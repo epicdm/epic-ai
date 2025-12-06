@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Generated files
+*.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Large files
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (but not examples)
+.env
+.env.local
+.env.*.local
+
+# Turbo cache
+.turbo/
+
+# Test coverage
+coverage/
+EOFcat > .claudeignore << 'EOF'
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Generated files
+*.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Large files
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (but not examples)
+.env
+.env.local
+.env.*.local
+
+# Turbo cache
+.turbo/
+
+# Test coverage
+coverage/

@@ -1,0 +1,27 @@
+{
+  "project": {
+    "name": "Epic AI",
+    "type": "fullstack",
+    "language": "typescript"
+  },
+  "preferences": {
+    "autoApprove": [
+      "read",
+      "list",
+      "search"
+    ],
+    "codeStyle": {
+      "indentation": 2,
+      "quotes": "double",
+      "semicolons": true,
+      "trailingComma": "es5"
+    }
+  },
+  "context": {
+    "alwaysInclude": [
+      "CLAUDE.md",
+      "package.json",
+      "tsconfig.json"
+    ]
+  }
+}
