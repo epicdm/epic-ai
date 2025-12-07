@@ -1,21 +1,36 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardBody, CardHeader } from "@heroui/react";
 
 interface DashboardContentProps {
   firstName: string | null;
+  organizationName: string | null;
+  stats: {
+    brandCount: number;
+    postCount: number;
+    callCount: number;
+    leadCount: number;
+  };
 }
 
-export function DashboardContent({ firstName }: DashboardContentProps) {
+export function DashboardContent({
+  firstName,
+  organizationName,
+  stats,
+}: DashboardContentProps) {
+  const { brandCount, postCount, callCount, leadCount } = stats;
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {firstName || "there"}!
+          Welcome back, {firstName || "there"}! 👋
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Here&apos;s what&apos;s happening with your marketing today.
+          Here&apos;s what&apos;s happening with {organizationName || "your marketing"}{" "}
+          today.
         </p>
       </div>
 
@@ -26,10 +41,28 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Brands
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  {brandCount}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">✨</span>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardBody className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Social Posts
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  0
+                  {postCount}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -48,7 +81,7 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
                   Voice Calls
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  0
+                  {callCount}
                 </p>
               </div>
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -67,33 +100,13 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
                   Total Leads
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  0
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">👥</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">All time</p>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Conversions
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  0%
+                  {leadCount}
                 </p>
               </div>
               <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🎯</span>
+                <span className="text-2xl">👥</span>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Lead to customer</p>
           </CardBody>
         </Card>
       </div>
@@ -105,7 +118,10 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
         </CardHeader>
         <CardBody>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left">
+            <Link
+              href="/dashboard/social/create"
+              className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left"
+            >
               <span className="text-2xl mb-2 block">✍️</span>
               <span className="font-medium text-gray-900 dark:text-white">
                 Create Post
@@ -113,9 +129,12 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
               <p className="text-sm text-gray-500 mt-1">
                 Schedule content across platforms
               </p>
-            </button>
+            </Link>
 
-            <button className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left">
+            <Link
+              href="/dashboard/voice/agents/new"
+              className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left"
+            >
               <span className="text-2xl mb-2 block">🤖</span>
               <span className="font-medium text-gray-900 dark:text-white">
                 Create Agent
@@ -123,44 +142,52 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
               <p className="text-sm text-gray-500 mt-1">
                 Set up a new voice AI agent
               </p>
-            </button>
+            </Link>
 
-            <button className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left">
+            <Link
+              href="/dashboard/leads"
+              className="p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors text-left"
+            >
               <span className="text-2xl mb-2 block">📊</span>
               <span className="font-medium text-gray-900 dark:text-white">
-                View Analytics
+                View Leads
               </span>
               <p className="text-sm text-gray-500 mt-1">
-                See your performance metrics
+                See your captured leads
               </p>
-            </button>
+            </Link>
           </div>
         </CardBody>
       </Card>
 
-      {/* Getting Started */}
+      {/* Getting Started Checklist */}
       <Card>
         <CardHeader className="pb-0">
           <h2 className="text-lg font-semibold">Getting Started</h2>
         </CardHeader>
         <CardBody>
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div className="w-8 h-8 bg-brand-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                1
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
+            >
+              <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                ✓
               </div>
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-white">
                   Create your organization
                 </p>
                 <p className="text-sm text-gray-500">
-                  Set up your workspace and invite team members
+                  {organizationName} is ready!
                 </p>
               </div>
-              <span className="text-gray-400">→</span>
-            </div>
+            </Link>
 
-            <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-50">
+            <Link
+              href="/dashboard/social/accounts"
+              className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
               <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 2
               </div>
@@ -173,9 +200,12 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
                 </p>
               </div>
               <span className="text-gray-400">→</span>
-            </div>
+            </Link>
 
-            <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-50">
+            <Link
+              href="/dashboard/voice/agents/new"
+              className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
               <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                 3
               </div>
@@ -188,7 +218,7 @@ export function DashboardContent({ firstName }: DashboardContentProps) {
                 </p>
               </div>
               <span className="text-gray-400">→</span>
-            </div>
+            </Link>
           </div>
         </CardBody>
       </Card>
