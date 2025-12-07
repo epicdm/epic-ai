@@ -100,7 +100,7 @@ export function LandingHero() {
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center text-gray-600 dark:text-gray-400">
-          <p>© 2024 Epic AI. All rights reserved.</p>
+          <p>© 2025 Epic AI. All rights reserved.</p>
         </div>
       </footer>
     </main>
