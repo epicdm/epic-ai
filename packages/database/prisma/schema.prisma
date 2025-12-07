@@ -41,6 +41,7 @@ model Organization {
   subscriptions Subscription[]
   leads         Lead[]
   usage         Usage[]
+  automations   Automation[]
 
   @@map("organizations")
 }
@@ -400,18 +401,66 @@ model Usage {
 
 model Automation {
   id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
-  brandId        String?   @map("brand_id")
   name           String
   description    String?   @db.Text
-  triggerType    String    @map("trigger_type")
-  triggerConfig  Json      @map("trigger_config")
-  actions        Json
+
+  // Trigger configuration
+  trigger        String    // LEAD_CREATED, LEAD_STATUS_CHANGED, CALL_COMPLETED, CALL_FAILED, SOCIAL_ENGAGEMENT, SCHEDULE, MANUAL
+  triggerConfig  Json?     @map("trigger_config")
+
+  // Conditions (optional filters)
+  conditions     Json?     // Array of conditions [{field, operator, value}]
+
+  // Actions to execute
+  actions        Json      // Array of actions [{type, config}]
+
+  // Status
   isActive       Boolean   @default(true) @map("is_active")
-  timesTriggered Int       @default(0) @map("times_triggered")
-  lastTriggered  DateTime? @map("last_triggered")
+
+  // Stats
+  runCount       Int       @default(0) @map("run_count")
+  lastRunAt      DateTime? @map("last_run_at")
+  lastRunStatus  String?   @map("last_run_status") // SUCCESS, FAILED, SKIPPED
+
+  // Relations
+  organizationId String    @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  runs           AutomationRun[]
+
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
+  @@index([organizationId])
+  @@index([trigger])
+  @@index([isActive])
   @@map("automations")
+}
+
+// Automation Run History
+model AutomationRun {
+  id             String    @id @default(cuid())
+
+  status         String    // RUNNING, SUCCESS, FAILED, SKIPPED
+
+  // Trigger data
+  triggerData    Json?     @map("trigger_data")
+
+  // Execution details
+  actionsExecuted Json?    @map("actions_executed")
+  error          String?   @db.Text
+
+  // Timing
+  startedAt      DateTime  @default(now()) @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  durationMs     Int?      @map("duration_ms")
+
+  // Relations
+  automationId   String    @map("automation_id")
+  automation     Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  @@index([automationId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("automation_runs")
 }
