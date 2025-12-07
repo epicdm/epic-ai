@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -16,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - epic-network
 
   redis:
     image: redis:7-alpine
@@ -30,7 +34,58 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - epic-network
+
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: epic-ai-postiz
+    restart: unless-stopped
+    environment:
+      # Database - using same postgres server, different database
+      DATABASE_URL: "postgresql://epic:epicpassword@postgres:5432/postiz"
+
+      # Redis - shared with Epic AI
+      REDIS_URL: "redis://redis:6379"
+
+      # JWT Secret
+      JWT_SECRET: "epic-ai-postiz-jwt-secret-change-in-production-12345"
+
+      # URLs
+      FRONTEND_URL: "http://localhost:5000"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000"
+      BACKEND_INTERNAL_URL: "http://localhost:3000"
+
+      # Storage - local for now
+      STORAGE_PROVIDER: "local"
+      UPLOAD_DIRECTORY: "/uploads"
+      NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY: "/uploads"
+
+      # General settings
+      IS_GENERAL: "true"
+
+      # Disable features we don't need yet
+      DISABLE_REGISTRATION: "false"
+
+    ports:
+      - "5000:5000"
+    volumes:
+      - postiz_config:/config
+      - postiz_uploads:/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - epic-network
 
 volumes:
   postgres_data:
   redis_data:
+  postiz_config:
+  postiz_uploads:
+
+networks:
+  epic-network:
+    driver: bridge

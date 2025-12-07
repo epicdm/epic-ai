@@ -1,0 +1,64 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
+import { cn } from "@/lib/utils";
+
+interface DashboardShellProps {
+  children: React.ReactNode;
+  organizationName?: string;
+  userName?: string;
+}
+
+export function DashboardShell({
+  children,
+  organizationName,
+  userName,
+}: DashboardShellProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Load saved preference
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved) {
+      setSidebarCollapsed(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save preference
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("sidebar-collapsed", JSON.stringify(sidebarCollapsed));
+    }
+  }, [sidebarCollapsed, mounted]);
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Sidebar - Desktop only */}
+      <div className="hidden lg:block">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div
+        className={cn(
+          "transition-all duration-300",
+          "lg:ml-64",
+          sidebarCollapsed && "lg:ml-16"
+        )}
+      >
+        <Header organizationName={organizationName} userName={userName} />
+
+        <main className="p-4 lg:p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

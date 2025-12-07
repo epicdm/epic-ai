@@ -1,9 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { needsOnboarding } from "@/lib/sync-user";
-import { SocialDashboard } from "@/components/social/social-dashboard";
+import { PostComposer } from "@/components/social/post-composer";
 
-export default async function SocialPage() {
+export default async function CreatePostPage() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -14,5 +14,5 @@ export default async function SocialPage() {
     redirect("/onboarding");
   }
 
-  return <SocialDashboard />;
+  return <PostComposer />;
 }
