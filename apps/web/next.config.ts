@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   transpilePackages: ["@epic-ai/database", "@epic-ai/shared", "@epic-ai/ui"],
   experimental: {
     serverActions: {

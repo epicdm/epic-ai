@@ -21,6 +21,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "generate": "prisma generate",
+    "postinstall": "prisma generate",
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
