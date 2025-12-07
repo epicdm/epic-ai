@@ -87,7 +87,8 @@ export function AutomationsDashboard() {
       const response = await fetch("/api/automations");
       if (response.ok) {
         const data = await response.json();
-        setAutomations(data);
+        // Ensure data is an array before setting state
+        setAutomations(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Error fetching automations:", error);
@@ -101,7 +102,8 @@ export function AutomationsDashboard() {
       const response = await fetch("/api/automations/templates");
       if (response.ok) {
         const data = await response.json();
-        setTemplates(data);
+        // Ensure data is an array before setting state
+        setTemplates(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Error fetching templates:", error);

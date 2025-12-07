@@ -191,9 +191,14 @@ export function TestConsole() {
     setIsProcessing(true);
 
     try {
-      // Convert blob to base64
+      // Convert blob to base64 (browser-compatible)
       const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64Audio = Buffer.from(arrayBuffer).toString("base64");
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64Audio = btoa(binary);
 
       // Transcribe audio
       const transcribeResponse = await fetch("/api/voice/transcribe", {
