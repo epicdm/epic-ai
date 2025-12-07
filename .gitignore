@@ -40,3 +40,5 @@ prisma/migrations/*_migration_lock.toml
 
 # Misc
 *.tsbuildinfo
+.vercel
+.env*.local
