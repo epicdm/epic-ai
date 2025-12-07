@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Card,
   CardBody,
@@ -130,6 +130,7 @@ export function FlywheelTestPage() {
   const [tests, setTests] = useState<TestStep[]>(INITIAL_TESTS);
   const [isRunning, setIsRunning] = useState(false);
   const [testLeadId, setTestLeadId] = useState<string | null>(null);
+  const testLeadIdRef = useRef<string | null>(null);
 
   const passedCount = tests.filter((t) => t.status === "passed").length;
   const failedCount = tests.filter((t) => t.status === "failed").length;
@@ -160,6 +161,7 @@ export function FlywheelTestPage() {
           });
           if (!res.ok) throw new Error(`Status: ${res.status}`);
           const lead = await res.json();
+          testLeadIdRef.current = lead.id;
           setTestLeadId(lead.id);
           return true;
         }
@@ -171,8 +173,9 @@ export function FlywheelTestPage() {
         }
 
         case "leads-update": {
-          if (!testLeadId) throw new Error("No test lead created");
-          const res = await fetch(`/api/leads/${testLeadId}`, {
+          const leadId = testLeadIdRef.current;
+          if (!leadId) throw new Error("No test lead created");
+          const res = await fetch(`/api/leads/${leadId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "CONTACTED" }),
@@ -182,8 +185,9 @@ export function FlywheelTestPage() {
         }
 
         case "leads-activity": {
-          if (!testLeadId) throw new Error("No test lead created");
-          const res = await fetch(`/api/leads/${testLeadId}/activities`, {
+          const leadId = testLeadIdRef.current;
+          if (!leadId) throw new Error("No test lead created");
+          const res = await fetch(`/api/leads/${leadId}/activities`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -256,6 +260,7 @@ export function FlywheelTestPage() {
     setIsRunning(true);
     setTests(INITIAL_TESTS); // Reset
     setTestLeadId(null);
+    testLeadIdRef.current = null;
 
     for (const test of INITIAL_TESTS) {
       const passed = await runTest(test);
@@ -269,6 +274,7 @@ export function FlywheelTestPage() {
   function resetTests() {
     setTests(INITIAL_TESTS);
     setTestLeadId(null);
+    testLeadIdRef.current = null;
   }
 
   return (

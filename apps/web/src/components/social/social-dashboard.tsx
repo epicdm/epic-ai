@@ -12,6 +12,8 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 
 interface PostizStatus {
+  configured: boolean;
+  status: "connected" | "unreachable" | "not_configured";
   postizAvailable: boolean;
   postizUrl: string;
   message: string;
@@ -81,7 +83,11 @@ export function SocialDashboard() {
             <div className="flex items-center gap-4">
               <div
                 className={`w-3 h-3 rounded-full ${
-                  status?.postizAvailable ? "bg-green-500" : "bg-red-500"
+                  status?.status === "connected"
+                    ? "bg-green-500"
+                    : status?.status === "unreachable"
+                    ? "bg-yellow-500"
+                    : "bg-gray-400"
                 }`}
               />
               <div>
@@ -94,10 +100,20 @@ export function SocialDashboard() {
               </div>
             </div>
             <Chip
-              color={status?.postizAvailable ? "success" : "danger"}
+              color={
+                status?.status === "connected"
+                  ? "success"
+                  : status?.status === "unreachable"
+                  ? "warning"
+                  : "default"
+              }
               variant="flat"
             >
-              {status?.postizAvailable ? "Online" : "Offline"}
+              {status?.status === "connected"
+                ? "Online"
+                : status?.status === "unreachable"
+                ? "Unreachable"
+                : "Not Configured"}
             </Chip>
           </div>
         </CardBody>
@@ -112,29 +128,51 @@ export function SocialDashboard() {
         </Card>
       )}
 
-      {/* Not Available State */}
-      {!status?.postizAvailable && (
+      {/* Not Configured State */}
+      {status?.status === "not_configured" && (
+        <Card>
+          <CardBody className="py-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-3xl">⚙️</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Social Media Not Configured
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              The social media service (Postiz) has not been configured for production yet.
+              This feature requires the POSTIZ_URL environment variable to be set.
+            </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Social media management is coming soon. We&apos;re working on deploying
+                the Postiz integration.
+              </p>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Unreachable State */}
+      {status?.status === "unreachable" && (
         <Card>
           <CardBody className="py-16 text-center">
             <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-3xl">⚠️</span>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Social Media Engine Not Running
+              Social Media Engine Unreachable
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              The social media service (Postiz) is not available. Please ensure
-              Docker containers are running.
+              The social media service (Postiz) is configured but not responding.
+              The service may be starting up or experiencing issues.
             </p>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
-              <p className="text-sm font-mono text-gray-600 dark:text-gray-400">
-                cd /opt/epic-ai
-                <br />
-                docker compose up -d
-                <br />
-                docker compose ps
-              </p>
-            </div>
+            <Button
+              color="primary"
+              variant="flat"
+              onPress={() => window.location.reload()}
+            >
+              Retry Connection
+            </Button>
           </CardBody>
         </Card>
       )}

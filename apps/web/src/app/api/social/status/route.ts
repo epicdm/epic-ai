@@ -10,14 +10,30 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const postizUrl = process.env.POSTIZ_URL;
+    const isConfigured = !!postizUrl && postizUrl !== "http://localhost:5000";
+
+    // Skip health check if not configured for production
+    if (!isConfigured) {
+      return NextResponse.json({
+        configured: false,
+        status: "not_configured",
+        postizAvailable: false,
+        postizUrl: getPostizDashboardUrl(),
+        message: "Postiz is not configured for production. Set POSTIZ_URL environment variable.",
+      });
+    }
+
     const isPostizHealthy = await checkPostizHealth();
 
     return NextResponse.json({
+      configured: true,
+      status: isPostizHealthy ? "connected" : "unreachable",
       postizAvailable: isPostizHealthy,
       postizUrl: getPostizDashboardUrl(),
       message: isPostizHealthy
         ? "Postiz is running and ready"
-        : "Postiz is not available. Please check Docker containers.",
+        : "Postiz is configured but not reachable. Check the Postiz deployment.",
     });
   } catch (error) {
     console.error("Error checking social status:", error);
