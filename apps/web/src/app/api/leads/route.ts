@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
+import { emitLeadCreated } from "@/lib/events/emit-lead-events";
 
 // GET all leads with filtering
 export async function GET(request: NextRequest) {
@@ -151,6 +152,18 @@ export async function POST(request: NextRequest) {
         userId,
       },
     });
+
+    // Emit lead created event for automations
+    emitLeadCreated({
+      id: lead.id,
+      organizationId: org.id,
+      firstName: lead.firstName,
+      lastName: lead.lastName,
+      email: lead.email,
+      phone: lead.phone,
+      source: lead.source,
+      status: lead.status,
+    }).catch(console.error);
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {

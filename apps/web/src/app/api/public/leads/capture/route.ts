@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@epic-ai/database";
+import { emitLeadCreated } from "@/lib/events/emit-lead-events";
 
 /**
  * Public endpoint for lead capture forms.
@@ -118,6 +119,18 @@ export async function POST(request: NextRequest) {
         description: `New lead captured from ${sourceDetails || source || "web form"}`,
       },
     });
+
+    // Emit lead created event for automations
+    emitLeadCreated({
+      id: lead.id,
+      organizationId,
+      firstName: lead.firstName,
+      lastName: lead.lastName,
+      email: lead.email,
+      phone: lead.phone,
+      source: lead.source,
+      status: lead.status,
+    }).catch(console.error);
 
     return NextResponse.json(
       {

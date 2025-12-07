@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
+import { emitLeadStatusChanged } from "@/lib/events/emit-lead-events";
 
 // GET single lead with activities
 export async function GET(
@@ -107,6 +108,14 @@ export async function PATCH(
           userId,
         },
       });
+
+      // Emit status change event for automations
+      emitLeadStatusChanged(
+        id,
+        org.id,
+        existing.status,
+        body.status
+      ).catch(console.error);
 
       // Set convertedAt if converted
       if (body.status === "CONVERTED" && !existing.convertedAt) {

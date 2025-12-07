@@ -15,6 +15,7 @@ import {
   Sparkles,
   BarChart3,
   Zap,
+  FlaskConical,
 } from "lucide-react";
 
 interface NavItem {
@@ -68,6 +69,12 @@ const navigation: NavItem[] = [
     href: "/dashboard/analytics",
     icon: BarChart3,
     badge: "Soon",
+  },
+  {
+    name: "Integration Tests",
+    href: "/dashboard/test",
+    icon: FlaskConical,
+    badge: "Dev",
   },
 ];
 
