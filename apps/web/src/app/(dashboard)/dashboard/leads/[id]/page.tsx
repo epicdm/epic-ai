@@ -1,9 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { needsOnboarding } from "@/lib/sync-user";
-import { LeadsDashboard } from "@/components/leads/leads-dashboard";
+import { LeadDetail } from "@/components/leads/lead-detail";
 
-export default async function LeadsPage() {
+export default async function LeadDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -14,5 +18,7 @@ export default async function LeadsPage() {
     redirect("/onboarding");
   }
 
-  return <LeadsDashboard />;
+  const { id } = await params;
+
+  return <LeadDetail leadId={id} />;
 }

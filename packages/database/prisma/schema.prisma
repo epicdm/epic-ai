@@ -276,47 +276,78 @@ model Lead {
   id             String    @id @default(cuid())
   organizationId String    @map("organization_id")
   brandId        String?   @map("brand_id")
+
+  // Contact Info
   email          String?
   phone          String?
-  firstName      String?   @map("first_name")
+  firstName      String    @map("first_name")
   lastName       String?   @map("last_name")
   company        String?
+  jobTitle       String?   @map("job_title")
   socialProfiles Json      @default("{}") @map("social_profiles")
-  source         String    @default("manual")
+
+  // Source
+  source         String    @default("MANUAL")
   sourcePlatform String?   @map("source_platform")
-  sourceDetail   String?   @map("source_detail")
+  sourceDetails  String?   @map("source_details")
   utmParams      Json?     @map("utm_params")
-  status         String    @default("new")
+
+  // Status & Value
+  status         String    @default("NEW")
   score          Int       @default(0)
-  tags           Json      @default("[]")
-  firstTouchAt   DateTime? @map("first_touch_at")
-  lastTouchAt    DateTime? @map("last_touch_at")
-  convertedAt    DateTime? @map("converted_at")
+  estimatedValue Float?    @map("estimated_value")
+  actualValue    Float?    @map("actual_value")
+  currency       String    @default("USD")
+
+  // Notes & Tags
+  notes          String?   @db.Text
+  tags           String[]  @default([])
   customFields   Json      @default("{}") @map("custom_fields")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Assignment
+  assignedToId   String?   @map("assigned_to_id")
+
+  // Timestamps
+  firstTouchAt      DateTime? @map("first_touch_at")
+  lastTouchAt       DateTime? @map("last_touch_at")
+  lastContactedAt   DateTime? @map("last_contacted_at")
+  convertedAt       DateTime? @map("converted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   brand        Brand?         @relation(fields: [brandId], references: [id], onDelete: SetNull)
   calls        Call[]
   activities   LeadActivity[]
 
+  @@index([organizationId])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
   @@map("leads")
 }
 
 model LeadActivity {
   id            String   @id @default(cuid())
   leadId        String   @map("lead_id")
-  channel       String
-  activityType  String   @map("activity_type")
+
+  type          String   // NOTE, EMAIL, CALL, MEETING, STATUS_CHANGE, TASK, SOCIAL_INTERACTION
+  title         String
+  description   String?  @db.Text
+  metadata      Json     @default("{}")
+
+  // Legacy fields for backward compatibility
+  channel       String?
   referenceType String?  @map("reference_type")
   referenceId   String?  @map("reference_id")
-  summary       String?  @db.Text
-  metadata      Json     @default("{}")
+
+  userId        String?  @map("user_id")
   createdAt     DateTime @default(now()) @map("created_at")
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@index([leadId])
+  @@index([createdAt])
   @@map("lead_activities")
 }
 
