@@ -1,9 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { needsOnboarding } from "@/lib/sync-user";
-import { VoiceDashboard } from "@/components/voice/voice-dashboard";
+import { PhoneNumbersPage } from "@/components/voice/phone-numbers-page";
 
-export default async function VoicePage() {
+export default async function NumbersPage() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -14,5 +14,5 @@ export default async function VoicePage() {
     redirect("/onboarding");
   }
 
-  return <VoiceDashboard />;
+  return <PhoneNumbersPage />;
 }
