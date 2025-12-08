@@ -33,22 +33,41 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user exists in database before creating organization
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {
-        email: primaryEmail,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        imageUrl: clerkUser.imageUrl,
-      },
-      create: {
-        id: userId,
-        email: primaryEmail,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        imageUrl: clerkUser.imageUrl,
-      },
+    // Handle case where email exists with different Clerk ID (user re-registered)
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email: primaryEmail },
     });
+
+    if (existingUserByEmail && existingUserByEmail.id !== userId) {
+      // User re-registered with same email - update their Clerk ID
+      await prisma.user.update({
+        where: { email: primaryEmail },
+        data: {
+          id: userId,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+      });
+    } else {
+      // Normal upsert - either new user or same Clerk ID
+      await prisma.user.upsert({
+        where: { id: userId },
+        update: {
+          email: primaryEmail,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+        create: {
+          id: userId,
+          email: primaryEmail,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+      });
+    }
 
     const body = await request.json();
 
