@@ -7,7 +7,8 @@
  * API Documentation: https://docs.postiz.com/public-api
  */
 
-const POSTIZ_URL = process.env.POSTIZ_URL || "http://localhost:5000";
+// Trim to handle any trailing whitespace or newlines from environment variables
+const POSTIZ_URL = (process.env.POSTIZ_URL || "http://localhost:5000").trim();
 
 interface PostizIntegration {
   id: string;
