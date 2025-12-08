@@ -74,7 +74,8 @@ export class PostizClient {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    this.baseUrl = `${POSTIZ_URL}/public/v1`;
+    // Note: Postiz API is at /api/public/v1, not /public/v1 as in docs
+    this.baseUrl = `${POSTIZ_URL}/api/public/v1`;
   }
 
   private async request<T>(
