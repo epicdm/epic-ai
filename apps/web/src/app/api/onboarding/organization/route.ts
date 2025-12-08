@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createOrganization } from "@/lib/services/organization";
 import { organizationSchema } from "@/lib/validations/onboarding";
+import { syncUser } from "@/lib/sync-user";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    // Ensure user exists in database before creating organization
+    const user = await syncUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Failed to sync user. Please try again." },
+        { status: 500 }
       );
     }
 
@@ -37,8 +47,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(organization);
   } catch (error) {
     console.error("Error creating organization:", error);
+    // Return more specific error message for debugging
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create organization" },
+      { error: `Failed to create organization: ${message}` },
       { status: 500 }
     );
   }
