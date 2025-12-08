@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardBody,
@@ -8,51 +8,279 @@ import {
   Button,
   Chip,
   Spinner,
+  Textarea,
+  Checkbox,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
+  Select,
+  SelectItem,
+  Avatar,
+  Tabs,
+  Tab,
+  Tooltip,
+  useDisclosure,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import {
+  Sparkles,
+  Send,
+  Calendar,
+  Settings,
+  Plus,
+  ExternalLink,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Image as ImageIcon,
+  RefreshCw,
+  Trash2,
+  Link as LinkIcon,
+} from "lucide-react";
 
-interface PostizStatus {
-  configured: boolean;
-  status: "connected" | "unreachable" | "not_configured";
-  postizAvailable: boolean;
-  postizUrl: string;
-  message: string;
+interface Integration {
+  id: string;
+  name: string;
+  platform: string;
+  platformDisplay: string;
+  platformColor: string;
+  picture?: string;
+  disabled: boolean;
 }
 
-const SUPPORTED_PLATFORMS = [
-  { id: "facebook", name: "Facebook", icon: "📘", color: "primary" },
-  { id: "instagram", name: "Instagram", icon: "📸", color: "secondary" },
-  { id: "x", name: "X (Twitter)", icon: "🐦", color: "default" },
-  { id: "linkedin", name: "LinkedIn", icon: "💼", color: "primary" },
-  { id: "tiktok", name: "TikTok", icon: "🎵", color: "danger" },
-  { id: "youtube", name: "YouTube", icon: "▶️", color: "danger" },
-  { id: "threads", name: "Threads", icon: "🧵", color: "default" },
-  { id: "bluesky", name: "Bluesky", icon: "🦋", color: "primary" },
-  { id: "pinterest", name: "Pinterest", icon: "📌", color: "danger" },
-  { id: "reddit", name: "Reddit", icon: "🤖", color: "warning" },
+interface Post {
+  id: string;
+  content: string;
+  publishDate: string;
+  state: "QUEUE" | "PUBLISHED" | "ERROR" | "DRAFT";
+  integration: {
+    id: string;
+    providerIdentifier: string;
+    name: string;
+    picture?: string;
+  };
+}
+
+interface SetupStatus {
+  connected: boolean;
+  connectedAt?: string;
+  postizUrl?: string;
+  connectUrl?: string;
+}
+
+interface GeneratedContent {
+  content: string;
+  hashtags: string[];
+  suggestedImagePrompt?: string;
+  imageUrl?: string;
+}
+
+const CONTENT_TYPES = [
+  { key: "custom", label: "Custom Prompt" },
+  { key: "lead_converted", label: "New Customer Celebration" },
+  { key: "five_star_call", label: "Great Call Highlight" },
+  { key: "weekly_content", label: "Weekly Content" },
+];
+
+const TONES = [
+  { key: "professional", label: "Professional" },
+  { key: "casual", label: "Casual" },
+  { key: "enthusiastic", label: "Enthusiastic" },
+  { key: "educational", label: "Educational" },
 ];
 
 export function SocialDashboard() {
-  const [status, setStatus] = useState<PostizStatus | null>(null);
+  // State
+  const [setup, setSetup] = useState<SetupStatus | null>(null);
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Composer state
+  const [content, setContent] = useState("");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [postNow, setPostNow] = useState(true);
+  const [posting, setPosting] = useState(false);
+
+  // AI generation state
+  const [generating, setGenerating] = useState(false);
+  const [contentType, setContentType] = useState("custom");
+  const [tone, setTone] = useState("professional");
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+
+  // Setup modal
+  const { isOpen: isSetupOpen, onOpen: onSetupOpen, onClose: onSetupClose } = useDisclosure();
+  const [apiKey, setApiKey] = useState("");
+  const [savingKey, setSavingKey] = useState(false);
+  const [setupError, setSetupError] = useState("");
+
+  // Load data
+  const loadData = useCallback(async () => {
+    try {
+      const [setupRes, integrationsRes, postsRes] = await Promise.all([
+        fetch("/api/social/setup"),
+        fetch("/api/social/integrations"),
+        fetch("/api/social/posts"),
+      ]);
+
+      if (setupRes.ok) {
+        const data = await setupRes.json();
+        setSetup(data);
+      }
+
+      if (integrationsRes.ok) {
+        const data = await integrationsRes.json();
+        setIntegrations(data.integrations || []);
+      }
+
+      if (postsRes.ok) {
+        const data = await postsRes.json();
+        setPosts(data.posts || []);
+      }
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function checkStatus() {
-      try {
-        const response = await fetch("/api/social/status");
-        if (!response.ok) throw new Error("Failed to check status");
-        const data = await response.json();
-        setStatus(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    }
+    loadData();
+  }, [loadData]);
 
-    checkStatus();
-  }, []);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadData();
+  };
+
+  // Save API key
+  const handleSaveApiKey = async () => {
+    if (!apiKey.trim()) return;
+    setSavingKey(true);
+    setSetupError("");
+
+    try {
+      const res = await fetch("/api/social/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: apiKey.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save API key");
+      }
+
+      onSetupClose();
+      setApiKey("");
+      loadData();
+    } catch (error) {
+      setSetupError(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  // Disconnect
+  const handleDisconnect = async () => {
+    if (!confirm("Are you sure you want to disconnect from Postiz?")) return;
+
+    try {
+      await fetch("/api/social/setup", { method: "DELETE" });
+      loadData();
+    } catch (error) {
+      console.error("Disconnect failed:", error);
+    }
+  };
+
+  // Generate content with AI
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setGeneratedImage(null);
+
+    try {
+      const res = await fetch("/api/social/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: contentType,
+          tone,
+          customPrompt: contentType === "custom" ? customPrompt : undefined,
+          platforms: selectedPlatforms,
+          includeImage: true,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Generation failed");
+
+      const data: GeneratedContent = await res.json();
+
+      // Combine content with hashtags
+      const hashtags = data.hashtags?.length
+        ? "\n\n" + data.hashtags.map((h) => `#${h}`).join(" ")
+        : "";
+      setContent(data.content + hashtags);
+
+      if (data.imageUrl) {
+        setGeneratedImage(data.imageUrl);
+      }
+    } catch (error) {
+      console.error("Generation error:", error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // Create post
+  const handlePost = async () => {
+    if (!content.trim() || selectedPlatforms.length === 0) return;
+    setPosting(true);
+
+    try {
+      const res = await fetch("/api/social/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: content.trim(),
+          integrationIds: selectedPlatforms,
+          scheduleDate: postNow ? undefined : scheduleDate,
+          postNow,
+          imageUrl: generatedImage,
+          generatedBy: generating ? "AI" : "MANUAL",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create post");
+
+      // Reset form
+      setContent("");
+      setSelectedPlatforms([]);
+      setScheduleDate("");
+      setGeneratedImage(null);
+      setCustomPrompt("");
+
+      // Refresh posts
+      loadData();
+    } catch (error) {
+      console.error("Post failed:", error);
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  // Toggle platform selection
+  const togglePlatform = (id: string) => {
+    setSelectedPlatforms((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
 
   if (loading) {
     return (
@@ -62,281 +290,560 @@ export function SocialDashboard() {
     );
   }
 
+  // Not connected state
+  if (!setup?.connected) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title="Social Media"
+          description="Connect your social accounts and manage content across all platforms."
+        />
+
+        <Card>
+          <CardBody className="py-16 text-center">
+            <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900 rounded-full flex items-center justify-center mx-auto mb-6">
+              <LinkIcon className="w-8 h-8 text-brand-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Connect to Postiz
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              To manage your social media from Epic AI, connect your Postiz account by entering your API key.
+            </p>
+            <div className="flex flex-col items-center gap-4">
+              <Button color="primary" size="lg" onPress={onSetupOpen}>
+                Connect Postiz Account
+              </Button>
+              {setup?.postizUrl && (
+                <a
+                  href={setup.postizUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                >
+                  Open Postiz to get your API key
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Setup Modal */}
+        <Modal isOpen={isSetupOpen} onClose={onSetupClose}>
+          <ModalContent>
+            <ModalHeader>Connect Postiz</ModalHeader>
+            <ModalBody>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Enter your Postiz API key to connect. You can find this in your Postiz settings under &quot;API Keys&quot;.
+              </p>
+              <Input
+                label="API Key"
+                placeholder="Enter your Postiz API key"
+                value={apiKey}
+                onValueChange={setApiKey}
+                type="password"
+              />
+              {setupError && (
+                <p className="text-sm text-red-500 mt-2">{setupError}</p>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="flat" onPress={onSetupClose}>
+                Cancel
+              </Button>
+              <Button
+                color="primary"
+                onPress={handleSaveApiKey}
+                isLoading={savingKey}
+                isDisabled={!apiKey.trim()}
+              >
+                Connect
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </div>
+    );
+  }
+
+  // Connected state with native experience
   return (
     <div className="space-y-8">
       <PageHeader
         title="Social Media"
-        description="Manage your social media presence across all platforms."
+        description="Create, schedule, and manage your social content."
         actions={
-          status?.postizAvailable && (
-            <Button as="a" href={status.postizUrl} target="_blank" color="primary">
-              Open Social Manager →
+          <div className="flex items-center gap-2">
+            <Tooltip content="Refresh">
+              <Button
+                variant="flat"
+                isIconOnly
+                onPress={handleRefresh}
+                isLoading={refreshing}
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </Tooltip>
+            {setup?.connectUrl && (
+              <Button
+                as="a"
+                href={setup.connectUrl}
+                target="_blank"
+                variant="flat"
+                startContent={<Plus className="w-4 h-4" />}
+              >
+                Add Account
+              </Button>
+            )}
+            <Button
+              variant="flat"
+              startContent={<Settings className="w-4 h-4" />}
+              onPress={onSetupOpen}
+            >
+              Settings
             </Button>
-          )
+          </div>
         }
       />
 
-      {/* Status Card */}
-      <Card>
-        <CardBody className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  status?.status === "connected"
-                    ? "bg-green-500"
-                    : status?.status === "unreachable"
-                    ? "bg-yellow-500"
-                    : "bg-gray-400"
-                }`}
-              />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  Social Media Engine
-                </p>
-                <p className="text-sm text-gray-500">
-                  {status?.message || "Checking status..."}
-                </p>
-              </div>
-            </div>
-            <Chip
-              color={
-                status?.status === "connected"
-                  ? "success"
-                  : status?.status === "unreachable"
-                  ? "warning"
-                  : "default"
-              }
-              variant="flat"
-            >
-              {status?.status === "connected"
-                ? "Online"
-                : status?.status === "unreachable"
-                ? "Unreachable"
-                : "Not Configured"}
-            </Chip>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Error State */}
-      {error && (
-        <Card className="border-red-200 dark:border-red-800">
-          <CardBody className="p-6">
-            <p className="text-red-600">{error}</p>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Not Configured State */}
-      {status?.status === "not_configured" && (
-        <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-3xl">⚙️</span>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Social Media Not Configured
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              The social media service (Postiz) has not been configured for production yet.
-              This feature requires the POSTIZ_URL environment variable to be set.
-            </p>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                Social media management is coming soon. We&apos;re working on deploying
-                the Postiz integration.
-              </p>
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Unreachable State */}
-      {status?.status === "unreachable" && (
-        <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-3xl">⚠️</span>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Social Media Engine Unreachable
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              The social media service (Postiz) is configured but not responding.
-              The service may be starting up or experiencing issues.
-            </p>
-            <Button
-              color="primary"
-              variant="flat"
-              onPress={() => window.location.reload()}
-            >
-              Retry Connection
-            </Button>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Available State */}
-      {status?.postizAvailable && (
-        <>
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card isPressable as="a" href={`${status.postizUrl}/launches`} target="_blank">
-              <CardBody className="p-6 text-center">
-                <span className="text-3xl mb-3 block">✍️</span>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Create Post
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Schedule content across platforms
-                </p>
-              </CardBody>
-            </Card>
-
-            <Card isPressable as="a" href={`${status.postizUrl}/calendar`} target="_blank">
-              <CardBody className="p-6 text-center">
-                <span className="text-3xl mb-3 block">📅</span>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Content Calendar
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  View and manage scheduled posts
-                </p>
-              </CardBody>
-            </Card>
-
-            <Card isPressable as="a" href={`${status.postizUrl}/settings`} target="_blank">
-              <CardBody className="p-6 text-center">
-                <span className="text-3xl mb-3 block">🔗</span>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Connect Accounts
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Link your social media accounts
-                </p>
-              </CardBody>
-            </Card>
-          </div>
-
-          {/* Supported Platforms */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main composer area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Post Composer */}
           <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Supported Platforms</h2>
+            <CardHeader className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Create Post</h2>
             </CardHeader>
-            <CardBody>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {SUPPORTED_PLATFORMS.map((platform) => (
-                  <div
-                    key={platform.id}
-                    className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+            <CardBody className="space-y-4">
+              {/* AI Generation */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Sparkles className="w-4 h-4 text-brand-500" />
+                  AI Content Generator
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Select
+                    label="Content Type"
+                    selectedKeys={[contentType]}
+                    onSelectionChange={(keys) =>
+                      setContentType(Array.from(keys)[0] as string)
+                    }
+                    size="sm"
                   >
-                    <span className="text-2xl">{platform.icon}</span>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {platform.name}
-                    </span>
-                  </div>
-                ))}
+                    {CONTENT_TYPES.map((type) => (
+                      <SelectItem key={type.key}>{type.label}</SelectItem>
+                    ))}
+                  </Select>
+                  <Select
+                    label="Tone"
+                    selectedKeys={[tone]}
+                    onSelectionChange={(keys) =>
+                      setTone(Array.from(keys)[0] as string)
+                    }
+                    size="sm"
+                  >
+                    {TONES.map((t) => (
+                      <SelectItem key={t.key}>{t.label}</SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                {contentType === "custom" && (
+                  <Input
+                    label="What should we write about?"
+                    placeholder="e.g., Tips for small business owners"
+                    value={customPrompt}
+                    onValueChange={setCustomPrompt}
+                    size="sm"
+                  />
+                )}
+                <Button
+                  color="secondary"
+                  variant="flat"
+                  onPress={handleGenerate}
+                  isLoading={generating}
+                  startContent={!generating && <Sparkles className="w-4 h-4" />}
+                  isDisabled={contentType === "custom" && !customPrompt.trim()}
+                >
+                  Generate Content
+                </Button>
               </div>
-              <p className="text-sm text-gray-500 mt-4">
-                + Mastodon, Discord, Slack, Telegram, Dribbble, and more
-              </p>
+
+              {/* Content textarea */}
+              <Textarea
+                label="Post Content"
+                placeholder="What's on your mind?"
+                value={content}
+                onValueChange={setContent}
+                minRows={4}
+                maxRows={8}
+              />
+
+              {/* Generated image preview */}
+              {generatedImage && (
+                <div className="relative">
+                  <img
+                    src={generatedImage}
+                    alt="Generated"
+                    className="rounded-lg max-h-64 object-cover"
+                  />
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="flat"
+                    className="absolute top-2 right-2"
+                    onPress={() => setGeneratedImage(null)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Platform selection */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                  Post to
+                </label>
+                {integrations.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No accounts connected.{" "}
+                    <a
+                      href={setup?.connectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-500 hover:underline"
+                    >
+                      Add one now
+                    </a>
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {integrations
+                      .filter((i) => !i.disabled)
+                      .map((integration) => (
+                        <Chip
+                          key={integration.id}
+                          variant={
+                            selectedPlatforms.includes(integration.id)
+                              ? "solid"
+                              : "bordered"
+                          }
+                          color={
+                            selectedPlatforms.includes(integration.id)
+                              ? "primary"
+                              : "default"
+                          }
+                          className="cursor-pointer"
+                          onClick={() => togglePlatform(integration.id)}
+                          avatar={
+                            integration.picture ? (
+                              <Avatar
+                                src={integration.picture}
+                                size="sm"
+                                className="w-5 h-5"
+                              />
+                            ) : undefined
+                          }
+                        >
+                          {integration.name}
+                        </Chip>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Schedule options */}
+              <div className="flex items-center gap-4">
+                <Checkbox
+                  isSelected={postNow}
+                  onValueChange={setPostNow}
+                  size="sm"
+                >
+                  Post immediately
+                </Checkbox>
+                {!postNow && (
+                  <Input
+                    type="datetime-local"
+                    value={scheduleDate}
+                    onValueChange={setScheduleDate}
+                    size="sm"
+                    className="max-w-xs"
+                    label="Schedule for"
+                  />
+                )}
+              </div>
+
+              {/* Post button */}
+              <div className="flex justify-end">
+                <Button
+                  color="primary"
+                  onPress={handlePost}
+                  isLoading={posting}
+                  isDisabled={
+                    !content.trim() ||
+                    selectedPlatforms.length === 0 ||
+                    (!postNow && !scheduleDate)
+                  }
+                  startContent={
+                    !posting &&
+                    (postNow ? (
+                      <Send className="w-4 h-4" />
+                    ) : (
+                      <Calendar className="w-4 h-4" />
+                    ))
+                  }
+                >
+                  {postNow ? "Post Now" : "Schedule Post"}
+                </Button>
+              </div>
             </CardBody>
           </Card>
 
-          {/* Getting Started Guide */}
+          {/* Scheduled/Recent Posts */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Getting Started</h2>
+              <h2 className="text-lg font-semibold">Scheduled & Recent Posts</h2>
+            </CardHeader>
+            <CardBody>
+              {posts.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  No scheduled posts yet. Create your first post above!
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {posts.slice(0, 10).map((post) => (
+                    <div
+                      key={post.id}
+                      className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                    >
+                      <Avatar
+                        src={post.integration.picture}
+                        name={post.integration.name}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">
+                            {post.integration.name}
+                          </span>
+                          <Chip
+                            size="sm"
+                            variant="flat"
+                            color={
+                              post.state === "PUBLISHED"
+                                ? "success"
+                                : post.state === "ERROR"
+                                ? "danger"
+                                : post.state === "QUEUE"
+                                ? "warning"
+                                : "default"
+                            }
+                          >
+                            {post.state === "QUEUE"
+                              ? "Scheduled"
+                              : post.state === "PUBLISHED"
+                              ? "Published"
+                              : post.state === "ERROR"
+                              ? "Failed"
+                              : "Draft"}
+                          </Chip>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          {post.content}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(post.publishDate).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Connected Accounts */}
+          <Card>
+            <CardHeader className="flex justify-between items-center">
+              <h3 className="font-semibold">Connected Accounts</h3>
+              <Button
+                as="a"
+                href={setup?.connectUrl}
+                target="_blank"
+                size="sm"
+                variant="light"
+                isIconOnly
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </CardHeader>
+            <CardBody>
+              {integrations.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 mb-3">
+                    No accounts connected
+                  </p>
+                  <Button
+                    as="a"
+                    href={setup?.connectUrl}
+                    target="_blank"
+                    size="sm"
+                    color="primary"
+                    variant="flat"
+                  >
+                    Connect Account
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {integrations.map((integration) => (
+                    <div
+                      key={integration.id}
+                      className="flex items-center gap-3"
+                    >
+                      <Avatar
+                        src={integration.picture}
+                        name={integration.name}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {integration.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {integration.platformDisplay}
+                        </p>
+                      </div>
+                      {integration.disabled && (
+                        <Chip size="sm" color="warning" variant="flat">
+                          Needs reconnect
+                        </Chip>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card>
+            <CardHeader>
+              <h3 className="font-semibold">This Week</h3>
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="w-8 h-8 bg-brand-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      Create a Postiz Account
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Open the Social Manager and create your account. This is
-                      separate from your Epic AI account for now.
-                    </p>
-                    <Button
-                      as="a"
-                      href={status.postizUrl}
-                      target="_blank"
-                      size="sm"
-                      variant="flat"
-                      className="mt-2"
-                    >
-                      Open Social Manager →
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Scheduled
+                  </span>
+                  <span className="font-semibold">
+                    {posts.filter((p) => p.state === "QUEUE").length}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      Connect Social Accounts
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Link your Facebook, Instagram, LinkedIn, X, and other
-                      accounts.
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Published
+                  </span>
+                  <span className="font-semibold">
+                    {posts.filter((p) => p.state === "PUBLISHED").length}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      Schedule Your First Post
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Create and schedule content to post across all your
-                      connected platforms.
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Accounts
+                  </span>
+                  <span className="font-semibold">
+                    {integrations.filter((i) => !i.disabled).length}
+                  </span>
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          {/* Note about Integration */}
-          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
-            <CardBody className="p-6">
-              <div className="flex items-start gap-4">
-                <span className="text-2xl">💡</span>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Deeper Integration Coming Soon
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    We&apos;re working on tighter integration between Epic AI and
-                    the social media engine. Soon you&apos;ll be able to manage
-                    everything from within Epic AI, including:
-                  </p>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 mt-2 list-disc list-inside">
-                    <li>Single sign-on (no separate account needed)</li>
-                    <li>
-                      AI-powered post generation using your brand&apos;s persona
-                    </li>
-                    <li>Social engagement → Lead capture automation</li>
-                    <li>Unified analytics dashboard</li>
-                  </ul>
-                </div>
-              </div>
+          {/* Postiz Link */}
+          <Card>
+            <CardBody className="py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Advanced features available in Postiz
+              </p>
+              <Button
+                as="a"
+                href={setup?.postizUrl}
+                target="_blank"
+                variant="flat"
+                className="w-full"
+                endContent={<ExternalLink className="w-4 h-4" />}
+              >
+                Open Postiz Dashboard
+              </Button>
             </CardBody>
           </Card>
-        </>
-      )}
+        </div>
+      </div>
+
+      {/* Settings Modal */}
+      <Modal isOpen={isSetupOpen} onClose={onSetupClose}>
+        <ModalContent>
+          <ModalHeader>Social Media Settings</ModalHeader>
+          <ModalBody>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Connection Status
+                </label>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-sm">Connected to Postiz</span>
+                </div>
+                {setup?.connectedAt && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Connected on{" "}
+                    {new Date(setup.connectedAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Update API Key
+                </label>
+                <Input
+                  placeholder="Enter new API key"
+                  value={apiKey}
+                  onValueChange={setApiKey}
+                  type="password"
+                  className="mt-1"
+                />
+                {setupError && (
+                  <p className="text-sm text-red-500 mt-1">{setupError}</p>
+                )}
+              </div>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="flat" color="danger" onPress={handleDisconnect}>
+              Disconnect
+            </Button>
+            <div className="flex-1" />
+            <Button variant="flat" onPress={onSetupClose}>
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onPress={handleSaveApiKey}
+              isLoading={savingKey}
+              isDisabled={!apiKey.trim()}
+            >
+              Update Key
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

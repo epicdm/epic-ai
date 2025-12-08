@@ -37,12 +37,19 @@ model Organization {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  memberships   Membership[]
-  brands        Brand[]
-  subscriptions Subscription[]
-  leads         Lead[]
-  usage         Usage[]
-  automations   Automation[]
+  // Postiz Integration
+  postizApiKey      String?   @map("postiz_api_key")
+  postizOrgId       String?   @map("postiz_org_id")
+  postizConnectedAt DateTime? @map("postiz_connected_at")
+
+  memberships       Membership[]
+  brands            Brand[]
+  subscriptions     Subscription[]
+  leads             Lead[]
+  usage             Usage[]
+  automations       Automation[]
+  socialPostLogs    SocialPostLog[]
+  autopilotSettings AutopilotSettings?
 
   @@map("organizations")
 }
@@ -464,4 +471,70 @@ model AutomationRun {
   @@index([status])
   @@index([startedAt])
   @@map("automation_runs")
+}
+
+// ============================================
+// SOCIAL POST LOGS (Track posts created via Epic AI)
+// ============================================
+
+model SocialPostLog {
+  id              String   @id @default(cuid())
+
+  // Content
+  content         String   @db.Text
+  mediaUrls       String[] @default([]) @map("media_urls")
+  platforms       String[] @default([])
+
+  // Postiz reference
+  postizPostIds   String[] @default([]) @map("postiz_post_ids")
+
+  // Scheduling
+  status          String   @default("DRAFT") // DRAFT, SCHEDULED, POSTED, FAILED
+  scheduledFor    DateTime? @map("scheduled_for")
+  postedAt        DateTime? @map("posted_at")
+  error           String?
+
+  // AI Generation
+  generatedBy     String   @default("MANUAL") @map("generated_by") // MANUAL, AI_LEAD, AI_CALL, AI_TREND
+  sourceType      String?  @map("source_type")
+  sourceId        String?  @map("source_id")
+  aiPrompt        String?  @db.Text @map("ai_prompt")
+
+  // Relations
+  organizationId  String   @map("organization_id")
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("social_post_logs")
+}
+
+// ============================================
+// AUTOPILOT SETTINGS (Social AI automation)
+// ============================================
+
+model AutopilotSettings {
+  id              String   @id @default(cuid())
+
+  // Social Autopilot
+  socialEnabled           Boolean  @default(false) @map("social_enabled")
+  socialOnLeadConverted   Boolean  @default(false) @map("social_on_lead_converted")
+  socialOnFiveStarCall    Boolean  @default(false) @map("social_on_five_star_call")
+  socialWeeklyContent     Boolean  @default(false) @map("social_weekly_content")
+  socialApprovalMode      String   @default("REVIEW") @map("social_approval_mode") // REVIEW, AUTO_NOTIFY, FULL_AUTO
+  socialMaxPostsPerDay    Int      @default(2) @map("social_max_posts_per_day")
+
+  // Platforms to auto-post to
+  socialDefaultPlatforms  String[] @default([]) @map("social_default_platforms")
+
+  // Relations
+  organizationId  String   @unique @map("organization_id")
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("autopilot_settings")
 }
