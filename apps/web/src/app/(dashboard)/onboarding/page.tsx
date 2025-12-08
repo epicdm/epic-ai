@@ -10,22 +10,38 @@ export default async function OnboardingPage() {
     redirect("/sign-in");
   }
 
-  // Sync user to database
-  await syncUser();
+  // Sync user to database - wrap in try/catch for resilience
+  try {
+    await syncUser();
+  } catch (e) {
+    console.error("Error syncing user:", e);
+  }
 
   // Check if user already has an organization
-  const needs = await needsOnboarding();
+  let needs = true;
+  try {
+    needs = await needsOnboarding();
+  } catch (e) {
+    console.error("Error checking onboarding status:", e);
+    // If we can't check, assume they need onboarding
+    needs = true;
+  }
 
   if (!needs) {
     // User already has an organization, go to dashboard
     redirect("/dashboard");
   }
 
-  const user = await currentUser();
+  let user = null;
+  try {
+    user = await currentUser();
+  } catch (e) {
+    console.error("Error getting current user:", e);
+  }
 
   return (
     <OnboardingWizard
-      userName={user?.firstName || user?.emailAddresses[0]?.emailAddress || "there"}
+      userName={user?.firstName || user?.emailAddresses?.[0]?.emailAddress || "there"}
     />
   );
 }
