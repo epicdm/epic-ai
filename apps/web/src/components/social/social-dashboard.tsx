@@ -19,8 +19,6 @@ import {
   Select,
   SelectItem,
   Avatar,
-  Tabs,
-  Tab,
   Tooltip,
   useDisclosure,
 } from "@heroui/react";
@@ -33,12 +31,9 @@ import {
   Plus,
   ExternalLink,
   Clock,
-  CheckCircle,
-  AlertCircle,
-  Image as ImageIcon,
   RefreshCw,
   Trash2,
-  Link as LinkIcon,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Integration {
@@ -69,6 +64,10 @@ interface SetupStatus {
   connectedAt?: string;
   postizUrl?: string;
   connectUrl?: string;
+  postizOrgId?: string;
+  autoProvisioned?: boolean;
+  requiresManualSetup?: boolean;
+  error?: string;
 }
 
 interface GeneratedContent {
@@ -99,6 +98,7 @@ export function SocialDashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   // Composer state
   const [content, setContent] = useState("");
@@ -114,37 +114,49 @@ export function SocialDashboard() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
-  // Setup modal
-  const { isOpen: isSetupOpen, onOpen: onSetupOpen, onClose: onSetupClose } = useDisclosure();
+  // Settings modal (for manual setup fallback and settings)
+  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
   const [apiKey, setApiKey] = useState("");
   const [savingKey, setSavingKey] = useState(false);
-  const [setupError, setSetupError] = useState("");
+  const [settingsError, setSettingsError] = useState("");
 
-  // Load data
+  // Load data - auto-provisions on first visit if POSTIZ_DATABASE_URL is configured
   const loadData = useCallback(async () => {
     try {
-      const [setupRes, integrationsRes, postsRes] = await Promise.all([
-        fetch("/api/social/setup"),
-        fetch("/api/social/integrations"),
-        fetch("/api/social/posts"),
-      ]);
+      setSetupError(null);
 
-      if (setupRes.ok) {
-        const data = await setupRes.json();
-        setSetup(data);
+      // Setup endpoint auto-provisions if possible
+      const setupRes = await fetch("/api/social/setup");
+      const setupData = await setupRes.json();
+
+      if (setupData.error) {
+        setSetupError(setupData.error);
+        setSetup({ connected: false });
+        return;
       }
 
-      if (integrationsRes.ok) {
-        const data = await integrationsRes.json();
-        setIntegrations(data.integrations || []);
-      }
+      setSetup(setupData);
 
-      if (postsRes.ok) {
-        const data = await postsRes.json();
-        setPosts(data.posts || []);
+      // Only fetch integrations and posts if connected
+      if (setupData.connected) {
+        const [integrationsRes, postsRes] = await Promise.all([
+          fetch("/api/social/integrations"),
+          fetch("/api/social/posts"),
+        ]);
+
+        if (integrationsRes.ok) {
+          const data = await integrationsRes.json();
+          setIntegrations(data.integrations || []);
+        }
+
+        if (postsRes.ok) {
+          const data = await postsRes.json();
+          setPosts(data.posts || []);
+        }
       }
     } catch (error) {
       console.error("Failed to load data:", error);
+      setSetupError("Failed to connect to social media service");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -160,11 +172,11 @@ export function SocialDashboard() {
     loadData();
   };
 
-  // Save API key
+  // Save API key (manual fallback)
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
     setSavingKey(true);
-    setSetupError("");
+    setSettingsError("");
 
     try {
       const res = await fetch("/api/social/setup", {
@@ -178,11 +190,11 @@ export function SocialDashboard() {
         throw new Error(data.error || "Failed to save API key");
       }
 
-      onSetupClose();
+      onSettingsClose();
       setApiKey("");
       loadData();
     } catch (error) {
-      setSetupError(error instanceof Error ? error.message : "Failed to save");
+      setSettingsError(error instanceof Error ? error.message : "Failed to save");
     } finally {
       setSavingKey(false);
     }
@@ -190,14 +202,39 @@ export function SocialDashboard() {
 
   // Disconnect
   const handleDisconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect from Postiz?")) return;
+    if (!confirm("Are you sure you want to disconnect? You can reconnect anytime.")) return;
 
     try {
       await fetch("/api/social/setup", { method: "DELETE" });
+      onSettingsClose();
       loadData();
     } catch (error) {
       console.error("Disconnect failed:", error);
     }
+  };
+
+  // Open Postiz in popup for connecting accounts
+  const openConnectPopup = () => {
+    if (!setup?.connectUrl) return;
+
+    const width = 800;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      setup.connectUrl,
+      "postiz-connect",
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+    );
+
+    // Poll for popup close to refresh data
+    const timer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(timer);
+        loadData();
+      }
+    }, 1000);
   };
 
   // Generate content with AI
@@ -284,13 +321,43 @@ export function SocialDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Spinner size="lg" />
+        <p className="text-gray-500">Setting up social media...</p>
       </div>
     );
   }
 
-  // Not connected state
+  // Error state
+  if (setupError) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title="Social Media"
+          description="Connect your social accounts and manage content across all platforms."
+        />
+
+        <Card>
+          <CardBody className="py-16 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Connection Error
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              {setupError}
+            </p>
+            <Button color="primary" onPress={handleRefresh}>
+              Try Again
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not connected state - show manual setup if required
   if (!setup?.connected) {
     return (
       <div className="space-y-8">
@@ -302,35 +369,44 @@ export function SocialDashboard() {
         <Card>
           <CardBody className="py-16 text-center">
             <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <LinkIcon className="w-8 h-8 text-brand-600" />
+              <Sparkles className="w-8 h-8 text-brand-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Connect to Postiz
+              {setup?.requiresManualSetup ? "Connect Your Postiz Account" : "Setting Up Social Media"}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              To manage your social media from Epic AI, connect your Postiz account by entering your API key.
+              {setup?.requiresManualSetup
+                ? "Enter your Postiz API key to connect your social media accounts."
+                : "We're setting up your social media workspace. This should only take a moment."
+              }
             </p>
-            <div className="flex flex-col items-center gap-4">
-              <Button color="primary" size="lg" onPress={onSetupOpen}>
-                Connect Postiz Account
+            {setup?.requiresManualSetup ? (
+              <div className="flex flex-col items-center gap-4">
+                <Button color="primary" size="lg" onPress={onSettingsOpen}>
+                  Connect Postiz Account
+                </Button>
+                {setup?.postizUrl && (
+                  <a
+                    href={setup.postizUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  >
+                    Open Postiz to get your API key
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <Button color="primary" onPress={handleRefresh} isLoading={refreshing}>
+                Refresh
               </Button>
-              {setup?.postizUrl && (
-                <a
-                  href={setup.postizUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                >
-                  Open Postiz to get your API key
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
-            </div>
+            )}
           </CardBody>
         </Card>
 
-        {/* Setup Modal */}
-        <Modal isOpen={isSetupOpen} onClose={onSetupClose}>
+        {/* Manual Setup Modal */}
+        <Modal isOpen={isSettingsOpen} onClose={onSettingsClose}>
           <ModalContent>
             <ModalHeader>Connect Postiz</ModalHeader>
             <ModalBody>
@@ -344,12 +420,12 @@ export function SocialDashboard() {
                 onValueChange={setApiKey}
                 type="password"
               />
-              {setupError && (
-                <p className="text-sm text-red-500 mt-2">{setupError}</p>
+              {settingsError && (
+                <p className="text-sm text-red-500 mt-2">{settingsError}</p>
               )}
             </ModalBody>
             <ModalFooter>
-              <Button variant="flat" onPress={onSetupClose}>
+              <Button variant="flat" onPress={onSettingsClose}>
                 Cancel
               </Button>
               <Button
@@ -385,21 +461,17 @@ export function SocialDashboard() {
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </Tooltip>
-            {setup?.connectUrl && (
-              <Button
-                as="a"
-                href={setup.connectUrl}
-                target="_blank"
-                variant="flat"
-                startContent={<Plus className="w-4 h-4" />}
-              >
-                Add Account
-              </Button>
-            )}
+            <Button
+              variant="flat"
+              startContent={<Plus className="w-4 h-4" />}
+              onPress={openConnectPopup}
+            >
+              Add Account
+            </Button>
             <Button
               variant="flat"
               startContent={<Settings className="w-4 h-4" />}
-              onPress={onSetupOpen}
+              onPress={onSettingsOpen}
             >
               Settings
             </Button>
@@ -505,17 +577,15 @@ export function SocialDashboard() {
                   Post to
                 </label>
                 {integrations.length === 0 ? (
-                  <p className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500">
                     No accounts connected.{" "}
-                    <a
-                      href={setup?.connectUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={openConnectPopup}
                       className="text-brand-500 hover:underline"
                     >
                       Add one now
-                    </a>
-                  </p>
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {integrations
@@ -671,12 +741,10 @@ export function SocialDashboard() {
             <CardHeader className="flex justify-between items-center">
               <h3 className="font-semibold">Connected Accounts</h3>
               <Button
-                as="a"
-                href={setup?.connectUrl}
-                target="_blank"
                 size="sm"
                 variant="light"
                 isIconOnly
+                onPress={openConnectPopup}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -688,12 +756,10 @@ export function SocialDashboard() {
                     No accounts connected
                   </p>
                   <Button
-                    as="a"
-                    href={setup?.connectUrl}
-                    target="_blank"
                     size="sm"
                     color="primary"
                     variant="flat"
+                    onPress={openConnectPopup}
                   >
                     Connect Account
                   </Button>
@@ -787,7 +853,7 @@ export function SocialDashboard() {
       </div>
 
       {/* Settings Modal */}
-      <Modal isOpen={isSetupOpen} onClose={onSetupClose}>
+      <Modal isOpen={isSettingsOpen} onClose={onSettingsClose}>
         <ModalContent>
           <ModalHeader>Social Media Settings</ModalHeader>
           <ModalBody>
@@ -798,7 +864,9 @@ export function SocialDashboard() {
                 </label>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-sm">Connected to Postiz</span>
+                  <span className="text-sm">
+                    {setup?.autoProvisioned ? "Auto-configured" : "Connected to Postiz"}
+                  </span>
                 </div>
                 {setup?.connectedAt && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -808,19 +876,40 @@ export function SocialDashboard() {
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Update API Key
-                </label>
-                <Input
-                  placeholder="Enter new API key"
-                  value={apiKey}
-                  onValueChange={setApiKey}
-                  type="password"
-                  className="mt-1"
-                />
-                {setupError && (
-                  <p className="text-sm text-red-500 mt-1">{setupError}</p>
+              {!setup?.autoProvisioned && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Update API Key
+                  </label>
+                  <Input
+                    placeholder="Enter new API key"
+                    value={apiKey}
+                    onValueChange={setApiKey}
+                    type="password"
+                    className="mt-1"
+                  />
+                  {settingsError && (
+                    <p className="text-sm text-red-500 mt-1">{settingsError}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Connected Accounts: {integrations.length}
+                </p>
+                {setup?.postizUrl && (
+                  <Button
+                    as="a"
+                    href={setup.postizUrl}
+                    target="_blank"
+                    variant="flat"
+                    size="sm"
+                    className="w-full"
+                    endContent={<ExternalLink className="w-4 h-4" />}
+                  >
+                    Manage in Postiz
+                  </Button>
                 )}
               </div>
             </div>
@@ -830,17 +919,18 @@ export function SocialDashboard() {
               Disconnect
             </Button>
             <div className="flex-1" />
-            <Button variant="flat" onPress={onSetupClose}>
-              Cancel
+            <Button variant="flat" onPress={onSettingsClose}>
+              Close
             </Button>
-            <Button
-              color="primary"
-              onPress={handleSaveApiKey}
-              isLoading={savingKey}
-              isDisabled={!apiKey.trim()}
-            >
-              Update Key
-            </Button>
+            {!setup?.autoProvisioned && apiKey.trim() && (
+              <Button
+                color="primary"
+                onPress={handleSaveApiKey}
+                isLoading={savingKey}
+              >
+                Update Key
+              </Button>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>
