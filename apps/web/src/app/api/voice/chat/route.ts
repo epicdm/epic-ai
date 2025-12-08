@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: agentId,
         brand: {
-          organizationId: userOrg.organizationId,
+          organizationId: userOrg.id,
         },
       },
     });
