@@ -50,7 +50,7 @@ export function DashboardShell({
         className={cn(
           "transition-all duration-300",
           "lg:ml-64",
-          sidebarCollapsed && "lg:ml-16"
+          mounted && sidebarCollapsed && "lg:ml-16"
         )}
       >
         <Header organizationName={organizationName} userName={userName} />
