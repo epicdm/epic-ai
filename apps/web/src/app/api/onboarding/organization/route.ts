@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { prisma } from "@epic-ai/database";
 import { createOrganization } from "@/lib/services/organization";
 import { organizationSchema } from "@/lib/validations/onboarding";
-import { syncUser } from "@/lib/sync-user";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,14 +15,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure user exists in database before creating organization
-    const user = await syncUser();
-    if (!user) {
+    // Get Clerk user data for sync
+    const clerkUser = await currentUser();
+    if (!clerkUser) {
       return NextResponse.json(
-        { error: "Failed to sync user. Please try again." },
+        { error: "Could not retrieve user data from Clerk" },
         { status: 500 }
       );
     }
+
+    const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
+    if (!primaryEmail) {
+      return NextResponse.json(
+        { error: "No email address found for user" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure user exists in database before creating organization
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {
+        email: primaryEmail,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        imageUrl: clerkUser.imageUrl,
+      },
+      create: {
+        id: userId,
+        email: primaryEmail,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        imageUrl: clerkUser.imageUrl,
+      },
+    });
 
     const body = await request.json();
 
