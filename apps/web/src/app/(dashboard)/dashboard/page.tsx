@@ -20,21 +20,41 @@ export default async function DashboardPage() {
   const user = await currentUser();
   const organization = await getUserOrganization();
 
-  // Get stats
-  const stats = organization
-    ? await Promise.all([
-        prisma.brand.count({ where: { organizationId: organization.id } }),
-        prisma.socialPost.count({
-          where: { brand: { organizationId: organization.id } },
-        }),
-        prisma.call.count({
-          where: { brand: { organizationId: organization.id } },
-        }),
-        prisma.lead.count({ where: { organizationId: organization.id } }),
-      ])
-    : [0, 0, 0, 0];
+  // Get stats - use try/catch for tables that may not exist yet
+  let brandCount = 0;
+  let postCount = 0;
+  let callCount = 0;
+  let leadCount = 0;
 
-  const [brandCount, postCount, callCount, leadCount] = stats;
+  if (organization) {
+    try {
+      brandCount = await prisma.brand.count({ where: { organizationId: organization.id } });
+    } catch {
+      brandCount = 0;
+    }
+
+    try {
+      postCount = await prisma.socialPost.count({
+        where: { brand: { organizationId: organization.id } },
+      });
+    } catch {
+      postCount = 0;
+    }
+
+    try {
+      callCount = await prisma.call.count({
+        where: { brand: { organizationId: organization.id } },
+      });
+    } catch {
+      callCount = 0;
+    }
+
+    try {
+      leadCount = await prisma.lead.count({ where: { organizationId: organization.id } });
+    } catch {
+      leadCount = 0;
+    }
+  }
 
   return (
     <DashboardContent
