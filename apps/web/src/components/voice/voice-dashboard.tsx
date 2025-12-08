@@ -28,7 +28,8 @@ export function VoiceDashboard() {
         const response = await fetch("/api/voice/agents");
         if (!response.ok) throw new Error("Failed to fetch agents");
         const data = await response.json();
-        setAgents(data);
+        // API returns { agents: [...] }
+        setAgents(Array.isArray(data.agents) ? data.agents : []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
