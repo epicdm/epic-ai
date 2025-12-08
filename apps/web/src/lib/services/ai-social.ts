@@ -10,9 +10,20 @@
 
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to avoid build-time errors when OPENAI_API_KEY is not set
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 export type ContentTone =
   | "professional"
@@ -143,7 +154,7 @@ export async function generateSocialContent(
 ): Promise<GeneratedContent> {
   const prompt = buildPrompt(request);
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -183,7 +194,7 @@ export async function generateImage(
   }
 
   try {
-    const response = await openai.images.generate({
+    const response = await getOpenAI().images.generate({
       model: "dall-e-3",
       prompt: `Professional social media image: ${prompt}. Style: clean, modern, business-appropriate.`,
       n: 1,
