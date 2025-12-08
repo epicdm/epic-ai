@@ -14,10 +14,27 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  // Sync user and get their organization
-  await syncUser();
-  const organization = await getUserOrganization();
-  const user = await currentUser();
+  // Sync user and get their organization - wrap in try/catch for resilience
+  let organization = null;
+  let user = null;
+
+  try {
+    await syncUser();
+  } catch (e) {
+    console.error("Error syncing user:", e);
+  }
+
+  try {
+    organization = await getUserOrganization();
+  } catch (e) {
+    console.error("Error getting organization:", e);
+  }
+
+  try {
+    user = await currentUser();
+  } catch (e) {
+    console.error("Error getting current user:", e);
+  }
 
   return (
     <DashboardShell
