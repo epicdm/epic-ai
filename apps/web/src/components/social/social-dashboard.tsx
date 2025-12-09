@@ -120,9 +120,8 @@ export function SocialDashboard() {
   const [savingKey, setSavingKey] = useState(false);
   const [settingsError, setSettingsError] = useState("");
 
-  // Postiz iframe modal (for connecting accounts without popup issues)
-  const { isOpen: isPostizOpen, onOpen: onPostizOpen, onClose: onPostizClose } = useDisclosure();
-  const [postizIframeSrc, setPostizIframeSrc] = useState("");
+  // Track when user is connecting accounts in Postiz (new tab)
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Load data - auto-provisions on first visit if POSTIZ_DATABASE_URL is configured
   const loadData = useCallback(async () => {
@@ -217,24 +216,21 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in an embedded iframe modal for connecting accounts
-  // This avoids popup issues where OIDC callbacks close the window
-  // Postiz is configured with OIDC using Epic AI (Clerk) as the provider
-  const openConnectModal = (destination?: string) => {
-    // Handle being called from event handlers (destination might be an event object)
+  // Open Postiz in a new tab for connecting accounts
+  // Shows a banner to remind user to click "Done" when finished
+  const openConnectInNewTab = (destination?: string) => {
     const redirectPath = typeof destination === "string" ? destination : "/integrations/social";
     const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
     const connectUrl = `${postizUrl}${redirectPath}`;
 
-    setPostizIframeSrc(connectUrl);
-    onPostizOpen();
+    // Open in new tab
+    window.open(connectUrl, "_blank");
+    setIsConnecting(true);
   };
 
-  // Close Postiz modal and refresh data
-  const closeConnectModal = () => {
-    onPostizClose();
-    setPostizIframeSrc("");
-    // Refresh data to pick up any new integrations
+  // Called when user clicks "Done" after connecting
+  const handleDoneConnecting = () => {
+    setIsConnecting(false);
     loadData();
   };
 
@@ -465,7 +461,7 @@ export function SocialDashboard() {
             <Button
               variant="flat"
               startContent={<Plus className="w-4 h-4" />}
-              onPress={() => openConnectModal()}
+              onPress={() => openConnectInNewTab()}
             >
               Add Account
             </Button>
@@ -581,7 +577,7 @@ export function SocialDashboard() {
                   <div className="text-sm text-gray-500">
                     No accounts connected.{" "}
                     <button
-                      onClick={() => openConnectModal()}
+                      onClick={() => openConnectInNewTab()}
                       className="text-brand-500 hover:underline"
                     >
                       Add one now
@@ -745,7 +741,7 @@ export function SocialDashboard() {
                 size="sm"
                 variant="light"
                 isIconOnly
-                onPress={() => openConnectModal()}
+                onPress={() => openConnectInNewTab()}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -760,7 +756,7 @@ export function SocialDashboard() {
                     size="sm"
                     color="primary"
                     variant="flat"
-                    onPress={() => openConnectModal()}
+                    onPress={() => openConnectInNewTab()}
                   >
                     Connect Account
                   </Button>
@@ -936,40 +932,24 @@ export function SocialDashboard() {
         </ModalContent>
       </Modal>
 
-      {/* Postiz Connect Modal (iframe) */}
-      <Modal
-        isOpen={isPostizOpen}
-        onClose={closeConnectModal}
-        size="5xl"
-        scrollBehavior="inside"
-        classNames={{
-          base: "max-w-[90vw] h-[85vh]",
-          body: "p-0",
-        }}
-      >
-        <ModalContent className="h-full">
-          <ModalHeader className="flex justify-between items-center border-b">
-            <span>Connect Social Account</span>
-            <Button
-              size="sm"
-              variant="light"
-              onPress={closeConnectModal}
-            >
-              Done
-            </Button>
-          </ModalHeader>
-          <ModalBody className="h-full overflow-hidden">
-            {postizIframeSrc && (
-              <iframe
-                src={postizIframeSrc}
-                className="w-full h-full border-0"
-                title="Connect Social Account"
-                allow="clipboard-write"
-              />
-            )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      {/* Connecting Banner - shows when user opened Postiz in new tab */}
+      {isConnecting && (
+        <div className="fixed bottom-4 right-4 z-50 bg-brand-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-4">
+          <div>
+            <p className="font-medium">Connecting social accounts...</p>
+            <p className="text-sm text-brand-100">Click Done when you&apos;ve finished in Postiz</p>
+          </div>
+          <Button
+            size="sm"
+            color="default"
+            variant="solid"
+            onPress={handleDoneConnecting}
+            className="bg-white text-brand-600 font-medium"
+          >
+            Done
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
