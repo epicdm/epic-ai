@@ -38,6 +38,8 @@ const navigation: NavItem[] = [
     icon: Share2,
     children: [
       { name: "Overview", href: "/dashboard/social" },
+      { name: "AI Suggestions", href: "/dashboard/social/suggestions" },
+      { name: "Autopilot Settings", href: "/dashboard/social/settings" },
       { name: "Create Post", href: "/dashboard/social/create" },
       { name: "Accounts", href: "/dashboard/social/accounts" },
     ],

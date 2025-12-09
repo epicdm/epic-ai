@@ -42,14 +42,15 @@ model Organization {
   postizOrgId       String?   @map("postiz_org_id")
   postizConnectedAt DateTime? @map("postiz_connected_at")
 
-  memberships       Membership[]
-  brands            Brand[]
-  subscriptions     Subscription[]
-  leads             Lead[]
-  usage             Usage[]
-  automations       Automation[]
-  socialPostLogs    SocialPostLog[]
-  autopilotSettings AutopilotSettings?
+  memberships         Membership[]
+  brands              Brand[]
+  subscriptions       Subscription[]
+  leads               Lead[]
+  usage               Usage[]
+  automations         Automation[]
+  socialPostLogs      SocialPostLog[]
+  autopilotSettings   AutopilotSettings?
+  socialSuggestions   SocialSuggestion[]
 
   @@map("organizations")
 }
@@ -519,22 +520,81 @@ model SocialPostLog {
 model AutopilotSettings {
   id              String   @id @default(cuid())
 
-  // Social Autopilot
-  socialEnabled           Boolean  @default(false) @map("social_enabled")
-  socialOnLeadConverted   Boolean  @default(false) @map("social_on_lead_converted")
-  socialOnFiveStarCall    Boolean  @default(false) @map("social_on_five_star_call")
-  socialWeeklyContent     Boolean  @default(false) @map("social_weekly_content")
-  socialApprovalMode      String   @default("REVIEW") @map("social_approval_mode") // REVIEW, AUTO_NOTIFY, FULL_AUTO
-  socialMaxPostsPerDay    Int      @default(2) @map("social_max_posts_per_day")
+  // Master toggle
+  enabled                 Boolean  @default(false)
 
-  // Platforms to auto-post to
-  socialDefaultPlatforms  String[] @default([]) @map("social_default_platforms")
+  // Triggers
+  onLeadConverted         Boolean  @default(true) @map("on_lead_converted")
+  onFiveStarCall          Boolean  @default(true) @map("on_five_star_call")
+  onWeeklySchedule        Boolean  @default(false) @map("on_weekly_schedule")
+  weeklyScheduleDay       Int?     @default(1) @map("weekly_schedule_day")  // 0=Sun, 1=Mon
+  weeklyScheduleHour      Int?     @default(9) @map("weekly_schedule_hour") // Hour in UTC
+
+  // Approval mode: REVIEW, AUTO_QUEUE, AUTO_POST
+  approvalMode            String   @default("REVIEW") @map("approval_mode")
+
+  // Default platforms (JSON array of integration IDs)
+  defaultPlatforms        String[] @default([]) @map("default_platforms")
+
+  // Posting limits
+  maxPostsPerDay          Int      @default(3) @map("max_posts_per_day")
+  minHoursBetween         Int      @default(4) @map("min_hours_between")
+
+  // Brand voice
+  defaultTone             String   @default("professional") @map("default_tone")
+  includeEmojis           Boolean  @default(true) @map("include_emojis")
+  includeHashtags         Boolean  @default(true) @map("include_hashtags")
+  includeCTA              Boolean  @default(false) @map("include_cta")
+  brandDescription        String?  @db.Text @map("brand_description")
 
   // Relations
   organizationId  String   @unique @map("organization_id")
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("autopilot_settings")
+}
+
+// ============================================
+// SOCIAL SUGGESTIONS (AI-generated content ideas)
+// ============================================
+
+model SocialSuggestion {
+  id              String   @id @default(cuid())
+
+  // Content
+  content         String   @db.Text
+  imageUrl        String?  @map("image_url")
+
+  // Source event: LEAD_CONVERTED, FIVE_STAR_CALL, WEEKLY_CONTENT, MANUAL
+  triggerType     String   @map("trigger_type")
+  triggerData     Json?    @map("trigger_data")
+
+  // Suggested platforms (integration IDs)
+  suggestedPlatforms String[] @default([]) @map("suggested_platforms")
+
+  // Status: PENDING, APPROVED, POSTED, DISMISSED, FAILED, AUTO_POSTED
+  status          String   @default("PENDING")
+
+  // If posted
+  postedAt        DateTime? @map("posted_at")
+  postId          String?   @map("post_id") // Postiz post ID
+  postPlatforms   String[]  @default([]) @map("post_platforms")
+
+  // If dismissed
+  dismissedAt     DateTime? @map("dismissed_at")
+  dismissReason   String?   @map("dismiss_reason")
+
+  // Relations
+  organizationId  String   @map("organization_id")
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@map("social_suggestions")
 }
