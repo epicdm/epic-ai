@@ -120,6 +120,10 @@ export function SocialDashboard() {
   const [savingKey, setSavingKey] = useState(false);
   const [settingsError, setSettingsError] = useState("");
 
+  // Postiz iframe modal (for connecting accounts without popup issues)
+  const { isOpen: isPostizOpen, onOpen: onPostizOpen, onClose: onPostizClose } = useDisclosure();
+  const [postizIframeSrc, setPostizIframeSrc] = useState("");
+
   // Load data - auto-provisions on first visit if POSTIZ_DATABASE_URL is configured
   const loadData = useCallback(async () => {
     try {
@@ -213,44 +217,25 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in popup for connecting accounts
+  // Open Postiz in an embedded iframe modal for connecting accounts
+  // This avoids popup issues where OIDC callbacks close the window
   // Postiz is configured with OIDC using Epic AI (Clerk) as the provider
-  // Users will see "Sign in with Epic AI" if not already logged into Postiz
-  const openConnectPopup = (destination?: string) => {
+  const openConnectModal = (destination?: string) => {
     // Handle being called from event handlers (destination might be an event object)
     const redirectPath = typeof destination === "string" ? destination : "/integrations/social";
     const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
-
-    // Open Postiz directly - OIDC will handle authentication
-    // If user isn't logged into Postiz, they'll see "Sign in with Epic AI"
-    // which will use the already-authenticated Clerk session
     const connectUrl = `${postizUrl}${redirectPath}`;
 
-    const width = 800;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
+    setPostizIframeSrc(connectUrl);
+    onPostizOpen();
+  };
 
-    const popup = window.open(
-      connectUrl,
-      "postiz-connect",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
-    );
-
-    if (!popup) {
-      // Popup blocked, open in new tab
-      window.open(connectUrl, "_blank");
-      return;
-    }
-
-    // Poll for popup close to sync and refresh data
-    const timer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(timer);
-        // Refresh data after popup closes
-        loadData();
-      }
-    }, 1000);
+  // Close Postiz modal and refresh data
+  const closeConnectModal = () => {
+    onPostizClose();
+    setPostizIframeSrc("");
+    // Refresh data to pick up any new integrations
+    loadData();
   };
 
   // Generate content with AI
@@ -480,7 +465,7 @@ export function SocialDashboard() {
             <Button
               variant="flat"
               startContent={<Plus className="w-4 h-4" />}
-              onPress={openConnectPopup}
+              onPress={() => openConnectModal()}
             >
               Add Account
             </Button>
@@ -596,7 +581,7 @@ export function SocialDashboard() {
                   <div className="text-sm text-gray-500">
                     No accounts connected.{" "}
                     <button
-                      onClick={openConnectPopup}
+                      onClick={() => openConnectModal()}
                       className="text-brand-500 hover:underline"
                     >
                       Add one now
@@ -760,7 +745,7 @@ export function SocialDashboard() {
                 size="sm"
                 variant="light"
                 isIconOnly
-                onPress={openConnectPopup}
+                onPress={() => openConnectModal()}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -775,7 +760,7 @@ export function SocialDashboard() {
                     size="sm"
                     color="primary"
                     variant="flat"
-                    onPress={openConnectPopup}
+                    onPress={() => openConnectModal()}
                   >
                     Connect Account
                   </Button>
@@ -948,6 +933,41 @@ export function SocialDashboard() {
               </Button>
             )}
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Postiz Connect Modal (iframe) */}
+      <Modal
+        isOpen={isPostizOpen}
+        onClose={closeConnectModal}
+        size="5xl"
+        scrollBehavior="inside"
+        classNames={{
+          base: "max-w-[90vw] h-[85vh]",
+          body: "p-0",
+        }}
+      >
+        <ModalContent className="h-full">
+          <ModalHeader className="flex justify-between items-center border-b">
+            <span>Connect Social Account</span>
+            <Button
+              size="sm"
+              variant="light"
+              onPress={closeConnectModal}
+            >
+              Done
+            </Button>
+          </ModalHeader>
+          <ModalBody className="h-full overflow-hidden">
+            {postizIframeSrc && (
+              <iframe
+                src={postizIframeSrc}
+                className="w-full h-full border-0"
+                title="Connect Social Account"
+                allow="clipboard-write"
+              />
+            )}
+          </ModalBody>
         </ModalContent>
       </Modal>
     </div>
