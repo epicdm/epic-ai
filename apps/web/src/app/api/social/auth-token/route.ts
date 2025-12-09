@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { SignJWT } from "jose";
+import { prisma } from "@epic-ai/database";
+import jwt from "jsonwebtoken";
 
-const POSTIZ_SSO_SECRET = process.env.POSTIZ_SSO_SECRET;
+// Use Postiz's JWT_SECRET (must match what Postiz is configured with)
+const POSTIZ_JWT_SECRET = process.env.POSTIZ_JWT_SECRET;
 
 /**
- * Generate a signed token for Postiz auto-login
+ * Generate a Postiz-compatible JWT token for auto-login
+ *
+ * Postiz expects a JWT signed with their JWT_SECRET containing user info.
+ * The token is used to set the 'auth' cookie on the Postiz domain.
  */
 export async function GET() {
   try {
-    if (!POSTIZ_SSO_SECRET) {
+    if (!POSTIZ_JWT_SECRET) {
       return NextResponse.json(
-        { error: "SSO not configured" },
+        { error: "POSTIZ_JWT_SECRET not configured" },
         { status: 500 }
       );
     }
@@ -29,24 +34,77 @@ export async function GET() {
       return NextResponse.json({ error: "No email found" }, { status: 400 });
     }
 
+    // Get the Epic AI organization and its Postiz org ID
     const org = await getUserOrganization();
-    const orgName = org?.name || user?.firstName || email.split("@")[0];
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
+    }
 
-    // Generate signed token with 5 minute expiry using jose
-    const secret = new TextEncoder().encode(POSTIZ_SSO_SECRET);
-    const token = await new SignJWT({
-      email,
-      userId,
-      orgName,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("5m")
-      .sign(secret);
+    // Get Postiz organization details
+    const epicOrg = await prisma.organization.findUnique({
+      where: { id: org.id },
+      select: { postizOrgId: true },
+    });
 
-    return NextResponse.json({ token });
+    if (!epicOrg?.postizOrgId) {
+      return NextResponse.json(
+        { error: "Postiz organization not provisioned" },
+        { status: 404 }
+      );
+    }
+
+    // Query Postiz database for the user's Postiz ID
+    const { Client } = await import("pg");
+    const postizDbUrl = process.env.POSTIZ_DATABASE_URL;
+
+    if (!postizDbUrl) {
+      return NextResponse.json(
+        { error: "POSTIZ_DATABASE_URL not configured" },
+        { status: 500 }
+      );
+    }
+
+    const client = new Client({ connectionString: postizDbUrl });
+    await client.connect();
+
+    try {
+      // Get the Postiz user ID and org ID for this email
+      const result = await client.query(
+        `SELECT u.id, u.email, u.activated, uo."organizationId"
+         FROM "User" u
+         JOIN "UserOrganization" uo ON u.id = uo."userId"
+         WHERE u.email = $1 AND uo."organizationId" = $2
+         LIMIT 1`,
+        [email, epicOrg.postizOrgId]
+      );
+
+      if (result.rows.length === 0) {
+        return NextResponse.json(
+          { error: "User not found in Postiz" },
+          { status: 404 }
+        );
+      }
+
+      const postizUser = result.rows[0];
+
+      // Generate JWT matching Postiz's expected format
+      // Postiz uses jsonwebtoken.sign(userObject, JWT_SECRET)
+      const token = jwt.sign(
+        {
+          id: postizUser.id,
+          email: postizUser.email,
+          activated: postizUser.activated,
+          organizationId: postizUser.organizationId,
+        },
+        POSTIZ_JWT_SECRET
+      );
+
+      return NextResponse.json({ token });
+    } finally {
+      await client.end();
+    }
   } catch (error) {
-    console.error("Error generating auth token:", error);
+    console.error("Error generating Postiz auth token:", error);
     return NextResponse.json(
       { error: "Failed to generate token" },
       { status: 500 }

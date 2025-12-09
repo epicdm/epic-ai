@@ -21,6 +21,7 @@
     "@prisma/client": "^6.1.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.15.0",
+    "jsonwebtoken": "^9.0.3",
     "livekit-server-sdk": "^2.14.2",
     "lucide-react": "^0.468.0",
     "next": "15.1.0",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.15.6",
     "@types/react": "^19.0.1",

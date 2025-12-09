@@ -213,13 +213,30 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in popup for connecting accounts
-  const openConnectPopup = (destination?: string) => {
+  // Open Postiz in popup for connecting accounts with auto-login
+  const openConnectPopup = async (destination?: string) => {
     // Handle being called from event handlers (destination might be an event object)
-    const path = typeof destination === "string" ? destination : "/settings/channels";
-    // Open Postiz directly - user may need to log in if not already authenticated
+    const redirectPath = typeof destination === "string" ? destination : "/integrations/social";
     const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
-    const connectUrl = `${postizUrl}${path}`;
+
+    // Get auto-login token from our API
+    let connectUrl = `${postizUrl}${redirectPath}`;
+
+    try {
+      const tokenRes = await fetch("/api/social/auth-token");
+      const tokenData = await tokenRes.json();
+
+      if (tokenData.token) {
+        // Use auto-login endpoint with JWT token
+        connectUrl = `${postizUrl}/auth/auto-login?token=${encodeURIComponent(tokenData.token)}&redirect=${encodeURIComponent(redirectPath)}`;
+      } else {
+        console.warn("Failed to get auth token:", tokenData.error);
+        // Fall back to direct URL - user will need to log in manually
+      }
+    } catch (error) {
+      console.error("Error getting auth token:", error);
+      // Fall back to direct URL
+    }
 
     const width = 800;
     const height = 700;
