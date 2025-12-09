@@ -12,6 +12,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
+import { SignJWT } from "jose";
 
 // Lazy initialization for Postiz database client
 let postizDbClient: PrismaClient | null = null;
@@ -267,4 +268,51 @@ export async function checkPostizDbHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Get the Postiz user ID for an Epic AI organization
+ */
+export async function getPostizUserId(postizOrgId: string): Promise<string | null> {
+  const postizDb = getPostizDb();
+  const result = await postizDb.$queryRaw<{ userId: string }[]>`
+    SELECT "userId" FROM "UserOrganization"
+    WHERE "organizationId" = ${postizOrgId}
+    AND role = 'SUPERADMIN'
+    LIMIT 1
+  `;
+  return result[0]?.userId || null;
+}
+
+/**
+ * Generate a JWT token for auto-login to Postiz
+ * This allows Epic AI users to seamlessly access Postiz integration pages
+ */
+export async function generatePostizAuthToken(
+  postizOrgId: string
+): Promise<string | null> {
+  const jwtSecret = process.env.POSTIZ_JWT_SECRET;
+  if (!jwtSecret) {
+    console.error("POSTIZ_JWT_SECRET is not configured");
+    return null;
+  }
+
+  const userId = await getPostizUserId(postizOrgId);
+  if (!userId) {
+    console.error("No user found for Postiz org:", postizOrgId);
+    return null;
+  }
+
+  // Generate JWT matching Postiz's expected format
+  const secret = new TextEncoder().encode(jwtSecret);
+  const token = await new SignJWT({
+    id: userId,
+    orgId: postizOrgId,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(secret);
+
+  return token;
 }

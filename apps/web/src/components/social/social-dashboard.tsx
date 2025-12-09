@@ -213,28 +213,59 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in popup for connecting accounts
-  const openConnectPopup = () => {
-    if (!setup?.connectUrl) return;
+  // Open Postiz in popup for connecting accounts with auto-login
+  const openConnectPopup = async (destination = "/integrations/social") => {
+    try {
+      // Get auto-login token from Epic AI
+      const tokenRes = await fetch("/api/social/auth-token");
+      const { token, error: tokenError } = await tokenRes.json();
 
-    const width = 800;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
+      let connectUrl: string;
 
-    const popup = window.open(
-      setup.connectUrl,
-      "postiz-connect",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
-    );
-
-    // Poll for popup close to refresh data
-    const timer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(timer);
-        loadData();
+      if (tokenError || !token) {
+        console.warn("Failed to get auth token, falling back to regular URL:", tokenError);
+        // Fallback to regular Postiz URL without auto-login
+        const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
+        connectUrl = `${postizUrl}${destination}`;
+      } else {
+        // Build auto-login URL
+        const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
+        connectUrl = `${postizUrl}/auth/auto-login?token=${encodeURIComponent(token)}&redirect=${encodeURIComponent(destination)}`;
       }
-    }, 1000);
+
+      const width = 800;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const popup = window.open(
+        connectUrl,
+        "postiz-connect",
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+      );
+
+      if (!popup) {
+        // Popup blocked, open in new tab
+        window.open(connectUrl, "_blank");
+        return;
+      }
+
+      // Poll for popup close to sync API key and refresh data
+      const timer = setInterval(async () => {
+        if (popup?.closed) {
+          clearInterval(timer);
+          // Sync API key from Postiz after popup closes
+          try {
+            await fetch("/api/social/setup", { method: "POST" });
+          } catch (e) {
+            console.error("Failed to sync after popup close:", e);
+          }
+          loadData();
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Error opening connect popup:", error);
+    }
   };
 
   // Generate content with AI

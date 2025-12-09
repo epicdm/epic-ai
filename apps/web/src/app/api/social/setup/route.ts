@@ -82,7 +82,9 @@ export async function GET() {
 }
 
 /**
- * POST - Manual API key setup (fallback when auto-provisioning not available)
+ * POST - Sync API key from Postiz DB or manual API key setup
+ * If body is empty, syncs from Postiz DB (after auto-login)
+ * If body contains apiKey, uses manual setup flow
  */
 export async function POST(request: NextRequest) {
   try {
@@ -96,31 +98,61 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const { apiKey } = await request.json();
-    if (!apiKey) {
-      return NextResponse.json({ error: "API key required" }, { status: 400 });
+    const user = await currentUser();
+    const email = user?.emailAddresses?.[0]?.emailAddress;
+
+    // Check if body contains apiKey (manual setup) or is empty (auto-sync)
+    let body: { apiKey?: string } = {};
+    try {
+      const text = await request.text();
+      if (text) {
+        body = JSON.parse(text);
+      }
+    } catch {
+      // Empty body or invalid JSON - proceed with auto-sync
     }
 
-    // Test the API key
-    const client = new PostizClient(apiKey.trim(), org.id);
-    const isValid = await client.testConnection();
+    if (body.apiKey) {
+      // Manual API key setup
+      const client = new PostizClient(body.apiKey.trim(), org.id);
+      const isValid = await client.testConnection();
 
-    if (!isValid) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 400 });
+      if (!isValid) {
+        return NextResponse.json({ error: "Invalid API key" }, { status: 400 });
+      }
+
+      await prisma.organization.update({
+        where: { id: org.id },
+        data: {
+          postizApiKey: body.apiKey.trim(),
+          postizConnectedAt: new Date(),
+        },
+      });
+
+      return NextResponse.json({ success: true });
     }
 
-    // Save the API key
-    await prisma.organization.update({
-      where: { id: org.id },
-      data: {
-        postizApiKey: apiKey.trim(),
-        postizConnectedAt: new Date(),
-      },
-    });
+    // Auto-sync from Postiz DB
+    if (!email) {
+      return NextResponse.json({ error: "No email found" }, { status: 400 });
+    }
 
-    return NextResponse.json({ success: true });
+    const hasPostizDb = !!process.env.POSTIZ_DATABASE_URL;
+    if (!hasPostizDb) {
+      return NextResponse.json({ error: "Auto-sync not available" }, { status: 400 });
+    }
+
+    // Import dynamically to avoid build errors when env is not set
+    const { syncPostizApiKey } = await import("@/lib/services/postiz-db");
+    const syncResult = await syncPostizApiKey(org.id, email);
+
+    if (!syncResult.success) {
+      return NextResponse.json({ error: syncResult.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, synced: true });
   } catch (error) {
-    console.error("Error saving API key:", error);
+    console.error("Error in setup POST:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

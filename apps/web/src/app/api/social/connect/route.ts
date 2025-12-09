@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { ensurePostizOrganization } from "@/lib/services/postiz-provisioning";
-import { getPostizConnectUrl } from "@/lib/services/postiz";
+import {
+  ensurePostizOrganization,
+  generatePostizAuthToken,
+} from "@/lib/services/postiz-provisioning";
+import { prisma } from "@epic-ai/database";
+
+const POSTIZ_URL = (process.env.NEXT_PUBLIC_POSTIZ_URL || "http://localhost:5000").trim();
 
 /**
- * GET - Generate a Postiz connect URL for the current user's organization
- * This ensures the Postiz org exists before redirecting to connect accounts
+ * GET - Generate a Postiz connect URL with auth token for the current user's organization
+ * This ensures the Postiz org exists and provides seamless auto-login
  */
 export async function GET(request: NextRequest) {
   try {
@@ -25,31 +30,55 @@ export async function GET(request: NextRequest) {
 
     // Get destination from query param (default to social integrations page)
     const { searchParams } = new URL(request.url);
-    const destination = searchParams.get("destination") || "/integrations/social";
     const platform = searchParams.get("platform"); // Optional: specific platform
 
     // Check if POSTIZ_DATABASE_URL is configured for auto-provisioning
     const hasPostizDb = !!process.env.POSTIZ_DATABASE_URL;
 
     let postizOrgId: string | null = null;
+    let authToken: string | null = null;
 
     if (hasPostizDb) {
       try {
         const postizOrg = await ensurePostizOrganization(org.id, org.name, email);
         postizOrgId = postizOrg.id;
+
+        // Generate auth token for auto-login
+        authToken = await generatePostizAuthToken(postizOrgId);
       } catch (error) {
         console.error("Failed to ensure Postiz org:", error);
-        // Fall through to use default connect URL
+        // Fall through to use default connect URL without auth
+      }
+    } else {
+      // Get existing postizOrgId from database
+      const orgData = await prisma.organization.findUnique({
+        where: { id: org.id },
+        select: { postizOrgId: true },
+      });
+      if (orgData?.postizOrgId) {
+        postizOrgId = orgData.postizOrgId;
+        authToken = await generatePostizAuthToken(postizOrgId);
       }
     }
 
-    // Generate the connect URL
-    const connectUrl = getPostizConnectUrl(platform || undefined);
+    // Build the connect URL with auth token
+    let connectPath = "/integrations/social";
+    if (platform) {
+      connectPath = `/integrations/social/${platform}`;
+    }
+
+    // If we have an auth token, append it to the URL
+    let connectUrl = `${POSTIZ_URL}${connectPath}`;
+    if (authToken) {
+      // Postiz uses auth cookie, so we need to redirect through a login endpoint
+      // that sets the cookie and then redirects to the destination
+      connectUrl = `${POSTIZ_URL}/api/auth/token-login?token=${encodeURIComponent(authToken)}&redirect=${encodeURIComponent(connectPath)}`;
+    }
 
     return NextResponse.json({
       url: connectUrl,
       postizOrgId,
-      destination,
+      hasAuthToken: !!authToken,
     });
   } catch (error) {
     console.error("Error generating connect URL:", error);
