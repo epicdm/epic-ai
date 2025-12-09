@@ -214,10 +214,12 @@ export function SocialDashboard() {
   };
 
   // Open Postiz in popup for connecting accounts
-  const openConnectPopup = (destination = "/settings/channels") => {
+  const openConnectPopup = (destination?: string) => {
+    // Handle being called from event handlers (destination might be an event object)
+    const path = typeof destination === "string" ? destination : "/settings/channels";
     // Open Postiz directly - user may need to log in if not already authenticated
     const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
-    const connectUrl = `${postizUrl}${destination}`;
+    const connectUrl = `${postizUrl}${path}`;
 
     const width = 800;
     const height = 700;
