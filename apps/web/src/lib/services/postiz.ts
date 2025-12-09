@@ -66,9 +66,9 @@ export function getPostizDashboardUrl(): string {
 export function getPostizConnectUrl(platform?: string): string {
   const base = (process.env.NEXT_PUBLIC_POSTIZ_URL || POSTIZ_URL).trim();
   if (platform) {
-    return `${base}/integrations/social/${platform}`;
+    return `${base}/settings/channels/${platform}`;
   }
-  return `${base}/integrations/social`;
+  return `${base}/settings/channels`;
 }
 
 /**

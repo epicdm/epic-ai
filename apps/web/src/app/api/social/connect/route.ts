@@ -62,9 +62,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Build the connect URL with auth token
-    let connectPath = "/integrations/social";
+    let connectPath = "/settings/channels";
     if (platform) {
-      connectPath = `/integrations/social/${platform}`;
+      connectPath = `/settings/channels/${platform}`;
     }
 
     // If we have an auth token, append it to the URL

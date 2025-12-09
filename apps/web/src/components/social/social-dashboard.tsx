@@ -214,7 +214,7 @@ export function SocialDashboard() {
   };
 
   // Open Postiz in popup for connecting accounts with auto-login
-  const openConnectPopup = async (destination = "/integrations/social") => {
+  const openConnectPopup = async (destination = "/settings/channels") => {
     try {
       // Get auto-login token from Epic AI
       const tokenRes = await fetch("/api/social/auth-token");
