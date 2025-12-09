@@ -213,30 +213,18 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in popup for connecting accounts with auto-login
-  const openConnectPopup = async (destination?: string) => {
+  // Open Postiz in popup for connecting accounts
+  // Postiz is configured with OIDC using Epic AI (Clerk) as the provider
+  // Users will see "Sign in with Epic AI" if not already logged into Postiz
+  const openConnectPopup = (destination?: string) => {
     // Handle being called from event handlers (destination might be an event object)
     const redirectPath = typeof destination === "string" ? destination : "/integrations/social";
     const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
 
-    // Get auto-login token from our API
-    let connectUrl = `${postizUrl}${redirectPath}`;
-
-    try {
-      const tokenRes = await fetch("/api/social/auth-token");
-      const tokenData = await tokenRes.json();
-
-      if (tokenData.token) {
-        // Use auto-login endpoint with JWT token
-        connectUrl = `${postizUrl}/auth/auto-login?token=${encodeURIComponent(tokenData.token)}&redirect=${encodeURIComponent(redirectPath)}`;
-      } else {
-        console.warn("Failed to get auth token:", tokenData.error);
-        // Fall back to direct URL - user will need to log in manually
-      }
-    } catch (error) {
-      console.error("Error getting auth token:", error);
-      // Fall back to direct URL
-    }
+    // Open Postiz directly - OIDC will handle authentication
+    // If user isn't logged into Postiz, they'll see "Sign in with Epic AI"
+    // which will use the already-authenticated Clerk session
+    const connectUrl = `${postizUrl}${redirectPath}`;
 
     const width = 800;
     const height = 700;
@@ -246,7 +234,7 @@ export function SocialDashboard() {
     const popup = window.open(
       connectUrl,
       "postiz-connect",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
     );
 
     if (!popup) {
@@ -256,7 +244,7 @@ export function SocialDashboard() {
     }
 
     // Poll for popup close to sync and refresh data
-    const timer = setInterval(async () => {
+    const timer = setInterval(() => {
       if (popup?.closed) {
         clearInterval(timer);
         // Refresh data after popup closes
