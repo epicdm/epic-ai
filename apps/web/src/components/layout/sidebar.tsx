@@ -16,6 +16,7 @@ import {
   BarChart3,
   Zap,
   FlaskConical,
+  Megaphone,
 } from "lucide-react";
 
 interface NavItem {
@@ -59,6 +60,16 @@ const navigation: NavItem[] = [
     name: "Leads",
     href: "/dashboard/leads",
     icon: Users,
+  },
+  {
+    name: "Ads",
+    href: "/dashboard/ads",
+    icon: Megaphone,
+    children: [
+      { name: "Dashboard", href: "/dashboard/ads" },
+      { name: "Create Campaign", href: "/dashboard/ads/create" },
+      { name: "Ad Accounts", href: "/dashboard/ads/accounts" },
+    ],
   },
   {
     name: "Automations",

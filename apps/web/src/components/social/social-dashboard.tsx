@@ -216,15 +216,15 @@ export function SocialDashboard() {
     }
   };
 
-  // Open Postiz in a new tab for connecting accounts
-  // Shows a banner to remind user to click "Done" when finished
-  const openConnectInNewTab = (destination?: string) => {
-    const redirectPath = typeof destination === "string" ? destination : "/integrations/social";
-    const postizUrl = process.env.NEXT_PUBLIC_POSTIZ_URL || "https://social.leads.epic.dm";
-    const connectUrl = `${postizUrl}${redirectPath}`;
+  // Get the connect URL - uses server-side redirect for SSO
+  const getConnectUrl = (platform?: string) => {
+    const params = platform ? `?platform=${platform}` : "";
+    return `/api/social/connect-redirect${params}`;
+  };
 
-    // Open in new tab
-    window.open(connectUrl, "_blank");
+  // Open Postiz with auto-login for connecting accounts
+  const openConnectInNewTab = (platform?: string) => {
+    window.open(getConnectUrl(platform), "_blank");
     setIsConnecting(true);
   };
 

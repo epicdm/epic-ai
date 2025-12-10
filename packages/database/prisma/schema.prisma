@@ -52,6 +52,11 @@ model Organization {
   autopilotSettings   AutopilotSettings?
   socialSuggestions   SocialSuggestion[]
 
+  // Ads
+  adAccounts          AdAccount[]
+  adCampaigns         AdCampaign[]
+  adRecommendations   AdRecommendation[]
+
   @@map("organizations")
 }
 
@@ -597,4 +602,275 @@ model SocialSuggestion {
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
   @@map("social_suggestions")
+}
+
+// ============================================
+// ADS MODULE
+// ============================================
+
+model AdAccount {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Platform
+  platform  AdPlatform
+
+  // Account info
+  accountId     String?   @map("account_id")
+  accountName   String    @map("account_name")
+
+  // Credentials (encrypted in production)
+  accessToken   String?   @map("access_token")
+  refreshToken  String?   @map("refresh_token")
+  tokenExpiry   DateTime? @map("token_expiry")
+
+  // Status
+  status    AdAccountStatus @default(PENDING)
+  lastSync  DateTime?       @map("last_sync")
+  syncError String?         @map("sync_error")
+
+  // Campaigns
+  campaigns AdCampaign[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([orgId, platform, accountId])
+  @@index([orgId])
+  @@map("ad_accounts")
+}
+
+enum AdPlatform {
+  META
+  GOOGLE
+  LINKEDIN
+  TIKTOK
+  TWITTER
+}
+
+enum AdAccountStatus {
+  PENDING
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  MANUAL
+}
+
+model AdCampaign {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Account reference
+  adAccountId String?   @map("ad_account_id")
+  adAccount   AdAccount? @relation(fields: [adAccountId], references: [id], onDelete: SetNull)
+
+  // External reference
+  externalId  String?   @map("external_id")
+
+  // Campaign info
+  name        String
+  platform    AdPlatform
+  objective   CampaignObjective @default(LEAD_GENERATION)
+  status      CampaignStatus @default(DRAFT)
+
+  // Budget
+  dailyBudget   Decimal?  @db.Decimal(10, 2) @map("daily_budget")
+  totalBudget   Decimal?  @db.Decimal(10, 2) @map("total_budget")
+  currency      String    @default("USD")
+
+  // Targeting (JSON)
+  targeting     Json?
+
+  // Schedule
+  startDate     DateTime? @map("start_date")
+  endDate       DateTime? @map("end_date")
+
+  // Creative
+  adCreatives   AdCreative[]
+
+  // Performance (aggregated)
+  metrics       AdCampaignMetrics?
+
+  // Daily snapshots
+  dailyMetrics  AdDailyMetrics[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@map("ad_campaigns")
+}
+
+enum CampaignObjective {
+  AWARENESS
+  TRAFFIC
+  ENGAGEMENT
+  LEAD_GENERATION
+  CONVERSIONS
+  SALES
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model AdCreative {
+  id         String   @id @default(cuid())
+  campaignId String   @map("campaign_id")
+  campaign   AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Creative type
+  type      CreativeType @default(IMAGE)
+
+  // Content
+  headline       String
+  primaryText    String    @map("primary_text")
+  description    String?
+  callToAction   String    @default("Learn More") @map("call_to_action")
+
+  // Media
+  imageUrl    String?   @map("image_url")
+  videoUrl    String?   @map("video_url")
+
+  // Destination
+  destinationUrl String? @map("destination_url")
+
+  // Status
+  status    CreativeStatus @default(DRAFT)
+
+  // Performance (per creative)
+  impressions Int     @default(0)
+  clicks      Int     @default(0)
+  leads       Int     @default(0)
+  spend       Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([campaignId])
+  @@map("ad_creatives")
+}
+
+enum CreativeType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  COLLECTION
+}
+
+enum CreativeStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  REJECTED
+}
+
+model AdCampaignMetrics {
+  id          String   @id @default(cuid())
+  campaignId  String   @unique @map("campaign_id")
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Core metrics
+  impressions   Int     @default(0)
+  reach         Int     @default(0)
+  clicks        Int     @default(0)
+  leads         Int     @default(0)
+  conversions   Int     @default(0)
+
+  // Spend
+  spend         Decimal @default(0) @db.Decimal(10, 2)
+
+  // Calculated metrics
+  ctr           Decimal? @db.Decimal(5, 4)
+  cpc           Decimal? @db.Decimal(10, 2)
+  cpl           Decimal? @db.Decimal(10, 2)
+  cpa           Decimal? @db.Decimal(10, 2)
+
+  // Last updated
+  lastUpdated   DateTime @default(now()) @map("last_updated")
+
+  @@map("ad_campaign_metrics")
+}
+
+model AdDailyMetrics {
+  id          String   @id @default(cuid())
+  campaignId  String   @map("campaign_id")
+  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Date
+  date        DateTime @db.Date
+
+  // Metrics
+  impressions   Int     @default(0)
+  clicks        Int     @default(0)
+  leads         Int     @default(0)
+  conversions   Int     @default(0)
+  spend         Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([campaignId, date])
+  @@index([campaignId, date])
+  @@map("ad_daily_metrics")
+}
+
+model AdRecommendation {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Reference
+  campaignId  String?  @map("campaign_id")
+  creativeId  String?  @map("creative_id")
+
+  // Recommendation
+  type        RecommendationType
+  title       String
+  description String
+  impact      RecommendationImpact @default(MEDIUM)
+
+  // Action
+  actionType  String?   @map("action_type")
+  actionData  Json?     @map("action_data")
+
+  // Status
+  status      RecommendationStatus @default(PENDING)
+  appliedAt   DateTime? @map("applied_at")
+  dismissedAt DateTime? @map("dismissed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orgId, status])
+  @@map("ad_recommendations")
+}
+
+enum RecommendationType {
+  BUDGET_INCREASE
+  BUDGET_DECREASE
+  PAUSE_UNDERPERFORMING
+  SCALE_WINNER
+  NEW_CREATIVE
+  AUDIENCE_EXPANSION
+  SCHEDULE_OPTIMIZATION
+}
+
+enum RecommendationImpact {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecommendationStatus {
+  PENDING
+  APPLIED
+  DISMISSED
+  EXPIRED
 }

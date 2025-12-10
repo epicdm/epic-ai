@@ -7,29 +7,27 @@ const POSTIZ_URL = (process.env.NEXT_PUBLIC_POSTIZ_URL || "http://localhost:5000
 const POSTIZ_SSO_SECRET = process.env.POSTIZ_SSO_SECRET;
 
 /**
- * GET - Generate a Postiz connect URL with SSO token for seamless auto-login
- * Uses the auto-login endpoint that handles user provisioning and cookie setting
+ * GET - Redirect to Postiz with auto-login
+ * This endpoint generates the SSO token and redirects directly
+ * Use this as an href instead of calling fetch + window.open
  */
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      // Redirect to sign-in if not authenticated
+      return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 
     const org = await getUserOrganization();
     if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      return NextResponse.redirect(new URL("/onboarding", request.url));
     }
 
     const user = await currentUser();
     const email = user?.emailAddresses?.[0]?.emailAddress;
 
-    if (!email) {
-      return NextResponse.json({ error: "No email found" }, { status: 400 });
-    }
-
-    // Get destination from query param (default to social integrations page)
+    // Get destination from query param
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get("platform");
 
@@ -40,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // If SSO secret is configured, use the auto-login flow
-    if (POSTIZ_SSO_SECRET) {
+    if (POSTIZ_SSO_SECRET && email) {
       // Generate SSO token signed with shared secret
       const ssoToken = jwt.sign(
         {
@@ -53,22 +51,16 @@ export async function GET(request: NextRequest) {
         POSTIZ_SSO_SECRET
       );
 
-      // Use the auto-login endpoint
-      const connectUrl = `${POSTIZ_URL}/auth/auto-login?token=${encodeURIComponent(ssoToken)}&redirect=${encodeURIComponent(connectPath)}`;
-
-      return NextResponse.json({
-        url: connectUrl,
-        hasAuthToken: true,
-      });
+      // Redirect to auto-login endpoint
+      const autoLoginUrl = `${POSTIZ_URL}/auth/auto-login?token=${encodeURIComponent(ssoToken)}&redirect=${encodeURIComponent(connectPath)}`;
+      return NextResponse.redirect(autoLoginUrl);
     }
 
-    // Fallback: direct URL without auth (user will need to login manually)
-    return NextResponse.json({
-      url: `${POSTIZ_URL}${connectPath}`,
-      hasAuthToken: false,
-    });
+    // Fallback: redirect directly to Postiz (user will need to login manually)
+    return NextResponse.redirect(`${POSTIZ_URL}${connectPath}`);
   } catch (error) {
-    console.error("Error generating connect URL:", error);
-    return NextResponse.json({ error: "Failed to generate connect URL" }, { status: 500 });
+    console.error("Error in connect-redirect:", error);
+    // Fallback to Postiz
+    return NextResponse.redirect(`${POSTIZ_URL}/integrations/social`);
   }
 }
