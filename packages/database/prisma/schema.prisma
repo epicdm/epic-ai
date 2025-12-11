@@ -57,6 +57,10 @@ model Organization {
   adCampaigns         AdCampaign[]
   adRecommendations   AdRecommendation[]
 
+  // Webhooks
+  webhookConfigs      WebhookConfig[]
+  webhookLogs         WebhookLog[]
+
   @@map("organizations")
 }
 
@@ -306,6 +310,17 @@ model Lead {
   sourcePlatform String?   @map("source_platform")
   sourceDetails  String?   @map("source_details")
   utmParams      Json?     @map("utm_params")
+
+  // Webhook source tracking
+  sourceId       String?   @map("source_id")        // External platform ID (Meta leadgen_id, etc.)
+  sourceCampaign String?   @map("source_campaign")  // Campaign name from ad platform
+  sourceAdSet    String?   @map("source_ad_set")    // Ad set name
+  sourceAd       String?   @map("source_ad")        // Ad name
+  webhookLogId   String?   @map("webhook_log_id")   // Reference to webhook log
+
+  // Link to ad campaign (if matched)
+  adCampaignId   String?   @map("ad_campaign_id")
+  adCampaign     AdCampaign? @relation(fields: [adCampaignId], references: [id], onDelete: SetNull)
 
   // Status & Value
   status         String    @default("NEW")
@@ -696,6 +711,9 @@ model AdCampaign {
   // Daily snapshots
   dailyMetrics  AdDailyMetrics[]
 
+  // Leads from this campaign
+  leads         Lead[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -873,4 +891,98 @@ enum RecommendationStatus {
   APPLIED
   DISMISSED
   EXPIRED
+}
+
+// ============================================
+// WEBHOOKS & LEAD CAPTURE
+// ============================================
+
+model WebhookConfig {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Webhook type
+  platform  WebhookPlatform
+
+  // Verification
+  verifyToken   String    @default(cuid()) @map("verify_token")
+  secretKey     String    @default(cuid()) @map("secret_key")
+
+  // Settings
+  enabled            Boolean   @default(true)
+  autoTriggerVoiceAI Boolean   @default(true) @map("auto_trigger_voice_ai")
+
+  // Field mappings (JSON)
+  fieldMappings Json?     @map("field_mappings")
+
+  // Stats
+  leadsReceived  Int       @default(0) @map("leads_received")
+  lastReceivedAt DateTime? @map("last_received_at")
+  lastError      String?   @map("last_error")
+
+  // Linked campaigns (for attribution)
+  linkedCampaigns String[] @default([]) @map("linked_campaigns")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([orgId, platform])
+  @@index([orgId])
+  @@map("webhook_configs")
+}
+
+enum WebhookPlatform {
+  META
+  GOOGLE
+  LINKEDIN
+  TIKTOK
+  GENERIC
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Request info
+  platform    WebhookPlatform
+  endpoint    String
+  method      String
+  headers     Json?
+  payload     Json
+
+  // Processing
+  status      WebhookStatus @default(RECEIVED)
+  leadId      String?       @map("lead_id")
+  error       String?
+
+  // Timing
+  receivedAt  DateTime @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+
+  @@index([orgId, receivedAt])
+  @@index([orgId, platform])
+  @@map("webhook_logs")
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSING
+  SUCCESS
+  FAILED
+  DUPLICATE
+  INVALID
+}
+
+enum LeadSource {
+  MANUAL
+  IMPORT
+  WEBHOOK_META
+  WEBHOOK_GOOGLE
+  WEBHOOK_LINKEDIN
+  WEBHOOK_TIKTOK
+  WEBHOOK_GENERIC
+  API
+  ORGANIC
 }
