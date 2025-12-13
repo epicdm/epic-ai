@@ -31,35 +31,27 @@ model Organization {
   name             String
   slug             String   @unique
   logo             String?
-  plan             String   @default("starter")
+  plan             String   @default("starter") // starter, growth, agency
   stripeCustomerId String?  @unique @map("stripe_customer_id")
   settings         Json     @default("{}")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  // Postiz Integration
-  postizApiKey      String?   @map("postiz_api_key")
-  postizOrgId       String?   @map("postiz_org_id")
+  // Legacy Postiz integration (kept for migration)
+  postizApiKey     String?  @map("postiz_api_key")
+  postizOrgId      String?  @map("postiz_org_id")
   postizConnectedAt DateTime? @map("postiz_connected_at")
 
+  // Relations
   memberships         Membership[]
   brands              Brand[]
   subscriptions       Subscription[]
-  leads               Lead[]
   usage               Usage[]
-  automations         Automation[]
-  socialPostLogs      SocialPostLog[]
-  autopilotSettings   AutopilotSettings?
-  socialSuggestions   SocialSuggestion[]
-
-  // Ads
-  adAccounts          AdAccount[]
-  adCampaigns         AdCampaign[]
-  adRecommendations   AdRecommendation[]
-
-  // Webhooks
-  webhookConfigs      WebhookConfig[]
-  webhookLogs         WebhookLog[]
+  leads               Lead[]
+  publishingSchedules PublishingSchedule[]
+  publishingLogs      PublishingLog[]
+  postAnalytics       PostAnalytics[]
+  analyticsSnapshots  AnalyticsSnapshot[]
 
   @@map("organizations")
 }
@@ -80,7 +72,7 @@ model Membership {
 }
 
 // ============================================
-// BRANDS
+// BRANDS (Core entity for AI Autopilot)
 // ============================================
 
 model Brand {
@@ -90,543 +82,732 @@ model Brand {
   slug           String
   logo           String?
   website        String?
-  brandVoice     Json?    @map("brand_voice")
-  brandColors    Json?    @map("brand_colors")
-  targetAudience Json?    @map("target_audience")
-  settings       Json     @default("{}")
+  industry       String?
+  settings       Json     @default("{}") // Legacy, kept for migration
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  personas       Persona[]
-  socialAccounts SocialAccount[]
-  socialPosts    SocialPost[]
-  voiceAgents    VoiceAgent[]
-  phoneNumbers   PhoneNumber[]
-  calls          Call[]
-  leads          Lead[]
+  // Relations
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brandBrain      BrandBrain?
+  contextSources  ContextSource[]
+  documentUploads DocumentUpload[]
+  socialAccounts  SocialAccount[]
+  contentQueue    ContentItem[]
+  autopilotConfig AutopilotConfig?
+  adAccounts      AdAccount[]
+  leads           Lead[]
+  analytics       ContentAnalytics[]
+  contentTemplates ContentTemplate[]
 
   @@unique([organizationId, slug])
   @@map("brands")
 }
 
 // ============================================
-// PERSONAS (Unified Voice + Social)
+// BRAND BRAIN (AI Understanding of the Brand)
 // ============================================
 
-model Persona {
-  id                 String   @id @default(cuid())
-  brandId            String   @map("brand_id")
-  name               String
-  role               String?
-  avatar             String?
-  personality        String?  @db.Text
-  tone               String   @default("friendly")
-  communicationStyle String?  @map("communication_style") @db.Text
-  knowledgeAreas     Json?    @map("knowledge_areas")
+model BrandBrain {
+  id        String   @id @default(cuid())
+  brandId   String   @unique @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
-  // Voice Channel Settings
-  voiceEnabled  Boolean @default(true) @map("voice_enabled")
-  voiceProvider String  @default("openai") @map("voice_provider")
-  voiceId       String  @default("nova") @map("voice_id")
-  voiceSettings Json    @default("{}") @map("voice_settings")
+  // Setup Wizard State
+  setupComplete     Boolean  @default(false) @map("setup_complete")
+  setupStep         Int      @default(0) @map("setup_step")
 
-  // Social Channel Settings
-  socialEnabled   Boolean @default(true) @map("social_enabled")
-  writingStyle    String? @map("writing_style") @db.Text
-  hashtagStrategy Json?   @map("hashtag_strategy")
-  emojiUsage      String  @default("moderate") @map("emoji_usage")
-  postTemplates   Json?   @map("post_templates")
+  // Brand Identity
+  companyName       String?  @map("company_name")
+  description       String?  @db.Text
+  mission           String?  @db.Text
+  values            String[] @default([])
+  uniqueSellingPoints String[] @default([]) @map("unique_selling_points")
+  industry          String?
+  targetMarket      String?  @db.Text @map("target_market")
 
-  // Guardrails
-  approvedTopics     Json? @map("approved_topics")
-  forbiddenTopics    Json? @map("forbidden_topics")
-  escalationTriggers Json? @map("escalation_triggers")
+  // Voice & Tone (Enhanced)
+  voiceTone         VoiceTone @default(PROFESSIONAL) @map("voice_tone")
+  voiceToneCustom   String?  @map("voice_tone_custom") // For custom tone descriptions
+  formalityLevel    Int      @default(3) @map("formality_level") // 1-5 scale
+  writingStyle      String?  @db.Text @map("writing_style")
+  doNotMention      String[] @default([]) @map("do_not_mention") // Topics/words to avoid
+  mustMention       String[] @default([]) @map("must_mention")   // Key messages to include
 
-  isActive  Boolean  @default(true) @map("is_active")
+  // Emoji & Hashtag Settings
+  useEmojis         Boolean  @default(true) @map("use_emojis")
+  emojiFrequency    EmojiFrequency @default(MODERATE) @map("emoji_frequency")
+  emojiStyle        String   @default("moderate") @map("emoji_style") // Legacy, kept for compatibility
+  useHashtags       Boolean  @default(true) @map("use_hashtags")
+  hashtagStyle      HashtagStyle @default(MIXED) @map("hashtag_style")
+  preferredHashtags String[] @default([]) @map("preferred_hashtags")
+  bannedHashtags    String[] @default([]) @map("banned_hashtags")
+
+  // Content Preferences
+  ctaStyle          String   @default("soft") @map("cta_style")       // none, soft, direct, urgent
+  contentPillarsLegacy String[] @default([]) @map("content_pillars") // Legacy, now using ContentPillar model
+
+  // Legacy JSON fields (kept for migration, use related models)
+  targetAudience    Json?    @map("target_audience") // Legacy, now using BrandAudience model
+  buyerPersonas     Json?    @map("buyer_personas")  // Legacy
+  competitors       Json?    // Legacy, now using BrandCompetitor model
+  differentiators   String[] @default([])
+
+  // AI-Generated Content
+  brandSummary      String?  @db.Text @map("brand_summary") // AI-generated brand summary
+  brandEmbedding    Json?    @map("brand_embedding") // Vector embedding for semantic search
+
+  // AI Learnings (Legacy, now using BrandLearning model)
+  learnings         Json?    // Legacy: {topHashtags, avoidHashtags, bestPostingTimes, insights}
+  keyMessages       String[] @default([]) @map("key_messages")
+
+  // Last updated by AI
+  lastAnalyzedAt    DateTime? @map("last_analyzed_at")
+  summaryGeneratedAt DateTime? @map("summary_generated_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  voiceAgents VoiceAgent[]
-  socialPosts SocialPost[]
+  // Relations to normalized models
+  audiences         BrandAudience[]
+  pillars           ContentPillar[]
+  brandCompetitors  BrandCompetitor[]
+  brandLearnings    BrandLearning[]
 
-  @@map("personas")
+  @@map("brand_brains")
 }
 
 // ============================================
-// SOCIAL MEDIA
+// BRAND AUDIENCE (Target Audiences)
+// ============================================
+
+model BrandAudience {
+  id          String   @id @default(cuid())
+  brainId     String   @map("brain_id")
+  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+
+  // Audience Details
+  name        String
+  description String?  @db.Text
+  isPrimary   Boolean  @default(false) @map("is_primary")
+
+  // Demographics
+  ageRange    String?  @map("age_range") // e.g., "25-45"
+  gender      String?  // all, male, female, non-binary
+  location    String[] @default([])
+  income      String?  // e.g., "$50k-$100k"
+  education   String?
+
+  // Psychographics
+  interests   String[] @default([])
+  painPoints  String[] @default([]) @map("pain_points")
+  goals       String[] @default([])
+  values      String[] @default([])
+  challenges  String[] @default([])
+
+  // Behavior
+  platforms   SocialPlatform[] @default([])
+  buyingBehavior String? @db.Text @map("buying_behavior")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([brainId])
+  @@map("brand_audiences")
+}
+
+// ============================================
+// CONTENT PILLARS (Main Topics)
+// ============================================
+
+model ContentPillar {
+  id          String   @id @default(cuid())
+  brainId     String   @map("brain_id")
+  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+
+  // Pillar Details
+  name        String
+  description String?  @db.Text
+  color       String?  // For UI display, e.g., "#7C3AED"
+  icon        String?  // Icon name or emoji
+
+  // Content Guidelines
+  topics      String[] @default([]) // Sub-topics within this pillar
+  hashtags    String[] @default([]) // Recommended hashtags for this pillar
+  tone        VoiceTone? // Override tone for this pillar
+
+  // Usage
+  priority    Int      @default(1) // 1 = highest priority
+  frequency   Int      @default(20) // Percentage of content (0-100)
+  isActive    Boolean  @default(true) @map("is_active")
+
+  // Performance tracking
+  postCount   Int      @default(0) @map("post_count")
+  avgEngagement Decimal? @db.Decimal(5, 4) @map("avg_engagement")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([brainId])
+  @@map("content_pillars")
+}
+
+// ============================================
+// BRAND COMPETITORS
+// ============================================
+
+model BrandCompetitor {
+  id          String   @id @default(cuid())
+  brainId     String   @map("brain_id")
+  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+
+  // Competitor Info
+  name        String
+  website     String?
+  description String?  @db.Text
+
+  // Social Presence
+  twitterHandle   String? @map("twitter_handle")
+  linkedinUrl     String? @map("linkedin_url")
+  instagramHandle String? @map("instagram_handle")
+  facebookUrl     String? @map("facebook_url")
+
+  // Competitive Analysis
+  strengths       String[] @default([])
+  weaknesses      String[] @default([])
+  differentiators String[] @default([]) // How we differ from them
+  contentStrategy String?  @db.Text @map("content_strategy")
+
+  // Monitoring
+  isMonitored     Boolean  @default(false) @map("is_monitored")
+  lastAnalyzed    DateTime? @map("last_analyzed")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([brainId])
+  @@map("brand_competitors")
+}
+
+// ============================================
+// BRAND LEARNINGS (AI Learning History)
+// ============================================
+
+model BrandLearning {
+  id          String   @id @default(cuid())
+  brainId     String   @map("brain_id")
+  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+
+  // Learning Details
+  type        LearningType
+  insight     String   @db.Text
+  confidence  Decimal  @default(0.5) @db.Decimal(3, 2) // 0.00 - 1.00
+
+  // Source
+  sourceData  Json?    @map("source_data") // Raw data that led to this insight
+  platform    SocialPlatform? // Platform-specific learning
+
+  // Application
+  isActive    Boolean  @default(true) @map("is_active")
+  appliedCount Int     @default(0) @map("applied_count")
+  successRate Decimal? @db.Decimal(5, 4) @map("success_rate")
+
+  // Validity
+  validFrom   DateTime @default(now()) @map("valid_from")
+  validUntil  DateTime? @map("valid_until")
+  isExpired   Boolean  @default(false) @map("is_expired")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([brainId])
+  @@index([type])
+  @@map("brand_learnings")
+}
+
+// ============================================
+// CONTEXT ENGINE (Data Sources for AI)
+// ============================================
+
+model ContextSource {
+  id        String   @id @default(cuid())
+  brandId   String   @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Source Type
+  type      ContextSourceType
+  name      String
+
+  // Source Configuration
+  config    Json     // Type-specific config (url, email, apiKey, etc.)
+
+  // Status
+  status    ContextSourceStatus @default(PENDING)
+  lastSync  DateTime? @map("last_sync")
+  syncError String?   @map("sync_error")
+
+  // Extracted content
+  contextItems ContextItem[]
+
+  // Linked Document Upload (if source created from upload)
+  documentUpload DocumentUpload?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@map("context_sources")
+}
+
+enum ContextSourceType {
+  WEBSITE         // Scrape website content
+  RSS_FEED        // RSS/Atom feed
+  PDF_UPLOAD      // Uploaded documents
+  GOOGLE_DOCS     // Google Docs integration
+  NOTION          // Notion integration
+  EMAIL_FORWARD   // Forwarded emails
+  MANUAL_NOTE     // Manual text input
+  CRM_HUBSPOT     // HubSpot CRM
+  CRM_SALESFORCE  // Salesforce CRM
+  SOCIAL_MENTION  // Social media mentions
+  NEWS_SEARCH     // Google News / industry news
+  COMPETITOR      // Competitor website monitoring
+}
+
+enum ContextSourceStatus {
+  PENDING
+  ACTIVE
+  SYNCING
+  ERROR
+  PAUSED
+}
+
+model ContextItem {
+  id            String   @id @default(cuid())
+  sourceId      String   @map("source_id")
+  source        ContextSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  // Content
+  title         String?
+  content       String   @db.Text
+  summary       String?  @db.Text  // AI-generated summary
+  url           String?
+
+  // Metadata
+  contentType   String   @default("text") @map("content_type") // text, news, product, service, testimonial
+  importance    Int      @default(5) // 1-10 scale
+  isEvergreen   Boolean  @default(false) @map("is_evergreen")
+
+  // AI Processing
+  embedding     Json?    // Vector embedding for semantic search
+  keywords      String[] @default([])
+  topics        String[] @default([])
+
+  // Usage tracking
+  usedInPosts   Int      @default(0) @map("used_in_posts")
+  lastUsedAt    DateTime? @map("last_used_at")
+
+  // Timestamps
+  publishedAt   DateTime? @map("published_at") // Original publish date
+  expiresAt     DateTime? @map("expires_at")   // When content becomes stale
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([sourceId])
+  @@index([contentType])
+  @@map("context_items")
+}
+
+// ============================================
+// DOCUMENT UPLOADS (For Context Engine)
+// ============================================
+
+model DocumentUpload {
+  id          String   @id @default(cuid())
+  brandId     String   @map("brand_id")
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // File Info
+  fileName    String   @map("file_name")
+  fileUrl     String   @map("file_url")        // Vercel Blob URL
+  mimeType    String   @map("mime_type")
+  fileSize    Int      @map("file_size")       // Size in bytes
+
+  // Processing Status
+  status      DocumentStatus @default(PENDING)
+  errorMessage String?  @map("error_message")
+
+  // Linked Context Source (created after processing)
+  contextSourceId String?  @unique @map("context_source_id")
+  contextSource   ContextSource? @relation(fields: [contextSourceId], references: [id], onDelete: SetNull)
+
+  // Processing Metadata
+  processedAt DateTime? @map("processed_at")
+  pagesCount  Int?      @map("pages_count")
+  wordCount   Int?      @map("word_count")
+
+  // Timestamps
+  uploadedBy  String    @map("uploaded_by")   // User ID
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@index([status])
+  @@map("document_uploads")
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// CONTENT FACTORY (Generated Content)
+// ============================================
+
+model ContentItem {
+  id        String   @id @default(cuid())
+  brandId   String   @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Content
+  content       String   @db.Text
+  contentHtml   String?  @db.Text @map("content_html") // Rich text version
+
+  // Media
+  mediaUrls     String[] @default([]) @map("media_urls")
+  mediaType     String?  @map("media_type") // image, video, carousel
+
+  // Platform-specific versions
+  variations    Json?    // {twitter: "...", linkedin: "...", instagram: "..."}
+
+  // Type & Category
+  contentType   ContentType @default(POST) @map("content_type")
+  category      String?     // Product launch, testimonial, educational, etc.
+
+  // Generation Details
+  generatedFrom Json?       @map("generated_from") // {sourceType, sourceIds, prompt}
+  aiModel       String?     @map("ai_model")
+  aiPrompt      String?     @db.Text @map("ai_prompt")
+
+  // Scheduling
+  status        ContentStatus @default(DRAFT)
+  scheduledFor  DateTime?     @map("scheduled_for")
+  publishedAt   DateTime?     @map("published_at")
+
+  // Approval
+  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
+  approvedBy     String?        @map("approved_by")
+  approvedAt     DateTime?      @map("approved_at")
+  rejectionReason String?       @map("rejection_reason")
+
+  // Target platforms
+  targetPlatforms SocialPlatform[] @default([]) @map("target_platforms")
+
+  // Publishing results
+  publishResults  PublishResult[]
+
+  // Performance
+  analytics       ContentAnalytics[]
+
+  // Platform-specific variations
+  contentVariations ContentVariation[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("content_items")
+}
+
+enum ContentType {
+  POST          // Regular social post
+  STORY         // Story/ephemeral content
+  REEL          // Short video
+  THREAD        // Twitter thread / LinkedIn carousel
+  AD            // Paid ad creative
+  BLOG_EXCERPT  // Blog post excerpt
+}
+
+enum ContentStatus {
+  DRAFT         // Just created
+  PENDING       // Awaiting approval
+  APPROVED      // Approved, waiting to schedule
+  SCHEDULED     // Scheduled for posting
+  PUBLISHING    // Currently being published
+  PUBLISHED     // Successfully posted
+  FAILED        // Publishing failed
+  ARCHIVED      // No longer active
+}
+
+enum ApprovalStatus {
+  PENDING       // Needs review
+  APPROVED      // Approved for posting
+  REJECTED      // Rejected by user
+  AUTO_APPROVED // Auto-approved by rules
+}
+
+// ============================================
+// BRAND BRAIN ENUMS (PKG-020)
+// ============================================
+
+enum VoiceTone {
+  PROFESSIONAL
+  CASUAL
+  ENTHUSIASTIC
+  EDUCATIONAL
+  WITTY
+  INSPIRATIONAL
+  EMPATHETIC
+  BOLD
+}
+
+enum EmojiFrequency {
+  NONE
+  MINIMAL
+  MODERATE
+  FREQUENT
+}
+
+enum HashtagStyle {
+  NONE
+  MINIMAL
+  MODERATE
+  MIXED
+  COMPREHENSIVE
+}
+
+enum LearningType {
+  BEST_TIME
+  BEST_HASHTAG
+  BEST_TOPIC
+  BEST_FORMAT
+  AUDIENCE_INSIGHT
+  TONE_ADJUSTMENT
+  AVOID
+  PLATFORM_SPECIFIC
+}
+
+enum SocialPlatform {
+  TWITTER
+  LINKEDIN
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  THREADS
+  BLUESKY
+}
+
+model PublishResult {
+  id            String   @id @default(cuid())
+  contentId     String   @map("content_id")
+  content       ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  // Platform
+  platform      SocialPlatform
+  accountId     String   @map("account_id")
+
+  // Result
+  status        PublishStatus @default(PENDING)
+  platformPostId String?  @map("platform_post_id")
+  postUrl       String?   @map("post_url")
+  error         String?
+
+  // Timing
+  attemptedAt   DateTime  @default(now()) @map("attempted_at")
+  publishedAt   DateTime? @map("published_at")
+
+  @@index([contentId])
+  @@map("publish_results")
+}
+
+enum PublishStatus {
+  PENDING
+  PUBLISHING
+  SUCCESS
+  FAILED
+  RATE_LIMITED
+}
+
+// ============================================
+// AUTOPILOT CONFIGURATION
+// ============================================
+
+model AutopilotConfig {
+  id        String   @id @default(cuid())
+  brandId   String   @unique @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Master Toggle
+  enabled   Boolean  @default(false)
+
+  // Approval Mode
+  approvalMode ApprovalMode @default(REVIEW) @map("approval_mode")
+
+  // Veto Window (hours before scheduled post when user can still reject)
+  vetoWindowHours Int @default(2) @map("veto_window_hours")
+
+  // Posting Schedule
+  postsPerWeek      Int      @default(7) @map("posts_per_week")
+  postingDays       Int[]    @default([1, 2, 3, 4, 5]) @map("posting_days") // 0=Sun, 6=Sat
+  postingTimesUtc   String[] @default(["14:00", "18:00"]) @map("posting_times_utc")
+  timezone          String   @default("America/New_York")
+
+  // Content Mix (percentages)
+  contentMix        Json     @default("{\"educational\": 40, \"promotional\": 20, \"engagement\": 20, \"news\": 20}") @map("content_mix")
+
+  // Platform Preferences
+  enabledPlatforms  SocialPlatform[] @default([]) @map("enabled_platforms")
+  platformPriority  Json?    @map("platform_priority") // Order of platform importance
+
+  // Generation Settings
+  generateImages    Boolean  @default(true) @map("generate_images")
+  imageStyle        String   @default("modern") @map("image_style") // modern, minimal, bold, playful
+
+  // Notifications
+  notifyOnGeneration Boolean @default(true) @map("notify_on_generation")
+  notifyOnPublish    Boolean @default(true) @map("notify_on_publish")
+  notifyEmail        String? @map("notify_email")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("autopilot_configs")
+}
+
+enum ApprovalMode {
+  REVIEW      // All posts require manual approval
+  AUTO_QUEUE  // Auto-approve to queue, user can veto
+  AUTO_POST   // Full autopilot, posts automatically
+}
+
+// ============================================
+// SOCIAL ACCOUNTS (Native Platform Connections)
 // ============================================
 
 model SocialAccount {
   id           String    @id @default(cuid())
   brandId      String    @map("brand_id")
-  platform     String
+  brand        Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Platform
+  platform     SocialPlatform
+
+  // Account Info
   platformId   String?   @map("platform_id")
   username     String?
   displayName  String?   @map("display_name")
   avatar       String?
+  profileUrl   String?   @map("profile_url")
+
+  // OAuth Tokens (encrypted in production)
   accessToken  String?   @map("access_token") @db.Text
   refreshToken String?   @map("refresh_token") @db.Text
   tokenExpires DateTime? @map("token_expires")
-  settings     Json      @default("{}")
-  isActive     Boolean   @default(true) @map("is_active")
-  connectedAt  DateTime  @default(now()) @map("connected_at")
+  tokenScope   String?   @map("token_scope")
 
-  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  // Status
+  status       AccountStatus @default(PENDING)
+  lastUsed     DateTime?     @map("last_used")
+  lastError    String?       @map("last_error")
+
+  // Settings
+  settings     Json      @default("{}")
+  isDefault    Boolean   @default(false) @map("is_default")
+
+  // Platform stats (cached from API)
+  followerCount  Int?     @map("follower_count")
+  followingCount Int?     @map("following_count")
+  postCount      Int?     @map("post_count")
+  platformData   Json?    @map("platform_data")  // Extra platform-specific data
+
+  // Content variations assigned to this account
+  contentVariations ContentVariation[]
+
+  connectedAt  DateTime  @default(now()) @map("connected_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@unique([brandId, platform, platformId])
+  @@index([brandId])
   @@map("social_accounts")
 }
 
-model SocialPost {
-  id          String    @id @default(cuid())
-  brandId     String    @map("brand_id")
-  personaId   String?   @map("persona_id")
-  content     String    @db.Text
-  mediaUrls   Json      @default("[]") @map("media_urls")
-  linkUrl     String?   @map("link_url")
-  status      String    @default("draft")
-  scheduledAt DateTime? @map("scheduled_at")
-  publishedAt DateTime? @map("published_at")
-  platforms   Json
-  aiGenerated Boolean   @default(false) @map("ai_generated")
-  prompt      String?   @db.Text
-  metrics     Json      @default("{}")
-  tags        Json      @default("[]")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+enum AccountStatus {
+  PENDING
+  CONNECTED
+  EXPIRED
+  ERROR
+  DISCONNECTED
+}
 
-  brand   Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  persona Persona? @relation(fields: [personaId], references: [id], onDelete: SetNull)
+// OAuth State for CSRF protection
+model OAuthState {
+  id          String   @id @default(cuid())
+  state       String   @unique
+  platform    SocialPlatform
+  brandId     String   @map("brand_id")
+  userId      String   @map("user_id")
+  codeVerifier String? @map("code_verifier")  // For PKCE (Twitter)
+  redirectUrl String?  @map("redirect_url")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  @@map("social_posts")
+  @@index([state])
+  @@index([expiresAt])
+  @@map("oauth_states")
 }
 
 // ============================================
-// VOICE AI
+// ANALYTICS & PERFORMANCE
 // ============================================
 
-model VoiceAgent {
-  id              String   @id @default(cuid())
-  brandId         String   @map("brand_id")
-  personaId       String?  @map("persona_id")
-  name            String
-  description     String?  @db.Text
-  systemPrompt    String?  @map("system_prompt") @db.Text
-  greeting        String?  @db.Text
-  fallbackMessage String?  @map("fallback_message") @db.Text
-  llmProvider     String   @default("openai") @map("llm_provider")
-  llmModel        String   @default("gpt-4-turbo") @map("llm_model")
-  sttProvider     String   @default("deepgram") @map("stt_provider")
-  ttsProvider     String   @default("openai") @map("tts_provider")
-  voiceSettings   Json     @default("{}") @map("voice_settings")
-  knowledgeBase   Json     @default("[]") @map("knowledge_base")
-  isDeployed      Boolean  @default(false) @map("is_deployed")
-  isActive        Boolean  @default(true) @map("is_active")
-  transferNumber  String?  @map("transfer_number")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+model ContentAnalytics {
+  id          String   @id @default(cuid())
+  brandId     String   @map("brand_id")
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  contentId   String   @map("content_id")
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
-  brand        Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  persona      Persona?      @relation(fields: [personaId], references: [id], onDelete: SetNull)
-  phoneNumbers PhoneNumber[]
-  calls        Call[]
+  // Platform
+  platform    SocialPlatform
 
-  @@map("voice_agents")
-}
+  // Engagement Metrics
+  impressions Int      @default(0)
+  reach       Int      @default(0)
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  clicks      Int      @default(0)
 
-model PhoneNumber {
-  id           String   @id @default(cuid())
-  brandId      String?  @map("brand_id")
-  agentId      String?  @map("agent_id")
-  number       String   @unique
-  provider     String
-  providerId   String?  @map("provider_id")
-  capabilities Json     @default("{\"voice\": true, \"sms\": false}")
-  monthlyCost  Float    @default(0) @map("monthly_cost")
-  isActive     Boolean  @default(true) @map("is_active")
-  acquiredAt   DateTime @default(now()) @map("acquired_at")
+  // Calculated
+  engagementRate Decimal? @db.Decimal(5, 4) @map("engagement_rate")
 
-  brand Brand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  agent VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  calls Call[]
+  // Video-specific
+  videoViews     Int?     @map("video_views")
+  avgWatchTime   Int?     @map("avg_watch_time") // seconds
 
-  @@map("phone_numbers")
-}
+  // Snapshot time
+  recordedAt  DateTime @default(now()) @map("recorded_at")
 
-model Call {
-  id            String    @id @default(cuid())
-  brandId       String?   @map("brand_id")
-  agentId       String?   @map("agent_id")
-  phoneNumberId String?   @map("phone_number_id")
-  leadId        String?   @map("lead_id")
-  direction     String
-  fromNumber    String?   @map("from_number")
-  toNumber      String?   @map("to_number")
-  status        String    @default("initiated")
-  outcome       String?
-  startedAt     DateTime? @map("started_at")
-  answeredAt    DateTime? @map("answered_at")
-  endedAt       DateTime? @map("ended_at")
-  duration      Int       @default(0)
-  transcript    String?   @db.Text
-  summary       String?   @db.Text
-  sentiment     String?
-  cost          Float     @default(0)
-  recordingUrl  String?   @map("recording_url")
-  roomId        String?   @map("room_id")
-  metadata      Json      @default("{}")
-  createdAt     DateTime  @default(now()) @map("created_at")
-
-  brand       Brand?       @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  agent       VoiceAgent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  phoneNumber PhoneNumber? @relation(fields: [phoneNumberId], references: [id], onDelete: SetNull)
-  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
-
-  @@map("calls")
+  @@index([brandId])
+  @@index([contentId])
+  @@map("content_analytics")
 }
 
 // ============================================
-// LEADS
-// ============================================
-
-model Lead {
-  id             String    @id @default(cuid())
-  organizationId String    @map("organization_id")
-  brandId        String?   @map("brand_id")
-
-  // Contact Info
-  email          String?
-  phone          String?
-  firstName      String    @map("first_name")
-  lastName       String?   @map("last_name")
-  company        String?
-  jobTitle       String?   @map("job_title")
-  socialProfiles Json      @default("{}") @map("social_profiles")
-
-  // Source
-  source         String    @default("MANUAL")
-  sourcePlatform String?   @map("source_platform")
-  sourceDetails  String?   @map("source_details")
-  utmParams      Json?     @map("utm_params")
-
-  // Webhook source tracking
-  sourceId       String?   @map("source_id")        // External platform ID (Meta leadgen_id, etc.)
-  sourceCampaign String?   @map("source_campaign")  // Campaign name from ad platform
-  sourceAdSet    String?   @map("source_ad_set")    // Ad set name
-  sourceAd       String?   @map("source_ad")        // Ad name
-  webhookLogId   String?   @map("webhook_log_id")   // Reference to webhook log
-
-  // Link to ad campaign (if matched)
-  adCampaignId   String?   @map("ad_campaign_id")
-  adCampaign     AdCampaign? @relation(fields: [adCampaignId], references: [id], onDelete: SetNull)
-
-  // Status & Value
-  status         String    @default("NEW")
-  score          Int       @default(0)
-  estimatedValue Float?    @map("estimated_value")
-  actualValue    Float?    @map("actual_value")
-  currency       String    @default("USD")
-
-  // Notes & Tags
-  notes          String?   @db.Text
-  tags           String[]  @default([])
-  customFields   Json      @default("{}") @map("custom_fields")
-
-  // Assignment
-  assignedToId   String?   @map("assigned_to_id")
-
-  // Timestamps
-  firstTouchAt      DateTime? @map("first_touch_at")
-  lastTouchAt       DateTime? @map("last_touch_at")
-  lastContactedAt   DateTime? @map("last_contacted_at")
-  convertedAt       DateTime? @map("converted_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
-
-  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  brand        Brand?         @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  calls        Call[]
-  activities   LeadActivity[]
-
-  @@index([organizationId])
-  @@index([status])
-  @@index([source])
-  @@index([createdAt])
-  @@map("leads")
-}
-
-model LeadActivity {
-  id            String   @id @default(cuid())
-  leadId        String   @map("lead_id")
-
-  type          String   // NOTE, EMAIL, CALL, MEETING, STATUS_CHANGE, TASK, SOCIAL_INTERACTION
-  title         String
-  description   String?  @db.Text
-  metadata      Json     @default("{}")
-
-  // Legacy fields for backward compatibility
-  channel       String?
-  referenceType String?  @map("reference_type")
-  referenceId   String?  @map("reference_id")
-
-  userId        String?  @map("user_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-
-  @@index([leadId])
-  @@index([createdAt])
-  @@map("lead_activities")
-}
-
-// ============================================
-// BILLING
-// ============================================
-
-model Subscription {
-  id                   String    @id @default(cuid())
-  organizationId       String    @map("organization_id")
-  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
-  stripePriceId        String?   @map("stripe_price_id")
-  plan                 String    @default("starter")
-  status               String    @default("active")
-  socialAccountsLimit  Int       @default(5) @map("social_accounts_limit")
-  voiceMinutesLimit    Int       @default(250) @map("voice_minutes_limit")
-  brandsLimit          Int       @default(1) @map("brands_limit")
-  usersLimit           Int       @default(1) @map("users_limit")
-  currentPeriodStart   DateTime? @map("current_period_start")
-  currentPeriodEnd     DateTime? @map("current_period_end")
-  trialEnd             DateTime? @map("trial_end")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@map("subscriptions")
-}
-
-model Usage {
-  id              String   @id @default(cuid())
-  organizationId  String   @map("organization_id")
-  periodStart     DateTime @map("period_start")
-  periodEnd       DateTime @map("period_end")
-  postsCreated    Int      @default(0) @map("posts_created")
-  aiImagesCreated Int      @default(0) @map("ai_images_created")
-  voiceMinutes    Int      @default(0) @map("voice_minutes")
-  aiTokensUsed    BigInt   @default(0) @map("ai_tokens_used")
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@unique([organizationId, periodStart])
-  @@map("usage")
-}
-
-// ============================================
-// AUTOMATIONS
-// ============================================
-
-model Automation {
-  id             String    @id @default(cuid())
-  name           String
-  description    String?   @db.Text
-
-  // Trigger configuration
-  trigger        String    // LEAD_CREATED, LEAD_STATUS_CHANGED, CALL_COMPLETED, CALL_FAILED, SOCIAL_ENGAGEMENT, SCHEDULE, MANUAL
-  triggerConfig  Json?     @map("trigger_config")
-
-  // Conditions (optional filters)
-  conditions     Json?     // Array of conditions [{field, operator, value}]
-
-  // Actions to execute
-  actions        Json      // Array of actions [{type, config}]
-
-  // Status
-  isActive       Boolean   @default(true) @map("is_active")
-
-  // Stats
-  runCount       Int       @default(0) @map("run_count")
-  lastRunAt      DateTime? @map("last_run_at")
-  lastRunStatus  String?   @map("last_run_status") // SUCCESS, FAILED, SKIPPED
-
-  // Relations
-  organizationId String    @map("organization_id")
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  runs           AutomationRun[]
-
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-
-  @@index([organizationId])
-  @@index([trigger])
-  @@index([isActive])
-  @@map("automations")
-}
-
-// Automation Run History
-model AutomationRun {
-  id             String    @id @default(cuid())
-
-  status         String    // RUNNING, SUCCESS, FAILED, SKIPPED
-
-  // Trigger data
-  triggerData    Json?     @map("trigger_data")
-
-  // Execution details
-  actionsExecuted Json?    @map("actions_executed")
-  error          String?   @db.Text
-
-  // Timing
-  startedAt      DateTime  @default(now()) @map("started_at")
-  completedAt    DateTime? @map("completed_at")
-  durationMs     Int?      @map("duration_ms")
-
-  // Relations
-  automationId   String    @map("automation_id")
-  automation     Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
-
-  @@index([automationId])
-  @@index([status])
-  @@index([startedAt])
-  @@map("automation_runs")
-}
-
-// ============================================
-// SOCIAL POST LOGS (Track posts created via Epic AI)
-// ============================================
-
-model SocialPostLog {
-  id              String   @id @default(cuid())
-
-  // Content
-  content         String   @db.Text
-  mediaUrls       String[] @default([]) @map("media_urls")
-  platforms       String[] @default([])
-
-  // Postiz reference
-  postizPostIds   String[] @default([]) @map("postiz_post_ids")
-
-  // Scheduling
-  status          String   @default("DRAFT") // DRAFT, SCHEDULED, POSTED, FAILED
-  scheduledFor    DateTime? @map("scheduled_for")
-  postedAt        DateTime? @map("posted_at")
-  error           String?
-
-  // AI Generation
-  generatedBy     String   @default("MANUAL") @map("generated_by") // MANUAL, AI_LEAD, AI_CALL, AI_TREND
-  sourceType      String?  @map("source_type")
-  sourceId        String?  @map("source_id")
-  aiPrompt        String?  @db.Text @map("ai_prompt")
-
-  // Relations
-  organizationId  String   @map("organization_id")
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@index([organizationId])
-  @@index([status])
-  @@map("social_post_logs")
-}
-
-// ============================================
-// AUTOPILOT SETTINGS (Social AI automation)
-// ============================================
-
-model AutopilotSettings {
-  id              String   @id @default(cuid())
-
-  // Master toggle
-  enabled                 Boolean  @default(false)
-
-  // Triggers
-  onLeadConverted         Boolean  @default(true) @map("on_lead_converted")
-  onFiveStarCall          Boolean  @default(true) @map("on_five_star_call")
-  onWeeklySchedule        Boolean  @default(false) @map("on_weekly_schedule")
-  weeklyScheduleDay       Int?     @default(1) @map("weekly_schedule_day")  // 0=Sun, 1=Mon
-  weeklyScheduleHour      Int?     @default(9) @map("weekly_schedule_hour") // Hour in UTC
-
-  // Approval mode: REVIEW, AUTO_QUEUE, AUTO_POST
-  approvalMode            String   @default("REVIEW") @map("approval_mode")
-
-  // Default platforms (JSON array of integration IDs)
-  defaultPlatforms        String[] @default([]) @map("default_platforms")
-
-  // Posting limits
-  maxPostsPerDay          Int      @default(3) @map("max_posts_per_day")
-  minHoursBetween         Int      @default(4) @map("min_hours_between")
-
-  // Brand voice
-  defaultTone             String   @default("professional") @map("default_tone")
-  includeEmojis           Boolean  @default(true) @map("include_emojis")
-  includeHashtags         Boolean  @default(true) @map("include_hashtags")
-  includeCTA              Boolean  @default(false) @map("include_cta")
-  brandDescription        String?  @db.Text @map("brand_description")
-
-  // Relations
-  organizationId  String   @unique @map("organization_id")
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@map("autopilot_settings")
-}
-
-// ============================================
-// SOCIAL SUGGESTIONS (AI-generated content ideas)
-// ============================================
-
-model SocialSuggestion {
-  id              String   @id @default(cuid())
-
-  // Content
-  content         String   @db.Text
-  imageUrl        String?  @map("image_url")
-
-  // Source event: LEAD_CONVERTED, FIVE_STAR_CALL, WEEKLY_CONTENT, MANUAL
-  triggerType     String   @map("trigger_type")
-  triggerData     Json?    @map("trigger_data")
-
-  // Suggested platforms (integration IDs)
-  suggestedPlatforms String[] @default([]) @map("suggested_platforms")
-
-  // Status: PENDING, APPROVED, POSTED, DISMISSED, FAILED, AUTO_POSTED
-  status          String   @default("PENDING")
-
-  // If posted
-  postedAt        DateTime? @map("posted_at")
-  postId          String?   @map("post_id") // Postiz post ID
-  postPlatforms   String[]  @default([]) @map("post_platforms")
-
-  // If dismissed
-  dismissedAt     DateTime? @map("dismissed_at")
-  dismissReason   String?   @map("dismiss_reason")
-
-  // Relations
-  organizationId  String   @map("organization_id")
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@index([organizationId, status])
-  @@index([organizationId, createdAt])
-  @@map("social_suggestions")
-}
-
-// ============================================
-// ADS MODULE
+// AD ACCOUNTS & CAMPAIGNS
 // ============================================
 
 model AdAccount {
   id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  brandId   String   @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Platform
   platform  AdPlatform
@@ -636,14 +817,14 @@ model AdAccount {
   accountName   String    @map("account_name")
 
   // Credentials (encrypted in production)
-  accessToken   String?   @map("access_token")
-  refreshToken  String?   @map("refresh_token")
+  accessToken   String?   @map("access_token") @db.Text
+  refreshToken  String?   @map("refresh_token") @db.Text
   tokenExpiry   DateTime? @map("token_expiry")
 
   // Status
-  status    AdAccountStatus @default(PENDING)
-  lastSync  DateTime?       @map("last_sync")
-  syncError String?         @map("sync_error")
+  status    AccountStatus @default(PENDING)
+  lastSync  DateTime?     @map("last_sync")
+  syncError String?       @map("sync_error")
 
   // Campaigns
   campaigns AdCampaign[]
@@ -651,8 +832,8 @@ model AdAccount {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([orgId, platform, accountId])
-  @@index([orgId])
+  @@unique([brandId, platform, accountId])
+  @@index([brandId])
   @@map("ad_accounts")
 }
 
@@ -661,21 +842,12 @@ enum AdPlatform {
   GOOGLE
   LINKEDIN
   TIKTOK
-  TWITTER
-}
-
-enum AdAccountStatus {
-  PENDING
-  CONNECTED
-  DISCONNECTED
-  ERROR
-  MANUAL
+  TWITTER // Legacy, kept for migration
 }
 
 model AdCampaign {
   id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  brandId   String   @map("brand_id")
 
   // Account reference
   adAccountId String?   @map("ad_account_id")
@@ -702,23 +874,19 @@ model AdCampaign {
   startDate     DateTime? @map("start_date")
   endDate       DateTime? @map("end_date")
 
-  // Creative
-  adCreatives   AdCreative[]
-
-  // Performance (aggregated)
-  metrics       AdCampaignMetrics?
-
-  // Daily snapshots
-  dailyMetrics  AdDailyMetrics[]
+  // Performance
+  impressions   Int       @default(0)
+  clicks        Int       @default(0)
+  leads         Int       @default(0)
+  spend         Decimal   @default(0) @db.Decimal(10, 2)
 
   // Leads from this campaign
-  leads         Lead[]
+  capturedLeads Lead[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([orgId])
-  @@index([orgId, status])
+  @@index([brandId])
   @@map("ad_campaigns")
 }
 
@@ -728,7 +896,7 @@ enum CampaignObjective {
   ENGAGEMENT
   LEAD_GENERATION
   CONVERSIONS
-  SALES
+  SALES // Legacy, kept for migration
 }
 
 enum CampaignStatus {
@@ -740,243 +908,60 @@ enum CampaignStatus {
   ARCHIVED
 }
 
-model AdCreative {
-  id         String   @id @default(cuid())
-  campaignId String   @map("campaign_id")
-  campaign   AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  // Creative type
-  type      CreativeType @default(IMAGE)
-
-  // Content
-  headline       String
-  primaryText    String    @map("primary_text")
-  description    String?
-  callToAction   String    @default("Learn More") @map("call_to_action")
-
-  // Media
-  imageUrl    String?   @map("image_url")
-  videoUrl    String?   @map("video_url")
-
-  // Destination
-  destinationUrl String? @map("destination_url")
-
-  // Status
-  status    CreativeStatus @default(DRAFT)
-
-  // Performance (per creative)
-  impressions Int     @default(0)
-  clicks      Int     @default(0)
-  leads       Int     @default(0)
-  spend       Decimal @default(0) @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@index([campaignId])
-  @@map("ad_creatives")
-}
-
-enum CreativeType {
-  IMAGE
-  VIDEO
-  CAROUSEL
-  COLLECTION
-}
-
-enum CreativeStatus {
-  DRAFT
-  ACTIVE
-  PAUSED
-  REJECTED
-}
-
-model AdCampaignMetrics {
-  id          String   @id @default(cuid())
-  campaignId  String   @unique @map("campaign_id")
-  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  // Core metrics
-  impressions   Int     @default(0)
-  reach         Int     @default(0)
-  clicks        Int     @default(0)
-  leads         Int     @default(0)
-  conversions   Int     @default(0)
-
-  // Spend
-  spend         Decimal @default(0) @db.Decimal(10, 2)
-
-  // Calculated metrics
-  ctr           Decimal? @db.Decimal(5, 4)
-  cpc           Decimal? @db.Decimal(10, 2)
-  cpl           Decimal? @db.Decimal(10, 2)
-  cpa           Decimal? @db.Decimal(10, 2)
-
-  // Last updated
-  lastUpdated   DateTime @default(now()) @map("last_updated")
-
-  @@map("ad_campaign_metrics")
-}
-
-model AdDailyMetrics {
-  id          String   @id @default(cuid())
-  campaignId  String   @map("campaign_id")
-  campaign    AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  // Date
-  date        DateTime @db.Date
-
-  // Metrics
-  impressions   Int     @default(0)
-  clicks        Int     @default(0)
-  leads         Int     @default(0)
-  conversions   Int     @default(0)
-  spend         Decimal @default(0) @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@unique([campaignId, date])
-  @@index([campaignId, date])
-  @@map("ad_daily_metrics")
-}
-
-model AdRecommendation {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  // Reference
-  campaignId  String?  @map("campaign_id")
-  creativeId  String?  @map("creative_id")
-
-  // Recommendation
-  type        RecommendationType
-  title       String
-  description String
-  impact      RecommendationImpact @default(MEDIUM)
-
-  // Action
-  actionType  String?   @map("action_type")
-  actionData  Json?     @map("action_data")
-
-  // Status
-  status      RecommendationStatus @default(PENDING)
-  appliedAt   DateTime? @map("applied_at")
-  dismissedAt DateTime? @map("dismissed_at")
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([orgId, status])
-  @@map("ad_recommendations")
-}
-
-enum RecommendationType {
-  BUDGET_INCREASE
-  BUDGET_DECREASE
-  PAUSE_UNDERPERFORMING
-  SCALE_WINNER
-  NEW_CREATIVE
-  AUDIENCE_EXPANSION
-  SCHEDULE_OPTIMIZATION
-}
-
-enum RecommendationImpact {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum RecommendationStatus {
-  PENDING
-  APPLIED
-  DISMISSED
-  EXPIRED
-}
-
 // ============================================
-// WEBHOOKS & LEAD CAPTURE
+// LEADS (From Ads & Organic)
 // ============================================
 
-model WebhookConfig {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+model Lead {
+  id             String   @id @default(cuid())
+  brandId        String   @map("brand_id")
+  brand          Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  organizationId String   @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  // Webhook type
-  platform  WebhookPlatform
+  // Contact Info
+  email          String?
+  phone          String?
+  firstName      String    @map("first_name")
+  lastName       String?   @map("last_name")
+  company        String?
+  jobTitle       String?   @map("job_title")
 
-  // Verification
-  verifyToken   String    @default(cuid()) @map("verify_token")
-  secretKey     String    @default(cuid()) @map("secret_key")
+  // Source
+  source         LeadSource @default(MANUAL)
+  sourcePlatform String?    @map("source_platform")
+  campaignId     String?    @map("campaign_id")
+  campaign       AdCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  utmParams      Json?      @map("utm_params")
 
-  // Settings
-  enabled            Boolean   @default(true)
-  autoTriggerVoiceAI Boolean   @default(true) @map("auto_trigger_voice_ai")
+  // Status
+  status         LeadStatus @default(NEW)
+  score          Int        @default(0)
 
-  // Field mappings (JSON)
-  fieldMappings Json?     @map("field_mappings")
+  // Notes
+  notes          String?    @db.Text
+  tags           String[]   @default([])
+  customFields   Json       @default("{}") @map("custom_fields")
 
-  // Stats
-  leadsReceived  Int       @default(0) @map("leads_received")
-  lastReceivedAt DateTime? @map("last_received_at")
-  lastError      String?   @map("last_error")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
 
-  // Linked campaigns (for attribution)
-  linkedCampaigns String[] @default([]) @map("linked_campaigns")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([orgId, platform])
-  @@index([orgId])
-  @@map("webhook_configs")
-}
-
-enum WebhookPlatform {
-  META
-  GOOGLE
-  LINKEDIN
-  TIKTOK
-  GENERIC
-}
-
-model WebhookLog {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  // Request info
-  platform    WebhookPlatform
-  endpoint    String
-  method      String
-  headers     Json?
-  payload     Json
-
-  // Processing
-  status      WebhookStatus @default(RECEIVED)
-  leadId      String?       @map("lead_id")
-  error       String?
-
-  // Timing
-  receivedAt  DateTime @default(now()) @map("received_at")
-  processedAt DateTime? @map("processed_at")
-
-  @@index([orgId, receivedAt])
-  @@index([orgId, platform])
-  @@map("webhook_logs")
-}
-
-enum WebhookStatus {
-  RECEIVED
-  PROCESSING
-  SUCCESS
-  FAILED
-  DUPLICATE
-  INVALID
+  @@index([brandId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("leads")
 }
 
 enum LeadSource {
   MANUAL
+  META_ADS
+  GOOGLE_ADS
+  LINKEDIN_ADS
+  TIKTOK_ADS
+  ORGANIC_SOCIAL
+  WEBSITE
+  REFERRAL
+  // Legacy values (kept for migration)
   IMPORT
   WEBHOOK_META
   WEBHOOK_GOOGLE
@@ -985,4 +970,456 @@ enum LeadSource {
   WEBHOOK_GENERIC
   API
   ORGANIC
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+// ============================================
+// VOICE AGENTS (Legacy, kept for migration)
+// ============================================
+
+model VoiceAgent {
+  id             String   @id @default(cuid())
+  brandId        String   @map("brand_id")
+  name           String
+  systemPrompt   String?  @db.Text @map("system_prompt")
+  voiceId        String?  @map("voice_id")
+  isActive       Boolean  @default(true) @map("is_active")
+  settings       Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@map("voice_agents")
+}
+
+// ============================================
+// BILLING
+// ============================================
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  organizationId       String    @map("organization_id")
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
+  stripePriceId        String?   @map("stripe_price_id")
+  plan                 String    @default("starter")
+  status               String    @default("active")
+
+  // Limits
+  brandsLimit          Int       @default(1) @map("brands_limit")
+  postsPerMonth        Int       @default(30) @map("posts_per_month")
+  socialAccounts       Int       @default(3) @map("social_accounts")
+  // Legacy limits (kept for migration)
+  socialAccountsLimit  Int       @default(3) @map("social_accounts_limit")
+  usersLimit           Int       @default(1) @map("users_limit")
+  voiceMinutesLimit    Int       @default(100) @map("voice_minutes_limit")
+
+  currentPeriodStart   DateTime? @map("current_period_start")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  trialEnd             DateTime? @map("trial_end")
+
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  @@map("subscriptions")
+}
+
+model Usage {
+  id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
+
+  postsGenerated  Int      @default(0) @map("posts_generated")
+  postsPublished  Int      @default(0) @map("posts_published")
+  imagesGenerated Int      @default(0) @map("images_generated")
+  aiTokensUsed    BigInt   @default(0) @map("ai_tokens_used")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([organizationId, periodStart])
+  @@map("usage")
+}
+
+// ============================================
+// JOB QUEUE (For Background Processing)
+// ============================================
+
+model Job {
+  id        String   @id @default(cuid())
+
+  // Job Type
+  type      JobType
+
+  // Reference
+  brandId   String?  @map("brand_id")
+
+  // Payload
+  payload   Json
+
+  // Status
+  status    JobStatus @default(PENDING)
+  attempts  Int       @default(0)
+  maxAttempts Int     @default(3) @map("max_attempts")
+
+  // Scheduling
+  runAt     DateTime  @default(now()) @map("run_at")
+  startedAt DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  // Result
+  result    Json?
+  error     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([status, runAt])
+  @@index([type])
+  @@map("jobs")
+}
+
+enum JobType {
+  SCRAPE_WEBSITE
+  SYNC_RSS
+  PROCESS_DOCUMENT
+  GENERATE_CONTENT
+  GENERATE_IMAGE
+  PUBLISH_CONTENT
+  SYNC_ANALYTICS
+  REFRESH_TOKEN
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// LEARNING HISTORY (AI Learning from Analytics)
+// ============================================
+
+model LearningHistory {
+  id        String   @id @default(cuid())
+  brandId   String   @map("brand_id")
+
+  // Learning Period
+  period    String   // week, month, quarter
+
+  // Learned Data
+  learnings Json     // Full learning data snapshot
+
+  // Application
+  appliedAt DateTime @map("applied_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([brandId])
+  @@map("learning_history")
+}
+
+// ============================================
+// CONTENT VARIATION (Platform-specific versions)
+// ============================================
+
+model ContentVariation {
+  id          String   @id @default(cuid())
+  contentId   String   @map("content_id")
+  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  // Platform
+  platform    SocialPlatform
+
+  // Content
+  text        String   @db.Text
+  hashtags    String[] @default([])
+  mediaPrompt String?  @db.Text @map("media_prompt") // AI prompt for image generation
+  mediaUrl    String?  @map("media_url") // Generated or uploaded media
+
+  // Platform-specific metadata
+  characterCount Int     @default(0) @map("character_count")
+  isOptimal     Boolean @default(true) @map("is_optimal") // Meets platform best practices
+
+  // Status (can be posted independently)
+  status      VariationStatus @default(PENDING)
+
+  // Publishing
+  accountId   String?   @map("account_id")
+  account     SocialAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  postId      String?   @map("post_id") // Platform post ID
+  postUrl     String?   @map("post_url")
+  publishedAt DateTime? @map("published_at")
+  error       String?
+
+  // Analytics
+  analytics   PostAnalytics?
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([contentId])
+  @@index([contentId, platform])
+  @@index([accountId])
+  @@map("content_variations")
+}
+
+enum VariationStatus {
+  PENDING
+  APPROVED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  SKIPPED
+  FAILED
+}
+
+// ============================================
+// CONTENT TEMPLATES (Reusable Prompts)
+// ============================================
+
+model ContentTemplate {
+  id          String   @id @default(cuid())
+  brandId     String   @map("brand_id")
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  // Template info
+  name        String
+  description String?  @db.Text
+  category    String?  // tip, announcement, promotion, engagement, etc.
+
+  // Template content
+  promptTemplate String  @db.Text @map("prompt_template") // Template with {{variables}}
+  variables      String[] @default([]) // List of variable names
+
+  // Example output
+  exampleOutput  String?  @db.Text @map("example_output")
+
+  // Platforms this template is good for
+  platforms      SocialPlatform[] @default([])
+
+  // Usage stats
+  timesUsed      Int      @default(0) @map("times_used")
+
+  isActive       Boolean  @default(true) @map("is_active")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([brandId])
+  @@index([brandId, category])
+  @@map("content_templates")
+}
+
+// ============================================
+// PUBLISHING ENGINE
+// ============================================
+
+model PublishingSchedule {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Schedule settings
+  platform      SocialPlatform
+
+  // Days of week (0=Sunday, 1=Monday, etc.)
+  activeDays    Int[] @default([1, 2, 3, 4, 5]) @map("active_days") // Mon-Fri by default
+
+  // Posting times (in UTC, as "HH:MM" strings)
+  postingTimes  String[] @default(["09:00", "12:00", "17:00"]) @map("posting_times")
+
+  // Timezone
+  timezone      String @default("UTC")
+
+  // Max posts per day
+  maxPostsPerDay Int @default(3) @map("max_posts_per_day")
+
+  // Is this schedule active
+  isActive      Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([orgId, platform])
+  @@index([orgId])
+  @@map("publishing_schedules")
+}
+
+model PublishingLog {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // What was published
+  variationId   String?  @map("variation_id")
+  contentId     String?  @map("content_id")
+
+  // Platform
+  platform      SocialPlatform
+  accountId     String?  @map("account_id")
+
+  // Result
+  status        PublishingStatus
+
+  platformPostId String? @map("platform_post_id")
+  platformUrl   String?  @map("platform_url")
+
+  // Error info
+  errorCode     String?  @map("error_code")
+  errorMessage  String?  @db.Text @map("error_message")
+
+  // Timing
+  scheduledFor  DateTime? @map("scheduled_for")
+  attemptedAt   DateTime @default(now()) @map("attempted_at")
+  completedAt   DateTime? @map("completed_at")
+
+  // Retry info
+  attemptNumber Int @default(1) @map("attempt_number")
+  nextRetryAt   DateTime? @map("next_retry_at")
+
+  @@index([orgId, attemptedAt])
+  @@index([orgId, status])
+  @@index([variationId])
+  @@map("publishing_logs")
+}
+
+enum PublishingStatus {
+  SUCCESS
+  FAILED
+  RETRYING
+  RATE_LIMITED
+  SKIPPED
+}
+
+// ============================================
+// ANALYTICS & LEARNING LOOP (PKG-025)
+// ============================================
+
+model PostAnalytics {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Link to content variation
+  variationId   String   @unique @map("variation_id")
+  variation     ContentVariation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+
+  // Platform
+  platform      SocialPlatform
+  accountId     String   @map("account_id")
+
+  // Core metrics
+  impressions   Int @default(0)
+  reach         Int @default(0)
+  engagements   Int @default(0)
+
+  // Engagement breakdown
+  likes         Int @default(0)
+  comments      Int @default(0)
+  shares        Int @default(0)
+  saves         Int @default(0)
+  clicks        Int @default(0)
+
+  // Calculated metrics
+  engagementRate Float @default(0) @map("engagement_rate") // engagements / impressions * 100
+
+  // Video-specific (if applicable)
+  videoViews    Int? @map("video_views")
+  videoWatchTime Int? @map("video_watch_time") // seconds
+
+  // Profile impact
+  profileVisits Int @default(0) @map("profile_visits")
+  newFollowers  Int @default(0) @map("new_followers")
+
+  // Content analysis
+  contentLength Int?  @map("content_length")             // Character count
+  hasMedia      Boolean @default(false) @map("has_media")
+  hasHashtags   Boolean @default(false) @map("has_hashtags")
+  hashtagCount  Int @default(0) @map("hashtag_count")
+  hasEmojis     Boolean @default(false) @map("has_emojis")
+  hasLinks      Boolean @default(false) @map("has_links")
+  hasQuestion   Boolean @default(false) @map("has_question")
+  hasCTA        Boolean @default(false) @map("has_cta")
+
+  // Timing
+  publishedAt   DateTime @map("published_at")
+  dayOfWeek     Int      @map("day_of_week")              // 0-6
+  hourOfDay     Int      @map("hour_of_day")              // 0-23
+
+  // Tracking
+  lastFetched   DateTime @default(now()) @map("last_fetched")
+  fetchCount    Int @default(1) @map("fetch_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([orgId, platform])
+  @@index([orgId, publishedAt])
+  @@index([accountId])
+  @@map("post_analytics")
+}
+
+model AnalyticsSnapshot {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Period
+  periodType    AnalyticsPeriod @map("period_type")
+  periodStart   DateTime @map("period_start")
+  periodEnd     DateTime @map("period_end")
+
+  // Platform (null = all platforms combined)
+  platform      SocialPlatform?
+
+  // Aggregate metrics
+  totalPosts        Int @default(0) @map("total_posts")
+  totalImpressions  Int @default(0) @map("total_impressions")
+  totalEngagements  Int @default(0) @map("total_engagements")
+  totalFollowers    Int @default(0) @map("total_followers")
+  followerGrowth    Int @default(0) @map("follower_growth")
+
+  // Averages
+  avgEngagementRate Float @default(0) @map("avg_engagement_rate")
+  avgImpressions    Float @default(0) @map("avg_impressions")
+  avgEngagements    Float @default(0) @map("avg_engagements")
+
+  // Best performers
+  topPostId         String? @map("top_post_id")
+  topHashtags       String[] @default([]) @map("top_hashtags")
+  bestDayOfWeek     Int? @map("best_day_of_week")
+  bestHourOfDay     Int? @map("best_hour_of_day")
+
+  // Content breakdown
+  postsWithMedia    Int @default(0) @map("posts_with_media")
+  postsWithHashtags Int @default(0) @map("posts_with_hashtags")
+  postsWithLinks    Int @default(0) @map("posts_with_links")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([orgId, periodType, periodStart, platform])
+  @@index([orgId])
+  @@index([orgId, periodType])
+  @@map("analytics_snapshots")
+}
+
+enum AnalyticsPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
 }

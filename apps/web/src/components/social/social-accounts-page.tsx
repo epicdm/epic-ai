@@ -1,35 +1,165 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Button, Spinner } from "@heroui/react";
+import { useSearchParams } from "next/navigation";
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Button,
+  Spinner,
+  Chip,
+  Avatar,
+  Divider,
+} from "@heroui/react";
+import {
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
+  Plus,
+  Trash2,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
 
-interface PostizStatus {
-  postizAvailable: boolean;
-  postizUrl: string;
+interface SocialAccount {
+  id: string;
+  platform: "TWITTER" | "LINKEDIN" | "FACEBOOK" | "INSTAGRAM";
+  platformId: string | null;
+  username: string | null;
+  displayName: string | null;
+  avatar: string | null;
+  profileUrl: string | null;
+  status: "PENDING" | "CONNECTED" | "EXPIRED" | "ERROR" | "DISCONNECTED";
+  lastUsed: string | null;
+  lastError: string | null;
+  followerCount: number | null;
+  connectedAt: string;
 }
 
+interface AccountsData {
+  accounts: SocialAccount[];
+  brandId: string;
+}
+
+const platformConfig = {
+  TWITTER: {
+    name: "Twitter / X",
+    icon: Twitter,
+    color: "bg-black",
+    connectPath: "/api/social/connect/twitter",
+  },
+  LINKEDIN: {
+    name: "LinkedIn",
+    icon: Linkedin,
+    color: "bg-[#0077B5]",
+    connectPath: "/api/social/connect/linkedin",
+  },
+  FACEBOOK: {
+    name: "Facebook",
+    icon: Facebook,
+    color: "bg-[#1877F2]",
+    connectPath: "/api/social/connect/meta?platform=facebook",
+  },
+  INSTAGRAM: {
+    name: "Instagram",
+    icon: Instagram,
+    color: "bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]",
+    connectPath: "/api/social/connect/meta?platform=instagram",
+  },
+};
+
+const statusColors = {
+  CONNECTED: "success",
+  PENDING: "warning",
+  EXPIRED: "warning",
+  ERROR: "danger",
+  DISCONNECTED: "default",
+} as const;
+
 export function SocialAccountsPage() {
-  const [status, setStatus] = useState<PostizStatus | null>(null);
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<AccountsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const successParam = searchParams.get("success");
+  const errorParam = searchParams.get("error");
 
   useEffect(() => {
-    async function checkStatus() {
-      try {
-        const response = await fetch("/api/social/status");
-        if (response.ok) {
-          const data = await response.json();
-          setStatus(data);
-        }
-      } catch (err) {
-        console.error("Error checking status:", err);
-      } finally {
-        setLoading(false);
+    if (successParam) {
+      setToast({
+        type: "success",
+        message: `Successfully connected ${successParam} account!`,
+      });
+      // Clear the URL param
+      window.history.replaceState({}, "", "/dashboard/social/accounts");
+    } else if (errorParam) {
+      setToast({
+        type: "error",
+        message: `Failed to connect: ${errorParam.replace(/_/g, " ")}`,
+      });
+      window.history.replaceState({}, "", "/dashboard/social/accounts");
+    }
+  }, [successParam, errorParam]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  async function fetchAccounts() {
+    try {
+      const response = await fetch("/api/social/accounts");
+      if (response.ok) {
+        const result = await response.json();
+        setData(result);
       }
+    } catch (err) {
+      console.error("Error fetching accounts:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDisconnect(accountId: string) {
+    if (!confirm("Are you sure you want to disconnect this account?")) return;
+
+    setActionLoading(accountId);
+    try {
+      const response = await fetch(`/api/social/accounts/${accountId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setToast({ type: "success", message: "Account disconnected" });
+        fetchAccounts();
+      } else {
+        setToast({ type: "error", message: "Failed to disconnect account" });
+      }
+    } catch (err) {
+      setToast({ type: "error", message: "Failed to disconnect account" });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  function handleConnect(platform: keyof typeof platformConfig) {
+    if (!data?.brandId) {
+      setToast({ type: "error", message: "Brand not found" });
+      return;
     }
 
-    checkStatus();
-  }, []);
+    const config = platformConfig[platform];
+    const separator = config.connectPath.includes("?") ? "&" : "?";
+    window.location.href = `${config.connectPath}${separator}brandId=${data.brandId}`;
+  }
 
   if (loading) {
     return (
@@ -39,8 +169,38 @@ export function SocialAccountsPage() {
     );
   }
 
+  const connectedAccounts = data?.accounts.filter(
+    (a) => a.status !== "DISCONNECTED"
+  ) || [];
+  const connectedPlatforms = new Set(connectedAccounts.map((a) => a.platform));
+
   return (
     <div className="space-y-8">
+      {/* Toast notification */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg ${
+            toast.type === "success"
+              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
+          <span>{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 hover:opacity-70"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -54,34 +214,159 @@ export function SocialAccountsPage() {
             Connected Accounts
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your connected social media accounts.
+            Connect and manage your social media accounts for publishing.
           </p>
         </div>
-
-        {status?.postizAvailable && (
-          <Button
-            as="a"
-            href={`${status.postizUrl}/launches`}
-            target="_blank"
-            color="primary"
-          >
-            + Connect Account
-          </Button>
-        )}
       </div>
 
-      {!status?.postizAvailable ? (
+      {/* Connect New Account */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Connect New Account
+          </h2>
+        </CardHeader>
+        <Divider />
+        <CardBody>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {(
+              Object.keys(platformConfig) as Array<keyof typeof platformConfig>
+            ).map((platform) => {
+              const config = platformConfig[platform];
+              const Icon = config.icon;
+              const isConnected = connectedPlatforms.has(platform);
+
+              return (
+                <Button
+                  key={platform}
+                  variant={isConnected ? "bordered" : "flat"}
+                  className="h-auto py-4 flex flex-col gap-2"
+                  onPress={() => handleConnect(platform)}
+                  isDisabled={isConnected}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center`}
+                  >
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-medium">{config.name}</span>
+                  {isConnected && (
+                    <Chip size="sm" color="success" variant="flat">
+                      Connected
+                    </Chip>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Connected Accounts */}
+      {connectedAccounts.length > 0 ? (
         <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-3xl">⚠️</span>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Social Media Engine Not Running
+          <CardHeader>
+            <h2 className="text-lg font-semibold">
+              Your Accounts ({connectedAccounts.length})
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Please start the social media service to manage accounts.
-            </p>
+          </CardHeader>
+          <Divider />
+          <CardBody className="p-0">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {connectedAccounts.map((account) => {
+                const config = platformConfig[account.platform];
+                const Icon = config.icon;
+
+                return (
+                  <div
+                    key={account.id}
+                    className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar
+                          src={account.avatar || undefined}
+                          name={account.displayName || account.username || "?"}
+                          size="lg"
+                        />
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${config.color} flex items-center justify-center`}
+                        >
+                          <Icon className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {account.displayName || account.username}
+                          </span>
+                          <Chip
+                            size="sm"
+                            color={statusColors[account.status]}
+                            variant="flat"
+                          >
+                            {account.status.toLowerCase()}
+                          </Chip>
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center gap-2">
+                          <span>@{account.username}</span>
+                          {account.followerCount !== null && (
+                            <>
+                              <span>•</span>
+                              <span>
+                                {account.followerCount.toLocaleString()}{" "}
+                                followers
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {account.lastError && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {account.lastError}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {account.profileUrl && (
+                        <Button
+                          as="a"
+                          href={account.profileUrl}
+                          target="_blank"
+                          variant="light"
+                          size="sm"
+                          isIconOnly
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {account.status === "EXPIRED" && (
+                        <Button
+                          variant="flat"
+                          size="sm"
+                          color="warning"
+                          startContent={<RefreshCw className="w-4 h-4" />}
+                          onPress={() => handleConnect(account.platform)}
+                        >
+                          Reconnect
+                        </Button>
+                      )}
+                      <Button
+                        variant="flat"
+                        size="sm"
+                        color="danger"
+                        isIconOnly
+                        isLoading={actionLoading === account.id}
+                        onPress={() => handleDisconnect(account.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </CardBody>
         </Card>
       ) : (
@@ -91,21 +376,11 @@ export function SocialAccountsPage() {
               <span className="text-3xl">🔗</span>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Connect Your First Account
+              No Accounts Connected
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Connect your social media accounts to start scheduling posts.
-              Accounts are managed in the Social Manager.
+              Connect your social media accounts to start scheduling and publishing posts.
             </p>
-            <Button
-              as="a"
-              href={`${status.postizUrl}/launches`}
-              target="_blank"
-              color="primary"
-              size="lg"
-            >
-              Open Social Manager →
-            </Button>
           </CardBody>
         </Card>
       )}

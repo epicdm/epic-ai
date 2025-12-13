@@ -17,6 +17,12 @@ import {
   Zap,
   FlaskConical,
   Megaphone,
+  Brain,
+  FileText,
+  CheckSquare,
+  Globe,
+  Database,
+  Calendar,
 } from "lucide-react";
 
 interface NavItem {
@@ -34,7 +40,43 @@ const navigation: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    name: "Social Media",
+    name: "Brand Brain",
+    href: "/dashboard/brand",
+    icon: Brain,
+    children: [
+      { name: "Overview", href: "/dashboard/brand" },
+      { name: "Voice & Style", href: "/dashboard/brand/voice" },
+      { name: "Strategy", href: "/dashboard/brand/strategy" },
+    ],
+  },
+  {
+    name: "Context Engine",
+    href: "/dashboard/context",
+    icon: Database,
+    children: [
+      { name: "Sources", href: "/dashboard/context" },
+      { name: "Documents", href: "/dashboard/context?tab=documents" },
+      { name: "Search", href: "/dashboard/context?tab=search" },
+    ],
+  },
+  {
+    name: "Content",
+    href: "/dashboard/content",
+    icon: FileText,
+    children: [
+      { name: "Queue", href: "/dashboard/content" },
+      { name: "Approval Queue", href: "/dashboard/content/approval" },
+      { name: "Generate", href: "/dashboard/content/generate" },
+      { name: "Published", href: "/dashboard/content/published" },
+    ],
+  },
+  {
+    name: "Calendar",
+    href: "/dashboard/calendar",
+    icon: Calendar,
+  },
+  {
+    name: "Social Accounts",
     href: "/dashboard/social",
     icon: Share2,
     children: [
@@ -49,7 +91,6 @@ const navigation: NavItem[] = [
     name: "Voice AI",
     href: "/dashboard/voice",
     icon: Phone,
-    badge: "Soon",
     children: [
       { name: "Agents", href: "/dashboard/voice" },
       { name: "Calls", href: "/dashboard/voice/calls" },
@@ -75,13 +116,11 @@ const navigation: NavItem[] = [
     name: "Automations",
     href: "/dashboard/automations",
     icon: Zap,
-    badge: "Soon",
   },
   {
     name: "Analytics",
     href: "/dashboard/analytics",
     icon: BarChart3,
-    badge: "Soon",
   },
   {
     name: "Integration Tests",
@@ -96,6 +135,10 @@ const bottomNavigation: NavItem[] = [
     name: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+    children: [
+      { name: "General", href: "/dashboard/settings" },
+      { name: "Publishing", href: "/dashboard/settings/publishing" },
+    ],
   },
 ];
 
