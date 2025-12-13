@@ -151,17 +151,23 @@ export function UnifiedDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
 
   const loadDashboard = useCallback(async () => {
+    setError(null);
     try {
       const res = await fetch(`/api/dashboard?period=${period}`);
       if (res.ok) {
         const dashboardData = await res.json();
         setData(dashboardData);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setError(errorData.error || `Failed to load dashboard (${res.status})`);
       }
     } catch (error) {
       console.error("Error loading dashboard:", error);
+      setError("Failed to connect to server");
     } finally {
       setLoading(false);
     }
@@ -171,10 +177,34 @@ export function UnifiedDashboard() {
     loadDashboard();
   }, [loadDashboard]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex justify-center py-12">
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger/10 flex items-center justify-center">
+            <Activity className="w-8 h-8 text-danger" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Unable to load dashboard</h2>
+          <p className="text-default-500 mb-6">
+            {error || "We couldn't fetch your dashboard data. Please try again."}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="bordered" onPress={() => router.push("/onboarding")}>
+              Setup Wizard
+            </Button>
+            <Button color="primary" onPress={() => loadDashboard()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

@@ -19,9 +19,6 @@ export async function GET(request: NextRequest) {
     }
 
     const org = await getUserOrganization();
-    if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
-    }
 
     const { searchParams } = new URL(request.url);
     const period = parseInt(searchParams.get("period") || "30");
@@ -29,6 +26,11 @@ export async function GET(request: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - period);
     startDate.setHours(0, 0, 0, 0);
+
+    // If no organization, return empty dashboard data for setup state
+    if (!org) {
+      return NextResponse.json(getEmptyDashboardData(period, startDate));
+    }
 
     // Get brand for this org
     const brand = await prisma.brand.findFirst({
@@ -428,4 +430,86 @@ async function getRecentActivity(
   return activities
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
+}
+
+/**
+ * Get empty dashboard data for users without organization/brand
+ */
+function getEmptyDashboardData(period: number, startDate: Date) {
+  return {
+    brandBrain: {
+      isSetup: false,
+      companyName: null,
+      audienceCount: 0,
+      pillarCount: 0,
+      learningCount: 0,
+    },
+    accounts: {
+      total: 0,
+      totalFollowers: 0,
+      list: [],
+    },
+    content: {
+      draft: 0,
+      pending: 0,
+      approved: 0,
+      scheduled: 0,
+      published: 0,
+      total: 0,
+    },
+    organic: {
+      posts: 0,
+      impressions: 0,
+      engagements: 0,
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      avgEngagementRate: 0,
+    },
+    paid: {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      ctr: 0,
+      cpa: 0,
+    },
+    leads: {
+      total: 0,
+      new: 0,
+      contacted: 0,
+      qualified: 0,
+      converted: 0,
+      organic: 0,
+      paid: 0,
+    },
+    roi: {
+      totalSpend: 0,
+      totalLeads: 0,
+      costPerLead: 0,
+      organicLeads: 0,
+      paidLeads: 0,
+      conversionRate: 0,
+    },
+    insights: [],
+    flywheel: {
+      score: 0,
+      status: "inactive",
+      components: [
+        { name: "Brand Brain", active: false },
+        { name: "Target Audience", active: false },
+        { name: "Content Pillars", active: false },
+        { name: "Social Accounts", active: false },
+        { name: "Published Content", active: false },
+        { name: "Analytics Active", active: false },
+        { name: "AI Learnings", active: false },
+      ],
+    },
+    activity: [],
+    period: {
+      days: period,
+      start: startDate.toISOString(),
+      end: new Date().toISOString(),
+    },
+  };
 }

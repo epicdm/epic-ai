@@ -20,38 +20,48 @@ export default async function ContextPage() {
     redirect("/onboarding");
   }
 
-  // Get brand with context sources
-  const brand = await prisma.brand.findFirst({
-    where: { organizationId: organization.id },
-    include: {
-      contextSources: {
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: { select: { contextItems: true } },
+  // Get brand with context sources - wrapped in try-catch for resilience
+  let brand = null;
+  try {
+    brand = await prisma.brand.findFirst({
+      where: { organizationId: organization.id },
+      include: {
+        contextSources: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            _count: { select: { contextItems: true } },
+          },
+        },
+        documentUploads: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+        _count: {
+          select: {
+            contextSources: true,
+          },
         },
       },
-      documentUploads: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      },
-      _count: {
-        select: {
-          contextSources: true,
-        },
-      },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Error fetching brand for context:", error);
+  }
 
   if (!brand) {
     redirect("/dashboard/brand");
   }
 
-  // Get total context items count
-  const totalContextItems = await prisma.contextItem.count({
-    where: {
-      source: { brandId: brand.id },
-    },
-  });
+  // Get total context items count - wrapped in try-catch
+  let totalContextItems = 0;
+  try {
+    totalContextItems = await prisma.contextItem.count({
+      where: {
+        source: { brandId: brand.id },
+      },
+    });
+  } catch (error) {
+    console.error("Error counting context items:", error);
+  }
 
   return (
     <ContextEnginePage

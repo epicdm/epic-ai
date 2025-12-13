@@ -20,21 +20,27 @@ export default async function Page() {
     redirect("/onboarding");
   }
 
-  const brand = await prisma.brand.findFirst({
-    where: { organizationId: organization.id },
-    include: {
-      socialAccounts: {
-        where: { status: "CONNECTED" },
-        select: {
-          id: true,
-          platform: true,
-          username: true,
-          displayName: true,
-          avatar: true,
+  // Fetch brand with error handling for resilience
+  let brand = null;
+  try {
+    brand = await prisma.brand.findFirst({
+      where: { organizationId: organization.id },
+      include: {
+        socialAccounts: {
+          where: { status: "CONNECTED" },
+          select: {
+            id: true,
+            platform: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Error fetching brand for content:", error);
+  }
 
   if (!brand) {
     redirect("/dashboard/brand");

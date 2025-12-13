@@ -24,17 +24,27 @@ export default async function SettingsPage() {
     redirect("/onboarding");
   }
 
-  // Get organization's brands
-  const brands = await prisma.brand.findMany({
-    where: { organizationId: organization.id },
-    orderBy: { createdAt: "desc" },
-  });
+  // Get organization's brands - wrapped in try-catch for resilience
+  let brands: Awaited<ReturnType<typeof prisma.brand.findMany>> = [];
+  try {
+    brands = await prisma.brand.findMany({
+      where: { organizationId: organization.id },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error fetching brands for settings:", error);
+  }
 
-  // Get subscription info
-  const subscription = await prisma.subscription.findFirst({
-    where: { organizationId: organization.id },
-    orderBy: { createdAt: "desc" },
-  });
+  // Get subscription info - wrapped in try-catch
+  let subscription: Awaited<ReturnType<typeof prisma.subscription.findFirst>> = null;
+  try {
+    subscription = await prisma.subscription.findFirst({
+      where: { organizationId: organization.id },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Error fetching subscription:", error);
+  }
 
   return (
     <SettingsContent

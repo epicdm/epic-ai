@@ -21,35 +21,41 @@ export default async function BrandPage() {
     redirect("/onboarding");
   }
 
-  // Get brand with brain and context sources
-  const brand = await prisma.brand.findFirst({
-    where: { organizationId: organization.id },
-    include: {
-      brandBrain: {
-        include: {
-          audiences: {
-            orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+  // Get brand with brain and context sources - wrapped in try-catch for resilience
+  let brand = null;
+  try {
+    brand = await prisma.brand.findFirst({
+      where: { organizationId: organization.id },
+      include: {
+        brandBrain: {
+          include: {
+            audiences: {
+              orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+            },
+            pillars: {
+              orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+            },
+            brandCompetitors: {
+              orderBy: { createdAt: "asc" },
+            },
           },
-          pillars: {
-            orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
-          },
-          brandCompetitors: {
-            orderBy: { createdAt: "asc" },
+        },
+        contextSources: {
+          orderBy: { updatedAt: "desc" },
+          take: 5,
+        },
+        _count: {
+          select: {
+            contextSources: true,
+            contentQueue: true,
           },
         },
       },
-      contextSources: {
-        orderBy: { updatedAt: "desc" },
-        take: 5,
-      },
-      _count: {
-        select: {
-          contextSources: true,
-          contentQueue: true,
-        },
-      },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Error fetching brand:", error);
+    // Continue with null brand - show setup wizard
+  }
 
   // If no brand exists, show setup wizard
   if (!brand) {
