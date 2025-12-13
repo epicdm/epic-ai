@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       where: { organizationId: org.id },
     });
 
-    // Parallel fetch all dashboard data
+    // Parallel fetch all dashboard data with error handling for each query
     const [
       brandBrain,
       socialAccounts,
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
                 },
               },
             },
-          })
+          }).catch((e) => { console.error("Error fetching brandBrain:", e); return null; })
         : null,
 
       // Social accounts
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
               avatar: true,
               followerCount: true,
             },
-          })
+          }).catch((e) => { console.error("Error fetching socialAccounts:", e); return []; })
         : [],
 
       // Content queue stats
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
             by: ["status"],
             where: { brandId: brand.id },
             _count: true,
-          })
+          }).catch((e) => { console.error("Error fetching contentStats:", e); return []; })
         : [],
 
       // Social metrics (last N days)
@@ -104,6 +104,13 @@ export async function GET(request: NextRequest) {
           engagementRate: true,
         },
         _count: true,
+      }).catch((e) => {
+        console.error("Error fetching socialMetrics:", e);
+        return {
+          _sum: { impressions: null, engagements: null, likes: null, comments: null, shares: null },
+          _avg: { engagementRate: null },
+          _count: 0,
+        };
       }),
 
       // Lead stats
@@ -114,7 +121,7 @@ export async function GET(request: NextRequest) {
           createdAt: { gte: startDate },
         },
         _count: true,
-      }),
+      }).catch((e) => { console.error("Error fetching leadStats:", e); return []; }),
 
       // Ad campaign stats
       brand
@@ -143,7 +150,7 @@ export async function GET(request: NextRequest) {
             },
             orderBy: { confidence: "desc" },
             take: 5,
-          })
+          }).catch((e) => { console.error("Error fetching learnings:", e); return []; })
         : [],
 
       // Recent activity
@@ -343,66 +350,78 @@ async function getRecentActivity(
 ): Promise<ActivityItem[]> {
   const activities: ActivityItem[] = [];
 
-  // Recent published content
+  // Recent published content - wrap in try-catch for resilience
   if (brandId) {
-    const recentContent = await prisma.contentVariation.findMany({
-      where: {
-        content: { brandId },
-        status: "PUBLISHED",
-      },
-      orderBy: { publishedAt: "desc" },
-      take: 5,
-      include: {
-        account: { select: { platform: true, username: true } },
-      },
-    });
+    try {
+      const recentContent = await prisma.contentVariation.findMany({
+        where: {
+          content: { brandId },
+          status: "PUBLISHED",
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 5,
+        include: {
+          account: { select: { platform: true, username: true } },
+        },
+      });
 
-    recentContent.forEach((variation) => {
-      if (variation.publishedAt) {
-        activities.push({
-          type: "post_published",
-          title: `Published to ${variation.platform}`,
-          description: variation.text.substring(0, 60) + "...",
-          timestamp: variation.publishedAt,
-          platform: variation.platform,
-        });
-      }
-    });
+      recentContent.forEach((variation) => {
+        if (variation.publishedAt) {
+          activities.push({
+            type: "post_published",
+            title: `Published to ${variation.platform}`,
+            description: variation.text.substring(0, 60) + "...",
+            timestamp: variation.publishedAt,
+            platform: variation.platform,
+          });
+        }
+      });
+    } catch (e) {
+      console.error("Error fetching content variations:", e);
+    }
   }
 
-  // Recent leads
-  const recentLeads = await prisma.lead.findMany({
-    where: { organizationId: orgId },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-  });
-
-  recentLeads.forEach((lead) => {
-    activities.push({
-      type: "lead_created",
-      title: "New lead captured",
-      description: `${lead.firstName} ${lead.lastName || ""} - ${lead.email || "No email"}`,
-      timestamp: lead.createdAt,
-    });
-  });
-
-  // Recent content generated
-  if (brandId) {
-    const recentItems = await prisma.contentItem.findMany({
-      where: { brandId },
+  // Recent leads - wrap in try-catch for resilience
+  try {
+    const recentLeads = await prisma.lead.findMany({
+      where: { organizationId: orgId },
       orderBy: { createdAt: "desc" },
       take: 5,
     });
 
-    recentItems.forEach((item) => {
+    recentLeads.forEach((lead) => {
       activities.push({
-        type: "content_generated",
-        title: "Content created",
-        description: item.content.substring(0, 60) + "...",
-        timestamp: item.createdAt,
-        status: item.status,
+        type: "lead_created",
+        title: "New lead captured",
+        description: `${lead.firstName} ${lead.lastName || ""} - ${lead.email || "No email"}`,
+        timestamp: lead.createdAt,
       });
     });
+  } catch (e) {
+    console.error("Error fetching recent leads:", e);
+  }
+
+  // Recent content generated - wrap in try-catch for resilience
+  if (brandId) {
+    try {
+      const recentItems = await prisma.contentItem.findMany({
+        where: { brandId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      });
+
+      recentItems.forEach((item) => {
+        activities.push({
+          type: "content_generated",
+          title: "Content created",
+          description: item.content.substring(0, 60) + "...",
+          timestamp: item.createdAt,
+          status: item.status,
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching content items:", e);
+    }
   }
 
   // Sort by timestamp and limit
