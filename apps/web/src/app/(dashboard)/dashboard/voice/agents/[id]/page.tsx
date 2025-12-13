@@ -26,18 +26,18 @@ export default async function AgentDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
-  // Fetch the agent
+  // First get the brand IDs for this organization
+  const orgBrands = await prisma.brand.findMany({
+    where: { organizationId: org.id },
+    select: { id: true },
+  });
+  const brandIds = orgBrands.map(b => b.id);
+
+  // Fetch the agent (VoiceAgent doesn't have a direct brand relation)
   const agent = await prisma.voiceAgent.findFirst({
     where: {
       id,
-      brand: {
-        organizationId: org.id,
-      },
-    },
-    include: {
-      brand: {
-        select: { id: true, name: true },
-      },
+      brandId: { in: brandIds },
     },
   });
 
@@ -52,19 +52,24 @@ export default async function AgentDetailPage({ params }: PageProps) {
   });
 
   // Transform agent data for the form
+  // Settings JSON may contain extended configuration
+  const agentSettings = (agent.settings as Record<string, unknown>) || {};
   const initialData = {
     id: agent.id,
     name: agent.name,
-    description: agent.description,
+    description: (agentSettings.description as string) || "",
     brandId: agent.brandId,
     systemPrompt: agent.systemPrompt,
-    greeting: agent.greeting,
-    llmProvider: agent.llmProvider,
-    llmModel: agent.llmModel,
-    ttsProvider: agent.ttsProvider,
-    sttProvider: agent.sttProvider,
-    voiceSettings: (agent.voiceSettings as { voiceId?: string; temperature?: number }) || {},
-    transferNumber: agent.transferNumber,
+    greeting: (agentSettings.greeting as string) || "",
+    llmProvider: (agentSettings.llmProvider as string) || "openai",
+    llmModel: (agentSettings.llmModel as string) || "gpt-4",
+    ttsProvider: (agentSettings.ttsProvider as string) || "elevenlabs",
+    sttProvider: (agentSettings.sttProvider as string) || "deepgram",
+    voiceSettings: {
+      voiceId: agent.voiceId || undefined,
+      temperature: (agentSettings.temperature as number) || 0.7,
+    },
+    transferNumber: (agentSettings.transferNumber as string) || "",
     isActive: agent.isActive,
   };
 

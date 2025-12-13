@@ -70,7 +70,7 @@ export class ContextManager {
 
     try {
       // Scrape content based on source type
-      const scrapedContent = await this.scrapeSource(source.type, source.config as SourceConfig);
+      const scrapedContent = await this.scrapeSource(source.type, source.config as unknown as SourceConfig);
 
       if (!scrapedContent.success) {
         await prisma.contextSource.update({

@@ -1,6 +1,19 @@
+/**
+ * Voice TTS (Text-to-Speech) API
+ * TODO: Implement when TTS service is completed
+ */
+
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { textToSpeech, textToSpeechBase64, getContentType, isValidVoiceId, VOICE_OPTIONS, type VoiceId } from "@/lib/voice/tts";
+
+const VOICE_OPTIONS: Record<string, { name: string; description: string }> = {
+  alloy: { name: "Alloy", description: "Neutral, balanced voice" },
+  echo: { name: "Echo", description: "Warm, engaging voice" },
+  fable: { name: "Fable", description: "Expressive, dynamic voice" },
+  onyx: { name: "Onyx", description: "Deep, authoritative voice" },
+  nova: { name: "Nova", description: "Friendly, conversational voice" },
+  shimmer: { name: "Shimmer", description: "Clear, professional voice" },
+};
 
 /**
  * POST /api/voice/speak
@@ -14,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { text, voice = "nova", speed = 1.0, format = "mp3", returnBase64 = false } = body;
+    const { text, voice = "nova", speed = 1.0 } = body;
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -27,15 +40,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate voice
-    if (!isValidVoiceId(voice)) {
+    if (!VOICE_OPTIONS[voice]) {
       return NextResponse.json(
         { error: `Invalid voice. Valid options: ${Object.keys(VOICE_OPTIONS).join(", ")}` },
         { status: 400 }
       );
     }
 
-    // Validate speed
     if (speed < 0.25 || speed > 4.0) {
       return NextResponse.json(
         { error: "Speed must be between 0.25 and 4.0" },
@@ -43,34 +54,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (returnBase64) {
-      // Return as base64 JSON
-      const result = await textToSpeechBase64(text, {
-        voice: voice as VoiceId,
-        speed,
-        responseFormat: format,
-      });
-
-      return NextResponse.json({
-        audio: result.audio,
-        format: result.format,
-        contentType: getContentType(result.format),
-      });
-    } else {
-      // Return as audio stream
-      const audioBuffer = await textToSpeech(text, {
-        voice: voice as VoiceId,
-        speed,
-        responseFormat: format,
-      });
-
-      return new NextResponse(audioBuffer, {
-        headers: {
-          "Content-Type": getContentType(format),
-          "Content-Length": audioBuffer.length.toString(),
-        },
-      });
-    }
+    // TODO: Implement TTS generation when service is completed
+    return NextResponse.json(
+      { error: "Text-to-speech not yet implemented" },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error generating speech:", error);
     return NextResponse.json(
@@ -81,7 +69,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/voice/speak/voices
+ * GET /api/voice/speak
  * List available TTS voices
  */
 export async function GET() {

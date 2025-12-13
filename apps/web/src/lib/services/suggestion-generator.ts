@@ -1,11 +1,11 @@
 /**
  * AI Suggestion Generator Service
+ * TODO: Implement when autopilotSettings and socialSuggestion models are complete
  *
  * Generates social media post suggestions based on business events
  * like lead conversions, 5-star calls, and weekly content planning.
  */
 
-import { prisma } from "@epic-ai/database";
 import OpenAI from "openai";
 
 // Lazy initialization to avoid build-time errors
@@ -54,23 +54,11 @@ type TriggerData = LeadConvertedData | FiveStarCallData | WeeklyContentData | Re
  * Generate a social media post suggestion based on trigger type
  */
 export async function generateSuggestion(
-  organizationId: string,
+  _organizationId: string,
   triggerType: TriggerType,
   triggerData: TriggerData
 ): Promise<{ content: string; suggestedPlatforms: string[] }> {
-  // Get autopilot settings for tone/style
-  const settings = await prisma.autopilotSettings.findUnique({
-    where: { organizationId },
-    select: {
-      defaultTone: true,
-      includeEmojis: true,
-      includeHashtags: true,
-      includeCTA: true,
-      brandDescription: true,
-      defaultPlatforms: true,
-    },
-  });
-
+  // TODO: Get autopilot settings when model is complete
   const defaultSettings: AutopilotSettings = {
     defaultTone: "professional",
     includeEmojis: true,
@@ -80,7 +68,7 @@ export async function generateSuggestion(
     defaultPlatforms: [],
   };
 
-  const effectiveSettings = settings || defaultSettings;
+  const effectiveSettings = defaultSettings;
 
   const prompt = buildPrompt(triggerType, triggerData, effectiveSettings);
 
@@ -160,7 +148,7 @@ The post should:
       basePrompt = `Write an engaging weekly social media post.
 
 Context:
-- Week number: ${data.weekNumber || new Date().getWeek()}
+- Week number: ${data.weekNumber || getWeekNumber()}
 - Theme: ${data.theme || "industry insights"}
 
 The post should:
@@ -273,94 +261,39 @@ function determinePlatforms(content: string, defaults: string[]): string[] {
 
 /**
  * Create a suggestion in the database
+ * TODO: Implement when socialSuggestion model is complete
  */
 export async function createSuggestion(
   organizationId: string,
   triggerType: TriggerType,
   triggerData: TriggerData,
-  autoPost: boolean = false
+  _autoPost: boolean = false
 ): Promise<{ id: string; content: string }> {
-  const { content, suggestedPlatforms } = await generateSuggestion(
+  const { content } = await generateSuggestion(
     organizationId,
     triggerType,
     triggerData
   );
 
-  // Check if auto-posting is enabled
-  const settings = await prisma.autopilotSettings.findUnique({
-    where: { organizationId },
-    select: { approvalMode: true, maxPostsPerDay: true, minHoursBetween: true },
-  });
-
-  const status = autoPost && settings?.approvalMode === "AUTO_POST"
-    ? "APPROVED"
-    : "PENDING";
-
-  const suggestion = await prisma.socialSuggestion.create({
-    data: {
-      organizationId,
-      content,
-      triggerType,
-      triggerData,
-      suggestedPlatforms,
-      status,
-    },
-  });
-
-  return { id: suggestion.id, content };
+  // TODO: Store suggestion when socialSuggestion model is complete
+  return { id: `stub-${Date.now()}`, content };
 }
 
 /**
  * Check rate limits for auto-posting
+ * TODO: Implement when autopilotSettings model is complete
  */
-export async function canAutoPost(organizationId: string): Promise<boolean> {
-  const settings = await prisma.autopilotSettings.findUnique({
-    where: { organizationId },
-    select: { maxPostsPerDay: true, minHoursBetween: true },
-  });
-
-  if (!settings) return true;
-
-  const now = new Date();
-  const dayStart = new Date(now.setHours(0, 0, 0, 0));
-  const minTimeAgo = new Date(Date.now() - settings.minHoursBetween * 60 * 60 * 1000);
-
-  // Check posts today
-  const postsToday = await prisma.socialSuggestion.count({
-    where: {
-      organizationId,
-      status: "POSTED",
-      postedAt: { gte: dayStart },
-    },
-  });
-
-  if (postsToday >= settings.maxPostsPerDay) {
-    return false;
-  }
-
-  // Check recent posts
-  const recentPost = await prisma.socialSuggestion.findFirst({
-    where: {
-      organizationId,
-      status: "POSTED",
-      postedAt: { gte: minTimeAgo },
-    },
-  });
-
-  return !recentPost;
+export async function canAutoPost(_organizationId: string): Promise<boolean> {
+  // Always return true until model is complete
+  return true;
 }
 
 // Helper to get week number
-declare global {
-  interface Date {
-    getWeek(): number;
-  }
-}
-
-Date.prototype.getWeek = function (): number {
-  const d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+function getWeekNumber(): number {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-};
+}

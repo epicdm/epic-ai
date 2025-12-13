@@ -95,21 +95,7 @@ export async function POST(request: NextRequest) {
       images,
     });
 
-    // Log in our database for tracking
-    await prisma.socialPostLog.create({
-      data: {
-        organizationId: org.id,
-        content,
-        platforms: integrationIds,
-        postizPostIds: result.map((r) => r.postId),
-        status: postNow ? "POSTED" : scheduleDate ? "SCHEDULED" : "DRAFT",
-        scheduledFor: scheduleDate ? new Date(scheduleDate) : null,
-        postedAt: postNow ? new Date() : null,
-        generatedBy: generatedBy || "MANUAL",
-        sourceType,
-        sourceId,
-      },
-    });
+    // TODO: Log in our database for tracking when socialPostLog model exists
 
     return NextResponse.json({ success: true, posts: result });
   } catch (error) {

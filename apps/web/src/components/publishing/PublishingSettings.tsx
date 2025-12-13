@@ -436,7 +436,7 @@ export function PublishingSettings({ orgId }: Props) {
                 )}
               >
                 {PLATFORMS.map((platform) => (
-                  <SelectItem key={platform} value={platform}>
+                  <SelectItem key={platform}>
                     {getPlatformName(platform)}
                   </SelectItem>
                 ))}
@@ -522,7 +522,7 @@ export function PublishingSettings({ orgId }: Props) {
                 }
               >
                 {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
+                  <SelectItem key={tz}>
                     {tz}
                   </SelectItem>
                 ))}

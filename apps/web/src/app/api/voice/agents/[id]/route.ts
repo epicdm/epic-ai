@@ -1,3 +1,7 @@
+/**
+ * Voice Agent Detail API
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
@@ -21,25 +25,17 @@ export async function GET(
 
     const { id } = await params;
 
+    // Get brand IDs for this org
+    const brands = await prisma.brand.findMany({
+      where: { organizationId: org.id },
+      select: { id: true },
+    });
+    const brandIds = brands.map((b) => b.id);
+
     const agent = await prisma.voiceAgent.findFirst({
       where: {
         id,
-        brand: {
-          organizationId: org.id,
-        },
-      },
-      include: {
-        brand: {
-          select: { id: true, name: true },
-        },
-        persona: {
-          select: { id: true, name: true },
-        },
-        phoneNumbers: true,
-        calls: {
-          take: 10,
-          orderBy: { createdAt: "desc" },
-        },
+        brandId: { in: brandIds },
       },
     });
 
@@ -47,7 +43,13 @@ export async function GET(
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    return NextResponse.json(agent);
+    // Get brand info
+    const brand = await prisma.brand.findUnique({
+      where: { id: agent.brandId },
+      select: { id: true, name: true },
+    });
+
+    return NextResponse.json({ ...agent, brand });
   } catch (error) {
     console.error("Error fetching agent:", error);
     return NextResponse.json(
@@ -75,13 +77,18 @@ export async function PATCH(
 
     const { id } = await params;
 
+    // Get brand IDs for this org
+    const brands = await prisma.brand.findMany({
+      where: { organizationId: org.id },
+      select: { id: true },
+    });
+    const brandIds = brands.map((b) => b.id);
+
     // Verify ownership
     const existing = await prisma.voiceAgent.findFirst({
       where: {
         id,
-        brand: {
-          organizationId: org.id,
-        },
+        brandId: { in: brandIds },
       },
     });
 
@@ -90,17 +97,28 @@ export async function PATCH(
     }
 
     const body = await request.json();
+
+    // Only allow updating fields that exist on the model
+    const { name, systemPrompt, voiceId, isActive, settings } = body;
+    const updateData: Record<string, unknown> = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (systemPrompt !== undefined) updateData.systemPrompt = systemPrompt;
+    if (voiceId !== undefined) updateData.voiceId = voiceId;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (settings !== undefined) updateData.settings = settings;
+
     const agent = await prisma.voiceAgent.update({
       where: { id },
-      data: body,
-      include: {
-        brand: {
-          select: { id: true, name: true },
-        },
-      },
+      data: updateData,
     });
 
-    return NextResponse.json(agent);
+    const brand = await prisma.brand.findUnique({
+      where: { id: agent.brandId },
+      select: { id: true, name: true },
+    });
+
+    return NextResponse.json({ ...agent, brand });
   } catch (error) {
     console.error("Error updating agent:", error);
     return NextResponse.json(
@@ -128,13 +146,18 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // Get brand IDs for this org
+    const brands = await prisma.brand.findMany({
+      where: { organizationId: org.id },
+      select: { id: true },
+    });
+    const brandIds = brands.map((b) => b.id);
+
     // Verify ownership
     const existing = await prisma.voiceAgent.findFirst({
       where: {
         id,
-        brand: {
-          organizationId: org.id,
-        },
+        brandId: { in: brandIds },
       },
     });
 

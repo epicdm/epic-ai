@@ -1,7 +1,11 @@
+/**
+ * Social Suggestions API
+ * TODO: Implement when socialSuggestion model exists
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
 import { z } from "zod";
 
 const createSuggestionSchema = z.object({
@@ -28,30 +32,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
-
-    const where: Record<string, unknown> = { organizationId: org.id };
-    if (status) {
-      where.status = status;
-    }
-
-    const [suggestions, total] = await Promise.all([
-      prisma.socialSuggestion.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.socialSuggestion.count({ where }),
-    ]);
-
+    // TODO: Implement when socialSuggestion model exists
     return NextResponse.json({
-      suggestions,
-      total,
-      hasMore: offset + suggestions.length < total,
+      suggestions: [],
+      total: 0,
+      hasMore: false,
     });
   } catch (error) {
     console.error("Error fetching suggestions:", error);
@@ -84,19 +69,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const suggestion = await prisma.socialSuggestion.create({
-      data: {
-        organizationId: org.id,
-        content: parsed.data.content,
-        imageUrl: parsed.data.imageUrl,
-        triggerType: parsed.data.triggerType,
-        triggerData: parsed.data.triggerData || {},
-        suggestedPlatforms: parsed.data.suggestedPlatforms,
-        status: parsed.data.status,
-      },
-    });
-
-    return NextResponse.json(suggestion, { status: 201 });
+    // TODO: Implement when socialSuggestion model exists
+    return NextResponse.json(
+      { error: "Suggestions not yet implemented" },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error creating suggestion:", error);
     return NextResponse.json({ error: "Failed to create suggestion" }, { status: 500 });

@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
 
       calendarData[dateKey].push({
         id: item.id,
-        title: item.title || item.contentText?.substring(0, 50) || 'Untitled',
+        title: item.content?.substring(0, 50) || 'Untitled',
         status: item.status,
         scheduledFor: item.scheduledFor?.toISOString() || '',
         brand: item.brand,

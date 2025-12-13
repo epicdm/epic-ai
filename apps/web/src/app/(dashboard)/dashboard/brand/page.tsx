@@ -25,7 +25,7 @@ export default async function BrandPage() {
   const brand = await prisma.brand.findFirst({
     where: { organizationId: organization.id },
     include: {
-      brain: {
+      brandBrain: {
         include: {
           audiences: {
             orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
@@ -66,32 +66,32 @@ export default async function BrandPage() {
     <BrandBrainPage
       brandId={brand.id}
       brandName={brand.name}
-      initialBrain={brand.brain ? {
-        id: brand.brain.id,
-        companyName: brand.brain.companyName,
-        description: brand.brain.description,
-        mission: brand.brain.mission,
-        values: brand.brain.values,
-        uniqueSellingPoints: brand.brain.uniqueSellingPoints,
-        industry: brand.brain.industry,
-        targetMarket: brand.brain.targetMarket,
-        voiceTone: brand.brain.voiceTone,
-        voiceToneCustom: brand.brain.voiceToneCustom,
-        formalityLevel: brand.brain.formalityLevel,
-        writingStyle: brand.brain.writingStyle,
-        doNotMention: brand.brain.doNotMention,
-        mustMention: brand.brain.mustMention,
-        useEmojis: brand.brain.useEmojis,
-        emojiFrequency: brand.brain.emojiFrequency,
-        useHashtags: brand.brain.useHashtags,
-        hashtagStyle: brand.brain.hashtagStyle,
-        preferredHashtags: brand.brain.preferredHashtags,
-        bannedHashtags: brand.brain.bannedHashtags,
-        ctaStyle: brand.brain.ctaStyle,
-        brandSummary: brand.brain.brandSummary,
-        setupComplete: brand.brain.setupComplete,
-        setupStep: brand.brain.setupStep,
-        audiences: brand.brain.audiences.map(a => ({
+      initialBrain={brand.brandBrain ? {
+        id: brand.brandBrain.id,
+        companyName: brand.brandBrain.companyName,
+        description: brand.brandBrain.description,
+        mission: brand.brandBrain.mission,
+        values: brand.brandBrain.values,
+        uniqueSellingPoints: brand.brandBrain.uniqueSellingPoints,
+        industry: brand.brandBrain.industry,
+        targetMarket: brand.brandBrain.targetMarket,
+        voiceTone: brand.brandBrain.voiceTone,
+        voiceToneCustom: brand.brandBrain.voiceToneCustom,
+        formalityLevel: brand.brandBrain.formalityLevel,
+        writingStyle: brand.brandBrain.writingStyle,
+        doNotMention: brand.brandBrain.doNotMention,
+        mustMention: brand.brandBrain.mustMention,
+        useEmojis: brand.brandBrain.useEmojis,
+        emojiFrequency: brand.brandBrain.emojiFrequency,
+        useHashtags: brand.brandBrain.useHashtags,
+        hashtagStyle: brand.brandBrain.hashtagStyle,
+        preferredHashtags: brand.brandBrain.preferredHashtags,
+        bannedHashtags: brand.brandBrain.bannedHashtags,
+        ctaStyle: brand.brandBrain.ctaStyle,
+        brandSummary: brand.brandBrain.brandSummary,
+        setupComplete: brand.brandBrain.setupComplete,
+        setupStep: brand.brandBrain.setupStep,
+        audiences: brand.brandBrain.audiences.map((a) => ({
           id: a.id,
           name: a.name,
           description: a.description,
@@ -101,16 +101,16 @@ export default async function BrandPage() {
           painPoints: a.painPoints,
           goals: a.goals,
         })),
-        pillars: brand.brain.pillars.map(p => ({
+        pillars: brand.brandBrain.pillars.map((p) => ({
           id: p.id,
           name: p.name,
           description: p.description,
           color: p.color,
           topics: p.topics,
-          frequency: p.frequency,
+          frequency: p.frequency, // number in schema, matches Pillar interface
           isActive: p.isActive,
         })),
-        brandCompetitors: brand.brain.brandCompetitors.map(c => ({
+        brandCompetitors: brand.brandBrain.brandCompetitors.map((c) => ({
           id: c.id,
           name: c.name,
           website: c.website,

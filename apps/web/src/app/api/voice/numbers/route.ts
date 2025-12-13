@@ -1,11 +1,11 @@
+/**
+ * Voice Phone Numbers API
+ * TODO: Implement when PhoneNumber model exists
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
-import {
-  isMagnusConfigured,
-  provisionDIDForUser,
-} from "@/lib/voice/magnus-billing";
 
 /**
  * GET /api/voice/numbers - List phone numbers for the organization
@@ -22,21 +22,10 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // Get phone numbers from our database that are linked to this org
-    const phoneNumbers = await prisma.phoneNumber.findMany({
-      where: {
-        brand: { organizationId: org.id },
-      },
-      include: {
-        brand: { select: { name: true } },
-        agent: { select: { id: true, name: true } },
-      },
-      orderBy: { acquiredAt: "desc" },
-    });
-
+    // TODO: Implement when PhoneNumber model exists
     return NextResponse.json({
-      phoneNumbers,
-      magnusConfigured: isMagnusConfigured(),
+      phoneNumbers: [],
+      magnusConfigured: false,
     });
   } catch (error) {
     console.error("Error fetching phone numbers:", error);
@@ -62,76 +51,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    if (!isMagnusConfigured()) {
-      return NextResponse.json(
-        { error: "Magnus Billing is not configured" },
-        { status: 503 }
-      );
-    }
-
-    const body = await request.json();
-    const { brandId, agentId, magnusUserId, magnusUsername } = body;
-
-    if (!brandId) {
-      return NextResponse.json(
-        { error: "Brand ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Verify brand belongs to this org
-    const brand = await prisma.brand.findFirst({
-      where: {
-        id: brandId,
-        organizationId: org.id,
-      },
-    });
-
-    if (!brand) {
-      return NextResponse.json({ error: "Brand not found" }, { status: 404 });
-    }
-
-    // If Magnus user credentials provided, provision DID
-    if (magnusUserId && magnusUsername) {
-      const result = await provisionDIDForUser(magnusUserId, magnusUsername);
-
-      if (!result.success) {
-        return NextResponse.json(
-          { error: result.error || "Failed to provision DID" },
-          { status: 500 }
-        );
-      }
-
-      // Save to our database using existing schema fields
-      // providerId stores Magnus DID ID, capabilities stores SIP ID as JSON
-      const phoneNumber = await prisma.phoneNumber.create({
-        data: {
-          number: result.did!,
-          brandId,
-          agentId: agentId || null,
-          provider: "magnus",
-          providerId: result.didId, // Store Magnus DID ID
-          capabilities: {
-            voice: true,
-            sms: false,
-            sip: true,
-            magnusSipId: result.sipId, // Store SIP ID in capabilities JSON
-          },
-          isActive: true,
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        phoneNumber,
-        magnusResult: result,
-      });
-    }
-
-    // Otherwise, just create a placeholder for manual setup
+    // TODO: Implement when PhoneNumber model and Magnus billing are completed
     return NextResponse.json(
-      { error: "Magnus user credentials required for DID provisioning" },
-      { status: 400 }
+      { error: "Phone number provisioning not yet implemented" },
+      { status: 501 }
     );
   } catch (error) {
     console.error("Error provisioning phone number:", error);

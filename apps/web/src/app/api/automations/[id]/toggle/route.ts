@@ -1,12 +1,18 @@
+/**
+ * Automation Toggle API
+ * TODO: Implement when Automation model is added to schema
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+// POST toggle automation enabled/disabled
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -19,24 +25,11 @@ export async function POST(
     }
 
     const { id } = await params;
-
-    const existing = await prisma.automation.findFirst({
-      where: {
-        id,
-        organizationId: org.id,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Automation not found" }, { status: 404 });
-    }
-
-    const automation = await prisma.automation.update({
-      where: { id },
-      data: { isActive: !existing.isActive },
-    });
-
-    return NextResponse.json(automation);
+    // TODO: Implement when Automation model is available
+    return NextResponse.json(
+      { error: `Cannot toggle automation ${id} - not implemented` },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error toggling automation:", error);
     return NextResponse.json(

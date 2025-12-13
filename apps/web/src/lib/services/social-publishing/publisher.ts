@@ -1,5 +1,6 @@
 /**
  * Social Publisher - Main orchestrator for publishing to multiple platforms
+ * TODO: Implement fully when PublishResult model and ContentItem relations are complete
  *
  * Handles:
  * - Multi-platform publishing
@@ -9,7 +10,7 @@
  */
 
 import { prisma } from '@epic-ai/database';
-import type { SocialPlatform, SocialAccount, ContentItem } from '@prisma/client';
+import type { SocialPlatform, SocialAccount } from '@prisma/client';
 import { TwitterClient } from './clients/twitter';
 import { LinkedInClient } from './clients/linkedin';
 import { MetaClient } from './clients/meta';
@@ -24,176 +25,39 @@ export class SocialPublisher {
 
   /**
    * Publish content to specified platforms
+   * TODO: Implement when PublishResult model is complete
    */
   async publish(
-    contentId: string,
+    _contentId: string,
     platforms: SocialPlatform[]
   ): Promise<{ platform: SocialPlatform; result: PublishResult }[]> {
-    const content = await prisma.contentItem.findUnique({
-      where: { id: contentId },
-      include: {
-        brand: true,
+    // Stub implementation - return failures for all platforms
+    return platforms.map((platform) => ({
+      platform,
+      result: {
+        success: false,
+        platform,
+        error: 'Publishing not yet implemented - PublishResult model required',
       },
-    });
-
-    if (!content) {
-      throw new Error('Content not found');
-    }
-
-    // Get social accounts for specified platforms
-    const accounts = await prisma.socialAccount.findMany({
-      where: {
-        brandId: this.brandId,
-        platform: { in: platforms },
-        status: 'CONNECTED',
-      },
-    });
-
-    const results: { platform: SocialPlatform; result: PublishResult }[] = [];
-
-    for (const platform of platforms) {
-      const account = accounts.find((a) => a.platform === platform);
-
-      if (!account) {
-        results.push({
-          platform,
-          result: {
-            success: false,
-            platform,
-            error: `No active ${platform} account connected`,
-          },
-        });
-        continue;
-      }
-
-      try {
-        // Get platform-specific content
-        const platformContent = this.getPlatformContent(content, platform);
-
-        // Create client and publish
-        const client = await this.createClient(account);
-
-        if (!client) {
-          results.push({
-            platform,
-            result: {
-              success: false,
-              platform,
-              error: `Failed to create client for ${platform}`,
-            },
-          });
-          continue;
-        }
-
-        // Refresh token if needed
-        const newTokens = await client.refreshTokenIfNeeded();
-        if (newTokens) {
-          await this.updateTokens(account.id, newTokens);
-        }
-
-        // Publish
-        const result = await client.publish(platformContent);
-
-        // Store result
-        await prisma.publishResult.create({
-          data: {
-            contentId,
-            platform,
-            success: result.success,
-            postId: result.postId,
-            postUrl: result.postUrl,
-            error: result.error,
-          },
-        });
-
-        results.push({ platform, result });
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        await prisma.publishResult.create({
-          data: {
-            contentId,
-            platform,
-            success: false,
-            error: errorMessage,
-          },
-        });
-
-        results.push({
-          platform,
-          result: {
-            success: false,
-            platform,
-            error: errorMessage,
-          },
-        });
-      }
-    }
-
-    // Update content status
-    const allSucceeded = results.every((r) => r.result.success);
-    const someSucceeded = results.some((r) => r.result.success);
-
-    await prisma.contentItem.update({
-      where: { id: contentId },
-      data: {
-        status: allSucceeded ? 'PUBLISHED' : someSucceeded ? 'PARTIALLY_PUBLISHED' : 'FAILED',
-        publishedAt: someSucceeded ? new Date() : undefined,
-      },
-    });
-
-    return results;
+    }));
   }
 
   /**
    * Publish scheduled content
    */
   async publishScheduled(): Promise<number> {
-    const now = new Date();
-
-    // Find content ready to publish
-    const scheduledContent = await prisma.contentItem.findMany({
-      where: {
-        brandId: this.brandId,
-        status: 'SCHEDULED',
-        approvalStatus: 'APPROVED',
-        scheduledFor: {
-          lte: now,
-        },
-      },
-      include: {
-        brand: {
-          include: {
-            socialAccounts: {
-              where: { status: 'CONNECTED' },
-            },
-          },
-        },
-      },
-    });
-
-    let publishedCount = 0;
-
-    for (const content of scheduledContent) {
-      try {
-        const platforms = content.platforms as SocialPlatform[];
-        const results = await this.publish(content.id, platforms);
-
-        if (results.some((r) => r.result.success)) {
-          publishedCount++;
-        }
-      } catch (error) {
-        console.error(`Failed to publish content ${content.id}:`, error);
-      }
-    }
-
-    return publishedCount;
+    // Stub implementation
+    return 0;
   }
 
   /**
    * Create appropriate client for platform
    */
   private async createClient(account: SocialAccount): Promise<SocialClient | null> {
+    if (!account.accessToken) {
+      return null;
+    }
+
     const tokens: OAuthTokens = {
       accessToken: account.accessToken,
       refreshToken: account.refreshToken || undefined,
@@ -232,18 +96,14 @@ export class SocialPublisher {
    * Get platform-specific content
    */
   private getPlatformContent(
-    content: ContentItem,
-    platform: SocialPlatform
+    content: string,
+    mediaUrls?: string[],
+    mediaType?: string
   ): PublishOptions {
-    // Get platform-specific variation if available
-    const variations = (content.platformVariations as Record<string, string>) || {};
-    const platformContent = variations[platform] || content.content;
-
     return {
-      content: platformContent,
-      mediaUrls: (content.mediaUrls as string[]) || undefined,
-      mediaType: content.mediaType as 'image' | 'video' | 'carousel' | undefined,
-      hashtags: (content.hashtags as string[]) || undefined,
+      content,
+      mediaUrls: mediaUrls || undefined,
+      mediaType: mediaType as 'image' | 'video' | 'carousel' | undefined,
     };
   }
 

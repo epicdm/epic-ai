@@ -68,6 +68,7 @@ export class ContentGenerator {
 
     return {
       ...parsed,
+      contentType: request.contentType,
       variations,
       suggestedHashtags: hashtags,
     };
@@ -151,7 +152,7 @@ Return only the prompt, no explanation.`,
       quality: 'standard',
     });
 
-    return response.data[0]?.url || '';
+    return response.data?.[0]?.url || '';
   }
 
   // Private methods

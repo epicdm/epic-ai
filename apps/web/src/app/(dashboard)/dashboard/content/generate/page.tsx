@@ -23,9 +23,13 @@ export default async function Page() {
   const brand = await prisma.brand.findFirst({
     where: { organizationId: organization.id },
     include: {
-      brain: true,
+      brandBrain: {
+        include: {
+          pillars: true,
+        },
+      },
       socialAccounts: {
-        where: { isActive: true },
+        where: { status: "CONNECTED" },
       },
     },
   });
@@ -34,11 +38,27 @@ export default async function Page() {
     redirect("/dashboard/brand");
   }
 
+  // Transform data to match component interface
+  const brain = brand.brandBrain ? {
+    id: brand.brandBrain.id,
+    voiceTone: brand.brandBrain.voiceTone,
+    writingStyle: brand.brandBrain.writingStyle,
+    contentPillars: brand.brandBrain.pillars.map(p => p.name),
+    keyTopics: brand.brandBrain.keyMessages || [],
+  } : null;
+
+  const socialAccounts = brand.socialAccounts.map(acc => ({
+    id: acc.id,
+    platform: acc.platform,
+    accountName: acc.displayName || acc.username || "Unknown",
+    profileImageUrl: acc.avatar,
+  }));
+
   return (
     <ContentGeneratePage
       brandId={brand.id}
-      brain={brand.brain}
-      socialAccounts={brand.socialAccounts}
+      brain={brain}
+      socialAccounts={socialAccounts}
     />
   );
 }

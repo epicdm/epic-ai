@@ -49,8 +49,8 @@ export async function transcribeAudio(
 ): Promise<TranscriptionResult> {
   const { model = "whisper-1", language, prompt, temperature, responseFormat = "verbose_json" } = options;
 
-  // Create a File-like object from the buffer
-  const file = new File([audioBuffer], filename, {
+  // Create a File-like object from the buffer - convert Buffer to Uint8Array for compatibility
+  const file = new File([new Uint8Array(audioBuffer)], filename, {
     type: getMimeType(filename),
   });
 

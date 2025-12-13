@@ -1,6 +1,10 @@
+/**
+ * Automations API
+ * TODO: Implement when Automation model is added to schema
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
 // GET all automations
@@ -16,17 +20,8 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const automations = await prisma.automation.findMany({
-      where: { organizationId: org.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: {
-          select: { runs: true },
-        },
-      },
-    });
-
-    return NextResponse.json(automations);
+    // TODO: Implement when Automation model is available
+    return NextResponse.json([]);
   } catch (error) {
     console.error("Error fetching automations:", error);
     return NextResponse.json(
@@ -49,31 +44,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { name, description, trigger, triggerConfig, conditions, actions, isActive } =
-      body;
-
-    if (!name || !trigger || !actions || !Array.isArray(actions)) {
-      return NextResponse.json(
-        { error: "Name, trigger, and actions are required" },
-        { status: 400 }
-      );
-    }
-
-    const automation = await prisma.automation.create({
-      data: {
-        name,
-        description,
-        trigger,
-        triggerConfig,
-        conditions,
-        actions,
-        isActive: isActive ?? true,
-        organizationId: org.id,
-      },
-    });
-
-    return NextResponse.json(automation, { status: 201 });
+    // TODO: Implement when Automation model is available
+    return NextResponse.json(
+      { error: "Automations not yet implemented" },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error creating automation:", error);
     return NextResponse.json(

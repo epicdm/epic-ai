@@ -1,7 +1,11 @@
+/**
+ * Social Suggestion Detail API
+ * TODO: Implement when socialSuggestion model exists
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
 import { z } from "zod";
 
 const updateSuggestionSchema = z.object({
@@ -19,7 +23,7 @@ interface RouteParams {
 /**
  * GET - Get a single suggestion
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -33,18 +37,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const suggestion = await prisma.socialSuggestion.findFirst({
-      where: {
-        id,
-        organizationId: org.id,
-      },
-    });
-
-    if (!suggestion) {
-      return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(suggestion);
+    // TODO: Implement when socialSuggestion model exists
+    return NextResponse.json({ error: `Suggestion ${id} not found` }, { status: 404 });
   } catch (error) {
     console.error("Error fetching suggestion:", error);
     return NextResponse.json({ error: "Failed to fetch suggestion" }, { status: 500 });
@@ -68,15 +62,6 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    // Verify ownership
-    const existing = await prisma.socialSuggestion.findFirst({
-      where: { id, organizationId: org.id },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
-    }
-
     const body = await request.json();
     const parsed = updateSuggestionSchema.safeParse(body);
 
@@ -87,19 +72,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       );
     }
 
-    const updateData: Record<string, unknown> = { ...parsed.data };
-
-    // Handle dismiss status
-    if (parsed.data.status === "DISMISSED" && !existing.dismissedAt) {
-      updateData.dismissedAt = new Date();
-    }
-
-    const suggestion = await prisma.socialSuggestion.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return NextResponse.json(suggestion);
+    // TODO: Implement when socialSuggestion model exists
+    return NextResponse.json({ error: `Suggestion ${id} not found` }, { status: 404 });
   } catch (error) {
     console.error("Error updating suggestion:", error);
     return NextResponse.json({ error: "Failed to update suggestion" }, { status: 500 });
@@ -109,7 +83,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 /**
  * DELETE - Delete a suggestion
  */
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -123,20 +97,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
 
-    // Verify ownership
-    const existing = await prisma.socialSuggestion.findFirst({
-      where: { id, organizationId: org.id },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Suggestion not found" }, { status: 404 });
-    }
-
-    await prisma.socialSuggestion.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true });
+    // TODO: Implement when socialSuggestion model exists
+    return NextResponse.json({ error: `Suggestion ${id} not found` }, { status: 404 });
   } catch (error) {
     console.error("Error deleting suggestion:", error);
     return NextResponse.json({ error: "Failed to delete suggestion" }, { status: 500 });

@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get content pillars for category rotation
-    const contentPillars = brand.brandBrain.contentPillars as string[] | null;
+    // Get content pillars for category rotation (use legacy field or fetch from pillars relation)
+    const contentPillars = brand.brandBrain.contentPillarsLegacy as string[] | undefined;
     const categories = validated.categories || contentPillars || ['general'];
 
     const generator = new ContentGenerator(validated.brandId);

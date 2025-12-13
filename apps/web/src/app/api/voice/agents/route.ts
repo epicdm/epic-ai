@@ -1,3 +1,7 @@
+/**
+ * Voice Agents API
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
@@ -16,27 +20,32 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
+    // Get brand IDs for this org
+    const brands = await prisma.brand.findMany({
+      where: { organizationId: org.id },
+      select: { id: true },
+    });
+    const brandIds = brands.map((b) => b.id);
+
     const agents = await prisma.voiceAgent.findMany({
       where: {
-        brand: {
-          organizationId: org.id,
-        },
-      },
-      include: {
-        brand: {
-          select: { id: true, name: true },
-        },
-        phoneNumbers: {
-          select: { id: true, number: true },
-        },
-        _count: {
-          select: { calls: true },
-        },
+        brandId: { in: brandIds },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ agents });
+    // Transform to include brand info
+    const agentsWithBrand = await Promise.all(
+      agents.map(async (agent) => {
+        const brand = await prisma.brand.findUnique({
+          where: { id: agent.brandId },
+          select: { id: true, name: true },
+        });
+        return { ...agent, brand };
+      })
+    );
+
+    return NextResponse.json({ agents: agentsWithBrand });
   } catch (error) {
     console.error("Error fetching agents:", error);
     return NextResponse.json(
@@ -60,21 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      name,
-      description,
-      brandId,
-      personaId,
-      systemPrompt,
-      greeting,
-      fallbackMessage,
-      llmProvider,
-      llmModel,
-      sttProvider,
-      ttsProvider,
-      voiceSettings,
-      transferNumber,
-    } = body;
+    const { name, brandId, systemPrompt, voiceId, isActive, settings } = body;
 
     // Validate brand belongs to org
     const brand = await prisma.brand.findFirst({
@@ -91,27 +86,15 @@ export async function POST(request: NextRequest) {
     const agent = await prisma.voiceAgent.create({
       data: {
         name,
-        description,
         brandId,
-        personaId,
         systemPrompt: systemPrompt || "You are a helpful AI assistant.",
-        greeting: greeting || "Hello! Thanks for calling. How can I help you today?",
-        fallbackMessage,
-        llmProvider: llmProvider || "openai",
-        llmModel: llmModel || "gpt-4-turbo",
-        sttProvider: sttProvider || "deepgram",
-        ttsProvider: ttsProvider || "openai",
-        voiceSettings: voiceSettings || {},
-        transferNumber,
-      },
-      include: {
-        brand: {
-          select: { id: true, name: true },
-        },
+        voiceId,
+        isActive: isActive ?? true,
+        settings: settings || {},
       },
     });
 
-    return NextResponse.json(agent, { status: 201 });
+    return NextResponse.json({ ...agent, brand: { id: brand.id, name: brand.name } }, { status: 201 });
   } catch (error) {
     console.error("Error creating agent:", error);
     return NextResponse.json(

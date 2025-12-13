@@ -1,0 +1,118 @@
+{
+  "name": "Epic AI - Daily Content Performance Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily at 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.EPIC_AI_API_URL }}/api/analytics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "brandId",
+              "value": "={{ $env.DEFAULT_BRAND_ID }}"
+            },
+            {
+              "name": "period",
+              "value": "week"
+            },
+            {
+              "name": "insights",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-analytics",
+      "name": "Get Analytics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format the analytics data for email\nconst data = $input.first().json;\n\nconst formatNumber = (num) => {\n  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';\n  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';\n  return num.toString();\n};\n\nconst report = {\n  subject: `Weekly Content Report - ${new Date().toLocaleDateString()}`,\n  summary: {\n    impressions: formatNumber(data.metrics?.totalImpressions || 0),\n    engagements: formatNumber(data.metrics?.totalEngagements || 0),\n    reach: formatNumber(data.metrics?.totalReach || 0),\n    engagementRate: (data.metrics?.avgEngagementRate || 0).toFixed(2) + '%'\n  },\n  topContent: data.metrics?.topPerformingContent?.slice(0, 5) || [],\n  insights: data.insights?.slice(0, 3) || [],\n  platformBreakdown: data.metrics?.performanceByPlatform || {}\n};\n\nreturn [{ json: report }];"
+      },
+      "id": "format-report",
+      "name": "Format Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reports@epic.dm",
+        "toEmail": "={{ $env.REPORT_EMAIL }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }\n    .header { background: #6366f1; color: white; padding: 20px; text-align: center; }\n    .metrics { display: flex; justify-content: space-around; padding: 20px; background: #f3f4f6; }\n    .metric { text-align: center; }\n    .metric-value { font-size: 24px; font-weight: bold; color: #6366f1; }\n    .metric-label { font-size: 12px; color: #666; }\n    .section { padding: 20px; }\n    .insight { background: #fef3c7; padding: 10px; margin: 5px 0; border-radius: 5px; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>Weekly Content Report</h1>\n  </div>\n  <div class=\"metrics\">\n    <div class=\"metric\">\n      <div class=\"metric-value\">{{ $json.summary.impressions }}</div>\n      <div class=\"metric-label\">Impressions</div>\n    </div>\n    <div class=\"metric\">\n      <div class=\"metric-value\">{{ $json.summary.engagements }}</div>\n      <div class=\"metric-label\">Engagements</div>\n    </div>\n    <div class=\"metric\">\n      <div class=\"metric-value\">{{ $json.summary.engagementRate }}</div>\n      <div class=\"metric-label\">Eng. Rate</div>\n    </div>\n  </div>\n  <div class=\"section\">\n    <h3>Key Insights</h3>\n    {{ $json.insights.map(i => '<div class=\"insight\"><strong>' + i.type + ':</strong> ' + i.recommendation + '</div>').join('') }}\n  </div>\n  <div class=\"section\">\n    <a href=\"{{ $env.EPIC_AI_API_URL }}/dashboard/analytics\" style=\"background: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">View Full Report</a>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Daily at 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Analytics": {
+      "main": [
+        [
+          {
+            "node": "Format Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Report": {
+      "main": [
+        [
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["epic-ai", "analytics", "reports", "email"]
+}

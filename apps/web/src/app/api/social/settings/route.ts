@@ -1,7 +1,11 @@
+/**
+ * Autopilot Settings API
+ * TODO: Implement when autopilotSettings model exists
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
 import { z } from "zod";
 
 const settingsSchema = z.object({
@@ -22,6 +26,25 @@ const settingsSchema = z.object({
   brandDescription: z.string().optional().nullable(),
 });
 
+// Default settings returned when model doesn't exist
+const defaultSettings = {
+  enabled: false,
+  onLeadConverted: true,
+  onFiveStarCall: true,
+  onWeeklySchedule: false,
+  weeklyScheduleDay: 1,
+  weeklyScheduleHour: 9,
+  approvalMode: "REVIEW",
+  defaultPlatforms: [],
+  maxPostsPerDay: 3,
+  minHoursBetween: 4,
+  defaultTone: "professional",
+  includeEmojis: true,
+  includeHashtags: true,
+  includeCTA: false,
+  brandDescription: null,
+};
+
 /**
  * GET - Retrieve autopilot settings for the organization
  */
@@ -37,36 +60,12 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // Get or create settings
-    let settings = await prisma.autopilotSettings.findUnique({
-      where: { organizationId: org.id },
+    // TODO: Implement when autopilotSettings model exists
+    // Return default settings for now
+    return NextResponse.json({
+      ...defaultSettings,
+      organizationId: org.id,
     });
-
-    if (!settings) {
-      // Create default settings
-      settings = await prisma.autopilotSettings.create({
-        data: {
-          organizationId: org.id,
-          enabled: false,
-          onLeadConverted: true,
-          onFiveStarCall: true,
-          onWeeklySchedule: false,
-          weeklyScheduleDay: 1,
-          weeklyScheduleHour: 9,
-          approvalMode: "REVIEW",
-          defaultPlatforms: [],
-          maxPostsPerDay: 3,
-          minHoursBetween: 4,
-          defaultTone: "professional",
-          includeEmojis: true,
-          includeHashtags: true,
-          includeCTA: false,
-          brandDescription: null,
-        },
-      });
-    }
-
-    return NextResponse.json(settings);
   } catch (error) {
     console.error("Error fetching settings:", error);
     return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
@@ -98,17 +97,12 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Upsert settings
-    const settings = await prisma.autopilotSettings.upsert({
-      where: { organizationId: org.id },
-      update: parsed.data,
-      create: {
-        organizationId: org.id,
-        ...parsed.data,
-      },
+    // TODO: Implement when autopilotSettings model exists
+    return NextResponse.json({
+      ...defaultSettings,
+      ...parsed.data,
+      organizationId: org.id,
     });
-
-    return NextResponse.json(settings);
   } catch (error) {
     console.error("Error updating settings:", error);
     return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });

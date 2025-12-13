@@ -39,11 +39,12 @@ interface ContextSource {
   id: string;
   type: string;
   name: string;
-  url: string | null;
+  config: { url?: string } & Record<string, unknown>;
   status: string;
-  lastProcessedAt: Date | null;
-  metadata: Record<string, unknown> | null;
+  lastSync: Date | null;
+  syncError: string | null;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 interface ContextSourcesPageProps {
@@ -230,20 +231,20 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
                         </Chip>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
-                        {source.url && (
+                        {source.config?.url && (
                           <a
-                            href={source.url}
+                            href={source.config.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 hover:text-brand-500"
                           >
-                            {source.url.substring(0, 40)}...
+                            {source.config.url.substring(0, 40)}...
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
-                        {source.lastProcessedAt && (
+                        {source.lastSync && (
                           <span>
-                            Updated {new Date(source.lastProcessedAt).toLocaleDateString()}
+                            Updated {new Date(source.lastSync).toLocaleDateString()}
                           </span>
                         )}
                       </div>

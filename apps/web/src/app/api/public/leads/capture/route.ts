@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       organizationId,
+      brandId,
       firstName,
       lastName,
       email,
@@ -35,14 +36,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify organization exists
+    // Verify organization exists and get default brand
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
+      include: {
+        brands: { take: 1 },
+      },
     });
 
     if (!org) {
       return NextResponse.json(
         { error: "Invalid organization" },
+        { status: 400 }
+      );
+    }
+
+    // Use provided brandId or fall back to first brand
+    const targetBrandId = brandId || org.brands[0]?.id;
+    if (!targetBrandId) {
+      return NextResponse.json(
+        { error: "No brand found for organization" },
         { status: 400 }
       );
     }
@@ -77,15 +90,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Add activity
-      await prisma.leadActivity.create({
-        data: {
-          leadId: existingLead.id,
-          type: "NOTE",
-          title: "Lead updated via capture form",
-          description: `Additional info captured from ${sourceDetails || source || "web form"}`,
-        },
-      });
+      // Note: LeadActivity model not in current schema
 
       return NextResponse.json({
         success: true,
@@ -102,23 +107,16 @@ export async function POST(request: NextRequest) {
         email,
         phone,
         company,
-        source: source || "WEB_FORM",
-        sourceDetails,
+        source: source || "WEBSITE",
+        sourcePlatform: sourceDetails, // Map to sourcePlatform
         customFields: customFields || {},
         organizationId,
+        brandId: targetBrandId,
         status: "NEW",
       },
     });
 
-    // Add creation activity
-    await prisma.leadActivity.create({
-      data: {
-        leadId: lead.id,
-        type: "NOTE",
-        title: "Lead captured",
-        description: `New lead captured from ${sourceDetails || source || "web form"}`,
-      },
-    });
+    // Note: LeadActivity model not in current schema
 
     // Emit lead created event for automations
     emitLeadCreated({

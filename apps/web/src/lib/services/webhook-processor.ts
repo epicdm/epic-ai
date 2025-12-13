@@ -1,3 +1,8 @@
+/**
+ * Webhook Processor
+ * TODO: Implement when webhook and automation models are complete
+ */
+
 import { prisma } from "@epic-ai/database";
 
 interface ProcessedLead {
@@ -20,32 +25,35 @@ interface WebhookProcessResult {
 /**
  * Extract lead data from Meta webhook payload
  */
-export function extractMetaLeadData(payload: any): ProcessedLead & { sourceId: string } {
+export function extractMetaLeadData(payload: unknown): ProcessedLead & { sourceId: string } {
   const leadData: ProcessedLead = {};
   let sourceId = "";
 
   try {
-    const entry = payload.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
+    const typedPayload = payload as Record<string, unknown>;
+    const entry = (typedPayload.entry as unknown[])?.[0] as Record<string, unknown> | undefined;
+    const changes = (entry?.changes as unknown[])?.[0] as Record<string, unknown> | undefined;
+    const value = changes?.value as Record<string, unknown> | undefined;
 
-    sourceId = value?.leadgen_id || "";
+    sourceId = (value?.leadgen_id as string) || "";
 
     // Extract field data
-    const fieldData = value?.field_data || [];
+    const fieldData = (value?.field_data as unknown[]) || [];
     for (const field of fieldData) {
-      const name = field.name?.toLowerCase();
-      const fieldValue = field.values?.[0] || "";
+      const typedField = field as Record<string, unknown>;
+      const name = (typedField.name as string)?.toLowerCase();
+      const fieldValue = ((typedField.values as unknown[])?.[0] as string) || "";
 
       switch (name) {
         case "email":
           leadData.email = fieldValue;
           break;
-        case "full_name":
+        case "full_name": {
           const [first, ...rest] = fieldValue.split(" ");
           leadData.firstName = first;
           leadData.lastName = rest.join(" ");
           break;
+        }
         case "first_name":
           leadData.firstName = fieldValue;
           break;
@@ -78,19 +86,21 @@ export function extractMetaLeadData(payload: any): ProcessedLead & { sourceId: s
 /**
  * Extract lead data from Google webhook payload
  */
-export function extractGoogleLeadData(payload: any): ProcessedLead & { sourceId: string } {
+export function extractGoogleLeadData(payload: unknown): ProcessedLead & { sourceId: string } {
   const leadData: ProcessedLead = {};
   let sourceId = "";
 
   try {
+    const typedPayload = payload as Record<string, unknown>;
     // Google Ads lead form webhook structure
-    const leadFormData = payload.lead_form_submit_data || payload;
-    sourceId = leadFormData.lead_id || leadFormData.google_key || "";
+    const leadFormData = (typedPayload.lead_form_submit_data as Record<string, unknown>) || typedPayload;
+    sourceId = (leadFormData.lead_id as string) || (leadFormData.google_key as string) || "";
 
-    const columnData = leadFormData.user_column_data || [];
+    const columnData = (leadFormData.user_column_data as unknown[]) || [];
     for (const column of columnData) {
-      const name = column.column_id?.toLowerCase() || column.column_name?.toLowerCase();
-      const value = column.string_value || "";
+      const typedColumn = column as Record<string, unknown>;
+      const name = ((typedColumn.column_id as string) || (typedColumn.column_name as string))?.toLowerCase();
+      const value = (typedColumn.string_value as string) || "";
 
       switch (name) {
         case "email":
@@ -98,11 +108,12 @@ export function extractGoogleLeadData(payload: any): ProcessedLead & { sourceId:
           leadData.email = value;
           break;
         case "full_name":
-        case "user_name":
+        case "user_name": {
           const [first, ...rest] = value.split(" ");
           leadData.firstName = first;
           leadData.lastName = rest.join(" ");
           break;
+        }
         case "first_name":
           leadData.firstName = value;
           break;
@@ -131,19 +142,21 @@ export function extractGoogleLeadData(payload: any): ProcessedLead & { sourceId:
 /**
  * Extract lead data from LinkedIn webhook payload
  */
-export function extractLinkedInLeadData(payload: any): ProcessedLead & { sourceId: string } {
+export function extractLinkedInLeadData(payload: unknown): ProcessedLead & { sourceId: string } {
   const leadData: ProcessedLead = {};
   let sourceId = "";
 
   try {
+    const typedPayload = payload as Record<string, unknown>;
     // LinkedIn Lead Gen Forms webhook structure
-    const formResponse = payload.formResponse || payload;
-    sourceId = formResponse.leadId || formResponse.id || "";
+    const formResponse = (typedPayload.formResponse as Record<string, unknown>) || typedPayload;
+    sourceId = (formResponse.leadId as string) || (formResponse.id as string) || "";
 
-    const answers = formResponse.answers || [];
+    const answers = (formResponse.answers as unknown[]) || [];
     for (const answer of answers) {
-      const questionId = answer.questionId?.toLowerCase();
-      const value = answer.answer || "";
+      const typedAnswer = answer as Record<string, unknown>;
+      const questionId = (typedAnswer.questionId as string)?.toLowerCase();
+      const value = (typedAnswer.answer as string) || "";
 
       switch (questionId) {
         case "email":
@@ -174,10 +187,10 @@ export function extractLinkedInLeadData(payload: any): ProcessedLead & { sourceI
     }
 
     // LinkedIn also provides some data directly
-    if (formResponse.firstName) leadData.firstName = formResponse.firstName;
-    if (formResponse.lastName) leadData.lastName = formResponse.lastName;
-    if (formResponse.email) leadData.email = formResponse.email;
-    if (formResponse.companyName) leadData.company = formResponse.companyName;
+    if (formResponse.firstName) leadData.firstName = formResponse.firstName as string;
+    if (formResponse.lastName) leadData.lastName = formResponse.lastName as string;
+    if (formResponse.email) leadData.email = formResponse.email as string;
+    if (formResponse.companyName) leadData.company = formResponse.companyName as string;
   } catch (error) {
     console.error("Error extracting LinkedIn lead data:", error);
   }
@@ -188,14 +201,14 @@ export function extractLinkedInLeadData(payload: any): ProcessedLead & { sourceI
 /**
  * Flatten nested object for easier field mapping
  */
-function flattenObject(obj: any, prefix = ""): Record<string, string> {
+function flattenObject(obj: Record<string, unknown>, prefix = ""): Record<string, string> {
   const result: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     const newKey = prefix ? `${prefix}.${key}` : key;
 
     if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      Object.assign(result, flattenObject(value, newKey));
+      Object.assign(result, flattenObject(value as Record<string, unknown>, newKey));
     } else if (typeof value === "string" || typeof value === "number") {
       result[key] = String(value);
       result[newKey] = String(value);
@@ -209,11 +222,12 @@ function flattenObject(obj: any, prefix = ""): Record<string, string> {
  * Extract lead data from generic webhook payload
  */
 export function extractGenericLeadData(
-  payload: any,
+  payload: unknown,
   fieldMappings?: Record<string, string>
 ): ProcessedLead & { sourceId: string } {
   const leadData: ProcessedLead = {};
-  const sourceId = payload.id || payload.lead_id || payload.sourceId || "";
+  const typedPayload = payload as Record<string, unknown>;
+  const sourceId = (typedPayload.id as string) || (typedPayload.lead_id as string) || (typedPayload.sourceId as string) || "";
 
   // Default field mappings
   const mappings = fieldMappings || {
@@ -233,7 +247,7 @@ export function extractGenericLeadData(
   };
 
   // Flatten nested payload
-  const flatPayload = flattenObject(payload);
+  const flatPayload = flattenObject(typedPayload);
 
   // Map fields
   for (const [sourceField, targetField] of Object.entries(mappings)) {
@@ -244,7 +258,7 @@ export function extractGenericLeadData(
         leadData.firstName = first;
         leadData.lastName = rest.join(" ");
       } else {
-        (leadData as any)[targetField] = value;
+        (leadData as Record<string, string>)[targetField] = value;
       }
     }
   }
@@ -254,13 +268,14 @@ export function extractGenericLeadData(
 
 /**
  * Process webhook and create lead
+ * TODO: Implement fully when Lead model has all required fields
  */
 export async function processWebhookLead(
   orgId: string,
   platform: "META" | "GOOGLE" | "LINKEDIN" | "GENERIC",
-  payload: any,
-  webhookLogId: string,
-  config?: any
+  payload: unknown,
+  _webhookLogId: string,
+  config?: { fieldMappings?: Record<string, string>; linkedCampaigns?: string[] }
 ): Promise<WebhookProcessResult> {
   try {
     // Extract lead data based on platform
@@ -291,25 +306,6 @@ export async function processWebhookLead(
       };
     }
 
-    // Check for duplicate by sourceId
-    if (leadData.sourceId) {
-      const existing = await prisma.lead.findFirst({
-        where: {
-          organizationId: orgId,
-          sourceId: leadData.sourceId,
-        },
-      });
-
-      if (existing) {
-        return {
-          success: false,
-          duplicate: true,
-          leadId: existing.id,
-          error: "Duplicate lead",
-        };
-      }
-    }
-
     // Check for duplicate by email
     if (leadData.email) {
       const existing = await prisma.lead.findFirst({
@@ -320,16 +316,6 @@ export async function processWebhookLead(
       });
 
       if (existing) {
-        // Update existing lead with new source info
-        await prisma.lead.update({
-          where: { id: existing.id },
-          data: {
-            sourcePlatform: platform.toLowerCase(),
-            sourceId: leadData.sourceId,
-            webhookLogId,
-          },
-        });
-
         return {
           success: true,
           duplicate: true,
@@ -338,34 +324,23 @@ export async function processWebhookLead(
       }
     }
 
-    // Extract campaign info from payload
-    let sourceCampaign = "";
-    let sourceAdSet = "";
-    let sourceAd = "";
+    // Get the first brand for the organization
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId: orgId },
+    });
 
-    if (platform === "META") {
-      sourceCampaign = payload.entry?.[0]?.changes?.[0]?.value?.campaign_name || "";
-      sourceAdSet = payload.entry?.[0]?.changes?.[0]?.value?.adset_name || "";
-      sourceAd = payload.entry?.[0]?.changes?.[0]?.value?.ad_name || "";
+    if (!brand) {
+      return {
+        success: false,
+        error: "No brand found for organization",
+      };
     }
 
-    // Try to match to an AdCampaign
-    let adCampaignId: string | null = null;
-    if (sourceCampaign && config?.linkedCampaigns?.length > 0) {
-      const matchedCampaign = await prisma.adCampaign.findFirst({
-        where: {
-          orgId,
-          id: { in: config.linkedCampaigns },
-          name: { contains: sourceCampaign, mode: "insensitive" },
-        },
-      });
-      adCampaignId = matchedCampaign?.id || null;
-    }
-
-    // Create lead
+    // Create lead with available fields
     const lead = await prisma.lead.create({
       data: {
         organizationId: orgId,
+        brandId: brand.id,
         firstName: leadData.firstName || "",
         lastName: leadData.lastName || "",
         email: leadData.email || null,
@@ -373,27 +348,9 @@ export async function processWebhookLead(
         company: leadData.company || null,
         jobTitle: leadData.title || null,
         source: `WEBHOOK_${platform}`,
-        sourceId: leadData.sourceId || null,
-        sourcePlatform: platform.toLowerCase(),
-        sourceCampaign,
-        sourceAdSet,
-        sourceAd,
-        webhookLogId,
-        adCampaignId,
         status: "NEW",
       },
     });
-
-    // Update AdCampaign metrics if linked
-    if (adCampaignId) {
-      await prisma.adCampaignMetrics.update({
-        where: { campaignId: adCampaignId },
-        data: {
-          leads: { increment: 1 },
-          lastUpdated: new Date(),
-        },
-      }).catch(() => {}); // Ignore if metrics don't exist
-    }
 
     return {
       success: true,
@@ -410,43 +367,9 @@ export async function processWebhookLead(
 
 /**
  * Trigger Voice AI for new lead
+ * TODO: Implement when automation model is complete
  */
-export async function triggerVoiceAIForLead(orgId: string, leadId: string): Promise<void> {
-  try {
-    // Check if there's an automation for new leads
-    const automation = await prisma.automation.findFirst({
-      where: {
-        organizationId: orgId,
-        trigger: "LEAD_CREATED",
-        isActive: true,
-      },
-    });
-
-    if (!automation) {
-      console.log("No automation found for new leads");
-      return;
-    }
-
-    // Trigger the automation
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://leads.epic.dm";
-
-    await fetch(`${appUrl}/api/automations/trigger`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.INTERNAL_WEBHOOK_SECRET || "internal"}`,
-      },
-      body: JSON.stringify({
-        orgId,
-        trigger: "LEAD_CREATED",
-        data: { leadId },
-      }),
-    }).catch((err) => {
-      console.error("Error triggering automation:", err);
-    });
-
-    console.log(`Triggered Voice AI automation for lead ${leadId}`);
-  } catch (error) {
-    console.error("Error triggering Voice AI:", error);
-  }
+export async function triggerVoiceAIForLead(_orgId: string, leadId: string): Promise<void> {
+  // Stub implementation - just log for now
+  console.log(`[Webhook] Would trigger Voice AI for lead ${leadId} - automation model not yet implemented`);
 }

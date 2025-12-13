@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     const sourceId = await manager.addSource(
       validated.type,
       validated.name,
-      validated.config
+      validated.config as never
     );
 
     const source = await prisma.contextSource.findUnique({

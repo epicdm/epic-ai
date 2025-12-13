@@ -33,5 +33,18 @@ export default async function Page() {
     redirect("/dashboard/brand");
   }
 
-  return <ContextSourcesPage brandId={brand.id} sources={brand.contextSources} />;
+  // Transform Prisma data to match component interface
+  const sources = brand.contextSources.map(s => ({
+    id: s.id,
+    type: s.type,
+    name: s.name,
+    config: (s.config as { url?: string } & Record<string, unknown>) || {},
+    status: s.status,
+    lastSync: s.lastSync,
+    syncError: s.syncError,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  }));
+
+  return <ContextSourcesPage brandId={brand.id} sources={sources} />;
 }

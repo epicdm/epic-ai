@@ -1,118 +1,58 @@
+/**
+ * Ad Account Detail API
+ * TODO: Fix schema mismatches
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-/**
- * GET - Get single ad account
- */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
-    if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
-    }
-
     const { id } = await params;
-
-    const account = await prisma.adAccount.findFirst({
-      where: {
-        id,
-        orgId: org.id,
-      },
-      include: {
-        campaigns: {
-          include: {
-            metrics: true,
-          },
-        },
-      },
-    });
-
-    if (!account) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ account });
+    // TODO: Implement when schema is fixed
+    return NextResponse.json({ error: `Ad account ${id} not found` }, { status: 404 });
   } catch (error) {
-    console.error("Error getting ad account:", error);
-    return NextResponse.json({ error: "Failed to get account" }, { status: 500 });
+    console.error("Error fetching ad account:", error);
+    return NextResponse.json({ error: "Failed to fetch ad account" }, { status: 500 });
   }
 }
 
-/**
- * PUT - Update ad account
- */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
-    if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
-    }
-
     const { id } = await params;
-    const body = await request.json();
-
-    await prisma.adAccount.updateMany({
-      where: {
-        id,
-        orgId: org.id,
-      },
-      data: {
-        accountName: body.accountName,
-        accountId: body.accountId,
-        status: body.status,
-      },
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: `Cannot update ad account ${id} - not implemented` }, { status: 501 });
   } catch (error) {
     console.error("Error updating ad account:", error);
-    return NextResponse.json({ error: "Failed to update account" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update ad account" }, { status: 500 });
   }
 }
 
-/**
- * DELETE - Remove ad account
- */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
-    if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
-    }
-
     const { id } = await params;
-
-    await prisma.adAccount.deleteMany({
-      where: {
-        id,
-        orgId: org.id,
-      },
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: `Cannot delete ad account ${id} - not implemented` }, { status: 501 });
   } catch (error) {
     console.error("Error deleting ad account:", error);
-    return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete ad account" }, { status: 500 });
   }
 }

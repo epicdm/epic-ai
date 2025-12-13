@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Get organization details for context
     const orgData = await prisma.organization.findUnique({
       where: { id: org.id },
-      select: { name: true, description: true },
+      select: { name: true },
     });
 
     const body = await request.json();
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       type,
       tone: tone || "professional",
       businessName: orgData?.name || "Our Business",
-      businessDescription: orgData?.description || undefined,
+      businessDescription: undefined,
       customPrompt,
       leadName,
       leadService,

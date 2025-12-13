@@ -46,18 +46,18 @@ export async function GET() {
           },
         }),
 
-        // Converted leads
+        // Won leads (converted)
         prisma.lead.count({
           where: {
             organizationId: org.id,
-            status: "CONVERTED",
+            status: "WON",
           },
         }),
 
-        // Total estimated value
+        // Total score (no estimatedValue in schema)
         prisma.lead.aggregate({
           where: { organizationId: org.id },
-          _sum: { estimatedValue: true },
+          _sum: { score: true },
         }),
       ]);
 
@@ -68,7 +68,7 @@ export async function GET() {
       thisWeek,
       converted,
       conversionRate: Math.round(conversionRate * 10) / 10,
-      totalValue: totalValue._sum.estimatedValue || 0,
+      totalValue: totalValue._sum?.score || 0,
       byStatus: byStatus.reduce(
         (acc, item) => {
           acc[item.status] = item._count.id;

@@ -40,11 +40,20 @@ export default async function Page() {
     redirect("/dashboard/brand");
   }
 
+  // Transform data to match component interface
+  const connectedAccounts = brand.socialAccounts.map(acc => ({
+    id: acc.id,
+    platform: acc.platform,
+    username: acc.username || "",
+    displayName: acc.displayName,
+    avatar: acc.avatar,
+  }));
+
   return (
     <ContentFactoryPage
       brandId={brand.id}
       brandName={brand.name}
-      connectedAccounts={brand.socialAccounts}
+      connectedAccounts={connectedAccounts}
     />
   );
 }

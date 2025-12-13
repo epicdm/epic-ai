@@ -1,7 +1,11 @@
+/**
+ * Voice Token API (LiveKit)
+ * TODO: Implement when LiveKit integration is completed
+ */
+
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@epic-ai/database";
-import { generateToken, getLiveKitUrl, isLiveKitConfigured } from "@/lib/voice/livekit";
 import { getUserOrganization } from "@/lib/sync-user";
 
 /**
@@ -16,7 +20,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if LiveKit is configured
-    if (!isLiveKitConfigured()) {
+    const liveKitConfigured = !!(
+      process.env.LIVEKIT_API_KEY &&
+      process.env.LIVEKIT_API_SECRET &&
+      process.env.LIVEKIT_URL
+    );
+
+    if (!liveKitConfigured) {
       return NextResponse.json(
         { error: "LiveKit is not configured. Please set LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and LIVEKIT_URL." },
         { status: 503 }
@@ -30,7 +40,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Room name is required" }, { status: 400 });
     }
 
-    // Get user organization
     const userOrg = await getUserOrganization();
     if (!userOrg) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -38,12 +47,16 @@ export async function POST(request: NextRequest) {
 
     // If agentId provided, verify access
     if (agentId) {
+      const brands = await prisma.brand.findMany({
+        where: { organizationId: userOrg.id },
+        select: { id: true },
+      });
+      const brandIds = brands.map((b) => b.id);
+
       const agent = await prisma.voiceAgent.findFirst({
         where: {
           id: agentId,
-          brand: {
-            organizationId: userOrg.id,
-          },
+          brandId: { in: brandIds },
         },
       });
 
@@ -52,18 +65,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate token for the user
-    const token = await generateToken(roomName, `user-${userId}`, {
-      canPublish: true,
-      canSubscribe: true,
-      canPublishData: true,
-    });
-
-    return NextResponse.json({
-      token,
-      url: getLiveKitUrl(),
-      roomName,
-    });
+    // TODO: Implement token generation when LiveKit service is completed
+    return NextResponse.json(
+      { error: "Voice token generation not yet implemented" },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error generating voice token:", error);
     return NextResponse.json(

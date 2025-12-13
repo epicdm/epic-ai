@@ -1,15 +1,22 @@
+/**
+ * Platform-specific Webhook Config API
+ * TODO: Implement when webhookConfig model exists
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
-import crypto from "crypto";
+
+interface RouteParams {
+  params: Promise<{ platform: string }>;
+}
 
 /**
  * GET - Get single webhook config
  */
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ platform: string }> }
+  _request: NextRequest,
+  { params }: RouteParams
 ) {
   try {
     const { userId } = await auth();
@@ -24,27 +31,8 @@ export async function GET(
 
     const { platform } = await params;
 
-    const config = await prisma.webhookConfig.findUnique({
-      where: {
-        orgId_platform: {
-          orgId: org.id,
-          platform: platform.toUpperCase() as any,
-        },
-      },
-    });
-
-    if (!config) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://leads.epic.dm";
-
-    return NextResponse.json({
-      config: {
-        ...config,
-        webhookUrl: `${baseUrl}/api/webhooks/${platform.toLowerCase()}/${org.id}`,
-      },
-    });
+    // TODO: Implement when webhookConfig model exists
+    return NextResponse.json({ error: `Config for ${platform} not found` }, { status: 404 });
   } catch (error) {
     console.error("Error getting webhook config:", error);
     return NextResponse.json({ error: "Failed to get config" }, { status: 500 });
@@ -56,7 +44,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ platform: string }> }
+  { params }: RouteParams
 ) {
   try {
     const { userId } = await auth();
@@ -70,24 +58,12 @@ export async function PUT(
     }
 
     const { platform } = await params;
-    const body = await request.json();
 
-    const config = await prisma.webhookConfig.update({
-      where: {
-        orgId_platform: {
-          orgId: org.id,
-          platform: platform.toUpperCase() as any,
-        },
-      },
-      data: {
-        enabled: body.enabled,
-        autoTriggerVoiceAI: body.autoTriggerVoiceAI,
-        fieldMappings: body.fieldMappings,
-        linkedCampaigns: body.linkedCampaigns,
-      },
-    });
-
-    return NextResponse.json({ config });
+    // TODO: Implement when webhookConfig model exists
+    return NextResponse.json(
+      { error: `Config update for ${platform} not yet implemented` },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error updating webhook config:", error);
     return NextResponse.json({ error: "Failed to update config" }, { status: 500 });
@@ -98,8 +74,8 @@ export async function PUT(
  * DELETE - Delete webhook config
  */
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ platform: string }> }
+  _request: NextRequest,
+  { params }: RouteParams
 ) {
   try {
     const { userId } = await auth();
@@ -114,16 +90,8 @@ export async function DELETE(
 
     const { platform } = await params;
 
-    await prisma.webhookConfig.delete({
-      where: {
-        orgId_platform: {
-          orgId: org.id,
-          platform: platform.toUpperCase() as any,
-        },
-      },
-    });
-
-    return NextResponse.json({ success: true });
+    // TODO: Implement when webhookConfig model exists
+    return NextResponse.json({ error: `Config for ${platform} not found` }, { status: 404 });
   } catch (error) {
     console.error("Error deleting webhook config:", error);
     return NextResponse.json({ error: "Failed to delete config" }, { status: 500 });
@@ -135,7 +103,7 @@ export async function DELETE(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ platform: string }> }
+  { params }: RouteParams
 ) {
   try {
     const { userId } = await auth();
@@ -149,30 +117,12 @@ export async function POST(
     }
 
     const { platform } = await params;
-    const body = await request.json();
-    const { action } = body;
 
-    if (action === "regenerate_tokens") {
-      const verifyToken = crypto.randomBytes(16).toString("hex");
-      const secretKey = crypto.randomBytes(32).toString("hex");
-
-      const config = await prisma.webhookConfig.update({
-        where: {
-          orgId_platform: {
-            orgId: org.id,
-            platform: platform.toUpperCase() as any,
-          },
-        },
-        data: {
-          verifyToken,
-          secretKey,
-        },
-      });
-
-      return NextResponse.json({ config });
-    }
-
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    // TODO: Implement when webhookConfig model exists
+    return NextResponse.json(
+      { error: `Token regeneration for ${platform} not yet implemented` },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

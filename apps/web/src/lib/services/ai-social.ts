@@ -202,7 +202,7 @@ export async function generateImage(
       quality: "standard",
     });
 
-    const url = response.data[0]?.url;
+    const url = response.data?.[0]?.url;
     return url ? { url } : null;
   } catch (error) {
     console.error("Image generation failed:", error);

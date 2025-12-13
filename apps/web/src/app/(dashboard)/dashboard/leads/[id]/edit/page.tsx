@@ -41,8 +41,8 @@ export default async function EditLeadPage({
       jobTitle: true,
       status: true,
       source: true,
-      sourceDetails: true,
-      estimatedValue: true,
+      sourcePlatform: true,
+      score: true,
       notes: true,
       brandId: true,
     },
@@ -57,5 +57,22 @@ export default async function EditLeadPage({
     select: { id: true, name: true },
   });
 
-  return <LeadForm brands={brands} initialData={lead} />;
+  // Transform lead data to match LeadForm interface
+  const formData = {
+    id: lead.id,
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    company: lead.company,
+    jobTitle: lead.jobTitle,
+    status: lead.status,
+    source: lead.source,
+    sourceDetails: lead.sourcePlatform, // Map sourcePlatform to sourceDetails
+    estimatedValue: lead.score, // Map score to estimatedValue for display
+    notes: lead.notes,
+    brandId: lead.brandId,
+  };
+
+  return <LeadForm brands={brands} initialData={formData} />;
 }

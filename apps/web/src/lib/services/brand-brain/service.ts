@@ -3,6 +3,7 @@
  */
 
 import { prisma } from '@epic-ai/database';
+import type { VoiceTone } from '@prisma/client';
 import { BrandAnalyzer } from './analyzer';
 import { ContextManager } from '../context-engine/manager';
 import type { BrandProfile, ContentPrompt } from './types';
@@ -91,14 +92,14 @@ export class BrandBrainService {
       mission: brain.mission,
       values: brain.values,
       uniqueSellingPoints: brain.uniqueSellingPoints,
-      voiceTone: brain.voiceTone,
+      voiceTone: brain.voiceTone as string,
       writingStyle: brain.writingStyle || '',
       targetAudience: (brain.targetAudience as BrandProfile['targetAudience']) || {
         demographics: [],
         interests: [],
         painPoints: [],
       },
-      contentPillars: brain.contentPillars,
+      contentPillars: brain.contentPillarsLegacy || [],
       preferredHashtags: brain.preferredHashtags,
       emojiStyle: brain.emojiStyle as BrandProfile['emojiStyle'],
       ctaStyle: brain.ctaStyle as BrandProfile['ctaStyle'],
@@ -128,6 +129,7 @@ export class BrandBrainService {
    * Update specific fields of the brand profile
    */
   async updateProfile(updates: Partial<BrandProfile>): Promise<void> {
+    const voiceToneValue = (updates.voiceTone?.toUpperCase() || 'PROFESSIONAL') as VoiceTone;
     await prisma.brandBrain.upsert({
       where: { brandId: this.brandId },
       create: {
@@ -136,10 +138,10 @@ export class BrandBrainService {
         mission: updates.mission,
         values: updates.values || [],
         uniqueSellingPoints: updates.uniqueSellingPoints || [],
-        voiceTone: updates.voiceTone || 'professional',
+        voiceTone: voiceToneValue,
         writingStyle: updates.writingStyle,
         targetAudience: updates.targetAudience as object,
-        contentPillars: updates.contentPillars || [],
+        contentPillarsLegacy: updates.contentPillars || [],
         preferredHashtags: updates.preferredHashtags || [],
         emojiStyle: updates.emojiStyle || 'moderate',
         ctaStyle: updates.ctaStyle || 'soft',
@@ -153,10 +155,10 @@ export class BrandBrainService {
         ...(updates.mission !== undefined && { mission: updates.mission }),
         ...(updates.values !== undefined && { values: updates.values }),
         ...(updates.uniqueSellingPoints !== undefined && { uniqueSellingPoints: updates.uniqueSellingPoints }),
-        ...(updates.voiceTone !== undefined && { voiceTone: updates.voiceTone }),
+        ...(updates.voiceTone !== undefined && { voiceTone: updates.voiceTone.toUpperCase() as VoiceTone }),
         ...(updates.writingStyle !== undefined && { writingStyle: updates.writingStyle }),
         ...(updates.targetAudience !== undefined && { targetAudience: updates.targetAudience as object }),
-        ...(updates.contentPillars !== undefined && { contentPillars: updates.contentPillars }),
+        ...(updates.contentPillars !== undefined && { contentPillarsLegacy: updates.contentPillars }),
         ...(updates.preferredHashtags !== undefined && { preferredHashtags: updates.preferredHashtags }),
         ...(updates.emojiStyle !== undefined && { emojiStyle: updates.emojiStyle }),
         ...(updates.ctaStyle !== undefined && { ctaStyle: updates.ctaStyle }),
@@ -238,6 +240,7 @@ ${profile.differentiators.map((d) => `- ${d}`).join('\n')}`;
   // Private methods
 
   private async saveProfile(profile: BrandProfile): Promise<void> {
+    const voiceToneValue = (profile.voiceTone?.toUpperCase() || 'PROFESSIONAL') as VoiceTone;
     await prisma.brandBrain.upsert({
       where: { brandId: this.brandId },
       create: {
@@ -246,10 +249,10 @@ ${profile.differentiators.map((d) => `- ${d}`).join('\n')}`;
         mission: profile.mission,
         values: profile.values,
         uniqueSellingPoints: profile.uniqueSellingPoints,
-        voiceTone: profile.voiceTone,
+        voiceTone: voiceToneValue,
         writingStyle: profile.writingStyle,
         targetAudience: profile.targetAudience as object,
-        contentPillars: profile.contentPillars,
+        contentPillarsLegacy: profile.contentPillars,
         preferredHashtags: profile.preferredHashtags,
         emojiStyle: profile.emojiStyle,
         ctaStyle: profile.ctaStyle,
@@ -264,10 +267,10 @@ ${profile.differentiators.map((d) => `- ${d}`).join('\n')}`;
         mission: profile.mission,
         values: profile.values,
         uniqueSellingPoints: profile.uniqueSellingPoints,
-        voiceTone: profile.voiceTone,
+        voiceTone: voiceToneValue,
         writingStyle: profile.writingStyle,
         targetAudience: profile.targetAudience as object,
-        contentPillars: profile.contentPillars,
+        contentPillarsLegacy: profile.contentPillars,
         preferredHashtags: profile.preferredHashtags,
         emojiStyle: profile.emojiStyle,
         ctaStyle: profile.ctaStyle,

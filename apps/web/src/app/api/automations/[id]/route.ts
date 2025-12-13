@@ -1,13 +1,18 @@
+/**
+ * Automation Detail API
+ * TODO: Implement when Automation model is added to schema
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
-// GET single automation
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+// GET automation by ID
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -20,25 +25,11 @@ export async function GET(
     }
 
     const { id } = await params;
-
-    const automation = await prisma.automation.findFirst({
-      where: {
-        id,
-        organizationId: org.id,
-      },
-      include: {
-        runs: {
-          orderBy: { startedAt: "desc" },
-          take: 20,
-        },
-      },
-    });
-
-    if (!automation) {
-      return NextResponse.json({ error: "Automation not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(automation);
+    // TODO: Implement when Automation model is available
+    return NextResponse.json(
+      { error: `Automation ${id} not found` },
+      { status: 404 }
+    );
   } catch (error) {
     console.error("Error fetching automation:", error);
     return NextResponse.json(
@@ -48,11 +39,8 @@ export async function GET(
   }
 }
 
-// PATCH update automation
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// PUT update automation
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -65,26 +53,11 @@ export async function PATCH(
     }
 
     const { id } = await params;
-
-    // Verify ownership
-    const existing = await prisma.automation.findFirst({
-      where: {
-        id,
-        organizationId: org.id,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Automation not found" }, { status: 404 });
-    }
-
-    const body = await request.json();
-    const automation = await prisma.automation.update({
-      where: { id },
-      data: body,
-    });
-
-    return NextResponse.json(automation);
+    // TODO: Implement when Automation model is available
+    return NextResponse.json(
+      { error: `Cannot update automation ${id} - not implemented` },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error updating automation:", error);
     return NextResponse.json(
@@ -95,10 +68,7 @@ export async function PATCH(
 }
 
 // DELETE automation
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -111,24 +81,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
-
-    // Verify ownership
-    const existing = await prisma.automation.findFirst({
-      where: {
-        id,
-        organizationId: org.id,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Automation not found" }, { status: 404 });
-    }
-
-    await prisma.automation.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true });
+    // TODO: Implement when Automation model is available
+    return NextResponse.json(
+      { error: `Cannot delete automation ${id} - not implemented` },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error deleting automation:", error);
     return NextResponse.json(

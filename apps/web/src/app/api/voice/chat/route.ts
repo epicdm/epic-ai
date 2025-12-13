@@ -1,11 +1,12 @@
+/**
+ * Voice Chat API
+ * TODO: Implement when voice agent worker is completed
+ */
+
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@epic-ai/database";
-import { createVoiceAgentFromConfig } from "@/lib/voice/agent-worker";
 import { getUserOrganization } from "@/lib/sync-user";
-
-// Store active conversations in memory (for demo - use Redis in production)
-const activeConversations = new Map<string, ReturnType<typeof createVoiceAgentFromConfig>>();
 
 /**
  * POST /api/voice/chat
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { agentId, message, conversationId } = body;
+    const { agentId, message } = body;
 
     if (!agentId || !message) {
       return NextResponse.json(
@@ -28,19 +29,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user organization
     const userOrg = await getUserOrganization();
     if (!userOrg) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
     }
 
+    // Get brand IDs for this org
+    const brands = await prisma.brand.findMany({
+      where: { organizationId: userOrg.id },
+      select: { id: true },
+    });
+    const brandIds = brands.map((b) => b.id);
+
     // Get the voice agent
     const agent = await prisma.voiceAgent.findFirst({
       where: {
         id: agentId,
-        brand: {
-          organizationId: userOrg.id,
-        },
+        brandId: { in: brandIds },
       },
     });
 
@@ -48,30 +53,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
     }
 
-    // Get or create conversation
-    const convId = conversationId || `${agentId}-${userId}-${Date.now()}`;
-    let voiceAgent = activeConversations.get(convId);
-
-    if (!voiceAgent) {
-      voiceAgent = createVoiceAgentFromConfig(agent);
-      activeConversations.set(convId, voiceAgent);
-
-      // Clean up old conversations after 30 minutes
-      setTimeout(() => {
-        activeConversations.delete(convId);
-      }, 30 * 60 * 1000);
-    }
-
-    // Process the message
-    const result = await voiceAgent.processMessage(message);
-
-    return NextResponse.json({
-      conversationId: convId,
-      response: result.response,
-      shouldTransfer: result.shouldTransfer,
-      sentiment: result.sentiment,
-      stats: voiceAgent.getStats(),
-    });
+    // TODO: Implement voice agent processing when worker is completed
+    return NextResponse.json(
+      { error: "Voice chat not yet implemented" },
+      { status: 501 }
+    );
   } catch (error) {
     console.error("Error processing chat:", error);
     return NextResponse.json(
@@ -102,26 +88,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const voiceAgent = activeConversations.get(conversationId);
-
-    if (!voiceAgent) {
-      return NextResponse.json(
-        { error: "Conversation not found" },
-        { status: 404 }
-      );
-    }
-
-    const [transcript, summary] = await Promise.all([
-      voiceAgent.getTranscript(),
-      voiceAgent.getSummary(),
-    ]);
-
-    return NextResponse.json({
-      conversationId,
-      transcript,
-      summary,
-      stats: voiceAgent.getStats(),
-    });
+    // TODO: Implement when conversation storage is completed
+    return NextResponse.json(
+      { error: "Conversation not found" },
+      { status: 404 }
+    );
   } catch (error) {
     console.error("Error getting conversation:", error);
     return NextResponse.json(
@@ -152,27 +123,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const voiceAgent = activeConversations.get(conversationId);
-
-    if (!voiceAgent) {
-      return NextResponse.json(
-        { error: "Conversation not found" },
-        { status: 404 }
-      );
-    }
-
-    // Get final stats before deleting
-    const stats = voiceAgent.getStats();
-    const summary = await voiceAgent.getSummary();
-
-    activeConversations.delete(conversationId);
-
-    return NextResponse.json({
-      conversationId,
-      ended: true,
-      stats,
-      summary,
-    });
+    // TODO: Implement when conversation storage is completed
+    return NextResponse.json(
+      { error: "Conversation not found" },
+      { status: 404 }
+    );
   } catch (error) {
     console.error("Error ending conversation:", error);
     return NextResponse.json(

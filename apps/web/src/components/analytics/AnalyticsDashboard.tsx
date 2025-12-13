@@ -269,7 +269,7 @@ export function AnalyticsDashboard({ orgId, brandId }: Props) {
             </div>
           </CardHeader>
           <CardBody>
-            {stats?.bestDayOfWeek !== null && stats?.bestHourOfDay !== null ? (
+            {stats && stats.bestDayOfWeek !== null && stats.bestHourOfDay !== null ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
                   <div className="flex items-center gap-2">

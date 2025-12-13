@@ -1,0 +1,126 @@
+{
+  "name": "Epic AI - Content Approval via Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "content-pending",
+        "options": {}
+      },
+      "id": "content-webhook",
+      "name": "Content Created Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#content-approvals",
+        "text": "New content ready for review",
+        "attachments": [
+          {
+            "color": "#36a64f",
+            "pretext": "A new post is ready for approval",
+            "title": "={{ $json.brandName }} - {{ $json.contentType }}",
+            "text": "={{ $json.content.substring(0, 280) }}...",
+            "fields": [
+              {
+                "title": "Scheduled For",
+                "value": "={{ $json.scheduledFor }}",
+                "short": true
+              },
+              {
+                "title": "Platforms",
+                "value": "={{ $json.platforms.join(', ') }}",
+                "short": true
+              }
+            ],
+            "actions": [
+              {
+                "type": "button",
+                "text": "Approve",
+                "url": "={{ $env.EPIC_AI_API_URL }}/api/content/queue?action=approve&id={{ $json.id }}&token={{ $json.approvalToken }}"
+              },
+              {
+                "type": "button",
+                "text": "Reject",
+                "url": "={{ $env.EPIC_AI_API_URL }}/api/content/queue?action=reject&id={{ $json.id }}&token={{ $json.approvalToken }}"
+              },
+              {
+                "type": "button",
+                "text": "View in Dashboard",
+                "url": "={{ $env.EPIC_AI_API_URL }}/dashboard/content/{{ $json.id }}"
+              }
+            ]
+          }
+        ],
+        "otherOptions": {}
+      },
+      "id": "slack-message",
+      "name": "Send Slack Message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EPIC_AI_API_URL }}/api/webhooks/n8n",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "update_content_status"
+            },
+            {
+              "name": "payload",
+              "value": "={{ JSON.stringify({ contentId: $json.id, status: 'PENDING', notifiedVia: 'slack' }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-status",
+      "name": "Update Content Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Content Created Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Message": {
+      "main": [
+        [
+          {
+            "node": "Update Content Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["epic-ai", "content", "slack", "approval"]
+}

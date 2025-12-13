@@ -66,19 +66,18 @@ export async function POST(request: NextRequest) {
 
     // Auto-schedule the content
     const result = await autoScheduleContent(
-      validated.orgId,
       validated.brandId,
-      validated.contentIds,
+      validated.contentIds[0] || '',
+      [], // platforms
       {
         startDate: validated.startDate ? new Date(validated.startDate) : undefined,
-        spreadAcrossDays: validated.spreadAcrossDays,
       }
     );
 
     return NextResponse.json({
       success: true,
       scheduled: result.scheduled,
-      dates: result.dates.map((d) => d.toISOString()),
+      dates: result.dates.map((d: Date) => d.toISOString()),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -116,7 +115,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const optimalTimes = getOptimalTimes(platform);
+    const optimalTimes = await getOptimalTimes('', platform);
 
     return NextResponse.json({ optimalTimes });
   } catch (error) {

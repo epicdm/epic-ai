@@ -36,20 +36,18 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const stats = await processScheduledContent();
+    const publishedCount = await processScheduledContent();
     const duration = Date.now() - startTime;
 
     console.log(
-      `[Cron] Publishing completed in ${duration}ms: ` +
-        `processed=${stats.processed}, published=${stats.published}, ` +
-        `failed=${stats.failed}, rateLimited=${stats.rateLimited}`
+      `[Cron] Publishing completed in ${duration}ms: published=${publishedCount}`
     );
 
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
       duration,
-      stats,
+      stats: { published: publishedCount },
     });
   } catch (error) {
     console.error('[Cron] Publishing cron failed:', error);

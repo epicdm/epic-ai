@@ -31,19 +31,7 @@ export async function GET(
         brand: {
           select: { id: true, name: true },
         },
-        activities: {
-          orderBy: { createdAt: "desc" },
-          take: 50,
-        },
-        calls: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
-          include: {
-            agent: {
-              select: { id: true, name: true },
-            },
-          },
-        },
+        // Note: activities and calls relations not in current schema
       },
     });
 
@@ -95,19 +83,8 @@ export async function PATCH(
 
     // Track status change
     if (body.status && body.status !== existing.status) {
-      await prisma.leadActivity.create({
-        data: {
-          leadId: id,
-          type: "STATUS_CHANGE",
-          title: `Status changed to ${body.status}`,
-          description: `Status changed from ${existing.status} to ${body.status}`,
-          metadata: {
-            oldStatus: existing.status,
-            newStatus: body.status,
-          },
-          userId,
-        },
-      });
+      // Note: LeadActivity model not in current schema
+      // Activity tracking can be added when schema supports it
 
       // Emit status change event for automations
       emitLeadStatusChanged(
@@ -116,11 +93,6 @@ export async function PATCH(
         existing.status,
         body.status
       ).catch(console.error);
-
-      // Set convertedAt if converted
-      if (body.status === "CONVERTED" && !existing.convertedAt) {
-        body.convertedAt = new Date();
-      }
     }
 
     const lead = await prisma.lead.update({
