@@ -1,211 +1,300 @@
-# Epic AI - Claude Code Instructions
+# Epic AI 2.0 - Claude Code Instructions
 
 ## Project Overview
 
-Epic AI is a unified AI marketing platform combining:
-1. **Social Media Management** - Powered by Postiz integration
-2. **Voice AI Agents** - Powered by LiveKit + OpenAI + Deepgram
-3. **Unified Lead Management** - All leads from all channels
-4. **Flywheel Automations** - Social → Voice → Leads → Social loop
+Epic AI is a **self-improving AI marketing platform** built around a flywheel architecture. Each component feeds into the next, and the output of the last step improves the first step. The more you use it, the better it gets.
+
+### Core Concept: The Flywheel
+
+```
+Brand Brain → Content Factory → Publishing Engine → Analytics → Learning Loop
+     ↑                                                              │
+     └──────────────────── AI Improvements ─────────────────────────┘
+```
+
+## Deployment Architecture
+
+| Platform | Service | URL |
+|----------|---------|-----|
+| **Vercel** | Next.js web app | https://leads.epic.dm |
+| **DigitalOcean** | n8n workflows, background workers | (App Platform) |
+| **Render** | PostgreSQL database, Voice AI service | (Managed services) |
+| **Postiz** | Social media management (legacy) | https://social.leads.epic.dm |
+
+**Note:** Postiz is being replaced by native OAuth integrations (PKG-022). The new architecture uses direct platform APIs.
+
+---
+
+## The 7 Core Modules
+
+### 1. Brand Brain (PKG-020)
+**Purpose:** Central intelligence storing everything about the brand.
+
+**Stores:**
+- Company name, industry, mission, values
+- Voice & tone settings (professional, friendly, witty, etc.)
+- Formality level (1-5 scale)
+- Emoji and hashtag preferences
+- Words/topics to avoid
+- Target audiences (personas with demographics, pain points, goals)
+- Content pillars (themes you post about)
+- Competitors to track
+- AI-generated learnings
+
+**Location:** `apps/web/src/lib/services/brand-brain/`
+
+### 2. Context Engine (PKG-021)
+**Purpose:** Feed external information to keep content relevant.
+
+**Data Sources:**
+- Website scraping
+- RSS feeds
+- Document uploads (PDFs)
+- Manual notes
+
+**Location:** `apps/web/src/lib/services/context-engine/`
+
+### 3. Native Social Connectors (PKG-022)
+**Purpose:** Direct OAuth connections to social platforms (replaces Postiz).
+
+**Platforms:**
+- Twitter/X (OAuth 2.0 with PKCE)
+- LinkedIn (OAuth 2.0)
+- Facebook Pages (OAuth 2.0)
+- Instagram (via Facebook Graph API)
+
+**Location:** `apps/web/src/lib/services/social-publishing/`
+
+### 4. Content Factory (PKG-023)
+**Purpose:** AI-powered content generation using brand voice.
+
+**Flow:**
+```
+User Topic → Brand Brain + Context → GPT-4o → Platform Variations
+```
+
+**Generates platform-specific versions:**
+- Twitter: 280 chars, punchy
+- LinkedIn: Professional, thought-leadership
+- Facebook: Conversational
+- Instagram: Visual, emoji-heavy
+
+**Location:** `apps/web/src/lib/services/content-factory/`
+
+### 5. Publishing Engine (PKG-024)
+**Purpose:** Schedule and automate content publishing.
+
+**Features:**
+- Manual scheduling
+- Auto-scheduling (optimal times)
+- Cron job (every minute)
+- Rate limiting per platform
+- Retry logic (max 3 attempts)
+
+**Location:** `apps/web/src/lib/services/publishing-engine/`
+
+### 6. Analytics & Learning Loop (PKG-025)
+**Purpose:** Collect metrics and generate AI-powered insights.
+
+**Metrics:**
+- Impressions, reach
+- Likes, comments, shares
+- Engagement rate
+- Link clicks
+
+**AI Learning:** Analyzes patterns and saves insights to Brand Brain for future content improvement.
+
+**Location:** `apps/web/src/lib/services/analytics/`
+
+### 7. Unified Dashboard (PKG-026)
+**Purpose:** Command center showing everything in one place.
+
+**Sections:**
+- Flywheel Status (0-100% health)
+- Quick Actions
+- Organic/Paid Metrics
+- Lead Stats
+- AI Insights
+- Recent Activity
+- Connected Accounts
+
+**Location:** `apps/web/src/components/dashboard/unified-dashboard.tsx`
+
+---
 
 ## Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **UI**: React 19, TypeScript, Tailwind CSS, HeroUI
-- **State**: Zustand, React Query
-- **Forms**: React Hook Form + Zod
+- **Framework:** Next.js 15 (App Router)
+- **UI:** React 19, TypeScript, Tailwind CSS, HeroUI
+- **State:** Zustand, React Query
+- **Forms:** React Hook Form + Zod
+- **Auth:** Clerk
 
 ### Backend
-- **API**: Next.js API Routes (primary)
-- **Voice Service**: Python Flask (separate service)
-- **Database**: PostgreSQL + Prisma ORM
-- **Cache/Queue**: Redis (Upstash)
-- **Storage**: S3-compatible (Cloudflare R2)
+- **API:** Next.js API Routes
+- **Voice Service:** Python Flask + LiveKit
+- **Database:** PostgreSQL + Prisma ORM
+- **Cache/Queue:** Redis (Upstash)
+- **Storage:** S3-compatible (Cloudflare R2)
+- **AI:** OpenAI GPT-4o, DALL-E 3
 
 ### Infrastructure
-- **Monorepo**: Turborepo + pnpm workspaces
-- **Hosting**: Vercel (frontend), Render (backend/database)
-- **Voice**: LiveKit Cloud
+- **Monorepo:** Turborepo + pnpm workspaces
+- **Frontend Hosting:** Vercel
+- **Backend Hosting:** DigitalOcean App Platform, Render
+- **Voice:** LiveKit Cloud
+
+---
 
 ## Project Structure
+
 ```
 epic-ai/
 ├── apps/
-│   ├── web/                    # Next.js frontend
+│   ├── web/                          # Next.js frontend
 │   │   ├── src/
-│   │   │   ├── app/            # App router pages
-│   │   │   ├── components/     # React components
-│   │   │   ├── lib/            # Utilities, configs
-│   │   │   ├── hooks/          # Custom hooks
-│   │   │   └── types/          # TypeScript types
+│   │   │   ├── app/                  # App router pages
+│   │   │   │   ├── (dashboard)/      # Dashboard route group
+│   │   │   │   │   ├── dashboard/    # Main dashboard
+│   │   │   │   │   ├── brand/        # Brand Brain UI
+│   │   │   │   │   ├── content/      # Content Factory UI
+│   │   │   │   │   ├── analytics/    # Analytics UI
+│   │   │   │   │   └── onboarding/   # Onboarding flow
+│   │   │   │   └── api/              # API routes
+│   │   │   │       ├── dashboard/    # Unified dashboard API
+│   │   │   │       ├── brand-brain/  # Brand Brain APIs
+│   │   │   │       ├── content/      # Content APIs
+│   │   │   │       ├── analytics/    # Analytics APIs
+│   │   │   │       └── social/       # Social connection APIs
+│   │   │   ├── components/           # React components
+│   │   │   │   ├── dashboard/        # Dashboard components
+│   │   │   │   ├── brand/            # Brand Brain components
+│   │   │   │   ├── content/          # Content components
+│   │   │   │   └── layout/           # Layout components
+│   │   │   └── lib/
+│   │   │       ├── services/         # Core service modules
+│   │   │       │   ├── brand-brain/
+│   │   │       │   ├── context-engine/
+│   │   │       │   ├── content-factory/
+│   │   │       │   ├── social-publishing/
+│   │   │       │   ├── publishing-engine/
+│   │   │       │   ├── analytics/
+│   │   │       │   └── ad-platform/
+│   │   │       └── sync-user.ts      # User sync utilities
 │   │   └── ...
-│   └── voice-service/          # Python voice backend
-│       ├── api/                # Flask routes
-│       ├── agents/             # Agent runtime
-│       └── ...
+│   └── voice-service/                # Python voice backend
 ├── packages/
-│   ├── database/               # Prisma schema & client
-│   ├── shared/                 # Shared types & utils
-│   └── ui/                     # Shared UI components
-└── docs/                       # Documentation
+│   ├── database/                     # Prisma schema & client
+│   ├── shared/                       # Shared types & utils
+│   └── ui/                           # Shared UI components
+├── .do/                              # DigitalOcean App Platform config
+└── docs/                             # Documentation
 ```
+
+---
+
+## Database Models (Key Tables)
+
+| Model | Purpose |
+|-------|---------|
+| `User` | Clerk-synced user |
+| `Organization` | Multi-tenant org |
+| `Brand` | Brand entity per org |
+| `BrandBrain` | AI brain settings |
+| `BrandAudience` | Target personas |
+| `ContentPillar` | Content themes |
+| `BrandCompetitor` | Competitors to track |
+| `BrandLearning` | AI-generated insights |
+| `ContextSource` | External data sources |
+| `ContextItem` | Processed content items |
+| `SocialAccount` | Connected platforms |
+| `ContentItem` | Generated content |
+| `ContentVariation` | Platform-specific versions |
+| `PublishingSchedule` | Posting schedules |
+| `PostAnalytics` | Per-post metrics |
+| `Lead` | CRM leads |
+| `AdCampaign` | Paid ad campaigns |
+
+---
+
+## Authentication
+
+Using **Clerk** for authentication:
+
+```tsx
+// Server Component
+import { auth } from "@clerk/nextjs/server";
+
+export default async function Page() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  // ...
+}
+```
+
+```tsx
+// API Route
+import { auth } from "@clerk/nextjs/server";
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // ...
+}
+```
+
+---
 
 ## Coding Standards
 
 ### TypeScript
-- Use strict TypeScript - no `any` types unless absolutely necessary
+- Use strict TypeScript - no `any` types
 - Define interfaces/types for all data structures
 - Use Zod for runtime validation
-- Prefer `const` over `let`, never use `var`
 
 ### React/Next.js
-- Use functional components with hooks
-- Use Server Components by default, Client Components only when needed
-- Mark client components with `"use client"` directive
+- Use Server Components by default
+- Mark client components with `"use client"`
 - Use `@/` alias for imports from `src/`
-- Colocate components with their pages when page-specific
 
-### File Naming
-- Components: PascalCase (`UserProfile.tsx`)
-- Utilities/hooks: camelCase (`useAuth.ts`, `formatDate.ts`)
-- Pages: lowercase with dashes (`user-profile/page.tsx`)
-- Constants: SCREAMING_SNAKE_CASE for values
-
-### Component Structure
+### API Routes
 ```tsx
-// 1. Imports
-import { useState } from "react";
-import { Button } from "@heroui/react";
-
-// 2. Types
-interface Props {
-  title: string;
-  onSubmit: () => void;
-}
-
-// 3. Component
-export function MyComponent({ title, onSubmit }: Props) {
-  // 3a. Hooks
-  const [state, setState] = useState("");
-  
-  // 3b. Handlers
-  const handleClick = () => {
-    onSubmit();
-  };
-  
-  // 3c. Render
-  return (
-    <div>
-      <h1>{title}</h1>
-      <Button onPress={handleClick}>Submit</Button>
-    </div>
-  );
-}
-```
-
-### API Routes (Next.js)
-```tsx
-// Use Route Handlers in app/api/
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 
 export async function GET(request: NextRequest) {
   try {
-    const data = await prisma.user.findMany();
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const data = await prisma.brand.findMany();
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch" },
-      { status: 500 }
-    );
+    console.error("Error:", error);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
 ```
 
-### Database (Prisma)
-- Use the shared `@epic-ai/database` package
-- Import prisma client: `import { prisma } from "@epic-ai/database"`
-- Use transactions for multi-step operations
-- Always handle errors appropriately
+### Error Handling
+- Wrap database calls in try-catch
+- Return graceful error responses
+- Log errors for debugging
+- Prevent redirect loops (check before redirecting)
 
-### Styling
-- Use Tailwind CSS utility classes
-- Use HeroUI components when available
-- Use `cn()` utility for conditional classes
-- Follow mobile-first responsive design
-
-## Common Patterns
-
-### Authentication Check
-```tsx
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-
-export default async function ProtectedPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  
-  return <div>Protected content</div>;
-}
-```
-
-### Data Fetching (Server Component)
-```tsx
-import { prisma } from "@epic-ai/database";
-
-export default async function UsersPage() {
-  const users = await prisma.user.findMany();
-  return <UserList users={users} />;
-}
-```
-
-### Form Handling
-```tsx
-"use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-export function MyForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
-  
-  const onSubmit = async (data: FormData) => {
-    // Handle submit
-  };
-  
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* form fields */}
-    </form>
-  );
-}
-```
-
-## Environment Variables
-
-Required variables are defined in `.env.example`. Copy to `.env.local` for development.
-
-Key variables:
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Auth encryption key
-- `NEXTAUTH_URL` - App URL for auth callbacks
-- `OPENAI_API_KEY` - For AI features
+---
 
 ## Commands
+
 ```bash
 # Development
-pnpm dev              # Start all apps in dev mode
+pnpm dev              # Start all apps
 pnpm build            # Build all apps
 pnpm lint             # Lint all apps
 
@@ -216,609 +305,58 @@ pnpm db:migrate       # Run migrations
 pnpm db:studio        # Open Prisma Studio
 
 # Specific apps
-pnpm --filter web dev           # Run only web app
-pnpm --filter @epic-ai/database generate  # Generate only database
+pnpm --filter web dev
+pnpm --filter @epic-ai/database generate
 ```
 
-## Current Phase
-
-We are in **Phase 1: Foundation** (Weeks 1-6)
-- Setting up monorepo structure
-- Implementing authentication
-- Building core entities (orgs, brands, personas)
-- Setting up billing with Stripe
-
-## Key Decisions
-
-1. **Monorepo**: Using Turborepo for build orchestration
-2. **Database**: PostgreSQL with Prisma (hosted on Render)
-3. **Auth**: NextAuth v5 with email + Google OAuth
-4. **UI**: HeroUI component library (Tailwind-based)
-5. **Social**: Will integrate Postiz (open-source)
-6. **Voice**: Will port from existing ai.epic.dm codebase
-
-## DO's and DON'Ts
-
-### DO:
-- ✅ Write clean, readable code with comments for complex logic
-- ✅ Handle errors gracefully with user-friendly messages
-- ✅ Use TypeScript strictly - define all types
-- ✅ Follow the existing patterns in the codebase
-- ✅ Create reusable components in packages/ui
-- ✅ Use environment variables for secrets
-- ✅ Write meaningful commit messages
-
-### DON'T:
-- ❌ Use `any` type without good reason
-- ❌ Hardcode secrets or API keys
-- ❌ Skip error handling
-- ❌ Create deeply nested component structures
-- ❌ Mix concerns (keep components focused)
-- ❌ Ignore TypeScript errors
-- ❌ Leave console.logs in production code
-
-## When Stuck
-
-1. Check existing similar code in the project
-2. Refer to documentation:
-   - Next.js: https://nextjs.org/docs
-   - Prisma: https://prisma.io/docs
-   - HeroUI: https://heroui.com
-   - Tailwind: https://tailwindcss.com/docs
-3. Ask for clarification before making assumptions
-
-## Contact
-
-This project is managed by the Epic AI team.
-- GitHub: github.com/epicdm/epic-ai
-- Domain: leads.epic.dm
-EOFcat > CLAUDE.md << 'EOF'
-# Epic AI - Claude Code Instructions
-
-## Project Overview
-
-Epic AI is a unified AI marketing platform combining:
-1. **Social Media Management** - Powered by Postiz integration
-2. **Voice AI Agents** - Powered by LiveKit + OpenAI + Deepgram
-3. **Unified Lead Management** - All leads from all channels
-4. **Flywheel Automations** - Social → Voice → Leads → Social loop
-
-## Tech Stack
-
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **UI**: React 19, TypeScript, Tailwind CSS, HeroUI
-- **State**: Zustand, React Query
-- **Forms**: React Hook Form + Zod
-
-### Backend
-- **API**: Next.js API Routes (primary)
-- **Voice Service**: Python Flask (separate service)
-- **Database**: PostgreSQL + Prisma ORM
-- **Cache/Queue**: Redis (Upstash)
-- **Storage**: S3-compatible (Cloudflare R2)
-
-### Infrastructure
-- **Monorepo**: Turborepo + pnpm workspaces
-- **Hosting**: Vercel (frontend), Render (backend/database)
-- **Voice**: LiveKit Cloud
-
-## Project Structure
-```
-epic-ai/
-├── apps/
-│   ├── web/                    # Next.js frontend
-│   │   ├── src/
-│   │   │   ├── app/            # App router pages
-│   │   │   ├── components/     # React components
-│   │   │   ├── lib/            # Utilities, configs
-│   │   │   ├── hooks/          # Custom hooks
-│   │   │   └── types/          # TypeScript types
-│   │   └── ...
-│   └── voice-service/          # Python voice backend
-│       ├── api/                # Flask routes
-│       ├── agents/             # Agent runtime
-│       └── ...
-├── packages/
-│   ├── database/               # Prisma schema & client
-│   ├── shared/                 # Shared types & utils
-│   └── ui/                     # Shared UI components
-└── docs/                       # Documentation
-```
-
-## Coding Standards
-
-### TypeScript
-- Use strict TypeScript - no `any` types unless absolutely necessary
-- Define interfaces/types for all data structures
-- Use Zod for runtime validation
-- Prefer `const` over `let`, never use `var`
-
-### React/Next.js
-- Use functional components with hooks
-- Use Server Components by default, Client Components only when needed
-- Mark client components with `"use client"` directive
-- Use `@/` alias for imports from `src/`
-- Colocate components with their pages when page-specific
-
-### File Naming
-- Components: PascalCase (`UserProfile.tsx`)
-- Utilities/hooks: camelCase (`useAuth.ts`, `formatDate.ts`)
-- Pages: lowercase with dashes (`user-profile/page.tsx`)
-- Constants: SCREAMING_SNAKE_CASE for values
-
-### Component Structure
-```tsx
-// 1. Imports
-import { useState } from "react";
-import { Button } from "@heroui/react";
-
-// 2. Types
-interface Props {
-  title: string;
-  onSubmit: () => void;
-}
-
-// 3. Component
-export function MyComponent({ title, onSubmit }: Props) {
-  // 3a. Hooks
-  const [state, setState] = useState("");
-  
-  // 3b. Handlers
-  const handleClick = () => {
-    onSubmit();
-  };
-  
-  // 3c. Render
-  return (
-    <div>
-      <h1>{title}</h1>
-      <Button onPress={handleClick}>Submit</Button>
-    </div>
-  );
-}
-```
-
-### API Routes (Next.js)
-```tsx
-// Use Route Handlers in app/api/
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@epic-ai/database";
-
-export async function GET(request: NextRequest) {
-  try {
-    const data = await prisma.user.findMany();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch" },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Database (Prisma)
-- Use the shared `@epic-ai/database` package
-- Import prisma client: `import { prisma } from "@epic-ai/database"`
-- Use transactions for multi-step operations
-- Always handle errors appropriately
-
-### Styling
-- Use Tailwind CSS utility classes
-- Use HeroUI components when available
-- Use `cn()` utility for conditional classes
-- Follow mobile-first responsive design
-
-## Common Patterns
-
-### Authentication Check
-```tsx
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-
-export default async function ProtectedPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  
-  return <div>Protected content</div>;
-}
-```
-
-### Data Fetching (Server Component)
-```tsx
-import { prisma } from "@epic-ai/database";
-
-export default async function UsersPage() {
-  const users = await prisma.user.findMany();
-  return <UserList users={users} />;
-}
-```
-
-### Form Handling
-```tsx
-"use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-export function MyForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
-  
-  const onSubmit = async (data: FormData) => {
-    // Handle submit
-  };
-  
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* form fields */}
-    </form>
-  );
-}
-```
+---
 
 ## Environment Variables
 
-Required variables are defined in `.env.example`. Copy to `.env.local` for development.
-
 Key variables:
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Auth encryption key
-- `NEXTAUTH_URL` - App URL for auth callbacks
-- `OPENAI_API_KEY` - For AI features
+- `DATABASE_URL` - PostgreSQL connection
+- `CLERK_SECRET_KEY` - Clerk auth
+- `OPENAI_API_KEY` - AI features
+- `TWITTER_CLIENT_ID/SECRET` - Twitter OAuth
+- `LINKEDIN_CLIENT_ID/SECRET` - LinkedIn OAuth
+- `META_APP_ID/SECRET` - Meta OAuth
 
-## Commands
-```bash
-# Development
-pnpm dev              # Start all apps in dev mode
-pnpm build            # Build all apps
-pnpm lint             # Lint all apps
-
-# Database
-pnpm db:generate      # Generate Prisma client
-pnpm db:push          # Push schema to database
-pnpm db:migrate       # Run migrations
-pnpm db:studio        # Open Prisma Studio
-
-# Specific apps
-pnpm --filter web dev           # Run only web app
-pnpm --filter @epic-ai/database generate  # Generate only database
-```
-
-## Current Phase
-
-We are in **Phase 1: Foundation** (Weeks 1-6)
-- Setting up monorepo structure
-- Implementing authentication
-- Building core entities (orgs, brands, personas)
-- Setting up billing with Stripe
-
-## Key Decisions
-
-1. **Monorepo**: Using Turborepo for build orchestration
-2. **Database**: PostgreSQL with Prisma (hosted on Render)
-3. **Auth**: NextAuth v5 with email + Google OAuth
-4. **UI**: HeroUI component library (Tailwind-based)
-5. **Social**: Will integrate Postiz (open-source)
-6. **Voice**: Will port from existing ai.epic.dm codebase
+---
 
 ## DO's and DON'Ts
 
 ### DO:
-- ✅ Write clean, readable code with comments for complex logic
-- ✅ Handle errors gracefully with user-friendly messages
-- ✅ Use TypeScript strictly - define all types
-- ✅ Follow the existing patterns in the codebase
-- ✅ Create reusable components in packages/ui
-- ✅ Use environment variables for secrets
-- ✅ Write meaningful commit messages
+- Use TypeScript strictly
+- Handle errors gracefully
+- Follow existing patterns
+- Use environment variables for secrets
+- Test redirect logic to prevent loops
+- Wrap async operations in try-catch
 
 ### DON'T:
-- ❌ Use `any` type without good reason
-- ❌ Hardcode secrets or API keys
-- ❌ Skip error handling
-- ❌ Create deeply nested component structures
-- ❌ Mix concerns (keep components focused)
-- ❌ Ignore TypeScript errors
-- ❌ Leave console.logs in production code
+- Use `any` type
+- Hardcode secrets
+- Skip error handling
+- Leave console.logs in production
+- Create redirect loops between pages
+- Call the same function multiple times unnecessarily
 
-## When Stuck
+---
 
-1. Check existing similar code in the project
-2. Refer to documentation:
-   - Next.js: https://nextjs.org/docs
-   - Prisma: https://prisma.io/docs
-   - HeroUI: https://heroui.com
-   - Tailwind: https://tailwindcss.com/docs
-3. Ask for clarification before making assumptions
+## Key Architectural Decisions
+
+1. **Flywheel Architecture** - Self-improving system
+2. **Native OAuth** - Direct platform integrations (not Postiz)
+3. **Brand Brain as Hub** - All content flows through brand voice
+4. **Platform Variations** - One idea, optimized per platform
+5. **Encrypted Credentials** - AES-256-GCM for tokens
+6. **Cron Scheduling** - Reliable automated publishing
+7. **AI Learning Loop** - System improves over time
+
+---
 
 ## Contact
 
-This project is managed by the Epic AI team.
-- GitHub: github.com/epicdm/epic-ai
-- Domain: leads.epic.dm
-EOFcat > CLAUDE.md << 'EOF'
-# Epic AI - Claude Code Instructions
-
-## Project Overview
-
-Epic AI is a unified AI marketing platform combining:
-1. **Social Media Management** - Powered by Postiz integration
-2. **Voice AI Agents** - Powered by LiveKit + OpenAI + Deepgram
-3. **Unified Lead Management** - All leads from all channels
-4. **Flywheel Automations** - Social → Voice → Leads → Social loop
-
-## Tech Stack
-
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **UI**: React 19, TypeScript, Tailwind CSS, HeroUI
-- **State**: Zustand, React Query
-- **Forms**: React Hook Form + Zod
-
-### Backend
-- **API**: Next.js API Routes (primary)
-- **Voice Service**: Python Flask (separate service)
-- **Database**: PostgreSQL + Prisma ORM
-- **Cache/Queue**: Redis (Upstash)
-- **Storage**: S3-compatible (Cloudflare R2)
-
-### Infrastructure
-- **Monorepo**: Turborepo + pnpm workspaces
-- **Hosting**: Vercel (frontend), Render (backend/database)
-- **Voice**: LiveKit Cloud
-
-## Project Structure
-```
-epic-ai/
-├── apps/
-│   ├── web/                    # Next.js frontend
-│   │   ├── src/
-│   │   │   ├── app/            # App router pages
-│   │   │   ├── components/     # React components
-│   │   │   ├── lib/            # Utilities, configs
-│   │   │   ├── hooks/          # Custom hooks
-│   │   │   └── types/          # TypeScript types
-│   │   └── ...
-│   └── voice-service/          # Python voice backend
-│       ├── api/                # Flask routes
-│       ├── agents/             # Agent runtime
-│       └── ...
-├── packages/
-│   ├── database/               # Prisma schema & client
-│   ├── shared/                 # Shared types & utils
-│   └── ui/                     # Shared UI components
-└── docs/                       # Documentation
-```
-
-## Coding Standards
-
-### TypeScript
-- Use strict TypeScript - no `any` types unless absolutely necessary
-- Define interfaces/types for all data structures
-- Use Zod for runtime validation
-- Prefer `const` over `let`, never use `var`
-
-### React/Next.js
-- Use functional components with hooks
-- Use Server Components by default, Client Components only when needed
-- Mark client components with `"use client"` directive
-- Use `@/` alias for imports from `src/`
-- Colocate components with their pages when page-specific
-
-### File Naming
-- Components: PascalCase (`UserProfile.tsx`)
-- Utilities/hooks: camelCase (`useAuth.ts`, `formatDate.ts`)
-- Pages: lowercase with dashes (`user-profile/page.tsx`)
-- Constants: SCREAMING_SNAKE_CASE for values
-
-### Component Structure
-```tsx
-// 1. Imports
-import { useState } from "react";
-import { Button } from "@heroui/react";
-
-// 2. Types
-interface Props {
-  title: string;
-  onSubmit: () => void;
-}
-
-// 3. Component
-export function MyComponent({ title, onSubmit }: Props) {
-  // 3a. Hooks
-  const [state, setState] = useState("");
-  
-  // 3b. Handlers
-  const handleClick = () => {
-    onSubmit();
-  };
-  
-  // 3c. Render
-  return (
-    <div>
-      <h1>{title}</h1>
-      <Button onPress={handleClick}>Submit</Button>
-    </div>
-  );
-}
-```
-
-### API Routes (Next.js)
-```tsx
-// Use Route Handlers in app/api/
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@epic-ai/database";
-
-export async function GET(request: NextRequest) {
-  try {
-    const data = await prisma.user.findMany();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch" },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Database (Prisma)
-- Use the shared `@epic-ai/database` package
-- Import prisma client: `import { prisma } from "@epic-ai/database"`
-- Use transactions for multi-step operations
-- Always handle errors appropriately
-
-### Styling
-- Use Tailwind CSS utility classes
-- Use HeroUI components when available
-- Use `cn()` utility for conditional classes
-- Follow mobile-first responsive design
-
-## Common Patterns
-
-### Authentication Check
-```tsx
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-
-export default async function ProtectedPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  
-  return <div>Protected content</div>;
-}
-```
-
-### Data Fetching (Server Component)
-```tsx
-import { prisma } from "@epic-ai/database";
-
-export default async function UsersPage() {
-  const users = await prisma.user.findMany();
-  return <UserList users={users} />;
-}
-```
-
-### Form Handling
-```tsx
-"use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-export function MyForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
-  
-  const onSubmit = async (data: FormData) => {
-    // Handle submit
-  };
-  
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* form fields */}
-    </form>
-  );
-}
-```
-
-## Environment Variables
-
-Required variables are defined in `.env.example`. Copy to `.env.local` for development.
-
-Key variables:
-- `DATABASE_URL` - PostgreSQL connection string
-- `NEXTAUTH_SECRET` - Auth encryption key
-- `NEXTAUTH_URL` - App URL for auth callbacks
-- `OPENAI_API_KEY` - For AI features
-
-## Commands
-```bash
-# Development
-pnpm dev              # Start all apps in dev mode
-pnpm build            # Build all apps
-pnpm lint             # Lint all apps
-
-# Database
-pnpm db:generate      # Generate Prisma client
-pnpm db:push          # Push schema to database
-pnpm db:migrate       # Run migrations
-pnpm db:studio        # Open Prisma Studio
-
-# Specific apps
-pnpm --filter web dev           # Run only web app
-pnpm --filter @epic-ai/database generate  # Generate only database
-```
-
-## Current Phase
-
-We are in **Phase 1: Foundation** (Weeks 1-6)
-- Setting up monorepo structure
-- Implementing authentication
-- Building core entities (orgs, brands, personas)
-- Setting up billing with Stripe
-
-## Key Decisions
-
-1. **Monorepo**: Using Turborepo for build orchestration
-2. **Database**: PostgreSQL with Prisma (hosted on Render)
-3. **Auth**: NextAuth v5 with email + Google OAuth
-4. **UI**: HeroUI component library (Tailwind-based)
-5. **Social**: Will integrate Postiz (open-source)
-6. **Voice**: Will port from existing ai.epic.dm codebase
-
-## DO's and DON'Ts
-
-### DO:
-- ✅ Write clean, readable code with comments for complex logic
-- ✅ Handle errors gracefully with user-friendly messages
-- ✅ Use TypeScript strictly - define all types
-- ✅ Follow the existing patterns in the codebase
-- ✅ Create reusable components in packages/ui
-- ✅ Use environment variables for secrets
-- ✅ Write meaningful commit messages
-
-### DON'T:
-- ❌ Use `any` type without good reason
-- ❌ Hardcode secrets or API keys
-- ❌ Skip error handling
-- ❌ Create deeply nested component structures
-- ❌ Mix concerns (keep components focused)
-- ❌ Ignore TypeScript errors
-- ❌ Leave console.logs in production code
-
-## When Stuck
-
-1. Check existing similar code in the project
-2. Refer to documentation:
-   - Next.js: https://nextjs.org/docs
-   - Prisma: https://prisma.io/docs
-   - HeroUI: https://heroui.com
-   - Tailwind: https://tailwindcss.com/docs
-3. Ask for clarification before making assumptions
-
-## Contact
-
-This project is managed by the Epic AI team.
-- GitHub: github.com/epicdm/epic-ai
-- Domain: leads.epic.dm
+- **GitHub:** github.com/epicdm/epic-ai
+- **Production:** https://leads.epic.dm
+- **Social (Postiz):** https://social.leads.epic.dm
