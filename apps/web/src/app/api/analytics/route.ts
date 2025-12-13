@@ -15,8 +15,8 @@ import type { SocialPlatform } from '@prisma/client';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's organization
     const membership = await prisma.membership.findFirst({
-      where: { userId: session.user.id },
+      where: { userId },
       include: { organization: true },
     });
 

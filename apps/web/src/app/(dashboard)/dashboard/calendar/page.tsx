@@ -14,14 +14,14 @@ export const metadata = {
 };
 
 export default async function CalendarPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect("/login");
   }
 
   // Get user's organization
   const membership = await prisma.membership.findFirst({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { organization: true },
   });
 

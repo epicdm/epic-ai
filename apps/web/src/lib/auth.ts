@@ -1,11 +1,14 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
+
+// Re-export Clerk's auth function for convenience
+export const auth = clerkAuth;
 
 /**
  * Get the current authenticated user from Clerk
  */
 export async function getAuth() {
-  return auth();
+  return clerkAuth();
 }
 
 /**
@@ -19,7 +22,7 @@ export async function getUser() {
  * Get the current user from our database (with organization data)
  */
 export async function getCurrentUser() {
-  const { userId } = await auth();
+  const { userId } = await clerkAuth();
 
   if (!userId) {
     return null;
@@ -58,7 +61,7 @@ export async function getCurrentOrganization() {
  * Check if user has access to an organization
  */
 export async function hasOrgAccess(organizationId: string) {
-  const { userId } = await auth();
+  const { userId } = await clerkAuth();
 
   if (!userId) {
     return false;
@@ -80,7 +83,7 @@ export async function hasOrgAccess(organizationId: string) {
  * Check if user has a specific role in an organization
  */
 export async function hasRole(organizationId: string, roles: string[]) {
-  const { userId } = await auth();
+  const { userId } = await clerkAuth();
 
   if (!userId) {
     return false;

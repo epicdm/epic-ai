@@ -13,8 +13,8 @@ import { prisma } from '@epic-ai/database';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Verify user has access to org
     const membership = await prisma.membership.findFirst({
-      where: { userId: session.user.id, organizationId: orgId },
+      where: { userId, organizationId: orgId },
     });
 
     if (!membership) {

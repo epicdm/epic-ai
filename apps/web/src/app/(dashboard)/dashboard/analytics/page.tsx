@@ -14,15 +14,15 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  const session = await auth();
+  const { userId } = await auth();
 
-  if (!session?.user?.id) {
+  if (!userId) {
     redirect('/login');
   }
 
   // Get user's organization and brand
   const membership = await prisma.membership.findFirst({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { organization: true },
   });
 

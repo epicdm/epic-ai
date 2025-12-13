@@ -28,8 +28,8 @@ const publishSchema = z.object({
  * POST - Publish content to platforms
  */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const { userId } = await auth();
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const hasAccess = content.brand.organization.members.some(
-      (m) => m.userId === session.user.id
+      (m) => m.userId === userId
     );
 
     if (!hasAccess) {

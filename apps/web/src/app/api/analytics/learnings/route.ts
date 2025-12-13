@@ -13,8 +13,8 @@ import { getBrandLearnings, generateLearnings } from '@/lib/services/analytics/l
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         id: brandId,
         organization: {
           memberships: {
-            some: { userId: session.user.id },
+            some: { userId },
           },
         },
       },
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
         id: brandId,
         organization: {
           memberships: {
-            some: { userId: session.user.id },
+            some: { userId },
           },
         },
       },
