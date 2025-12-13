@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { syncUser, getUserOrganization } from "@/lib/sync-user";
+import { syncUser } from "@/lib/sync-user";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default async function DashboardLayout({
@@ -14,32 +14,34 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  // Sync user and get their organization - wrap in try/catch for resilience
-  let organization = null;
-  let user = null;
+  // Get user data in parallel - wrap in try/catch for resilience
+  let organizationName: string | undefined;
+  let userName: string | undefined;
 
   try {
-    await syncUser();
-  } catch (e) {
-    console.error("Error syncing user:", e);
-  }
+    const [syncedUser, clerkUser] = await Promise.all([
+      syncUser(),
+      currentUser(),
+    ]);
 
-  try {
-    organization = await getUserOrganization();
-  } catch (e) {
-    console.error("Error getting organization:", e);
-  }
+    // Get organization from synced user (already includes memberships)
+    if (syncedUser?.memberships?.[0]?.organization) {
+      organizationName = syncedUser.memberships[0].organization.name;
+    }
 
-  try {
-    user = await currentUser();
+    // Get user name from Clerk
+    if (clerkUser?.firstName) {
+      userName = clerkUser.firstName;
+    }
   } catch (e) {
-    console.error("Error getting current user:", e);
+    console.error("Error in dashboard layout:", e);
+    // Continue rendering with default values
   }
 
   return (
     <DashboardShell
-      organizationName={organization?.name}
-      userName={user?.firstName || undefined}
+      organizationName={organizationName}
+      userName={userName}
     >
       {children}
     </DashboardShell>

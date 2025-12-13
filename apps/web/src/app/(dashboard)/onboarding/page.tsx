@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { syncUser, needsOnboarding } from "@/lib/sync-user";
+import { syncUser } from "@/lib/sync-user";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 
 export default async function OnboardingPage() {
@@ -10,38 +10,36 @@ export default async function OnboardingPage() {
     redirect("/sign-in");
   }
 
-  // Sync user to database - wrap in try/catch for resilience
+  // Sync user and check if they need onboarding in one call
+  let userHasOrg = false;
+  let clerkUser = null;
+
   try {
-    await syncUser();
+    const [syncedUser, clerk] = await Promise.all([
+      syncUser(),
+      currentUser(),
+    ]);
+
+    clerkUser = clerk;
+
+    // Only redirect if we successfully verified user HAS an organization
+    // If syncUser fails or returns null, stay on onboarding to be safe
+    if (syncedUser && syncedUser.memberships.length > 0) {
+      userHasOrg = true;
+    }
   } catch (e) {
-    console.error("Error syncing user:", e);
+    console.error("Error in onboarding check:", e);
+    // On error, DON'T redirect - stay on onboarding to avoid redirect loop
   }
 
-  // Check if user already has an organization
-  let needs = true;
-  try {
-    needs = await needsOnboarding();
-  } catch (e) {
-    console.error("Error checking onboarding status:", e);
-    // If we can't check, assume they need onboarding
-    needs = true;
-  }
-
-  if (!needs) {
+  if (userHasOrg) {
     // User already has an organization, go to dashboard
     redirect("/dashboard");
   }
 
-  let user = null;
-  try {
-    user = await currentUser();
-  } catch (e) {
-    console.error("Error getting current user:", e);
-  }
-
   return (
     <OnboardingWizard
-      userName={user?.firstName || user?.emailAddresses?.[0]?.emailAddress || "there"}
+      userName={clerkUser?.firstName || clerkUser?.emailAddresses?.[0]?.emailAddress || "there"}
     />
   );
 }

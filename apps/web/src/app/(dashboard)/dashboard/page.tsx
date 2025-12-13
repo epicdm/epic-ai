@@ -5,7 +5,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { needsOnboarding } from "@/lib/sync-user";
+import { syncUser } from "@/lib/sync-user";
 import { UnifiedDashboard } from "@/components/dashboard/unified-dashboard";
 
 export const metadata = {
@@ -20,15 +20,24 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
-  // Check if user needs onboarding
+  // Check if user needs onboarding - use syncUser directly to avoid double calls
+  // and handle errors more gracefully
+  let needsOnboarding = false;
+
   try {
-    const needs = await needsOnboarding();
-    if (needs) {
-      redirect("/onboarding");
+    const user = await syncUser();
+    // Only redirect if we successfully verified user has no memberships
+    // If syncUser fails (returns null), render dashboard anyway to avoid redirect loop
+    if (user && user.memberships.length === 0) {
+      needsOnboarding = true;
     }
   } catch (e) {
     console.error("Error checking onboarding status:", e);
-    // If we can't check, redirect to onboarding to be safe
+    // On error, DON'T redirect - render dashboard to avoid redirect loop
+    // The UnifiedDashboard will handle missing data gracefully
+  }
+
+  if (needsOnboarding) {
     redirect("/onboarding");
   }
 
