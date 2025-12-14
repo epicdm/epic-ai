@@ -37,10 +37,7 @@ model Organization {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  // Legacy Postiz integration (kept for migration)
-  postizApiKey     String?  @map("postiz_api_key")
-  postizOrgId      String?  @map("postiz_org_id")
-  postizConnectedAt DateTime? @map("postiz_connected_at")
+  // Postiz integration removed - using native OAuth
 
   // Relations
   memberships         Membership[]
@@ -52,6 +49,14 @@ model Organization {
   publishingLogs      PublishingLog[]
   postAnalytics       PostAnalytics[]
   analyticsSnapshots  AnalyticsSnapshot[]
+
+  // Voice Module Relations
+  voiceAgents         VoiceAgent[]
+  voicePersonas       VoicePersona[]
+  sipConfigs          SIPConfig[]
+  phoneMappings       PhoneMapping[]
+  callLogs            CallLog[]
+  voiceCampaigns      VoiceCampaign[]
 
   @@map("organizations")
 }
@@ -983,22 +988,497 @@ enum LeadStatus {
 }
 
 // ============================================
-// VOICE AGENTS (Legacy, kept for migration)
+// VOICE AGENTS (Enhanced with full config)
 // ============================================
 
 model VoiceAgent {
   id             String   @id @default(cuid())
-  brandId        String   @map("brand_id")
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+  personaId      String?  @map("persona_id")
+
+  // Basic Info
   name           String
+  description    String?  @db.Text
+  agentType      AgentType @default(INBOUND) @map("agent_type")
+
+  // Instructions
   systemPrompt   String?  @db.Text @map("system_prompt")
-  voiceId        String?  @map("voice_id")
+  customInstructions String? @db.Text @map("custom_instructions")
+
+  // LLM Configuration
+  llmProvider    String   @default("openai") @map("llm_provider")
+  llmModel       String   @default("gpt-4o-mini") @map("llm_model")
+  temperature    Float    @default(0.7)
+  language       String   @default("en-US")
+
+  // STT Configuration
+  sttProvider    String   @default("deepgram") @map("stt_provider")
+  sttModel       String   @default("nova-2") @map("stt_model")
+  sttLanguage    String   @default("en") @map("stt_language")
+
+  // TTS Configuration
+  ttsProvider    String   @default("openai") @map("tts_provider")
+  ttsModel       String?  @map("tts_model")
+  ttsVoiceId     String?  @map("tts_voice_id")
+  voiceId        String?  @map("voice_id") // Legacy
+
+  // Realtime API Configuration
+  realtimeVoice  String   @default("alloy") @map("realtime_voice")
+
+  // VAD Configuration
+  vadEnabled     Boolean  @default(true) @map("vad_enabled")
+  vadProvider    String   @default("silero") @map("vad_provider")
+
+  // Turn Detection
+  turnDetectionModel String @default("multilingual") @map("turn_detection_model")
+
+  // Noise Cancellation
+  noiseCancellationEnabled Boolean @default(true) @map("noise_cancellation_enabled")
+  noiseCancellationType    String  @default("BVC") @map("noise_cancellation_type")
+
+  // Advanced Session Options
+  preemptiveGeneration     Boolean @default(false) @map("preemptive_generation")
+  resumeFalseInterruption  Boolean @default(false) @map("resume_false_interruption")
+  falseInterruptionTimeout Float   @default(1.0) @map("false_interruption_timeout")
+  minInterruptionDuration  Float   @default(0.2) @map("min_interruption_duration")
+
+  // Greeting Configuration
+  greetingEnabled Boolean  @default(true) @map("greeting_enabled")
+  greetingMessage String?  @db.Text @map("greeting_message")
+
+  // Multi-Channel Configuration
+  channels       Json     @default("{}") // {voice: {}, chat: {}, sms: {}}
+
+  // Deployment
+  deploymentMode String   @default("production") @map("deployment_mode")
+  filePath       String?  @map("file_path")
+  status         String   @default("created")
+
+  // Status
   isActive       Boolean  @default(true) @map("is_active")
   settings       Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  persona        VoicePersona? @relation(fields: [personaId], references: [id], onDelete: SetNull)
+  phoneMappings  PhoneMapping[]
+  callLogs       CallLog[]
+  campaigns      VoiceCampaign[]
+
+  @@index([organizationId])
   @@index([brandId])
   @@map("voice_agents")
+}
+
+enum AgentType {
+  INBOUND
+  OUTBOUND
+  HYBRID
+}
+
+// ============================================
+// VOICE PERSONAS (Templates)
+// ============================================
+
+model VoicePersona {
+  id             String   @id @default(cuid())
+  organizationId String?  @map("organization_id") // NULL for system templates
+
+  // Basic Info
+  name           String
+  type           String   // sales, support, receptionist, etc.
+  description    String?  @db.Text
+
+  // Personality
+  instructions   String   @db.Text
+  personalityTraits Json? @map("personality_traits") // ["helpful", "patient"]
+  tone           String?  // professional, friendly, casual
+  languageStyle  String?  @map("language_style") // concise, detailed
+
+  // Voice Configuration
+  voiceConfig    Json?    @map("voice_config") // {voice_id, provider, speed}
+
+  // Capabilities
+  capabilities   Json     @default("[\"voice\"]") // ["voice", "chat", "sms"]
+  tools          Json     @default("[]") // Tool configurations
+
+  // Meta
+  isTemplate     Boolean  @default(false) @map("is_template")
+  agentCount     Int      @default(0) @map("agent_count")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agents         VoiceAgent[]
+
+  @@index([organizationId])
+  @@map("voice_personas")
+}
+
+// ============================================
+// SIP CONFIGURATION (Magnus Billing)
+// ============================================
+
+model SIPConfig {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+
+  // Basic Info
+  name           String
+  provider       String   @default("magnus") // magnus, twilio, etc.
+
+  // Magnus Billing Integration
+  magnusTrunkId  String?  @map("magnus_trunk_id")
+  magnusAccountId String? @map("magnus_account_id")
+
+  // SIP Settings
+  sipUrl         String   @map("sip_url")
+  sipUsername    String?  @map("sip_username")
+  sipPassword    String?  @map("sip_password") // Encrypted
+  sipTransport   String   @default("tcp") @map("sip_transport") // tcp, udp, tls
+
+  // Capabilities
+  inboundEnabled  Boolean @default(true) @map("inbound_enabled")
+  outboundEnabled Boolean @default(true) @map("outbound_enabled")
+  isDefault       Boolean @default(false) @map("is_default")
+
+  // Status
+  status         String   @default("pending") // pending, active, error
+  lastChecked    DateTime? @map("last_checked")
+  errorMessage   String?  @map("error_message")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phoneMappings  PhoneMapping[]
+
+  @@index([organizationId])
+  @@map("sip_configs")
+}
+
+// ============================================
+// PHONE NUMBER MANAGEMENT (Magnus DIDs)
+// ============================================
+
+model PhoneMapping {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  agentId        String?  @map("agent_id")
+  sipConfigId    String?  @map("sip_config_id")
+
+  // Phone Number
+  phoneNumber    String   @unique @map("phone_number")
+  countryCode    String?  @map("country_code")
+  areaCode       String?  @map("area_code")
+
+  // Magnus Integration
+  magnusDidId    String?  @map("magnus_did_id")
+  magnusStatus   String?  @map("magnus_status")
+
+  // Routing
+  routingType    String   @default("agent") @map("routing_type") // agent, ivr, forward
+  forwardTo      String?  @map("forward_to")
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  isVerified     Boolean  @default(false) @map("is_verified")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  sipConfig      SIPConfig? @relation(fields: [sipConfigId], references: [id], onDelete: SetNull)
+  callLogs       CallLog[]
+
+  @@index([organizationId])
+  @@index([phoneNumber])
+  @@map("phone_mappings")
+}
+
+// ============================================
+// CALL LOGS (Enhanced with cost tracking)
+// ============================================
+
+model CallLog {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  agentId        String?  @map("agent_id")
+  phoneMappingId String?  @map("phone_mapping_id")
+  campaignId     String?  @map("campaign_id")
+
+  // Call Identifiers
+  livekitRoomName String? @map("livekit_room_name")
+  livekitRoomSid  String? @unique @map("livekit_room_sid")
+  sipCallId       String? @map("sip_call_id")
+
+  // Call Details
+  direction      CallDirection @default(INBOUND)
+  phoneNumber    String?  @map("phone_number")
+  callerNumber   String?  @map("caller_number")
+
+  // Timing
+  startedAt      DateTime @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  duration       Int?     // Duration in seconds
+
+  // Status & Outcome
+  status         CallStatus @default(ACTIVE)
+  outcome        CallOutcome?
+
+  // Recording
+  recordingUrl   String?  @map("recording_url")
+  transcriptId   String?  @map("transcript_id")
+
+  // Cost Tracking (Magnus CDR)
+  cost           Decimal? @db.Decimal(10, 4)
+  costCurrency   String   @default("USD") @map("cost_currency")
+  magnusCdrId    String?  @map("magnus_cdr_id")
+
+  // Metadata
+  metadata       Json?
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  phoneMapping   PhoneMapping? @relation(fields: [phoneMappingId], references: [id], onDelete: SetNull)
+  campaign       VoiceCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  transcript     CallTranscript?
+  events         CallEvent[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([startedAt])
+  @@map("call_logs")
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum CallStatus {
+  ACTIVE
+  RINGING
+  IN_PROGRESS
+  ENDED
+}
+
+enum CallOutcome {
+  COMPLETED
+  NO_ANSWER
+  BUSY
+  FAILED
+  VOICEMAIL
+  TRANSFERRED
+}
+
+// ============================================
+// CALL EVENTS (LiveKit Webhooks)
+// ============================================
+
+model CallEvent {
+  id             String   @id @default(cuid())
+  callLogId      String   @map("call_log_id")
+
+  // Event Details
+  eventId        String   @unique @map("event_id") // Idempotency key
+  eventType      String   @map("event_type")
+  timestamp      DateTime
+
+  // Participant Info
+  participantId  String?  @map("participant_id")
+  participantSid String?  @map("participant_sid")
+
+  // Payload
+  rawPayload     Json     @map("raw_payload")
+
+  // Processing
+  processed      Boolean  @default(true)
+  errorMessage   String?  @map("error_message")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  callLog        CallLog  @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+
+  @@index([callLogId])
+  @@map("call_events")
+}
+
+// ============================================
+// CALL TRANSCRIPTS
+// ============================================
+
+model CallTranscript {
+  id             String   @id @default(cuid())
+  callLogId      String   @unique @map("call_log_id")
+
+  // Transcript Metadata
+  language       String?
+  duration       Float?
+  segmentCount   Int      @default(0) @map("segment_count")
+
+  // Analysis
+  sentiment      String?  // positive, negative, neutral
+  summary        String?  @db.Text
+  keywords       Json?
+
+  // Status
+  status         String   @default("processing") // processing, completed, failed
+  errorMessage   String?  @map("error_message")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  completedAt    DateTime? @map("completed_at")
+
+  // Relations
+  callLog        CallLog  @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+  segments       TranscriptSegment[]
+
+  @@map("call_transcripts")
+}
+
+model TranscriptSegment {
+  id             String   @id @default(cuid())
+  transcriptId   String   @map("transcript_id")
+
+  // Segment Info
+  sequenceNumber Int      @map("sequence_number")
+  speaker        String   // agent, user
+  speakerId      String?  @map("speaker_id")
+
+  // Timing
+  startTime      Float    @map("start_time")
+  endTime        Float    @map("end_time")
+
+  // Content
+  text           String   @db.Text
+  confidence     Float?
+  language       String?
+  isFinal        Boolean  @default(true) @map("is_final")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  transcript     CallTranscript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+
+  @@index([transcriptId])
+  @@map("transcript_segments")
+}
+
+// ============================================
+// VOICE CAMPAIGNS (Autonomous Outbound)
+// ============================================
+
+model VoiceCampaign {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  agentId        String   @map("agent_id")
+
+  // Basic Info
+  name           String
+  description    String?  @db.Text
+
+  // Status
+  status         CampaignVoiceStatus @default(DRAFT)
+
+  // Schedule
+  timezone       String   @default("America/New_York")
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  callWindowStart String? @map("call_window_start") // "09:00"
+  callWindowEnd   String? @map("call_window_end")   // "17:00"
+  callDays       Int[]    @default([1, 2, 3, 4, 5]) @map("call_days") // 1=Mon
+
+  // Dialing Settings
+  maxConcurrentCalls Int  @default(1) @map("max_concurrent_calls")
+  callsPerHour   Int      @default(30) @map("calls_per_hour")
+  retryAttempts  Int      @default(2) @map("retry_attempts")
+  retryDelayMinutes Int   @default(60) @map("retry_delay_minutes")
+
+  // Stats
+  totalLeads     Int      @default(0) @map("total_leads")
+  calledCount    Int      @default(0) @map("called_count")
+  answeredCount  Int      @default(0) @map("answered_count")
+  convertedCount Int      @default(0) @map("converted_count")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent          VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  leads          CampaignLead[]
+  callLogs       CallLog[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("voice_campaigns")
+}
+
+enum CampaignVoiceStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model CampaignLead {
+  id             String   @id @default(cuid())
+  campaignId     String   @map("campaign_id")
+
+  // Contact Info
+  phoneNumber    String   @map("phone_number")
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  email          String?
+  company        String?
+
+  // Custom Data
+  customFields   Json?    @map("custom_fields")
+
+  // Call Status
+  status         CampaignLeadStatus @default(PENDING)
+  callAttempts   Int      @default(0) @map("call_attempts")
+  lastCalledAt   DateTime? @map("last_called_at")
+  nextCallAt     DateTime? @map("next_call_at")
+
+  // Outcome
+  outcome        String?  // completed, voicemail, no_answer, etc.
+  notes          String?  @db.Text
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  campaign       VoiceCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([status])
+  @@map("campaign_leads")
+}
+
+enum CampaignLeadStatus {
+  PENDING
+  CALLING
+  COMPLETED
+  FAILED
+  SKIPPED
+  DO_NOT_CALL
 }
 
 // ============================================

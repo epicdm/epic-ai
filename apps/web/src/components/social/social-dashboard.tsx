@@ -29,45 +29,46 @@ import {
   Calendar,
   Settings,
   Plus,
-  ExternalLink,
   Clock,
   RefreshCw,
   Trash2,
   AlertTriangle,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
 } from "lucide-react";
 
-interface Integration {
+interface SocialAccount {
   id: string;
   name: string;
   platform: string;
   platformDisplay: string;
   platformColor: string;
   picture?: string;
+  username?: string;
+  isActive: boolean;
   disabled: boolean;
+  expiresAt?: string;
 }
 
 interface Post {
   id: string;
-  content: string;
-  publishDate: string;
-  state: "QUEUE" | "PUBLISHED" | "ERROR" | "DRAFT";
-  integration: {
-    id: string;
-    providerIdentifier: string;
-    name: string;
-    picture?: string;
-  };
+  text: string;
+  scheduledAt?: string;
+  publishedAt?: string;
+  status: string;
+  platform: string;
+  postUrl?: string;
 }
 
 interface SetupStatus {
   connected: boolean;
-  connectedAt?: string;
-  postizUrl?: string;
-  connectUrl?: string;
-  postizOrgId?: string;
-  autoProvisioned?: boolean;
-  requiresManualSetup?: boolean;
-  error?: string;
+  hasBrand: boolean;
+  brandId?: string;
+  accounts: SocialAccount[];
+  platforms: string[];
+  message?: string;
 }
 
 interface GeneratedContent {
@@ -91,10 +92,17 @@ const TONES = [
   { key: "educational", label: "Educational" },
 ];
 
+const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  TWITTER: Twitter,
+  LINKEDIN: Linkedin,
+  FACEBOOK: Facebook,
+  INSTAGRAM: Instagram,
+};
+
 export function SocialDashboard() {
   // State
   const [setup, setSetup] = useState<SetupStatus | null>(null);
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [integrations, setIntegrations] = useState<SocialAccount[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,34 +122,28 @@ export function SocialDashboard() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
-  // Settings modal (for manual setup fallback and settings)
-  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
-  const [apiKey, setApiKey] = useState("");
-  const [savingKey, setSavingKey] = useState(false);
-  const [settingsError, setSettingsError] = useState("");
+  // Connect modal
+  const { isOpen: isConnectOpen, onOpen: onConnectOpen, onClose: onConnectClose } = useDisclosure();
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
 
-  // Track when user is connecting accounts in Postiz (new tab)
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  // Load data - auto-provisions on first visit if POSTIZ_DATABASE_URL is configured
+  // Load data
   const loadData = useCallback(async () => {
     try {
       setSetupError(null);
 
-      // Setup endpoint auto-provisions if possible
       const setupRes = await fetch("/api/social/setup");
       const setupData = await setupRes.json();
 
       if (setupData.error) {
         setSetupError(setupData.error);
-        setSetup({ connected: false });
+        setSetup({ connected: false, hasBrand: false, accounts: [], platforms: [] });
         return;
       }
 
       setSetup(setupData);
 
-      // Only fetch integrations and posts if connected
-      if (setupData.connected) {
+      // Fetch integrations and posts if we have a brand
+      if (setupData.hasBrand) {
         const [integrationsRes, postsRes] = await Promise.all([
           fetch("/api/social/integrations"),
           fetch("/api/social/posts"),
@@ -175,63 +177,39 @@ export function SocialDashboard() {
     loadData();
   };
 
-  // Save API key (manual fallback)
-  const handleSaveApiKey = async () => {
-    if (!apiKey.trim()) return;
-    setSavingKey(true);
-    setSettingsError("");
-
+  // Connect to platform
+  const handleConnect = async (platform: string) => {
+    setConnectingPlatform(platform);
     try {
-      const res = await fetch("/api/social/setup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: apiKey.trim() }),
-      });
+      const res = await fetch(`/api/social/connect?platform=${platform}`);
+      const data = await res.json();
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to save API key");
+      if (data.url) {
+        // Redirect to OAuth URL
+        window.location.href = data.url;
       }
-
-      onSettingsClose();
-      setApiKey("");
-      loadData();
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : "Failed to save");
+      console.error("Failed to get connect URL:", error);
     } finally {
-      setSavingKey(false);
+      setConnectingPlatform(null);
     }
   };
 
-  // Disconnect
-  const handleDisconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect? You can reconnect anytime.")) return;
+  // Disconnect account
+  const handleDisconnect = async (accountId: string) => {
+    if (!confirm("Are you sure you want to disconnect this account?")) return;
 
     try {
-      await fetch("/api/social/setup", { method: "DELETE" });
-      onSettingsClose();
-      loadData();
+      const res = await fetch(`/api/social/setup?accountId=${accountId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        loadData();
+      }
     } catch (error) {
       console.error("Disconnect failed:", error);
     }
-  };
-
-  // Get the connect URL - uses server-side redirect for SSO
-  const getConnectUrl = (platform?: string) => {
-    const params = platform ? `?platform=${platform}` : "";
-    return `/api/social/connect-redirect${params}`;
-  };
-
-  // Open Postiz with auto-login for connecting accounts
-  const openConnectInNewTab = (platform?: string) => {
-    window.open(getConnectUrl(platform), "_blank");
-    setIsConnecting(true);
-  };
-
-  // Called when user clicks "Done" after connecting
-  const handleDoneConnecting = () => {
-    setIsConnecting(false);
-    loadData();
   };
 
   // Generate content with AI
@@ -283,11 +261,10 @@ export function SocialDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: content.trim(),
-          integrationIds: selectedPlatforms,
+          accountIds: selectedPlatforms,
           scheduleDate: postNow ? undefined : scheduleDate,
           postNow,
           imageUrl: generatedImage,
-          generatedBy: generating ? "AI" : "MANUAL",
         }),
       });
 
@@ -320,7 +297,7 @@ export function SocialDashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Spinner size="lg" />
-        <p className="text-gray-500">Setting up social media...</p>
+        <p className="text-gray-500">Loading social media...</p>
       </div>
     );
   }
@@ -354,8 +331,8 @@ export function SocialDashboard() {
     );
   }
 
-  // Not connected state - show manual setup if required
-  if (!setup?.connected) {
+  // No brand state
+  if (!setup?.hasBrand) {
     return (
       <div className="space-y-8">
         <PageHeader
@@ -369,73 +346,16 @@ export function SocialDashboard() {
               <Sparkles className="w-8 h-8 text-brand-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {setup?.requiresManualSetup ? "Connect Your Postiz Account" : "Setting Up Social Media"}
+              Create Your Brand First
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              {setup?.requiresManualSetup
-                ? "Enter your Postiz API key to connect your social media accounts."
-                : "We're setting up your social media workspace. This should only take a moment."
-              }
+              Set up your brand to connect social accounts and start posting.
             </p>
-            {setup?.requiresManualSetup ? (
-              <div className="flex flex-col items-center gap-4">
-                <Button color="primary" size="lg" onPress={onSettingsOpen}>
-                  Connect Postiz Account
-                </Button>
-                {setup?.postizUrl && (
-                  <a
-                    href={setup.postizUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                  >
-                    Open Postiz to get your API key
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-            ) : (
-              <Button color="primary" onPress={handleRefresh} isLoading={refreshing}>
-                Refresh
-              </Button>
-            )}
+            <Button color="primary" size="lg" as="a" href="/dashboard/brand">
+              Create Brand
+            </Button>
           </CardBody>
         </Card>
-
-        {/* Manual Setup Modal */}
-        <Modal isOpen={isSettingsOpen} onClose={onSettingsClose}>
-          <ModalContent>
-            <ModalHeader>Connect Postiz</ModalHeader>
-            <ModalBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Enter your Postiz API key to connect. You can find this in your Postiz settings under &quot;API Keys&quot;.
-              </p>
-              <Input
-                label="API Key"
-                placeholder="Enter your Postiz API key"
-                value={apiKey}
-                onValueChange={setApiKey}
-                type="password"
-              />
-              {settingsError && (
-                <p className="text-sm text-red-500 mt-2">{settingsError}</p>
-              )}
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="flat" onPress={onSettingsClose}>
-                Cancel
-              </Button>
-              <Button
-                color="primary"
-                onPress={handleSaveApiKey}
-                isLoading={savingKey}
-                isDisabled={!apiKey.trim()}
-              >
-                Connect
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
       </div>
     );
   }
@@ -461,16 +381,9 @@ export function SocialDashboard() {
             <Button
               variant="flat"
               startContent={<Plus className="w-4 h-4" />}
-              onPress={() => openConnectInNewTab()}
+              onPress={onConnectOpen}
             >
               Add Account
-            </Button>
-            <Button
-              variant="flat"
-              startContent={<Settings className="w-4 h-4" />}
-              onPress={onSettingsOpen}
-            >
-              Settings
             </Button>
           </div>
         }
@@ -573,11 +486,11 @@ export function SocialDashboard() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                   Post to
                 </label>
-                {integrations.length === 0 ? (
+                {integrations.filter((i) => !i.disabled).length === 0 ? (
                   <div className="text-sm text-gray-500">
                     No accounts connected.{" "}
                     <button
-                      onClick={() => openConnectInNewTab()}
+                      onClick={onConnectOpen}
                       className="text-brand-500 hover:underline"
                     >
                       Add one now
@@ -683,44 +596,33 @@ export function SocialDashboard() {
                       key={post.id}
                       className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                     >
-                      <Avatar
-                        src={post.integration.picture}
-                        name={post.integration.name}
-                        size="sm"
-                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium">
-                            {post.integration.name}
+                            {post.platform}
                           </span>
                           <Chip
                             size="sm"
                             variant="flat"
                             color={
-                              post.state === "PUBLISHED"
+                              post.status === "PUBLISHED"
                                 ? "success"
-                                : post.state === "ERROR"
+                                : post.status === "FAILED"
                                 ? "danger"
-                                : post.state === "QUEUE"
+                                : post.status === "SCHEDULED"
                                 ? "warning"
                                 : "default"
                             }
                           >
-                            {post.state === "QUEUE"
-                              ? "Scheduled"
-                              : post.state === "PUBLISHED"
-                              ? "Published"
-                              : post.state === "ERROR"
-                              ? "Failed"
-                              : "Draft"}
+                            {post.status}
                           </Chip>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                          {post.content}
+                          {post.text}
                         </p>
                         <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(post.publishDate).toLocaleString()}
+                          {new Date(post.scheduledAt || post.publishedAt || "").toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -741,7 +643,7 @@ export function SocialDashboard() {
                 size="sm"
                 variant="light"
                 isIconOnly
-                onPress={() => openConnectInNewTab()}
+                onPress={onConnectOpen}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -756,7 +658,7 @@ export function SocialDashboard() {
                     size="sm"
                     color="primary"
                     variant="flat"
-                    onPress={() => openConnectInNewTab()}
+                    onPress={onConnectOpen}
                   >
                     Connect Account
                   </Button>
@@ -781,10 +683,19 @@ export function SocialDashboard() {
                           {integration.platformDisplay}
                         </p>
                       </div>
-                      {integration.disabled && (
+                      {integration.disabled ? (
                         <Chip size="sm" color="warning" variant="flat">
                           Needs reconnect
                         </Chip>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="light"
+                          isIconOnly
+                          onPress={() => handleDisconnect(integration.id)}
+                        >
+                          <Trash2 className="w-3 h-3 text-gray-400" />
+                        </Button>
                       )}
                     </div>
                   ))}
@@ -805,7 +716,7 @@ export function SocialDashboard() {
                     Scheduled
                   </span>
                   <span className="font-semibold">
-                    {posts.filter((p) => p.state === "QUEUE").length}
+                    {posts.filter((p) => p.status === "SCHEDULED").length}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -813,7 +724,7 @@ export function SocialDashboard() {
                     Published
                   </span>
                   <span className="font-semibold">
-                    {posts.filter((p) => p.state === "PUBLISHED").length}
+                    {posts.filter((p) => p.status === "PUBLISHED").length}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -827,129 +738,63 @@ export function SocialDashboard() {
               </div>
             </CardBody>
           </Card>
-
-          {/* Postiz Link */}
-          <Card>
-            <CardBody className="py-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Advanced features available in Postiz
-              </p>
-              <Button
-                as="a"
-                href={setup?.postizUrl}
-                target="_blank"
-                variant="flat"
-                className="w-full"
-                endContent={<ExternalLink className="w-4 h-4" />}
-              >
-                Open Postiz Dashboard
-              </Button>
-            </CardBody>
-          </Card>
         </div>
       </div>
 
-      {/* Settings Modal */}
-      <Modal isOpen={isSettingsOpen} onClose={onSettingsClose}>
+      {/* Connect Account Modal */}
+      <Modal isOpen={isConnectOpen} onClose={onConnectClose}>
         <ModalContent>
-          <ModalHeader>Social Media Settings</ModalHeader>
+          <ModalHeader>Connect Social Account</ModalHeader>
           <ModalBody>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Connection Status
-                </label>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-sm">
-                    {setup?.autoProvisioned ? "Auto-configured" : "Connected to Postiz"}
-                  </span>
-                </div>
-                {setup?.connectedAt && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Connected on{" "}
-                    {new Date(setup.connectedAt).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-
-              {!setup?.autoProvisioned && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Update API Key
-                  </label>
-                  <Input
-                    placeholder="Enter new API key"
-                    value={apiKey}
-                    onValueChange={setApiKey}
-                    type="password"
-                    className="mt-1"
-                  />
-                  {settingsError && (
-                    <p className="text-sm text-red-500 mt-1">{settingsError}</p>
-                  )}
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  Connected Accounts: {integrations.length}
-                </p>
-                {setup?.postizUrl && (
-                  <Button
-                    as="a"
-                    href={setup.postizUrl}
-                    target="_blank"
-                    variant="flat"
-                    size="sm"
-                    className="w-full"
-                    endContent={<ExternalLink className="w-4 h-4" />}
-                  >
-                    Manage in Postiz
-                  </Button>
-                )}
-              </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Select a platform to connect your social account.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="flat"
+                className="h-20 flex-col gap-2"
+                onPress={() => handleConnect("twitter")}
+                isLoading={connectingPlatform === "twitter"}
+              >
+                <Twitter className="w-6 h-6 text-sky-500" />
+                <span>Twitter/X</span>
+              </Button>
+              <Button
+                variant="flat"
+                className="h-20 flex-col gap-2"
+                onPress={() => handleConnect("linkedin")}
+                isLoading={connectingPlatform === "linkedin"}
+              >
+                <Linkedin className="w-6 h-6 text-blue-700" />
+                <span>LinkedIn</span>
+              </Button>
+              <Button
+                variant="flat"
+                className="h-20 flex-col gap-2"
+                onPress={() => handleConnect("facebook")}
+                isLoading={connectingPlatform === "facebook"}
+              >
+                <Facebook className="w-6 h-6 text-blue-600" />
+                <span>Facebook</span>
+              </Button>
+              <Button
+                variant="flat"
+                className="h-20 flex-col gap-2"
+                onPress={() => handleConnect("instagram")}
+                isLoading={connectingPlatform === "instagram"}
+              >
+                <Instagram className="w-6 h-6 text-pink-500" />
+                <span>Instagram</span>
+              </Button>
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="flat" color="danger" onPress={handleDisconnect}>
-              Disconnect
+            <Button variant="flat" onPress={onConnectClose}>
+              Cancel
             </Button>
-            <div className="flex-1" />
-            <Button variant="flat" onPress={onSettingsClose}>
-              Close
-            </Button>
-            {!setup?.autoProvisioned && apiKey.trim() && (
-              <Button
-                color="primary"
-                onPress={handleSaveApiKey}
-                isLoading={savingKey}
-              >
-                Update Key
-              </Button>
-            )}
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      {/* Connecting Banner - shows when user opened Postiz in new tab */}
-      {isConnecting && (
-        <div className="fixed bottom-4 right-4 z-50 bg-brand-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-4">
-          <div>
-            <p className="font-medium">Connecting social accounts...</p>
-            <p className="text-sm text-brand-100">Click Done when you&apos;ve finished in Postiz</p>
-          </div>
-          <Button
-            size="sm"
-            color="default"
-            variant="solid"
-            onPress={handleDoneConnecting}
-            className="bg-white text-brand-600 font-medium"
-          >
-            Done
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

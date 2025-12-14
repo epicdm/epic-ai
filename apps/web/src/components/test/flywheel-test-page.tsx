@@ -105,8 +105,8 @@ const INITIAL_TESTS: TestStep[] = [
   // Social Module
   {
     id: "social-status",
-    name: "Postiz Status",
-    description: "Check Postiz connection status",
+    name: "Social Status",
+    description: "Check social connection status",
     module: "social",
     status: "pending",
   },
@@ -240,7 +240,7 @@ export function FlywheelTestPage() {
 
         case "social-status": {
           const res = await fetch("/api/social/status");
-          // Postiz might not be configured, which is ok
+          // Social might not be configured, which is ok
           return res.ok || res.status === 503;
         }
 

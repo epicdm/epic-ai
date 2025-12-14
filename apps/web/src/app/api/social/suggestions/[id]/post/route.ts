@@ -19,7 +19,7 @@ interface RouteParams {
 }
 
 /**
- * POST - Publish a suggestion to social media via Postiz
+ * POST - Publish a suggestion to social media via native OAuth
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {

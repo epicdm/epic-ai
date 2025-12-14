@@ -10,22 +10,36 @@
 - Domain: leads.epic.dm
 - GitHub: epicdm/epic-ai
 
-### Architecture Decisions
-- Social module will wrap Postiz (open-source)
-- Voice module will port from ai.epic.dm
+### 2024-12: Consolidation & Architecture Updates
+- Social module uses native OAuth 2.0 (Twitter, LinkedIn, Meta)
+- Voice module ported from ai.epic.dm
+- Telephony via Magnus Billing (replacing FreeSWITCH/FusionPBX)
+- Voice AI via LiveKit Cloud
 - Unified persona system for voice + social
 - Lead hub aggregates all sources
-- n8n for automation workflows
+- n8n for automation workflows (DigitalOcean)
 
-## Pending Decisions
-- [ ] Exact Postiz integration method (embed vs API)
-- [ ] Phone provider (Telnyx vs Twilio)
-- [ ] File storage (R2 vs S3)
+## Architecture Decisions
+- Native OAuth for social platforms (no third-party wrappers)
+  - Twitter/X: OAuth 2.0 with PKCE
+  - LinkedIn: OAuth 2.0
+  - Meta (Facebook/Instagram): OAuth 2.0 via Graph API
+- Token encryption: AES-256-GCM
+- Magnus Billing for telephony (DID management, SIP trunks)
+- LiveKit for real-time voice AI
+
+## Resolved Decisions
+- [x] Social integration: Native OAuth 2.0 (direct platform APIs)
+- [x] Phone provider: Magnus Billing
+- [x] File storage: Cloudflare R2 (S3-compatible)
 
 ## Blockers
 - None currently
 
 ## Links
-- Postiz: https://github.com/gitroomhq/postiz-app
 - HeroUI: https://heroui.com
 - LiveKit: https://livekit.io
+- Magnus Billing: https://www.magnusbilling.org/
+- Twitter Developer: https://developer.twitter.com/
+- LinkedIn Developer: https://developer.linkedin.com/
+- Meta Developer: https://developers.facebook.com/

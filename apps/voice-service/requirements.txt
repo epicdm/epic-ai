@@ -1,4 +1,12 @@
 flask==3.0.0
+flask-cors==4.0.0
 gunicorn==21.2.0
 python-dotenv==1.0.0
 livekit-server-sdk-python==1.0.0
+livekit-agents[openai,deepgram,silero]>=1.0.0
+requests==2.31.0
+pydantic==2.5.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+redis==5.0.1
+openai==1.6.1

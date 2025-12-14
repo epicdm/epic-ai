@@ -37,41 +37,40 @@ services:
     networks:
       - epic-network
 
-  postiz:
-    image: ghcr.io/gitroomhq/postiz-app:latest
-    container_name: epic-ai-postiz
+  voice-service:
+    build:
+      context: ./apps/voice-service
+      dockerfile: Dockerfile
+    container_name: epic-ai-voice
     restart: unless-stopped
     environment:
-      # Database - using same postgres server, different database
-      DATABASE_URL: "postgresql://epic:epicpassword@postgres:5432/postiz"
+      # Database
+      DATABASE_URL: "postgresql://epic:epicpassword@postgres:5432/epic_ai"
 
-      # Redis - shared with Epic AI
+      # Redis
       REDIS_URL: "redis://redis:6379"
 
-      # JWT Secret
-      JWT_SECRET: "epic-ai-postiz-jwt-secret-change-in-production-12345"
+      # LiveKit
+      LIVEKIT_URL: "${LIVEKIT_URL}"
+      LIVEKIT_API_KEY: "${LIVEKIT_API_KEY}"
+      LIVEKIT_API_SECRET: "${LIVEKIT_API_SECRET}"
 
-      # URLs
-      FRONTEND_URL: "http://localhost:5000"
-      NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000"
-      BACKEND_INTERNAL_URL: "http://localhost:3000"
+      # Magnus Billing
+      MAGNUS_API_URL: "${MAGNUS_API_URL}"
+      MAGNUS_API_KEY: "${MAGNUS_API_KEY}"
+      MAGNUS_TENANT_ID: "${MAGNUS_TENANT_ID}"
 
-      # Storage - local for now
-      STORAGE_PROVIDER: "local"
-      UPLOAD_DIRECTORY: "/uploads"
-      NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY: "/uploads"
+      # OpenAI
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
 
-      # General settings
-      IS_GENERAL: "true"
+      # Deepgram
+      DEEPGRAM_API_KEY: "${DEEPGRAM_API_KEY}"
 
-      # Disable features we don't need yet
-      DISABLE_REGISTRATION: "false"
-
+      # Service
+      FLASK_ENV: "production"
+      PORT: "5000"
     ports:
       - "5000:5000"
-    volumes:
-      - postiz_config:/config
-      - postiz_uploads:/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,12 +78,15 @@ services:
         condition: service_healthy
     networks:
       - epic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:
   redis_data:
-  postiz_config:
-  postiz_uploads:
 
 networks:
   epic-network:
