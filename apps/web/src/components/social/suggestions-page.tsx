@@ -20,7 +20,6 @@ import {
   Tabs,
   Tab,
   useDisclosure,
-  addToast,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -157,16 +156,14 @@ export function SuggestionsPage() {
       });
 
       if (response.ok) {
-        addToast({ title: "Posted successfully!", color: "success" });
         postModal.onClose();
         await fetchSuggestions();
       } else {
         const error = await response.json();
-        addToast({ title: error.error || "Failed to post", color: "danger" });
+        console.error("Post error:", error.error || "Failed to post");
       }
     } catch (error) {
       console.error("Failed to post:", error);
-      addToast({ title: "Failed to post", color: "danger" });
     } finally {
       setPosting(false);
     }
@@ -183,15 +180,13 @@ export function SuggestionsPage() {
       });
 
       if (response.ok) {
-        addToast({ title: "Suggestion updated", color: "success" });
         editModal.onClose();
         await fetchSuggestions();
       } else {
-        addToast({ title: "Failed to update", color: "danger" });
+        console.error("Failed to update suggestion");
       }
     } catch (error) {
       console.error("Failed to update:", error);
-      addToast({ title: "Failed to update", color: "danger" });
     }
   };
 
@@ -204,7 +199,6 @@ export function SuggestionsPage() {
       });
 
       if (response.ok) {
-        addToast({ title: "Suggestion dismissed", color: "default" });
         await fetchSuggestions();
       }
     } catch (error) {

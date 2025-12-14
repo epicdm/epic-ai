@@ -15,7 +15,6 @@ import {
   Checkbox,
   Input,
   Divider,
-  addToast,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -140,14 +139,11 @@ export function AutopilotSettings() {
         body: JSON.stringify(settings),
       });
 
-      if (response.ok) {
-        addToast({ title: "Settings saved", color: "success" });
-      } else {
-        addToast({ title: "Failed to save settings", color: "danger" });
+      if (!response.ok) {
+        console.error("Failed to save settings");
       }
     } catch (error) {
       console.error("Failed to save:", error);
-      addToast({ title: "Failed to save settings", color: "danger" });
     } finally {
       setSaving(false);
     }
