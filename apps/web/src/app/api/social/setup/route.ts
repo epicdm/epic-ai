@@ -1,13 +1,17 @@
+/**
+ * Social Setup API
+ * GET - Check social connection status
+ * POST - No longer needed (native OAuth handles connections)
+ * DELETE - Disconnect a social account
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { getUserOrganization } from "@/lib/sync-user";
-import { getPostizConnectUrl, PostizClient } from "@/lib/services/postiz";
-import { ensurePostizOrganization } from "@/lib/services/postiz-provisioning";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
 
 /**
- * GET - Check/provision Postiz setup
- * Auto-provisions Postiz org on first visit
+ * GET - Check/provision social setup
  */
 export async function GET() {
   try {
@@ -21,70 +25,53 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const user = await currentUser();
-    const email = user?.emailAddresses?.[0]?.emailAddress || "admin@epic.dm";
-
-    // Check if POSTIZ_DATABASE_URL is configured
-    const hasPostizDb = !!process.env.POSTIZ_DATABASE_URL;
-
-    // Auto-provision Postiz organization if database is available
-    if (hasPostizDb) {
-      try {
-        const postizOrg = await ensurePostizOrganization(org.id, org.name, email);
-
-        // Test connection with the provisioned API key
-        const client = new PostizClient(postizOrg.apiKey, org.id);
-        const isConnected = await client.testConnection();
-
-        return NextResponse.json({
-          connected: isConnected,
-          postizOrgId: postizOrg.id,
-          postizUrl: process.env.NEXT_PUBLIC_POSTIZ_URL,
-          connectUrl: getPostizConnectUrl(),
-          autoProvisioned: true,
-        });
-      } catch (error) {
-        console.error("Failed to auto-provision Postiz org:", error);
-        // Fall through to manual setup flow
-      }
-    }
-
-    // Manual setup flow (fallback when auto-provisioning is not available)
-    const orgData = await prisma.organization.findUnique({
-      where: { id: org.id },
-      select: { postizApiKey: true, postizConnectedAt: true, postizOrgId: true },
+    // Get brand for this org
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId: org.id },
     });
 
-    if (orgData?.postizApiKey) {
-      const client = new PostizClient(orgData.postizApiKey, org.id);
-      const isConnected = await client.testConnection();
-
+    if (!brand) {
       return NextResponse.json({
-        connected: isConnected,
-        postizOrgId: orgData.postizOrgId,
-        connectedAt: orgData.postizConnectedAt,
-        postizUrl: process.env.NEXT_PUBLIC_POSTIZ_URL,
-        connectUrl: getPostizConnectUrl(),
-        autoProvisioned: false,
+        connected: false,
+        hasBrand: false,
+        accounts: [],
+        message: "No brand configured. Create a brand first.",
       });
     }
 
+    // Get connected accounts
+    const accounts = await prisma.socialAccount.findMany({
+      where: { brandId: brand.id },
+      select: {
+        id: true,
+        platform: true,
+        platformUsername: true,
+        displayName: true,
+        isActive: true,
+        tokenExpiresAt: true,
+      },
+    });
+
+    const platforms = [...new Set(accounts.map((a) => a.platform))];
+
     return NextResponse.json({
-      connected: false,
-      postizUrl: process.env.NEXT_PUBLIC_POSTIZ_URL,
-      connectUrl: getPostizConnectUrl(),
-      requiresManualSetup: !hasPostizDb,
+      connected: accounts.length > 0,
+      hasBrand: true,
+      brandId: brand.id,
+      accounts,
+      platforms,
+      message: accounts.length > 0
+        ? `${accounts.length} account(s) connected`
+        : "No accounts connected. Use the connect buttons to link your social accounts.",
     });
   } catch (error) {
     console.error("Error in social setup:", error);
-    return NextResponse.json({ error: "Setup failed" }, { status: 500 });
+    return NextResponse.json({ error: "Setup check failed" }, { status: 500 });
   }
 }
 
 /**
- * POST - Sync API key from Postiz DB or manual API key setup
- * If body is empty, syncs from Postiz DB (after auto-login)
- * If body contains apiKey, uses manual setup flow
+ * POST - Create brand if needed (for new users)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -98,69 +85,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const user = await currentUser();
-    const email = user?.emailAddresses?.[0]?.emailAddress;
+    const body = await request.json();
+    const { brandName } = body;
 
-    // Check if body contains apiKey (manual setup) or is empty (auto-sync)
-    let body: { apiKey?: string } = {};
-    try {
-      const text = await request.text();
-      if (text) {
-        body = JSON.parse(text);
-      }
-    } catch {
-      // Empty body or invalid JSON - proceed with auto-sync
-    }
+    // Check if brand exists
+    let brand = await prisma.brand.findFirst({
+      where: { organizationId: org.id },
+    });
 
-    if (body.apiKey) {
-      // Manual API key setup
-      const client = new PostizClient(body.apiKey.trim(), org.id);
-      const isValid = await client.testConnection();
-
-      if (!isValid) {
-        return NextResponse.json({ error: "Invalid API key" }, { status: 400 });
-      }
-
-      await prisma.organization.update({
-        where: { id: org.id },
+    if (!brand) {
+      brand = await prisma.brand.create({
         data: {
-          postizApiKey: body.apiKey.trim(),
-          postizConnectedAt: new Date(),
+          organizationId: org.id,
+          name: brandName || org.name || "My Brand",
         },
       });
-
-      return NextResponse.json({ success: true });
     }
 
-    // Auto-sync from Postiz DB
-    if (!email) {
-      return NextResponse.json({ error: "No email found" }, { status: 400 });
-    }
-
-    const hasPostizDb = !!process.env.POSTIZ_DATABASE_URL;
-    if (!hasPostizDb) {
-      return NextResponse.json({ error: "Auto-sync not available" }, { status: 400 });
-    }
-
-    // Import dynamically to avoid build errors when env is not set
-    const { syncPostizApiKey } = await import("@/lib/services/postiz-db");
-    const syncResult = await syncPostizApiKey(org.id, email);
-
-    if (!syncResult.success) {
-      return NextResponse.json({ error: syncResult.error }, { status: 400 });
-    }
-
-    return NextResponse.json({ success: true, synced: true });
+    return NextResponse.json({
+      success: true,
+      brandId: brand.id,
+      brandName: brand.name,
+    });
   } catch (error) {
     console.error("Error in setup POST:", error);
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+    return NextResponse.json({ error: "Setup failed" }, { status: 500 });
   }
 }
 
 /**
- * DELETE - Disconnect Postiz (clears reference, doesn't delete Postiz org)
+ * DELETE - Disconnect a social account
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -172,18 +128,39 @@ export async function DELETE() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    await prisma.organization.update({
-      where: { id: org.id },
-      data: {
-        postizApiKey: null,
-        postizOrgId: null,
-        postizConnectedAt: null,
-      },
+    const { searchParams } = new URL(request.url);
+    const accountId = searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json({ error: "Account ID required" }, { status: 400 });
+    }
+
+    // Get brand for this org
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId: org.id },
+    });
+
+    if (!brand) {
+      return NextResponse.json({ error: "No brand found" }, { status: 404 });
+    }
+
+    // Verify account belongs to this brand
+    const account = await prisma.socialAccount.findFirst({
+      where: { id: accountId, brandId: brand.id },
+    });
+
+    if (!account) {
+      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    }
+
+    // Delete the account
+    await prisma.socialAccount.delete({
+      where: { id: accountId },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error disconnecting:", error);
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+    return NextResponse.json({ error: "Disconnect failed" }, { status: 500 });
   }
 }

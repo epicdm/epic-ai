@@ -56,7 +56,7 @@ export const Events = {
   AGENT_CREATED: "agent.created",
   AGENT_UPDATED: "agent.updated",
 
-  // Social events (future - from Postiz webhooks)
+  // Social events (from native OAuth webhooks)
   SOCIAL_POST_PUBLISHED: "social.post_published",
   SOCIAL_ENGAGEMENT: "social.engagement",
 } as const;

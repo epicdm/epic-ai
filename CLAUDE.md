@@ -19,9 +19,8 @@ Brand Brain → Content Factory → Publishing Engine → Analytics → Learning
 | **Vercel** | Next.js web app | https://leads.epic.dm |
 | **DigitalOcean** | n8n workflows, background workers | (App Platform) |
 | **Render** | PostgreSQL database, Voice AI service | (Managed services) |
-| **Postiz** | Social media management (legacy) | https://social.leads.epic.dm |
 
-**Note:** Postiz is being replaced by native OAuth integrations (PKG-022). The new architecture uses direct platform APIs.
+**Note:** Social media integration uses native OAuth 2.0 with direct platform APIs (Twitter, LinkedIn, Meta).
 
 ---
 
@@ -55,7 +54,7 @@ Brand Brain → Content Factory → Publishing Engine → Analytics → Learning
 **Location:** `apps/web/src/lib/services/context-engine/`
 
 ### 3. Native Social Connectors (PKG-022)
-**Purpose:** Direct OAuth connections to social platforms (replaces Postiz).
+**Purpose:** Direct OAuth connections to social platforms.
 
 **Platforms:**
 - Twitter/X (OAuth 2.0 with PKCE)
@@ -63,7 +62,8 @@ Brand Brain → Content Factory → Publishing Engine → Analytics → Learning
 - Facebook Pages (OAuth 2.0)
 - Instagram (via Facebook Graph API)
 
-**Location:** `apps/web/src/lib/services/social-publishing/`
+**OAuth Routes:** `apps/web/src/app/api/social/connect/[platform]/route.ts`
+**Publishing Service:** `apps/web/src/lib/services/social-publishing/`
 
 ### 4. Content Factory (PKG-023)
 **Purpose:** AI-powered content generation using brand voice.
@@ -346,7 +346,7 @@ Key variables:
 ## Key Architectural Decisions
 
 1. **Flywheel Architecture** - Self-improving system
-2. **Native OAuth** - Direct platform integrations (not Postiz)
+2. **Native OAuth** - Direct platform integrations via OAuth 2.0
 3. **Brand Brain as Hub** - All content flows through brand voice
 4. **Platform Variations** - One idea, optimized per platform
 5. **Encrypted Credentials** - AES-256-GCM for tokens
@@ -359,4 +359,3 @@ Key variables:
 
 - **GitHub:** github.com/epicdm/epic-ai
 - **Production:** https://leads.epic.dm
-- **Social (Postiz):** https://social.leads.epic.dm

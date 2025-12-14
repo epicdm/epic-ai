@@ -1,14 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { getUserOrganization } from "@/lib/sync-user";
-import jwt from "jsonwebtoken";
+/**
+ * Social Connect API
+ * Returns OAuth connect URLs for social platforms
+ */
 
-const POSTIZ_URL = (process.env.NEXT_PUBLIC_POSTIZ_URL || "http://localhost:5000").trim();
-const POSTIZ_SSO_SECRET = process.env.POSTIZ_SSO_SECRET;
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+const PLATFORM_ROUTES = {
+  twitter: "/api/social/connect/twitter",
+  linkedin: "/api/social/connect/linkedin",
+  facebook: "/api/social/connect/meta",
+  instagram: "/api/social/connect/meta",
+  meta: "/api/social/connect/meta",
+} as const;
 
 /**
- * GET - Generate a Postiz connect URL with SSO token for seamless auto-login
- * Uses the auto-login endpoint that handles user provisioning and cookie setting
+ * GET - Get the OAuth connect URL for a platform
  */
 export async function GET(request: NextRequest) {
   try {
@@ -22,53 +33,59 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    const user = await currentUser();
-    const email = user?.emailAddresses?.[0]?.emailAddress;
-
-    if (!email) {
-      return NextResponse.json({ error: "No email found" }, { status: 400 });
-    }
-
-    // Get destination from query param (default to social integrations page)
     const { searchParams } = new URL(request.url);
-    const platform = searchParams.get("platform");
+    const platform = searchParams.get("platform")?.toLowerCase();
 
-    // Build the redirect path
-    let connectPath = "/integrations/social";
-    if (platform) {
-      connectPath = `/integrations/social/${platform}`;
+    if (!platform) {
+      return NextResponse.json({ error: "Platform required" }, { status: 400 });
     }
 
-    // If SSO secret is configured, use the auto-login flow
-    if (POSTIZ_SSO_SECRET) {
-      // Generate SSO token signed with shared secret
-      const ssoToken = jwt.sign(
-        {
-          email,
-          orgName: org.name,
-          epicOrgId: org.id,
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + 300, // 5 minute expiry
+    // Get or create brand for this org
+    let brand = await prisma.brand.findFirst({
+      where: { organizationId: org.id },
+    });
+
+    if (!brand) {
+      brand = await prisma.brand.create({
+        data: {
+          organizationId: org.id,
+          name: org.name || "My Brand",
         },
-        POSTIZ_SSO_SECRET
-      );
-
-      // Use the auto-login endpoint
-      const connectUrl = `${POSTIZ_URL}/auth/auto-login?token=${encodeURIComponent(ssoToken)}&redirect=${encodeURIComponent(connectPath)}`;
-
-      return NextResponse.json({
-        url: connectUrl,
-        hasAuthToken: true,
       });
     }
 
-    // Fallback: direct URL without auth (user will need to login manually)
+    // Get the connect route for the platform
+    const route = PLATFORM_ROUTES[platform as keyof typeof PLATFORM_ROUTES];
+
+    if (!route) {
+      return NextResponse.json(
+        { error: `Unsupported platform: ${platform}` },
+        { status: 400 }
+      );
+    }
+
+    // Build the OAuth URL with brand ID
+    const params = new URLSearchParams({
+      brandId: brand.id,
+    });
+
+    // For Instagram, add platform param
+    if (platform === "instagram") {
+      params.set("platform", "instagram");
+    }
+
+    const connectUrl = `${BASE_URL}${route}?${params.toString()}`;
+
     return NextResponse.json({
-      url: `${POSTIZ_URL}${connectPath}`,
-      hasAuthToken: false,
+      url: connectUrl,
+      platform,
+      brandId: brand.id,
     });
   } catch (error) {
     console.error("Error generating connect URL:", error);
-    return NextResponse.json({ error: "Failed to generate connect URL" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate connect URL" },
+      { status: 500 }
+    );
   }
 }
