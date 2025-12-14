@@ -154,6 +154,17 @@ export function UnifiedDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
 
+  // Calculate onboarding progress
+  const getOnboardingStatus = (dashboardData: DashboardData) => {
+    const steps = [
+      { id: 'brand', label: 'Set up Brand Brain', done: dashboardData.brandBrain.isSetup, href: '/dashboard/brand' },
+      { id: 'accounts', label: 'Connect social accounts', done: dashboardData.accounts.total > 0, href: '/dashboard/social/accounts' },
+      { id: 'content', label: 'Create your first post', done: dashboardData.content.total > 0, href: '/dashboard/content' },
+    ];
+    const completed = steps.filter(s => s.done).length;
+    return { steps, completed, total: steps.length, isComplete: completed === steps.length };
+  };
+
   const loadDashboard = useCallback(async () => {
     setError(null);
     try {
@@ -209,6 +220,8 @@ export function UnifiedDashboard() {
     );
   }
 
+  const onboarding = data ? getOnboardingStatus(data) : null;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -241,6 +254,71 @@ export function UnifiedDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Getting Started - Show prominently for new users */}
+      {onboarding && !onboarding.isComplete && (
+        <Card className="border-2 border-primary/50 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <CardBody className="p-6">
+            <div className="flex items-start gap-6">
+              <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary items-center justify-center flex-shrink-0">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold mb-1">Let's get you started! 🚀</h2>
+                <p className="text-default-500 mb-4">
+                  Complete these {onboarding.total - onboarding.completed} steps to unlock AI-powered content creation
+                </p>
+                
+                <div className="space-y-3">
+                  {onboarding.steps.map((step, index) => (
+                    <div
+                      key={step.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        step.done 
+                          ? 'bg-success/10 border border-success/20' 
+                          : 'bg-default-100 hover:bg-default-200 cursor-pointer'
+                      }`}
+                      onClick={() => !step.done && router.push(step.href)}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        step.done ? 'bg-success text-white' : 'bg-default-300 text-default-600'
+                      }`}>
+                        {step.done ? (
+                          <CheckCircle className="w-5 h-5" />
+                        ) : (
+                          <span className="text-sm font-bold">{index + 1}</span>
+                        )}
+                      </div>
+                      <span className={`flex-1 font-medium ${step.done ? 'text-success line-through' : ''}`}>
+                        {step.label}
+                      </span>
+                      {!step.done && (
+                        <Button 
+                          size="sm" 
+                          color="primary"
+                          onPress={() => router.push(step.href)}
+                        >
+                          Start
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Progress 
+                  value={(onboarding.completed / onboarding.total) * 100} 
+                  className="mt-4"
+                  color="primary"
+                  size="sm"
+                />
+                <p className="text-xs text-default-400 mt-2">
+                  {onboarding.completed} of {onboarding.total} complete
+                </p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Flywheel Status */}
       <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
@@ -662,24 +740,26 @@ export function UnifiedDashboard() {
         </CardBody>
       </Card>
 
-      {/* Setup Prompt (if not complete) */}
-      {!data.brandBrain.isSetup && (
-        <Card className="bg-gradient-to-r from-primary to-secondary">
+      {/* Success celebration when onboarding complete */}
+      {onboarding?.isComplete && data.content.total <= 3 && (
+        <Card className="bg-gradient-to-r from-success to-secondary">
           <CardBody className="text-white">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Complete Your Setup</h3>
-                <p className="text-white/80">
-                  Set up your Brand Brain to unlock AI-powered content
-                  generation
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🎉</div>
+                <div>
+                  <h3 className="text-lg font-semibold">You're all set up!</h3>
+                  <p className="text-white/80">
+                    Your flywheel is ready. Create content and watch it spin!
+                  </p>
+                </div>
               </div>
               <Button
                 color="default"
                 variant="solid"
-                onPress={() => router.push("/dashboard/brand")}
+                onPress={() => router.push("/dashboard/content")}
               >
-                Get Started
+                Create Post
               </Button>
             </div>
           </CardBody>
