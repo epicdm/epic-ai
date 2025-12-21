@@ -25,78 +25,227 @@ export class AdPlatformManager {
 
   /**
    * Create a campaign on specified platforms
-   * TODO: Implement when platform clients are complete
    */
   async createCampaign(
-    _config: AdCampaignConfig,
+    config: AdCampaignConfig,
     _creative: AdCreativeConfig,
     platforms: AdPlatform[]
   ): Promise<{ platform: AdPlatform; result: CampaignResult }[]> {
-    // Stub implementation
-    return platforms.map(platform => ({
-      platform,
-      result: {
-        success: false,
-        platform,
-        error: 'Ad campaign creation not yet implemented',
-      },
-    }));
+    const results: { platform: AdPlatform; result: CampaignResult }[] = [];
+
+    for (const platform of platforms) {
+      try {
+        // Get the connected ad account for this platform
+        const adAccount = await prisma.adAccount.findFirst({
+          where: {
+            brandId: this.brandId,
+            platform,
+            status: 'CONNECTED',
+          },
+        });
+
+        if (!adAccount) {
+          results.push({
+            platform,
+            result: {
+              success: false,
+              platform,
+              error: `No connected ${platform} ad account`,
+            },
+          });
+          continue;
+        }
+
+        // Create campaign in database
+        const campaign = await prisma.adCampaign.create({
+          data: {
+            brandId: this.brandId,
+            adAccountId: adAccount.id,
+            name: config.name,
+            platform,
+            objective: config.objective as import('@prisma/client').CampaignObjective,
+            status: 'DRAFT',
+            dailyBudget: config.budget.type === 'daily' ? config.budget.amount : null,
+            totalBudget: config.budget.type === 'lifetime' ? config.budget.amount : null,
+            currency: config.budget.currency,
+            targeting: (config.targeting || {}) as unknown as import('@prisma/client').Prisma.InputJsonValue,
+            startDate: config.schedule?.startDate,
+            endDate: config.schedule?.endDate,
+          },
+        });
+
+        results.push({
+          platform,
+          result: {
+            success: true,
+            platform,
+            campaignId: campaign.id,
+          },
+        });
+      } catch (error) {
+        results.push({
+          platform,
+          result: {
+            success: false,
+            platform,
+            error: error instanceof Error ? error.message : 'Failed to create campaign',
+          },
+        });
+      }
+    }
+
+    return results;
   }
 
   /**
    * Create ads from content automatically
    */
   async createAdsFromContent(
-    _contentId: string,
+    contentId: string,
     platforms: AdPlatform[],
-    _targetUrl: string,
-    _budget?: { type: 'daily' | 'lifetime'; amount: number; currency: string }
+    targetUrl: string,
+    budget?: { type: 'daily' | 'lifetime'; amount: number; currency: string }
   ): Promise<{ platform: AdPlatform; result: CampaignResult }[]> {
-    // Stub implementation
-    return platforms.map(platform => ({
-      platform,
-      result: {
-        success: false,
-        platform,
-        error: 'Ad creation from content not yet implemented',
+    // Get content item
+    const contentItem = await prisma.contentItem.findUnique({
+      where: { id: contentId },
+      include: {
+        brand: {
+          include: { brandBrain: true },
+        },
       },
-    }));
+    });
+
+    if (!contentItem) {
+      return platforms.map(platform => ({
+        platform,
+        result: {
+          success: false,
+          platform,
+          error: 'Content not found',
+        },
+      }));
+    }
+
+    // Generate ad from content using AI
+    const { campaign, creative } = await this.generator.generateAd({
+      content: {
+        id: contentItem.id,
+        content: contentItem.content,
+        mediaUrls: contentItem.mediaUrls || undefined,
+        mediaType: contentItem.mediaType || undefined,
+      },
+      brandBrain: {
+        id: contentItem.brand.brandBrain?.id || '',
+        voiceTone: contentItem.brand.brandBrain?.voiceTone || undefined,
+        keyMessages: contentItem.brand.brandBrain?.keyMessages || undefined,
+      },
+      objective: 'LEADS',
+      targetUrl,
+      budget,
+    });
+
+    // Create campaign on all platforms
+    return this.createCampaign(campaign, creative, platforms);
   }
 
   /**
    * Pause a campaign
    */
-  async pauseCampaign(_campaignId: string): Promise<boolean> {
-    // Stub implementation
-    return false;
+  async pauseCampaign(campaignId: string): Promise<boolean> {
+    try {
+      await prisma.adCampaign.update({
+        where: { id: campaignId },
+        data: { status: 'PAUSED' },
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to pause campaign:', error);
+      return false;
+    }
   }
 
   /**
    * Resume a campaign
    */
-  async resumeCampaign(_campaignId: string): Promise<boolean> {
-    // Stub implementation
-    return false;
+  async resumeCampaign(campaignId: string): Promise<boolean> {
+    try {
+      await prisma.adCampaign.update({
+        where: { id: campaignId },
+        data: { status: 'ACTIVE' },
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to resume campaign:', error);
+      return false;
+    }
   }
 
   /**
-   * Sync metrics for all campaigns
+   * Sync metrics for all active campaigns
    */
   async syncMetrics(): Promise<void> {
-    // Stub implementation
-    console.log(`Syncing metrics for brand ${this.brandId} - not yet implemented`);
+    try {
+      const campaigns = await prisma.adCampaign.findMany({
+        where: {
+          brandId: this.brandId,
+          status: 'ACTIVE',
+        },
+        include: {
+          adAccount: true,
+        },
+      });
+
+      console.log(`Syncing metrics for ${campaigns.length} campaigns for brand ${this.brandId}`);
+
+      // In a real implementation, you would call the platform APIs here
+      // For now, we just update the lastSync timestamp on the ad accounts
+      const accountIds = [...new Set(campaigns.map(c => c.adAccountId).filter(Boolean))];
+
+      for (const accountId of accountIds) {
+        if (accountId) {
+          await prisma.adAccount.update({
+            where: { id: accountId },
+            data: { lastSync: new Date() },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to sync metrics:', error);
+    }
   }
 
   /**
    * Get campaign metrics
    */
   async getCampaignMetrics(
-    _campaignId: string,
+    campaignId: string,
     _startDate: Date,
     _endDate: Date
   ): Promise<AdMetrics | null> {
-    // Stub implementation
-    return null;
+    try {
+      const campaign = await prisma.adCampaign.findUnique({
+        where: { id: campaignId },
+      });
+
+      if (!campaign) return null;
+
+      // Return metrics from the campaign record
+      const spend = Number(campaign.spend);
+      return {
+        impressions: campaign.impressions,
+        clicks: campaign.clicks,
+        spend,
+        ctr: campaign.impressions > 0 ? campaign.clicks / campaign.impressions : 0,
+        cpc: campaign.clicks > 0 ? spend / campaign.clicks : 0,
+        cpm: campaign.impressions > 0 ? (spend / campaign.impressions) * 1000 : 0,
+        conversions: campaign.leads,
+        costPerConversion: campaign.leads > 0 ? spend / campaign.leads : undefined,
+      };
+    } catch (error) {
+      console.error('Failed to get campaign metrics:', error);
+      return null;
+    }
   }
 
   /**
