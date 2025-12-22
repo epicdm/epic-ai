@@ -16,7 +16,17 @@ import { QueueName } from './types/payloads';
 import { getWorkerOptions } from './queues/options';
 import { logger } from './lib/logger';
 import type { JobData } from './processors/base';
-import { contentGenerationProcessor } from './processors';
+import {
+  contentGenerationProcessor,
+  contextScraperProcessor,
+  rssSyncerProcessor,
+  analyticsCollectorProcessor,
+  tokenRefresherProcessor,
+  documentProcessor,
+  contentPublisherProcessor,
+  imageGeneratorProcessor,
+} from './processors';
+import { JobType } from './types/payloads';
 
 // Load environment variables
 dotenv.config();
@@ -52,23 +62,81 @@ let isShuttingDown = false;
 // =============================================================================
 
 /**
- * Placeholder processor for context scraping queue
- * Replace with actual processors in Phase 4
+ * Content generation queue router
+ * Routes jobs to the appropriate processor based on job type
+ * T046: Handles GENERATE_CONTENT, GENERATE_IMAGE, PUBLISH_CONTENT
+ *
+ * Processor concurrency/lockDuration recommendations:
+ * - content-generator: concurrency 10, lockDuration 5min (CPU/API intensive)
+ * - image-generator: concurrency 5, lockDuration 3min (API intensive)
+ * - content-publisher: concurrency 30, lockDuration 2min (I/O bound)
  */
-async function contextScrapingProcessor(job: { data: JobData }): Promise<unknown> {
-  logger.info(COMPONENT, `Processing context scraping job: ${job.data.prismaJobId}`);
-  // Placeholder - actual implementation in US-002
-  return { status: 'processed', jobId: job.data.prismaJobId };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function contentGenerationRouter(job: any): Promise<unknown> {
+  const jobType = job.data?.type || job.data?.jobType;
+
+  switch (jobType) {
+    case JobType.GENERATE_CONTENT:
+      return contentGenerationProcessor(job);
+    case JobType.GENERATE_IMAGE:
+      return imageGeneratorProcessor(job);
+    case JobType.PUBLISH_CONTENT:
+      return contentPublisherProcessor(job);
+    default:
+      logger.warn(COMPONENT, `Unknown content generation job type: ${jobType}`);
+      throw new Error(`Unknown job type: ${jobType}`);
+  }
 }
 
 /**
- * Placeholder processor for analytics sync queue
- * Replace with actual processors in Phase 5
+ * Context scraping queue router
+ * Routes jobs to the appropriate processor based on job type
+ * T046: Handles SCRAPE_WEBSITE, SYNC_RSS, PROCESS_DOCUMENT
+ *
+ * Processor concurrency/lockDuration recommendations:
+ * - context-scraper: concurrency 30, lockDuration 2min (I/O bound)
+ * - rss-syncer: concurrency 30, lockDuration 2min (I/O bound)
+ * - document-processor: concurrency 10, lockDuration 5min (CPU intensive)
  */
-async function analyticsSyncProcessor(job: { data: JobData }): Promise<unknown> {
-  logger.info(COMPONENT, `Processing analytics sync job: ${job.data.prismaJobId}`);
-  // Placeholder - actual implementation in US-005
-  return { status: 'processed', jobId: job.data.prismaJobId };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function contextScrapingRouter(job: any): Promise<unknown> {
+  const jobType = job.data?.type || job.data?.jobType;
+
+  switch (jobType) {
+    case JobType.SCRAPE_WEBSITE:
+      return contextScraperProcessor(job);
+    case JobType.SYNC_RSS:
+      return rssSyncerProcessor(job);
+    case JobType.PROCESS_DOCUMENT:
+      return documentProcessor(job);
+    default:
+      logger.warn(COMPONENT, `Unknown context scraping job type: ${jobType}`);
+      throw new Error(`Unknown job type: ${jobType}`);
+  }
+}
+
+/**
+ * Analytics sync queue router
+ * Routes jobs to the appropriate processor based on job type
+ * T046: Handles SYNC_ANALYTICS, REFRESH_TOKEN
+ *
+ * Processor concurrency/lockDuration recommendations:
+ * - analytics-collector: concurrency 60, lockDuration 3min (API calls with wait)
+ * - token-refresher: concurrency 20, lockDuration 2min (OAuth refresh)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function analyticsSyncRouter(job: any): Promise<unknown> {
+  const jobType = job.data?.type || job.data?.jobType;
+
+  switch (jobType) {
+    case JobType.SYNC_ANALYTICS:
+      return analyticsCollectorProcessor(job);
+    case JobType.REFRESH_TOKEN:
+      return tokenRefresherProcessor(job);
+    default:
+      logger.warn(COMPONENT, `Unknown analytics sync job type: ${jobType}`);
+      throw new Error(`Unknown job type: ${jobType}`);
+  }
 }
 
 // =============================================================================
@@ -217,21 +285,22 @@ async function main(): Promise<void> {
     logger.info(COMPONENT, 'Connected to Redis');
 
     // Create workers for each queue
+    // T046: All workers use routers to handle multiple job types per queue
     const contentWorker = createWorker(
       QueueName.CONTENT_GENERATION,
-      contentGenerationProcessor
+      contentGenerationRouter
     );
     workers.push(contentWorker);
 
     const scrapingWorker = createWorker(
       QueueName.CONTEXT_SCRAPING,
-      contextScrapingProcessor
+      contextScrapingRouter
     );
     workers.push(scrapingWorker);
 
     const analyticsWorker = createWorker(
       QueueName.ANALYTICS_SYNC,
-      analyticsSyncProcessor
+      analyticsSyncRouter
     );
     workers.push(analyticsWorker);
 
