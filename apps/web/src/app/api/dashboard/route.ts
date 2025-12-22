@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       adStats,
       learnings,
       recentActivity,
+      failedJobsCount,
     ] = await Promise.all([
       // Brand Brain status
       brand
@@ -157,6 +158,16 @@ export async function GET(request: NextRequest) {
 
       // Recent activity
       getRecentActivity(org.id, brand?.id || null, 10),
+
+      // T048: Failed jobs count for notification badge
+      brand
+        ? prisma.job.count({
+            where: {
+              brandId: brand.id,
+              status: 'FAILED',
+            },
+          }).catch((e) => { console.error("Error fetching failed jobs:", e); return 0; })
+        : 0,
     ]);
 
     // Process content stats
@@ -277,6 +288,11 @@ export async function GET(request: NextRequest) {
 
       // Recent activity
       activity: recentActivity,
+
+      // T048: Background jobs status for notification badge
+      jobs: {
+        failed: failedJobsCount,
+      },
 
       // Period info
       period: {
@@ -514,6 +530,9 @@ function getEmptyDashboardData(period: number, startDate: Date) {
       ],
     },
     activity: [],
+    jobs: {
+      failed: 0,
+    },
     period: {
       days: period,
       start: startDate.toISOString(),

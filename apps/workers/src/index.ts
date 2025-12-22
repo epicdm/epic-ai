@@ -11,9 +11,11 @@
 
 import dotenv from 'dotenv';
 import { Worker } from 'bullmq';
+import { prisma } from '@epic-ai/database';
 import { redis, closeRedisConnection, createRedisConnection } from './lib';
 import { QueueName } from './types/payloads';
 import { getWorkerOptions } from './queues/options';
+import { getQueuesHealth } from './queues';
 import { logger } from './lib/logger';
 import type { JobData } from './processors/base';
 import {
@@ -27,6 +29,7 @@ import {
   imageGeneratorProcessor,
 } from './processors';
 import { JobType } from './types/payloads';
+import { startHealthServer, recordJobProcessed } from './health';
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +46,17 @@ const COMPONENT = 'worker';
  */
 const SHUTDOWN_TIMEOUT_MS = 30_000;
 
+/**
+ * T049: Stalled job threshold in milliseconds (30 minutes)
+ * Jobs running longer than this are considered stalled on startup
+ */
+const STALLED_JOB_THRESHOLD_MS = 30 * 60 * 1000;
+
+/**
+ * T053: Stats monitoring interval in milliseconds (60 seconds)
+ */
+const STATS_INTERVAL_MS = 60_000;
+
 // =============================================================================
 // Worker Registry
 // =============================================================================
@@ -57,8 +71,139 @@ const workers: Worker[] = [];
  */
 let isShuttingDown = false;
 
+/**
+ * Stats monitoring interval reference
+ */
+let statsInterval: NodeJS.Timeout | null = null;
+
 // =============================================================================
-// Placeholder Processors (to be replaced with actual implementations)
+// T049: Stalled Job Recovery
+// =============================================================================
+
+/**
+ * Recovers stalled jobs on worker startup
+ * Finds jobs with RUNNING status older than threshold and marks them as FAILED
+ *
+ * Implements T049: Stalled job recovery
+ */
+async function recoverStalledJobs(): Promise<void> {
+  const threshold = new Date(Date.now() - STALLED_JOB_THRESHOLD_MS);
+
+  try {
+    // Find jobs that are marked as RUNNING but started more than 30 minutes ago
+    const stalledJobs = await prisma.job.findMany({
+      where: {
+        status: 'RUNNING',
+        startedAt: { lt: threshold },
+      },
+      select: {
+        id: true,
+        type: true,
+        startedAt: true,
+      },
+    });
+
+    if (stalledJobs.length === 0) {
+      logger.info(COMPONENT, 'No stalled jobs found on startup');
+      return;
+    }
+
+    logger.warn(COMPONENT, `Found ${stalledJobs.length} stalled jobs, recovering...`);
+
+    // Mark all stalled jobs as FAILED
+    const result = await prisma.job.updateMany({
+      where: {
+        id: { in: stalledJobs.map((j) => j.id) },
+      },
+      data: {
+        status: 'FAILED',
+        completedAt: new Date(),
+        error: 'Worker crashed or restarted - job was stalled',
+      },
+    });
+
+    logger.info(COMPONENT, `Recovered ${result.count} stalled jobs`, {
+      jobIds: stalledJobs.map((j) => j.id),
+      jobTypes: [...new Set(stalledJobs.map((j) => j.type))],
+    });
+  } catch (error) {
+    logger.error(COMPONENT, 'Failed to recover stalled jobs', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Don't throw - worker should continue starting
+  }
+}
+
+// =============================================================================
+// T053: Stats Monitoring
+// =============================================================================
+
+/**
+ * Logs queue metrics every 60 seconds
+ * Implements T053: Worker stats monitoring
+ */
+async function logQueueStats(): Promise<void> {
+  try {
+    const health = await getQueuesHealth();
+
+    for (const [queueName, stats] of Object.entries(health)) {
+      logger.info(COMPONENT, `Queue stats: ${queueName}`, {
+        waiting: stats.waiting,
+        active: stats.active,
+        completed: stats.completed,
+        failed: stats.failed,
+        delayed: stats.delayed,
+        paused: stats.paused,
+      });
+    }
+
+    // Log total summary
+    const totals = Object.values(health).reduce(
+      (acc, stats) => ({
+        waiting: acc.waiting + stats.waiting,
+        active: acc.active + stats.active,
+        completed: acc.completed + stats.completed,
+        failed: acc.failed + stats.failed,
+      }),
+      { waiting: 0, active: 0, completed: 0, failed: 0 }
+    );
+
+    logger.info(COMPONENT, 'Queue stats summary', totals);
+  } catch (error) {
+    logger.error(COMPONENT, 'Failed to log queue stats', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Starts the stats monitoring interval
+ */
+function startStatsMonitoring(): void {
+  statsInterval = setInterval(() => {
+    logQueueStats().catch((err) => {
+      logger.error(COMPONENT, 'Stats monitoring error', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+  }, STATS_INTERVAL_MS);
+
+  logger.info(COMPONENT, `Stats monitoring started (interval: ${STATS_INTERVAL_MS / 1000}s)`);
+}
+
+/**
+ * Stops the stats monitoring interval
+ */
+function stopStatsMonitoring(): void {
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+    logger.info(COMPONENT, 'Stats monitoring stopped');
+  }
+}
+
+// =============================================================================
+// Queue Routers
 // =============================================================================
 
 /**
@@ -186,6 +331,8 @@ function createWorker(
     logger.debug(COMPONENT, `Job completed: ${job.id}`, {
       queue: queueName,
     });
+    // T050: Record job completion for health endpoint
+    recordJobProcessed();
   });
 
   worker.on('failed', (job, err) => {
@@ -254,6 +401,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
  * Closes all workers and connections
  */
 async function shutdownWorkers(): Promise<void> {
+  // T053: Stop stats monitoring
+  stopStatsMonitoring();
+
   // Close all workers (waits for active jobs to complete)
   const closePromises = workers.map(async (worker) => {
     try {
@@ -284,6 +434,12 @@ async function main(): Promise<void> {
     await redis.connect();
     logger.info(COMPONENT, 'Connected to Redis');
 
+    // T049: Recover stalled jobs from previous worker crash
+    await recoverStalledJobs();
+
+    // T050: Start health check HTTP server
+    startHealthServer();
+
     // Create workers for each queue
     // T046: All workers use routers to handle multiple job types per queue
     const contentWorker = createWorker(
@@ -311,6 +467,9 @@ async function main(): Promise<void> {
         QueueName.ANALYTICS_SYNC,
       ],
     });
+
+    // T053: Start stats monitoring (logs queue metrics every 60s)
+    startStatsMonitoring();
 
     // Register shutdown handlers
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));

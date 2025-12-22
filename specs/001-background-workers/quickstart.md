@@ -298,6 +298,83 @@ const redis = new Redis(process.env.REDIS_URL!, {
 
 ---
 
+## Validation Tests
+
+### T050: Health Check Endpoint
+
+```bash
+# Start worker and verify health endpoint
+pnpm --filter workers dev &
+sleep 5
+
+# Test health endpoint
+curl http://localhost:3001/health
+
+# Expected response:
+# {
+#   "status": "healthy",
+#   "uptime": 5,
+#   "lastJobProcessedAt": null,
+#   "queues": [
+#     { "name": "content-generation", "waiting": 0, "active": 0, ... }
+#   ],
+#   "timestamp": "2025-12-22T..."
+# }
+```
+
+### T049: Stalled Job Recovery
+
+```bash
+# 1. Create a job and simulate worker crash
+# 2. Restart worker and check logs for:
+#    "[worker] Found X stalled jobs, recovering..."
+#    "[worker] Recovered X stalled jobs"
+
+# Verify in Prisma Studio that previously RUNNING jobs
+# older than 30 minutes are now marked as FAILED
+```
+
+### T047: Per-Organization Rate Limiting
+
+```bash
+# Create 51 jobs rapidly for the same organization
+for i in {1..51}; do
+  curl -X POST http://localhost:3000/api/jobs \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer YOUR_TOKEN" \
+    -d '{"type": "GENERATE_CONTENT", "brandId": "BRAND_ID", "payload": {...}}'
+done
+
+# The 51st request should return:
+# { "error": "Too many pending jobs for this organization" }
+# Status code: 429
+```
+
+### T053: Worker Stats Monitoring
+
+```bash
+# Start worker and wait 60+ seconds
+# Check logs for queue stats output every 60 seconds:
+#
+# [worker] Queue stats: content-generation { waiting: 0, active: 0, completed: 5, failed: 0, ... }
+# [worker] Queue stats: context-scraping { waiting: 2, active: 1, completed: 10, failed: 1, ... }
+# [worker] Queue stats summary { waiting: 2, active: 1, completed: 15, failed: 1 }
+```
+
+### T048: Failed Jobs Dashboard Badge
+
+```bash
+# Create a job that will fail (e.g., missing API key)
+# Check dashboard API response includes:
+curl http://localhost:3000/api/dashboard \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Response should include:
+# { ..., "jobs": { "failed": 1 }, ... }
+```
+
+---
+
 ## Next Steps
 
 1. **Implement processors**: Start with `content-generation.ts`
