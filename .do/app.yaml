@@ -94,6 +94,55 @@ services:
         scope: RUN_TIME
         type: SECRET
 
+  # Voice Service (Flask backend for LiveKit and Magnus Billing)
+  - name: voice-service
+    github:
+      repo: epicdm/epic-ai
+      branch: main
+      deploy_on_push: true
+    source_dir: apps/voice-service
+    dockerfile_path: apps/voice-service/Dockerfile
+    instance_count: 1
+    instance_size_slug: basic-xs  # 1 vCPU, 512MB RAM
+    http_port: 8000
+    routes:
+      - path: /voice
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: REDIS_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: OPENAI_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: LIVEKIT_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: LIVEKIT_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: LIVEKIT_API_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: MAGNUS_BILLING_API_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: MAGNUS_BILLING_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: MAGNUS_BILLING_ACCOUNT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: LOG_LEVEL
+        scope: RUN_TIME
+        value: INFO
+
 # ===========================================
 # WORKERS (Background processing)
 # ===========================================
