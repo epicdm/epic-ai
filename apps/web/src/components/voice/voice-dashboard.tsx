@@ -17,19 +17,40 @@ interface VoiceAgent {
   _count: { calls: number };
 }
 
+interface VoiceStats {
+  totalCalls: number;
+  totalMinutes: number;
+  successRate: number;
+  activeAgents: number;
+  phoneNumbers: number;
+  totalCost: number;
+}
+
 export function VoiceDashboard() {
   const [agents, setAgents] = useState<VoiceAgent[]>([]);
+  const [stats, setStats] = useState<VoiceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchAgents() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/voice/agents");
-        if (!response.ok) throw new Error("Failed to fetch agents");
-        const data = await response.json();
-        // API returns { agents: [...] }
-        setAgents(Array.isArray(data.agents) ? data.agents : []);
+        // Fetch agents and stats in parallel
+        const [agentsRes, statsRes] = await Promise.all([
+          fetch("/api/voice/agents"),
+          fetch("/api/voice/stats"),
+        ]);
+
+        if (!agentsRes.ok) throw new Error("Failed to fetch agents");
+        const agentsData = await agentsRes.json();
+        setAgents(Array.isArray(agentsData.agents) ? agentsData.agents : []);
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          if (statsData.success && statsData.data) {
+            setStats(statsData.data);
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -37,7 +58,7 @@ export function VoiceDashboard() {
       }
     }
 
-    fetchAgents();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -91,7 +112,7 @@ export function VoiceDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {agents.reduce((acc, a) => acc + a._count.calls, 0)}
+                  {stats?.totalCalls ?? agents.reduce((acc, a) => acc + a._count.calls, 0)}
                 </p>
                 <p className="text-sm text-gray-500">Total Calls</p>
               </div>
@@ -107,7 +128,11 @@ export function VoiceDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  0m
+                  {stats?.totalMinutes !== undefined
+                    ? stats.totalMinutes >= 60
+                      ? `${Math.floor(stats.totalMinutes / 60)}h ${stats.totalMinutes % 60}m`
+                      : `${stats.totalMinutes}m`
+                    : "0m"}
                 </p>
                 <p className="text-sm text-gray-500">Call Minutes</p>
               </div>
@@ -123,7 +148,7 @@ export function VoiceDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  0%
+                  {stats?.successRate !== undefined ? `${stats.successRate}%` : "0%"}
                 </p>
                 <p className="text-sm text-gray-500">Success Rate</p>
               </div>

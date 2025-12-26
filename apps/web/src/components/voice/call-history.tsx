@@ -20,11 +20,14 @@ interface Call {
   id: string;
   direction: string;
   status: string;
-  fromNumber: string | null;
-  toNumber: string | null;
-  duration: number;
+  outcome: string | null;
+  callerNumber: string | null;
+  phoneNumber: string | null;
+  duration: number | null;
   startedAt: string | null;
+  endedAt: string | null;
   agent: { id: string; name: string } | null;
+  phoneMapping: { id: string; phoneNumber: string } | null;
 }
 
 export function CallHistory() {
@@ -56,19 +59,36 @@ export function CallHistory() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const getStatusColor = (status: string): "success" | "primary" | "danger" | "warning" | "default" => {
-    switch (status) {
+  const getStatusColor = (status: string, outcome: string | null): "success" | "primary" | "danger" | "warning" | "default" => {
+    // Use outcome if available, otherwise fall back to status
+    const displayStatus = outcome?.toLowerCase() || status.toLowerCase();
+    switch (displayStatus) {
       case "completed":
         return "success";
+      case "in_progress":
       case "in-progress":
+      case "active":
+      case "ringing":
         return "primary";
       case "failed":
         return "danger";
+      case "no_answer":
       case "no-answer":
+      case "busy":
+      case "voicemail":
         return "warning";
+      case "transferred":
+        return "success";
       default:
         return "default";
     }
+  };
+
+  const getDisplayStatus = (status: string, outcome: string | null): string => {
+    if (outcome) {
+      return outcome.replace(/_/g, " ").toLowerCase();
+    }
+    return status.replace(/_/g, " ").toLowerCase();
   };
 
   if (loading) {
@@ -123,23 +143,23 @@ export function CallHistory() {
                 {calls.map((call) => (
                   <TableRow key={call.id}>
                     <TableCell>
-                      {call.direction === "inbound" ? (
+                      {call.direction === "INBOUND" || call.direction === "inbound" ? (
                         <PhoneIncoming className="w-4 h-4 text-green-500" />
                       ) : (
                         <PhoneOutgoing className="w-4 h-4 text-blue-500" />
                       )}
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {call.fromNumber || "-"}
+                      {call.callerNumber || "-"}
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {call.toNumber || "-"}
+                      {call.phoneNumber || call.phoneMapping?.phoneNumber || "-"}
                     </TableCell>
                     <TableCell>{call.agent?.name || "-"}</TableCell>
                     <TableCell>{formatDuration(call.duration)}</TableCell>
                     <TableCell>
-                      <Chip size="sm" color={getStatusColor(call.status)} variant="flat">
-                        {call.status}
+                      <Chip size="sm" color={getStatusColor(call.status, call.outcome)} variant="flat">
+                        {getDisplayStatus(call.status, call.outcome)}
                       </Chip>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
