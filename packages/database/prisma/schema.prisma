@@ -58,6 +58,10 @@ model Organization {
   callLogs            CallLog[]
   voiceCampaigns      VoiceCampaign[]
 
+  // Voice Cost Tracking
+  pricingConfigs      PricingConfig[]
+  voiceUsageRecords   VoiceUsageRecord[]
+
   @@map("organizations")
 }
 
@@ -715,6 +719,16 @@ model SocialAccount {
   refreshToken String?   @map("refresh_token") @db.Text
   tokenExpires DateTime? @map("token_expires")
   tokenScope   String?   @map("token_scope")
+  tokenType    String?   @map("token_type")   // bearer
+
+  // Token refresh management
+  refreshExpiresAt DateTime? @map("refresh_expires_at")
+  lastRefreshed    DateTime? @map("last_refreshed")
+  refreshAttempts  Int       @default(0) @map("refresh_attempts")
+  refreshError     String?   @map("refresh_error")
+
+  // PKCE support (Twitter)
+  codeVerifier     String?   @map("code_verifier") @db.Text  // Temporary, cleared after exchange
 
   // Status
   status       AccountStatus @default(PENDING)
@@ -1256,6 +1270,7 @@ model CallLog {
   campaign       VoiceCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   transcript     CallTranscript?
   events         CallEvent[]
+  costBreakdown  CallCostBreakdown?
 
   @@index([organizationId])
   @@index([agentId])
@@ -1902,4 +1917,141 @@ enum AnalyticsPeriod {
   DAILY
   WEEKLY
   MONTHLY
+}
+
+// ============================================
+// VOICE: Pricing & Cost Tracking
+// ============================================
+
+model PricingConfig {
+  id             String   @id @default(cuid())
+  organizationId String?  @map("organization_id") // NULL for system default
+  configName     String   @map("config_name")
+
+  // STT Providers (per minute)
+  deepgramNova2PerMin     Decimal @default(0.08) @db.Decimal(10, 6) @map("deepgram_nova2_per_min")
+  deepgramWhisperPerMin   Decimal @default(0.08) @db.Decimal(10, 6) @map("deepgram_whisper_per_min")
+  assemblyaiPerMin        Decimal @default(0.05) @db.Decimal(10, 6) @map("assemblyai_per_min")
+
+  // LLM Providers (per 1M tokens)
+  openaiGpt4oMiniInput    Decimal @default(15.00) @db.Decimal(10, 6) @map("openai_gpt4o_mini_input_per_1m")
+  openaiGpt4oMiniOutput   Decimal @default(60.00) @db.Decimal(10, 6) @map("openai_gpt4o_mini_output_per_1m")
+  openaiGpt4Input         Decimal @default(30.00) @db.Decimal(10, 6) @map("openai_gpt4_input_per_1m")
+  openaiGpt4Output        Decimal @default(60.00) @db.Decimal(10, 6) @map("openai_gpt4_output_per_1m")
+  anthropicClaudeInput    Decimal @default(3.00) @db.Decimal(10, 6) @map("anthropic_claude_input_per_1m")
+  anthropicClaudeOutput   Decimal @default(15.00) @db.Decimal(10, 6) @map("anthropic_claude_output_per_1m")
+
+  // TTS Providers
+  openaiTtsPer1mChars     Decimal @default(15.00) @db.Decimal(10, 6) @map("openai_tts_per_1m_chars")
+  cartesiaPerAudioMin     Decimal @default(1.50) @db.Decimal(10, 6) @map("cartesia_per_audio_min")
+  elevenlabsPer1kChars    Decimal @default(0.18) @db.Decimal(10, 6) @map("elevenlabs_per_1k_chars")
+
+  // Telephony
+  inboundPerMinute        Decimal @default(0.001) @db.Decimal(10, 6) @map("inbound_per_minute")
+  outboundPerMinute       Decimal @default(0.002) @db.Decimal(10, 6) @map("outbound_per_minute")
+  didMonthly              Decimal @default(2.00) @db.Decimal(10, 6) @map("did_monthly")
+
+  // Platform overhead
+  platformOverheadPerMin  Decimal @default(0.01) @db.Decimal(10, 6) @map("platform_overhead_per_min")
+
+  // Status
+  isDefault     Boolean  @default(false) @map("is_default")
+  effectiveDate DateTime @default(now()) @map("effective_date")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  costBreakdowns   CallCostBreakdown[]
+
+  @@unique([organizationId, configName])
+  @@index([organizationId])
+  @@map("pricing_configs")
+}
+
+model CallCostBreakdown {
+  id         String @id @default(cuid())
+  callLogId  String @unique @map("call_log_id")
+
+  // STT Costs
+  sttProvider      String  @map("stt_provider")
+  sttModel         String  @map("stt_model")
+  sttMinutes       Decimal @db.Decimal(10, 4) @map("stt_minutes")
+  sttCost          Decimal @db.Decimal(10, 6) @map("stt_cost")
+
+  // LLM Costs
+  llmProvider      String  @map("llm_provider")
+  llmModel         String  @map("llm_model")
+  llmInputTokens   Int     @map("llm_input_tokens")
+  llmOutputTokens  Int     @map("llm_output_tokens")
+  llmCost          Decimal @db.Decimal(10, 6) @map("llm_cost")
+
+  // TTS Costs
+  ttsProvider      String  @map("tts_provider")
+  ttsModel         String? @map("tts_model")
+  ttsCharacters    Int     @map("tts_characters")
+  ttsAudioSeconds  Decimal? @db.Decimal(10, 4) @map("tts_audio_seconds")
+  ttsCost          Decimal @db.Decimal(10, 6) @map("tts_cost")
+
+  // Telephony Costs
+  telephonyDirection String  @map("telephony_direction") // inbound, outbound
+  telephonyMinutes   Decimal @db.Decimal(10, 4) @map("telephony_minutes")
+  telephonyCost      Decimal @db.Decimal(10, 6) @map("telephony_cost")
+
+  // Platform Costs
+  platformCost     Decimal @db.Decimal(10, 6) @map("platform_cost")
+
+  // Totals
+  totalRealCost    Decimal @db.Decimal(10, 6) @map("total_real_cost")
+  totalCustomerCost Decimal @db.Decimal(10, 6) @map("total_customer_cost")
+
+  // Pricing tier used
+  pricingConfigId  String? @map("pricing_config_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  callLog       CallLog       @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+  pricingConfig PricingConfig? @relation(fields: [pricingConfigId], references: [id], onDelete: SetNull)
+
+  @@map("call_cost_breakdowns")
+}
+
+model VoiceUsageRecord {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+
+  // Time period
+  periodStart    DateTime @map("period_start")
+  periodEnd      DateTime @map("period_end")
+  periodType     String   @map("period_type") // daily, weekly, monthly
+
+  // Usage metrics
+  totalCalls       Int     @default(0) @map("total_calls")
+  totalMinutes     Decimal @default(0) @db.Decimal(10, 2) @map("total_minutes")
+  totalCost        Decimal @default(0) @db.Decimal(10, 2) @map("total_cost")
+
+  // Breakdown by category
+  sttCost          Decimal @default(0) @db.Decimal(10, 2) @map("stt_cost")
+  llmCost          Decimal @default(0) @db.Decimal(10, 2) @map("llm_cost")
+  ttsCost          Decimal @default(0) @db.Decimal(10, 2) @map("tts_cost")
+  telephonyCost    Decimal @default(0) @db.Decimal(10, 2) @map("telephony_cost")
+
+  // Breakdown by direction
+  inboundCalls     Int     @default(0) @map("inbound_calls")
+  outboundCalls    Int     @default(0) @map("outbound_calls")
+  inboundMinutes   Decimal @default(0) @db.Decimal(10, 2) @map("inbound_minutes")
+  outboundMinutes  Decimal @default(0) @db.Decimal(10, 2) @map("outbound_minutes")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodStart, periodType])
+  @@index([organizationId])
+  @@index([periodStart])
+  @@map("voice_usage_records")
 }
