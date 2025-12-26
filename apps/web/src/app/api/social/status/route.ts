@@ -41,8 +41,8 @@ export async function GET() {
       where: { brandId: brand.id },
       select: {
         platform: true,
-        isActive: true,
-        tokenExpiresAt: true,
+        status: true,
+        tokenExpires: true,
       },
     });
 
@@ -55,10 +55,10 @@ export async function GET() {
         platformCounts[account.platform] = { total: 0, active: 0, expiring: 0 };
       }
       platformCounts[account.platform].total++;
-      if (account.isActive) {
+      if (account.status === "CONNECTED") {
         platformCounts[account.platform].active++;
       }
-      if (account.tokenExpiresAt && account.tokenExpiresAt.getTime() - now.getTime() < sevenDays) {
+      if (account.tokenExpires && account.tokenExpires.getTime() - now.getTime() < sevenDays) {
         platformCounts[account.platform].expiring++;
       }
     }
@@ -70,7 +70,7 @@ export async function GET() {
       configured: true,
       status: accounts.length > 0 ? "connected" : "no_accounts",
       connectedAccounts: accounts.length,
-      activeAccounts: accounts.filter((a) => a.isActive).length,
+      activeAccounts: accounts.filter((a) => a.status === "CONNECTED").length,
       platforms: connectedPlatforms,
       platformDetails: platformCounts,
       hasExpiringTokens: hasExpiring,

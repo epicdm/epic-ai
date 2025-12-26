@@ -44,7 +44,7 @@ export async function GET() {
     // Get connected social accounts
     const accounts = await prisma.socialAccount.findMany({
       where: { brandId: brand.id },
-      orderBy: { createdAt: "desc" },
+      orderBy: { connectedAt: "desc" },
     });
 
     // Enrich with display info
@@ -55,19 +55,20 @@ export async function GET() {
         color: "bg-gray-500",
       };
 
+      const isActive = account.status === "CONNECTED";
       return {
         id: account.id,
-        name: account.displayName || account.platformUsername || "Unknown",
+        name: account.displayName || account.username || "Unknown",
         platform: account.platform,
         platformDisplay: platformInfo.name,
         platformColor: platformInfo.color,
-        picture: account.avatarUrl,
-        username: account.platformUsername,
+        picture: account.avatar,
+        username: account.username,
         profileUrl: account.profileUrl,
-        isActive: account.isActive,
-        disabled: !account.isActive,
-        connectedAt: account.createdAt,
-        expiresAt: account.tokenExpiresAt,
+        isActive,
+        disabled: !isActive,
+        connectedAt: account.connectedAt,
+        expiresAt: account.tokenExpires,
       };
     });
 

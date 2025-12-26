@@ -46,10 +46,18 @@ export async function GET(request: NextRequest) {
     });
 
     if (!brand) {
+      // Generate a slug from org name or use a default
+      const baseName = org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
       brand = await prisma.brand.create({
         data: {
           organizationId: org.id,
-          name: org.name || "My Brand",
+          name: baseName,
+          slug,
         },
       });
     }

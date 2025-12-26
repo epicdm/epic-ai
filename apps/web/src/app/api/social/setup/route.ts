@@ -45,10 +45,10 @@ export async function GET() {
       select: {
         id: true,
         platform: true,
-        platformUsername: true,
+        username: true,
         displayName: true,
-        isActive: true,
-        tokenExpiresAt: true,
+        status: true,
+        tokenExpires: true,
       },
     });
 
@@ -94,10 +94,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (!brand) {
+      // Generate a slug from brand/org name
+      const baseName = brandName || org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
       brand = await prisma.brand.create({
         data: {
           organizationId: org.id,
-          name: brandName || org.name || "My Brand",
+          name: baseName,
+          slug,
         },
       });
     }
