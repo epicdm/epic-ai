@@ -15,6 +15,7 @@ import {
 } from "@heroui/react";
 import Link from "next/link";
 import { Send, Calendar, Sparkles } from "lucide-react";
+import { trackEvent } from "@/lib/analytics/analytics";
 
 interface SocialAccount {
   id: string;
@@ -82,6 +83,12 @@ export function PostComposer() {
       });
 
       if (!res.ok) throw new Error("Failed to create post");
+
+      trackEvent("social_post_created", {
+        platforms_count: selectedAccounts.length,
+        scheduled: !postNow,
+        content_length: content.length,
+      });
 
       // Reset form
       setContent("");

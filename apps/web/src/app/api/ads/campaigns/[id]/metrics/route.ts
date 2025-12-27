@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -12,7 +12,7 @@ interface RouteParams {
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { emitLeadCreated } from "@/lib/events/emit-lead-events";
@@ -7,7 +7,7 @@ import { emitLeadCreated } from "@/lib/events/emit-lead-events";
 // GET all leads with filtering
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 // POST create new lead
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

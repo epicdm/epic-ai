@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { ContentQueueManager } from '@/lib/services/content-factory/queue-manager';
 import { z } from 'zod';
@@ -26,7 +26,7 @@ const updateContentSchema = z.object({
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -138,7 +138,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

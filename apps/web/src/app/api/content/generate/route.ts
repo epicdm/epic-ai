@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { ContentGenerator } from '@/lib/services/content-factory/generator';
 import { z } from 'zod';
@@ -24,7 +24,7 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

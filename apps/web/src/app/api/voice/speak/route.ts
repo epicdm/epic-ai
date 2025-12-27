@@ -3,7 +3,7 @@
  * TODO: Implement when TTS service is completed
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const VOICE_OPTIONS: Record<string, { name: string; description: string }> = {
@@ -21,7 +21,7 @@ const VOICE_OPTIONS: Record<string, { name: string; description: string }> = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

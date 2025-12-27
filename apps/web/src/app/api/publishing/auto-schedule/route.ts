@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { z } from 'zod';
 import { autoScheduleContent, getOptimalTimes } from '@/lib/services/publishing-engine';
@@ -23,7 +23,7 @@ const autoScheduleSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

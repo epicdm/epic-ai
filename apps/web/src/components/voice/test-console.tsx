@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Card, CardBody, Button, Select, SelectItem, Spinner, Chip } from "@heroui/react";
+import { Card, CardBody, Button, Select, SelectItem, Spinner, Chip, Tooltip } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Mic, MicOff, Phone, PhoneOff, Volume2, Send, AlertCircle } from "lucide-react";
+import { Mic, MicOff, Phone, PhoneOff, Volume2, Send, AlertCircle, DollarSign, Clock, Info } from "lucide-react";
+import Link from "next/link";
+import { PRICING } from "@/components/ui/cost-estimator";
+import { trackEvent } from "@/lib/analytics";
 
 interface VoiceAgent {
   id: string;
@@ -87,6 +90,9 @@ export function TestConsole() {
       setConversationId(null);
       setError(null);
 
+      // Track call started
+      trackEvent("voice_call_started", { agent_id: selectedAgentId, type: "test" });
+
       // Get greeting from agent
       const response = await fetch("/api/voice/chat", {
         method: "POST",
@@ -135,6 +141,16 @@ export function TestConsole() {
           const data = await response.json();
           addMessage("system", `Call ended. ${data.summary || ""}`);
           setStats(data.stats);
+          
+          // Track call ended analytics
+          if (data.stats && selectedAgentId) {
+            const durationSeconds = data.stats.duration || 0;
+            trackEvent("voice_call_ended", {
+              agent_id: selectedAgentId,
+              duration_seconds: durationSeconds,
+              estimated_cost: (durationSeconds / 60) * PRICING.voice.perMinute,
+            });
+          }
         }
       } catch (err) {
         console.error("Error ending call:", err);
@@ -145,7 +161,7 @@ export function TestConsole() {
     setIsRecording(false);
     setIsSpeaking(false);
     setConversationId(null);
-  }, [conversationId, isRecording]);
+  }, [conversationId, isRecording, selectedAgentId]);;
 
   const startRecording = useCallback(async () => {
     try {
@@ -327,6 +343,54 @@ export function TestConsole() {
         description="Test your voice agents directly in your browser using your microphone."
       />
 
+      {/* Cost Information Banner */}
+      <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+        <CardBody className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-200 dark:bg-amber-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-200">
+                  Test calls cost ${PRICING.voice.perMinute.toFixed(2)}/minute
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Includes speech-to-text, AI processing, and text-to-speech
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Tooltip content={
+                <div className="p-2 space-y-1 text-sm">
+                  <p className="font-medium">Cost Breakdown</p>
+                  <p>STT: ${PRICING.voice.breakdown.stt.toFixed(2)}/min</p>
+                  <p>LLM: ${PRICING.voice.breakdown.llm.toFixed(2)}/min</p>
+                  <p>TTS: ${PRICING.voice.breakdown.tts.toFixed(2)}/min</p>
+                  <p>Telephony: ${PRICING.voice.breakdown.telephony.toFixed(2)}/min</p>
+                </div>
+              }>
+                <Chip size="sm" variant="flat" className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 cursor-help">
+                  <span className="flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    View breakdown
+                  </span>
+                </Chip>
+              </Tooltip>
+              <Button
+                as={Link}
+                href="/dashboard/settings/usage"
+                size="sm"
+                variant="flat"
+                className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300"
+              >
+                View Usage
+              </Button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
       {/* Error display */}
       {error && (
         <Card className="border-danger-200 bg-danger-50">
@@ -454,6 +518,10 @@ export function TestConsole() {
                   <div className="font-medium">{stats.messageCount}</div>
                   <div className="text-gray-500">Duration:</div>
                   <div className="font-medium">{Math.floor(stats.duration / 60)}:{String(stats.duration % 60).padStart(2, "0")}</div>
+                  <div className="text-gray-500">Est. Cost:</div>
+                  <div className="font-medium text-amber-600">
+                    ${((stats.duration / 60) * PRICING.voice.perMinute).toFixed(2)}
+                  </div>
                 </div>
               </div>
             )}

@@ -128,7 +128,7 @@ export function BrandsList({ brands, organizationId }: BrandsListProps) {
                     </a>
                   )}
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500" suppressHydrationWarning>
                   Created{" "}
                   {new Date(brand.createdAt).toLocaleDateString("en-US", {
                     month: "short",

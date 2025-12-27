@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { getAnalyticsOverview } from '@/lib/services/analytics/aggregator';
 import { getBrandLearnings } from '@/lib/services/analytics/learning-generator';
@@ -15,7 +15,7 @@ import type { SocialPlatform } from '@prisma/client';
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

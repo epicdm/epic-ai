@@ -519,7 +519,7 @@ export function WebhooksPage() {
                           <p className="text-xs text-danger mt-1">{log.error}</p>
                         )}
                       </div>
-                      <span className="text-xs text-default-400">
+                      <span className="text-xs text-default-400" suppressHydrationWarning>
                         {new Date(log.receivedAt).toLocaleString()}
                       </span>
                     </div>

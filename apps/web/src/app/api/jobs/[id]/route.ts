@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthWithBypass } from '@/lib/auth';
 import { getUserOrganization } from '@/lib/sync-user';
 import { getJob, cancelJob } from '@/lib/services/job-queue';
 
@@ -26,7 +26,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     // 1. Authenticate
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'UNAUTHORIZED' },
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     // 1. Authenticate
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'UNAUTHORIZED' },

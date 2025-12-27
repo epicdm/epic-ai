@@ -1,6 +1,13 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 
+// UAT bypass support
+const isUATBypassEnabled =
+  process.env.NODE_ENV === "development" &&
+  process.env.UAT_AUTH_BYPASS === "true";
+
+const UAT_TEST_USER_ID = "uat_test_user_001";
+
 /**
  * Ensures the current Clerk user exists in our database.
  * Call this on protected pages as a fallback for webhooks.
@@ -10,6 +17,21 @@ import { prisma } from "@epic-ai/database";
 export async function syncUser() {
   try {
     const clerkUser = await currentUser();
+
+    // UAT bypass: return test user if no clerk user
+    if (!clerkUser && isUATBypassEnabled) {
+      const uatUser = await prisma.user.findUnique({
+        where: { id: UAT_TEST_USER_ID },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+      });
+      return uatUser;
+    }
 
     if (!clerkUser) {
       return null;

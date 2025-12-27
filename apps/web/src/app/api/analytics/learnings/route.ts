@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { getBrandLearnings, generateLearnings } from '@/lib/services/analytics/learning-generator';
 
@@ -13,7 +13,7 @@ import { getBrandLearnings, generateLearnings } from '@/lib/services/analytics/l
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

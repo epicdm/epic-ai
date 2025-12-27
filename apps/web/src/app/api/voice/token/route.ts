@@ -3,7 +3,7 @@
  * TODO: Implement when LiveKit integration is completed
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
@@ -14,7 +14,7 @@ import { getUserOrganization } from "@/lib/sync-user";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

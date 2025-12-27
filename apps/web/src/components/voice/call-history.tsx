@@ -14,7 +14,8 @@ import {
   Spinner,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, DollarSign } from "lucide-react";
+import { PRICING } from "@/components/ui/cost-estimator";
 
 interface Call {
   id: string;
@@ -57,6 +58,12 @@ export function CallHistory() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const calculateCost = (seconds: number | null) => {
+    if (!seconds) return null;
+    const minutes = seconds / 60;
+    return (minutes * PRICING.voice.perMinute).toFixed(2);
   };
 
   const getStatusColor = (status: string, outcome: string | null): "success" | "primary" | "danger" | "warning" | "default" => {
@@ -136,6 +143,7 @@ export function CallHistory() {
                 <TableColumn>To</TableColumn>
                 <TableColumn>Agent</TableColumn>
                 <TableColumn>Duration</TableColumn>
+                <TableColumn>Cost</TableColumn>
                 <TableColumn>Status</TableColumn>
                 <TableColumn>Date</TableColumn>
               </TableHeader>
@@ -157,6 +165,15 @@ export function CallHistory() {
                     </TableCell>
                     <TableCell>{call.agent?.name || "-"}</TableCell>
                     <TableCell>{formatDuration(call.duration)}</TableCell>
+                    <TableCell>
+                      {calculateCost(call.duration) ? (
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          ${calculateCost(call.duration)}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Chip size="sm" color={getStatusColor(call.status, call.outcome)} variant="flat">
                         {getDisplayStatus(call.status, call.outcome)}

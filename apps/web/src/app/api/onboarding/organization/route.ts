@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { createOrganization } from "@/lib/services/organization";
 import { organizationSchema } from "@/lib/validations/onboarding";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
 
     if (!userId) {
       return NextResponse.json(

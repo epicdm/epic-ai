@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@epic-ai/database", "@epic-ai/shared", "@epic-ai/ui"],
+  transpilePackages: [
+    "@epic-ai/database",
+    "@epic-ai/shared",
+    "@epic-ai/ui",
+    "next-themes",
+    "posthog-js",
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
@@ -14,7 +20,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 };
 

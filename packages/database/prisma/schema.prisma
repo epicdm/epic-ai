@@ -21,9 +21,94 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  memberships Membership[]
+  memberships            Membership[]
+  onboardingProgress     UserOnboardingProgress?
+  wizardSessions         WizardSession[]
+  featureDiscoveryStates FeatureDiscoveryState[]
+  demoModeData           DemoModeData?
 
   @@map("users")
+}
+
+// ============================================
+// ONBOARDING & UX TRACKING
+// ============================================
+
+model UserOnboardingProgress {
+  id                    String    @id @default(cuid())
+  userId                String    @unique @map("user_id")
+  hasSeenWelcome        Boolean   @default(false) @map("has_seen_welcome")
+  hasChosenGoal         String?   @map("has_chosen_goal") // "content" | "voice" | "campaigns" | "explore"
+  hasCreatedBrand       Boolean   @default(false) @map("has_created_brand")
+  hasCompletedQuickWin  Boolean   @default(false) @map("has_completed_quick_win")
+  hasSeenDashboardTour  Boolean   @default(false) @map("has_seen_dashboard_tour")
+  hasCreatedVoiceAgent  Boolean   @default(false) @map("has_created_voice_agent")
+  hasConnectedSocial    Boolean   @default(false) @map("has_connected_social")
+  hasCreatedCampaign    Boolean   @default(false) @map("has_created_campaign")
+  hasGeneratedContent   Boolean   @default(false) @map("has_generated_content")
+  completionPercentage  Int       @default(0) @map("completion_percentage")
+  currentStep           String?   @map("current_step")
+  isDemoMode            Boolean   @default(false) @map("is_demo_mode")
+  onboardingStartedAt   DateTime  @default(now()) @map("onboarding_started_at")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  lastActiveAt          DateTime  @default(now()) @map("last_active_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_onboarding_progress")
+}
+
+model WizardSession {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  wizardType  String    @map("wizard_type") // "master" | "voice_agent" | "campaign" | "social" | "content"
+  currentStep Int       @default(0) @map("current_step")
+  totalSteps  Int       @map("total_steps")
+  data        Json      @default("{}")
+  completed   Boolean   @default(false)
+  abandoned   Boolean   @default(false)
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wizard_sessions")
+}
+
+model FeatureDiscoveryState {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  feature          String   // Feature identifier (e.g., "voice_agent", "content_factory")
+  hasSeenTooltip   Boolean  @default(false) @map("has_seen_tooltip")
+  hasDismissed     Boolean  @default(false) @map("has_dismissed")
+  interactionCount Int      @default(0) @map("interaction_count")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature])
+  @@map("feature_discovery_state")
+}
+
+model DemoModeData {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  demoVoiceAgent Json?    @map("demo_voice_agent")
+  demoCampaign   Json?    @map("demo_campaign")
+  demoLeads      Json?    @map("demo_leads")
+  demoCallLogs   Json?    @map("demo_call_logs")
+  demoContent    Json?    @map("demo_content")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("demo_mode_data")
 }
 
 model Organization {

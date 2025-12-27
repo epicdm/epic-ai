@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthWithBypass } from '@/lib/auth';
 import { getUserOrganization } from '@/lib/sync-user';
 import {
   enqueueJob,
@@ -37,7 +37,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'UNAUTHORIZED' },
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // 1. Authenticate
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'UNAUTHORIZED' },

@@ -19,6 +19,7 @@ import {
   Avatar,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import { trackEvent } from "@/lib/analytics/analytics";
 import {
   Sparkles,
   Wand2,
@@ -124,6 +125,13 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
         const data = await res.json();
         setGeneratedContent(data.content || []);
         setStep(2);
+        trackEvent("content_generated", {
+          content_type: contentType,
+          platforms: platforms.join(","),
+          tone,
+          count,
+          generated_count: data.content?.length || 0,
+        });
       }
     } catch (error) {
       console.error("Error generating content:", error);
@@ -146,6 +154,9 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
       });
 
       if (res.ok) {
+        trackEvent("content_saved", {
+          content_count: selectedContent.length,
+        });
         router.push("/dashboard/content");
       }
     } catch (error) {

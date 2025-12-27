@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { generateDemoStats } from "@/lib/demo/sample-data";
 
 /**
  * GET /api/voice/stats
@@ -8,9 +9,24 @@ import { prisma } from "@epic-ai/database";
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is in demo mode
+    const progress = await prisma.userOnboardingProgress.findUnique({
+      where: { userId },
+      select: { isDemoMode: true },
+    });
+
+    if (progress?.isDemoMode) {
+      const demoStats = generateDemoStats();
+      return NextResponse.json({
+        success: true,
+        data: demoStats.voice,
+        isDemo: true,
+      });
     }
 
     // Get user's organization

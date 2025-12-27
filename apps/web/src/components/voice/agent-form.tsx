@@ -13,10 +13,14 @@ import {
   SelectItem,
   Switch,
   Slider,
+  Chip,
+  Tooltip,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Clock, Info } from "lucide-react";
 import Link from "next/link";
+import { PRICING } from "@/components/ui/cost-estimator";
+import { trackEvent } from "@/lib/analytics";
 
 interface Brand {
   id: string;
@@ -124,6 +128,19 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to save agent");
+      }
+
+      const responseData = await response.json();
+
+      // Track analytics event
+      if (initialData) {
+        trackEvent("voice_agent_edited", { agent_id: initialData.id });
+      } else {
+        trackEvent("voice_agent_created", {
+          agent_id: responseData.id || responseData.agent?.id || "unknown",
+          llm_provider: formData.llmProvider,
+          tts_provider: formData.ttsProvider,
+        });
       }
 
       router.push("/dashboard/voice");
@@ -336,6 +353,83 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               onChange={(e) => setFormData({ ...formData, transferNumber: e.target.value })}
               description="Number to transfer calls to when requested or escalation needed"
             />
+          </CardBody>
+        </Card>
+
+        {/* Cost Information */}
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-amber-200 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-300">Pricing Information</h2>
+            </div>
+          </CardHeader>
+          <CardBody className="pt-2 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+              <div>
+                <p className="font-medium text-amber-900 dark:text-amber-200">Voice AI Calls</p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Billed per minute of call duration
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-amber-800 dark:text-amber-300">
+                  ${PRICING.voice.perMinute.toFixed(2)}<span className="text-sm font-normal">/min</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Tooltip content="Speech recognition to convert caller audio to text">
+                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Speech-to-Text</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">
+                    ${PRICING.voice.breakdown.stt.toFixed(2)}/min
+                  </p>
+                </div>
+              </Tooltip>
+              <Tooltip content="AI processing and response generation">
+                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">AI Processing</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">
+                    ${PRICING.voice.breakdown.llm.toFixed(2)}/min
+                  </p>
+                </div>
+              </Tooltip>
+              <Tooltip content="Convert AI responses to natural speech">
+                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Text-to-Speech</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">
+                    ${PRICING.voice.breakdown.tts.toFixed(2)}/min
+                  </p>
+                </div>
+              </Tooltip>
+              <Tooltip content="Phone line and carrier costs">
+                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Telephony</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">
+                    ${PRICING.voice.breakdown.telephony.toFixed(2)}/min
+                  </p>
+                </div>
+              </Tooltip>
+            </div>
+
+            <div className="flex items-start gap-2 p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg">
+              <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-amber-700 dark:text-amber-400">
+                <p>
+                  <strong>Example:</strong> A 5-minute call costs approximately ${(5 * PRICING.voice.perMinute).toFixed(2)}.
+                </p>
+                <p className="mt-1">
+                  <Link href="/dashboard/settings/usage" className="underline hover:no-underline">
+                    View your usage dashboard
+                  </Link>{" "}
+                  for detailed cost tracking.
+                </p>
+              </div>
+            </div>
           </CardBody>
         </Card>
 

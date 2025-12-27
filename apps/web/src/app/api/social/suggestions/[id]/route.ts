@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ interface RouteParams {
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -50,7 +50,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -85,7 +85,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
  */
 export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
