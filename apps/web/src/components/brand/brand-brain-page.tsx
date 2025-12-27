@@ -24,6 +24,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import { TemplatePickerButton } from "@/components/brand/template-picker";
 import {
   Brain,
   Building,
@@ -176,6 +177,49 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
 
   const [audiences, setAudiences] = useState<Audience[]>(brain?.audiences || []);
   const [pillars, setPillars] = useState<Pillar[]>(brain?.pillars || []);
+
+  // Refetch brain data (used after template apply)
+  const refetchBrain = async () => {
+    try {
+      const res = await fetch(`/api/brand-brain?brandId=${brandId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.brain) {
+          setBrain(data.brain);
+          setProfile({
+            companyName: data.brain.companyName || brandName,
+            description: data.brain.description || "",
+            mission: data.brain.mission || "",
+            values: data.brain.values || [],
+            uniqueSellingPoints: data.brain.uniqueSellingPoints || [],
+            industry: data.brain.industry || "",
+            targetMarket: data.brain.targetMarket || "",
+          });
+          setVoice({
+            voiceTone: data.brain.voiceTone || "PROFESSIONAL",
+            voiceToneCustom: data.brain.voiceToneCustom || "",
+            formalityLevel: data.brain.formalityLevel || 3,
+            writingStyle: data.brain.writingStyle || "",
+            doNotMention: data.brain.doNotMention || [],
+            mustMention: data.brain.mustMention || [],
+            useEmojis: data.brain.useEmojis ?? true,
+            emojiFrequency: data.brain.emojiFrequency || "MODERATE",
+            useHashtags: data.brain.useHashtags ?? true,
+            hashtagStyle: data.brain.hashtagStyle || "MIXED",
+            preferredHashtags: data.brain.preferredHashtags || [],
+            bannedHashtags: data.brain.bannedHashtags || [],
+            ctaStyle: data.brain.ctaStyle || "soft",
+          });
+          setAudiences(data.brain.audiences || []);
+          setPillars(data.brain.pillars || []);
+          setMessage({ type: "success", text: "Template applied successfully!" });
+          setTimeout(() => setMessage(null), 3000);
+        }
+      }
+    } catch (error) {
+      console.error("Error refetching brain:", error);
+    }
+  };
   const [competitors, setCompetitors] = useState<Competitor[]>(brain?.brandCompetitors || []);
 
   // New item inputs
@@ -428,6 +472,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                 {message.text}
               </Chip>
             )}
+            <TemplatePickerButton brandId={brandId} onTemplateApplied={refetchBrain} />
             <Button
               color="primary"
               startContent={<Save className="w-4 h-4" />}

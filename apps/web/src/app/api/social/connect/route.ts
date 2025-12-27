@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
@@ -23,7 +23,7 @@ const PLATFORM_ROUTES = {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -46,10 +46,18 @@ export async function GET(request: NextRequest) {
     });
 
     if (!brand) {
+      // Generate a slug from org name or use a default
+      const baseName = org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
       brand = await prisma.brand.create({
         data: {
           organizationId: org.id,
-          name: org.name || "My Brand",
+          name: baseName,
+          slug,
         },
       });
     }

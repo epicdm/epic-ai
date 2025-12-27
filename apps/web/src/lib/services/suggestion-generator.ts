@@ -1,12 +1,12 @@
 /**
  * AI Suggestion Generator Service
- * TODO: Implement when autopilotSettings and socialSuggestion models are complete
  *
  * Generates social media post suggestions based on business events
  * like lead conversions, 5-star calls, and weekly content planning.
  */
 
 import OpenAI from "openai";
+import { prisma } from "@epic-ai/database";
 
 // Lazy initialization to avoid build-time errors
 let openaiClient: OpenAI | null = null;
@@ -54,11 +54,11 @@ type TriggerData = LeadConvertedData | FiveStarCallData | WeeklyContentData | Re
  * Generate a social media post suggestion based on trigger type
  */
 export async function generateSuggestion(
-  _organizationId: string,
+  organizationId: string,
   triggerType: TriggerType,
   triggerData: TriggerData
 ): Promise<{ content: string; suggestedPlatforms: string[] }> {
-  // TODO: Get autopilot settings when model is complete
+  // Get brand and brain settings from the database
   const defaultSettings: AutopilotSettings = {
     defaultTone: "professional",
     includeEmojis: true,
@@ -68,7 +68,33 @@ export async function generateSuggestion(
     defaultPlatforms: [],
   };
 
-  const effectiveSettings = defaultSettings;
+  let effectiveSettings = defaultSettings;
+
+  try {
+    // Get the first brand for this organization with its brain settings
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId },
+      include: {
+        brandBrain: true,
+        autopilotConfig: true,
+      },
+    });
+
+    if (brand?.brandBrain) {
+      const brain = brand.brandBrain;
+      effectiveSettings = {
+        defaultTone: brain.voiceTone?.toLowerCase() || "professional",
+        includeEmojis: brain.useEmojis ?? true,
+        includeHashtags: brain.useHashtags ?? true,
+        includeCTA: brain.ctaStyle !== "none",
+        brandDescription: brain.description || brand.name,
+        defaultPlatforms: brand.autopilotConfig?.enabledPlatforms?.map(p => p.toLowerCase()) || [],
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch brand settings:", error);
+    // Continue with default settings
+  }
 
   const prompt = buildPrompt(triggerType, triggerData, effectiveSettings);
 
@@ -260,32 +286,115 @@ function determinePlatforms(content: string, defaults: string[]): string[] {
 }
 
 /**
- * Create a suggestion in the database
- * TODO: Implement when socialSuggestion model is complete
+ * Create a suggestion in the database as a ContentItem
  */
 export async function createSuggestion(
   organizationId: string,
   triggerType: TriggerType,
   triggerData: TriggerData,
-  _autoPost: boolean = false
+  autoPost: boolean = false
 ): Promise<{ id: string; content: string }> {
-  const { content } = await generateSuggestion(
+  const { content, suggestedPlatforms } = await generateSuggestion(
     organizationId,
     triggerType,
     triggerData
   );
 
-  // TODO: Store suggestion when socialSuggestion model is complete
-  return { id: `stub-${Date.now()}`, content };
+  try {
+    // Get the first brand for this organization
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId },
+    });
+
+    if (!brand) {
+      console.warn("No brand found for organization:", organizationId);
+      return { id: `temp-${Date.now()}`, content };
+    }
+
+    // Determine content type based on trigger
+    let contentType: "POST" | "STORY" | "REEL" | "THREAD" | "ARTICLE" = "POST";
+    if (triggerType === "WEEKLY_CONTENT") {
+      contentType = "POST";
+    }
+
+    // Create as a ContentItem in draft/pending state
+    const contentItem = await prisma.contentItem.create({
+      data: {
+        brandId: brand.id,
+        content,
+        contentType,
+        category: triggerType.toLowerCase().replace(/_/g, "-"),
+        status: autoPost ? "SCHEDULED" : "DRAFT",
+        approvalStatus: autoPost ? "AUTO_APPROVED" : "PENDING",
+        targetPlatforms: suggestedPlatforms.map(p => p.toUpperCase()) as import("@prisma/client").SocialPlatform[],
+        scheduledFor: autoPost ? new Date(Date.now() + 30 * 60 * 1000) : null, // 30 min from now if auto
+      },
+    });
+
+    return { id: contentItem.id, content };
+  } catch (error) {
+    console.error("Failed to create suggestion:", error);
+    return { id: `temp-${Date.now()}`, content };
+  }
 }
 
 /**
- * Check rate limits for auto-posting
- * TODO: Implement when autopilotSettings model is complete
+ * Check rate limits for auto-posting based on autopilot config
  */
-export async function canAutoPost(_organizationId: string): Promise<boolean> {
-  // Always return true until model is complete
-  return true;
+export async function canAutoPost(organizationId: string): Promise<boolean> {
+  try {
+    // Get the first brand with autopilot config
+    const brand = await prisma.brand.findFirst({
+      where: { organizationId },
+      include: {
+        autopilotConfig: true,
+      },
+    });
+
+    if (!brand?.autopilotConfig) {
+      return false; // No autopilot config means no auto-posting
+    }
+
+    const config = brand.autopilotConfig;
+
+    // Check if autopilot is enabled
+    if (!config.enabled) {
+      return false;
+    }
+
+    // Check if approval mode allows auto-posting
+    if (config.approvalMode !== "AUTO_POST") {
+      return false;
+    }
+
+    // Check if we've exceeded posts per week
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const postsThisWeek = await prisma.contentItem.count({
+      where: {
+        brandId: brand.id,
+        status: "PUBLISHED",
+        publishedAt: { gte: weekStart },
+      },
+    });
+
+    if (postsThisWeek >= config.postsPerWeek) {
+      return false;
+    }
+
+    // Check if today is a posting day (0=Sun, 6=Sat)
+    const today = new Date().getDay();
+    if (!config.postingDays.includes(today)) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Failed to check auto-post eligibility:", error);
+    return false;
+  }
 }
 
 // Helper to get week number

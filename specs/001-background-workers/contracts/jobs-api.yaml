@@ -1,0 +1,406 @@
+openapi: 3.0.3
+info:
+  title: Epic AI Jobs API
+  description: |
+    REST API for managing background jobs in Epic AI.
+    All endpoints require authentication via Clerk.
+    Jobs are scoped to the authenticated user's organization.
+  version: 1.0.0
+  contact:
+    name: Epic AI
+    url: https://leads.epic.dm
+
+servers:
+  - url: https://leads.epic.dm/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Development
+
+security:
+  - ClerkAuth: []
+
+tags:
+  - name: Jobs
+    description: Background job management
+
+paths:
+  /jobs:
+    post:
+      tags: [Jobs]
+      summary: Create a new job
+      description: |
+        Enqueues a new background job for processing.
+        The job type determines the required payload structure.
+        Returns immediately with job ID for status tracking.
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJobRequest'
+            examples:
+              contentGeneration:
+                summary: Content Generation Job
+                value:
+                  type: GENERATE_CONTENT
+                  brandId: clxyz123abc
+                  payload:
+                    topic: "AI trends in marketing 2025"
+                    platforms: [TWITTER, LINKEDIN]
+                  priority: HIGH
+              contextScraping:
+                summary: Context Scraping Job
+                value:
+                  type: SCRAPE_WEBSITE
+                  brandId: clxyz123abc
+                  payload:
+                    contextSourceId: clxyz456def
+                    url: "https://example.com/blog"
+                    sourceType: WEBSITE
+                  priority: NORMAL
+              analyticsSync:
+                summary: Analytics Sync Job
+                value:
+                  type: SYNC_ANALYTICS
+                  payload:
+                    socialAccountId: clxyz789ghi
+                    platform: TWITTER
+                    syncType: INCREMENTAL
+                  priority: LOW
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyJobs'
+
+    get:
+      tags: [Jobs]
+      summary: List jobs
+      description: |
+        Returns a paginated list of jobs for the authenticated user's organization.
+        Supports filtering by status and type.
+      operationId: listJobs
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+          description: Filter by job status
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/JobType'
+          description: Filter by job type
+        - name: brandId
+          in: query
+          schema:
+            type: string
+          description: Filter by brand ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of jobs to return
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor from previous response
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /jobs/{id}:
+    get:
+      tags: [Jobs]
+      summary: Get job by ID
+      description: Returns detailed information about a specific job including its result or error.
+      operationId: getJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Jobs]
+      summary: Cancel a job
+      description: |
+        Cancels a pending or running job.
+        Completed and failed jobs cannot be cancelled.
+      operationId: cancelJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '200':
+          description: Job cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          description: Job cannot be cancelled (already completed/failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /jobs/{id}/retry:
+    post:
+      tags: [Jobs]
+      summary: Retry a failed job
+      description: |
+        Re-enqueues a failed job for processing.
+        Creates a new job with the same payload.
+      operationId: retryJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '201':
+          description: New job created from retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          description: Job is not in failed state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    ClerkAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk authentication token
+
+  schemas:
+    JobType:
+      type: string
+      enum:
+        - SCRAPE_WEBSITE
+        - SYNC_RSS
+        - PROCESS_DOCUMENT
+        - GENERATE_CONTENT
+        - GENERATE_IMAGE
+        - PUBLISH_CONTENT
+        - SYNC_ANALYTICS
+        - REFRESH_TOKEN
+      description: Type of background job
+
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - RUNNING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+      description: Current job status
+
+    JobPriority:
+      type: string
+      enum:
+        - HIGH
+        - NORMAL
+        - LOW
+      description: Job priority level
+
+    CreateJobRequest:
+      type: object
+      required:
+        - type
+        - payload
+      properties:
+        type:
+          $ref: '#/components/schemas/JobType'
+        brandId:
+          type: string
+          description: Brand ID (required for brand-specific jobs)
+        payload:
+          type: object
+          description: Job-specific payload (validated by Zod schema per job type)
+        priority:
+          $ref: '#/components/schemas/JobPriority'
+          default: NORMAL
+        runAt:
+          type: string
+          format: date-time
+          description: Scheduled execution time (optional, defaults to now)
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique job identifier
+        type:
+          $ref: '#/components/schemas/JobType'
+        brandId:
+          type: string
+          nullable: true
+        organizationId:
+          type: string
+        payload:
+          type: object
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        priority:
+          type: integer
+          description: Numeric priority (1=HIGH, 5=NORMAL, 10=LOW)
+        attempts:
+          type: integer
+          description: Current attempt number
+        maxAttempts:
+          type: integer
+          description: Maximum retry attempts
+        runAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        result:
+          type: object
+          nullable: true
+          description: Job result (on success)
+        error:
+          type: string
+          nullable: true
+          description: Error message (on failure)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobList:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page (null if no more pages)
+        totalCount:
+          type: integer
+          description: Total number of jobs matching filters
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code for programmatic handling
+        details:
+          type: object
+          description: Additional error context
+
+  responses:
+    BadRequest:
+      description: Invalid request payload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid payload for job type GENERATE_CONTENT"
+            code: "INVALID_PAYLOAD"
+            details:
+              issues:
+                - path: ["topic"]
+                  message: "Required"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Authentication required"
+            code: "UNAUTHORIZED"
+
+    NotFound:
+      description: Job not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Job not found"
+            code: "NOT_FOUND"
+
+    TooManyJobs:
+      description: Organization has reached maximum concurrent jobs limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Maximum concurrent jobs reached (50)"
+            code: "TOO_MANY_JOBS"

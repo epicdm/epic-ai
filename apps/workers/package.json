@@ -4,19 +4,25 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts src/scheduler.ts --format esm,cjs --dts",
+    "build": "tsup src/index.ts src/scheduler.ts src/lib/index.ts src/types/index.ts src/queues/index.ts --format esm,cjs --dts",
     "start": "node dist/index.js",
     "schedule": "node dist/scheduler.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@epic-ai/database": "workspace:*",
     "@epic-ai/shared": "workspace:*",
+    "bullmq": "^5.7.0",
     "dotenv": "^16.4.5",
-    "bullmq": "^5.7.0"
+    "ioredis": "^5.8.2",
+    "node-cron": "^4.2.1",
+    "openai": "^6.10.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
+    "@types/node-cron": "^3.0.11",
     "tsup": "^8.0.2",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5"

@@ -5,8 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import type { SocialPlatform } from "@prisma/client";
 import { getUserOrganization } from "@/lib/sync-user";
 import { SocialPublisher } from "@/lib/services/social-publishing";
 import { z } from "zod";
@@ -22,7 +23,7 @@ const createPostSchema = z.object({
 
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -41,22 +42,24 @@ export async function GET() {
       return NextResponse.json({ posts: [] });
     }
 
-    // Get scheduled and recent posts
+    // Get recent posts (variations that have been published or are pending)
     const posts = await prisma.contentVariation.findMany({
       where: {
         content: {
           brandId: brand.id,
         },
-        scheduledAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-        },
+        OR: [
+          { publishedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }, // Published in last 7 days
+          { status: "PENDING" }, // Or pending
+          { status: "SCHEDULED" }, // Or scheduled
+        ],
       },
       include: {
         content: {
-          select: { id: true, title: true, type: true },
+          select: { id: true, content: true, contentType: true },
         },
       },
-      orderBy: { scheduledAt: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
 
@@ -69,7 +72,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: validated.accountIds },
         brandId: brand.id,
-        isActive: true,
+        status: "CONNECTED",
       },
     });
 
@@ -107,64 +110,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const results = [];
-    const errors = [];
+    // Get unique platforms from selected accounts
+    const platforms = [...new Set(accounts.map((a) => a.platform))];
 
-    // Publish to each account
-    for (const account of accounts) {
-      try {
-        if (validated.postNow) {
-          // Publish immediately
-          const result = await SocialPublisher.publish(account.id, {
-            text: validated.content,
-            imageUrl: validated.imageUrl,
-          });
-          results.push({
-            accountId: account.id,
-            platform: account.platform,
-            success: result.success,
-            postId: result.platformPostId,
-          });
-        } else if (validated.scheduleDate) {
-          // Schedule for later via PublishingSchedule
-          const schedule = await prisma.publishingSchedule.create({
-            data: {
-              brandId: brand.id,
-              platform: account.platform,
-              contentVariationId: validated.contentItemId,
-              scheduledAt: new Date(validated.scheduleDate),
-              status: "PENDING",
-            },
-          });
-          results.push({
-            accountId: account.id,
-            platform: account.platform,
-            success: true,
-            scheduleId: schedule.id,
-          });
-        } else {
-          // Save as draft
-          results.push({
-            accountId: account.id,
-            platform: account.platform,
-            success: true,
-            status: "draft",
-          });
-        }
-      } catch (err) {
-        errors.push({
-          accountId: account.id,
-          platform: account.platform,
-          error: err instanceof Error ? err.message : "Unknown error",
+    try {
+      // Create ContentItem for the post
+      const contentItem = await prisma.contentItem.create({
+        data: {
+          brandId: brand.id,
+          content: validated.content,
+          contentType: "POST",
+          mediaUrls: validated.imageUrl ? [validated.imageUrl] : [],
+          targetPlatforms: platforms,
+          status: validated.postNow ? "PENDING" : validated.scheduleDate ? "SCHEDULED" : "DRAFT",
+          scheduledFor: validated.scheduleDate ? new Date(validated.scheduleDate) : null,
+        },
+      });
+
+      if (validated.postNow) {
+        // Publish immediately using SocialPublisher instance
+        const publisher = new SocialPublisher(brand.id);
+        const publishResults = await publisher.publish(contentItem.id, platforms);
+
+        const successCount = publishResults.filter((r) => r.result.success).length;
+        const failedCount = publishResults.filter((r) => !r.result.success).length;
+
+        return NextResponse.json({
+          success: failedCount === 0,
+          contentItemId: contentItem.id,
+          results: publishResults.map((r) => ({
+            platform: r.platform,
+            success: r.result.success,
+            postId: r.result.postId,
+            postUrl: r.result.postUrl,
+            error: r.result.error,
+          })),
+          summary: { published: successCount, failed: failedCount },
+        });
+      } else if (validated.scheduleDate) {
+        // Content is already scheduled via ContentItem
+        return NextResponse.json({
+          success: true,
+          contentItemId: contentItem.id,
+          status: "scheduled",
+          scheduledFor: validated.scheduleDate,
+          platforms,
+        });
+      } else {
+        // Saved as draft
+        return NextResponse.json({
+          success: true,
+          contentItemId: contentItem.id,
+          status: "draft",
+          platforms,
         });
       }
+    } catch (err) {
+      console.error("Error creating/publishing post:", err);
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Failed to create post" },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({
-      success: errors.length === 0,
-      results,
-      errors: errors.length > 0 ? errors : undefined,
-    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid request", details: error.errors }, { status: 400 });

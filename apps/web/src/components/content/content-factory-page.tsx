@@ -46,6 +46,7 @@ import {
   Zap,
 } from "lucide-react";
 import { getPlatformIcon, getPlatformColor, getPlatformName } from "@/lib/utils/platform";
+import { ContentEmptyState } from "./content-empty-state";
 
 interface SocialAccount {
   id: string;
@@ -354,28 +355,13 @@ export function ContentFactoryPage({
               <Spinner size="lg" />
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center py-12">
-              <Sparkles className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No content yet</h3>
-              <p className="text-gray-500 mb-6">
-                Generate AI content to start building your queue.
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button
-                  variant="flat"
-                  startContent={<Zap className="w-4 h-4" />}
-                  onPress={handleQuickGenerate}
-                  isDisabled={generating}
-                >
-                  Quick Generate 3 Posts
-                </Button>
-                <Link href="/dashboard/content/generate">
-                  <Button color="primary" startContent={<Plus className="w-4 h-4" />}>
-                    Custom Generate
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            <ContentEmptyState
+              onQuickGenerate={handleQuickGenerate}
+              generating={generating}
+              brandId={brandId}
+              brandName={brandName}
+              hasConnectedAccounts={connectedAccounts.length > 0}
+            />
           ) : (
             <div className="space-y-4">
               {items.map((item) => (

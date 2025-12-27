@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, CardHeader, Divider } from "@heroui/react";
+import { useState } from "react";
+import { Card, CardBody, CardHeader, Divider, Button } from "@heroui/react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { BrandsList } from "./brands-list";
 
@@ -39,6 +41,39 @@ export function SettingsContent({
   subscription,
   userEmail,
 }: SettingsContentProps) {
+  const [resettingOnboarding, setResettingOnboarding] = useState(false);
+  const [resetMessage, setResetMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleResetOnboarding = async () => {
+    if (!confirm("Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.")) {
+      return;
+    }
+
+    setResettingOnboarding(true);
+    setResetMessage(null);
+
+    try {
+      const response = await fetch("/api/onboarding/reset", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        setResetMessage({ type: "success", text: "Onboarding reset! Redirecting to onboarding..." });
+        // Redirect to onboarding after a short delay
+        setTimeout(() => {
+          window.location.href = "/onboarding";
+        }, 1500);
+      } else {
+        const error = await response.json();
+        setResetMessage({ type: "error", text: error.error || "Failed to reset onboarding" });
+      }
+    } catch {
+      setResetMessage({ type: "error", text: "Failed to reset onboarding" });
+    } finally {
+      setResettingOnboarding(false);
+    }
+  };
+
   const isTrialing = subscription?.status === "trialing";
   const trialDaysLeft = subscription?.trialEnd
     ? Math.max(
@@ -127,13 +162,49 @@ export function SettingsContent({
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Member since
               </p>
-              <p className="font-medium text-gray-900 dark:text-white">
+              <p className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
                 {new Date(organization.createdAt).toLocaleDateString("en-US", {
                   month: "long",
                   day: "numeric",
                   year: "numeric",
                 })}
               </p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Developer Tools */}
+      <Card className="border-warning-200 dark:border-warning-800">
+        <CardHeader className="pb-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-warning" />
+            <h2 className="text-lg font-semibold">Developer Tools</h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Reset your onboarding to test the setup flow again. This will show
+                the onboarding wizard on your next page load.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  color="warning"
+                  variant="flat"
+                  startContent={<RefreshCw className={`w-4 h-4 ${resettingOnboarding ? "animate-spin" : ""}`} />}
+                  isLoading={resettingOnboarding}
+                  onPress={handleResetOnboarding}
+                >
+                  Reset Onboarding
+                </Button>
+                {resetMessage && (
+                  <span className={`text-sm ${resetMessage.type === "success" ? "text-success" : "text-danger"}`}>
+                    {resetMessage.text}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </CardBody>

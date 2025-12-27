@@ -359,3 +359,10 @@ Key variables:
 
 - **GitHub:** github.com/epicdm/epic-ai
 - **Production:** https://leads.epic.dm
+
+## Active Technologies
+- TypeScript 5.x (Node.js 20+) + BullMQ 5.7.0 (already installed), Prisma ORM, ioredis (001-background-workers)
+- PostgreSQL (Render) + Redis (Upstash) for queue backend (001-background-workers)
+
+## Recent Changes
+- 001-background-workers: Added TypeScript 5.x (Node.js 20+) + BullMQ 5.7.0 (already installed), Prisma ORM, ioredis

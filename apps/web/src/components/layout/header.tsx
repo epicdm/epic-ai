@@ -72,14 +72,16 @@ export function Header({ organizationName }: HeaderProps) {
           )}
 
           {/* User */}
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: "w-8 h-8",
-              },
-            }}
-          />
+          <div suppressHydrationWarning>
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                },
+              }}
+            />
+          </div>
         </div>
       </div>
     </header>

@@ -1,6 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getUserOrganization } from "@/lib/sync-user";
+import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { ContentGeneratePage } from "@/components/content/content-generate-page";
 
@@ -9,13 +8,13 @@ export const metadata = {
 };
 
 export default async function Page() {
-  const { userId } = await auth();
+  const { userId } = await getAuthWithBypass();
 
   if (!userId) {
     redirect("/sign-in");
   }
 
-  const organization = await getUserOrganization();
+  const organization = await getCurrentOrganization();
   if (!organization) {
     redirect("/onboarding");
   }

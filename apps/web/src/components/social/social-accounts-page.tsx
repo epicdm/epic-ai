@@ -86,6 +86,8 @@ export function SocialAccountsPage() {
   const [data, setData] = useState<AccountsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [mockMode, setMockMode] = useState(false);
+  const [creatingMock, setCreatingMock] = useState(false);
   const [toast, setToast] = useState<{
     type: "success" | "error";
     message: string;
@@ -113,7 +115,39 @@ export function SocialAccountsPage() {
 
   useEffect(() => {
     fetchAccounts();
+    checkMockMode();
   }, []);
+
+  async function checkMockMode() {
+    try {
+      const response = await fetch("/api/social/mock");
+      if (response.ok) {
+        const result = await response.json();
+        setMockMode(result.mockMode === true);
+      }
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  async function createMockAccounts() {
+    setCreatingMock(true);
+    try {
+      const response = await fetch("/api/social/mock", { method: "POST" });
+      if (response.ok) {
+        const result = await response.json();
+        setToast({ type: "success", message: result.message });
+        fetchAccounts();
+      } else {
+        const error = await response.json();
+        setToast({ type: "error", message: error.error || "Failed to create mock accounts" });
+      }
+    } catch {
+      setToast({ type: "error", message: "Failed to create mock accounts" });
+    } finally {
+      setCreatingMock(false);
+    }
+  }
 
   async function fetchAccounts() {
     try {
@@ -197,6 +231,34 @@ export function SocialAccountsPage() {
           >
             ×
           </button>
+        </div>
+      )}
+
+      {/* Mock Mode Banner */}
+      {mockMode && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🧪</span>
+              <div>
+                <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                  Mock Mode Enabled
+                </h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  Social publishing will be simulated. No real posts will be made.
+                </p>
+              </div>
+            </div>
+            <Button
+              color="warning"
+              variant="flat"
+              onPress={createMockAccounts}
+              isLoading={creatingMock}
+              startContent={!creatingMock && <Plus className="w-4 h-4" />}
+            >
+              Create Mock Accounts
+            </Button>
+          </div>
         </div>
       )}
 

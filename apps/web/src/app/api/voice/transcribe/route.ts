@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { transcribeAudio, transcribeBase64, isSupportedFormat, SUPPORTED_LANGUAGES } from "@/lib/voice/stt";
 
@@ -8,7 +8,7 @@ import { transcribeAudio, transcribeBase64, isSupportedFormat, SUPPORTED_LANGUAG
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

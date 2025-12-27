@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
@@ -15,7 +15,7 @@ import { getUserOrganization } from "@/lib/sync-user";
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -45,10 +45,10 @@ export async function GET() {
       select: {
         id: true,
         platform: true,
-        platformUsername: true,
+        username: true,
         displayName: true,
-        isActive: true,
-        tokenExpiresAt: true,
+        status: true,
+        tokenExpires: true,
       },
     });
 
@@ -75,7 +75,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -94,10 +94,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (!brand) {
+      // Generate a slug from brand/org name
+      const baseName = brandName || org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
       brand = await prisma.brand.create({
         data: {
           organizationId: org.id,
-          name: brandName || org.name || "My Brand",
+          name: baseName,
+          slug,
         },
       });
     }
@@ -118,7 +126,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

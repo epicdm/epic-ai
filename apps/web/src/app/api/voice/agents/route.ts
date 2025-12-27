@@ -3,45 +3,73 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
-import { getUserOrganization } from "@/lib/sync-user";
+import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
+import { generateDemoVoiceAgent } from "@/lib/demo/sample-data";
 
 // GET all agents for the organization
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    // Check if user is in demo mode
+    const progress = await prisma.userOnboardingProgress.findUnique({
+      where: { userId },
+      select: { isDemoMode: true },
+    });
+
+    if (progress?.isDemoMode) {
+      const demoAgent = generateDemoVoiceAgent("Demo Company");
+      return NextResponse.json({
+        agents: [demoAgent],
+        isDemo: true,
+      });
+    }
+
+    const org = await getCurrentOrganization();
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // Get brand IDs for this org
-    const brands = await prisma.brand.findMany({
-      where: { organizationId: org.id },
-      select: { id: true },
-    });
-    const brandIds = brands.map((b) => b.id);
-
+    // Query agents directly by organizationId with all required relations
     const agents = await prisma.voiceAgent.findMany({
       where: {
-        brandId: { in: brandIds },
+        organizationId: org.id,
+      },
+      include: {
+        phoneMappings: {
+          select: { id: true, phoneNumber: true },
+        },
+        _count: {
+          select: { callLogs: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // Transform to include brand info
+    // Transform to match frontend expectations
     const agentsWithBrand = await Promise.all(
       agents.map(async (agent) => {
-        const brand = await prisma.brand.findUnique({
-          where: { id: agent.brandId },
-          select: { id: true, name: true },
-        });
-        return { ...agent, brand };
+        const brand = agent.brandId
+          ? await prisma.brand.findUnique({
+              where: { id: agent.brandId },
+              select: { id: true, name: true },
+            })
+          : null;
+
+        return {
+          ...agent,
+          brand: brand || { id: "", name: "No Brand" },
+          phoneNumbers: agent.phoneMappings.map((pm) => ({
+            id: pm.id,
+            number: pm.phoneNumber,
+          })),
+          isDeployed: agent.status === "deployed",
+          _count: { calls: agent._count.callLogs },
+        };
       })
     );
 
@@ -58,12 +86,12 @@ export async function GET() {
 // POST create new agent
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    const org = await getCurrentOrganization();
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
@@ -86,6 +114,7 @@ export async function POST(request: NextRequest) {
     const agent = await prisma.voiceAgent.create({
       data: {
         name,
+        organizationId: org.id,
         brandId,
         systemPrompt: systemPrompt || "You are a helpful AI assistant.",
         voiceId,

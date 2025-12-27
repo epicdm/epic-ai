@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { z } from "zod";
 
-export async function POST(_request: NextRequest) {
+const completeSchema = z.object({
+  goal: z.enum(["content", "voice", "campaigns", "explore"]).optional(),
+  isDemoMode: z.boolean().optional(),
+});
+
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
 
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
+    }
+
+    // Parse request body
+    let goal: string | undefined;
+    let isDemoMode = false;
+
+    try {
+      const body = await request.json();
+      const validated = completeSchema.parse(body);
+      goal = validated.goal;
+      isDemoMode = validated.isDemoMode || false;
+    } catch {
+      // Body is optional for backwards compatibility
     }
 
     // Verify user has at least one organization
@@ -31,6 +50,28 @@ export async function POST(_request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Update or create onboarding progress
+    await prisma.userOnboardingProgress.upsert({
+      where: { userId },
+      create: {
+        userId,
+        hasSeenWelcome: true,
+        hasChosenGoal: goal,
+        hasCreatedBrand: membership.organization.brands.length > 0,
+        hasSeenDashboardTour: true,
+        isDemoMode,
+        completionPercentage: 100,
+        onboardingCompletedAt: new Date(),
+        lastActiveAt: new Date(),
+      },
+      update: {
+        hasSeenDashboardTour: true,
+        completionPercentage: 100,
+        onboardingCompletedAt: new Date(),
+        lastActiveAt: new Date(),
+      },
+    });
 
     // Optional: Create a default subscription record
     const existingSubscription = await prisma.subscription.findFirst({

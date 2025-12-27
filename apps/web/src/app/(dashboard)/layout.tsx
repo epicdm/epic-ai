@@ -3,12 +3,29 @@ import { redirect } from "next/navigation";
 import { syncUser } from "@/lib/sync-user";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
+// Development UAT bypass - allows testing without auth in development mode
+const isUATBypassEnabled =
+  process.env.NODE_ENV === "development" &&
+  process.env.UAT_AUTH_BYPASS === "true";
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { userId } = await auth();
+
+  // In UAT bypass mode, skip auth check and use mock values
+  if (isUATBypassEnabled && !userId) {
+    return (
+      <DashboardShell
+        organizationName="UAT Test Organization"
+        userName="UAT Tester"
+      >
+        {children}
+      </DashboardShell>
+    );
+  }
 
   if (!userId) {
     redirect("/sign-in");

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getAuthWithBypass } from '@/lib/auth';
 import { prisma } from '@epic-ai/database';
 import { ContentGenerator } from '@/lib/services/content-factory/generator';
 import { ContentQueueManager } from '@/lib/services/content-factory/queue-manager';
@@ -26,7 +26,7 @@ const batchGenerateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -57,15 +57,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
     }
 
-    if (!brand.brandBrain) {
-      return NextResponse.json(
-        { error: 'Brand profile not initialized. Please set up your brand first.' },
-        { status: 400 }
-      );
+    // Auto-initialize BrandBrain with sensible defaults if it doesn't exist
+    // This reduces friction for new users - they can start generating content immediately
+    let brandBrain = brand.brandBrain;
+    if (!brandBrain) {
+      brandBrain = await prisma.brandBrain.create({
+        data: {
+          brandId: brand.id,
+          companyName: brand.name,
+          industry: brand.industry || 'technology',
+          voiceTone: 'PROFESSIONAL',
+          formalityLevel: 3,
+          useEmojis: true,
+          emojiFrequency: 'MODERATE',
+          useHashtags: true,
+          hashtagStyle: 'MIXED',
+          setupStep: 1,
+          setupComplete: false,
+        },
+      });
+      console.log(`Auto-initialized BrandBrain for brand ${brand.id}`);
     }
 
     // Get content pillars for category rotation (use legacy field or fetch from pillars relation)
-    const contentPillars = brand.brandBrain.contentPillarsLegacy as string[] | undefined;
+    const contentPillars = (brandBrain as { contentPillarsLegacy?: string[] }).contentPillarsLegacy;
     const categories = validated.categories || contentPillars || ['general'];
 
     const generator = new ContentGenerator(validated.brandId);

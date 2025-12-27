@@ -17,6 +17,7 @@ export const brandSchema = z.object({
     .url("Please enter a valid URL")
     .optional()
     .or(z.literal("")),
+  industry: z.string().optional(),
 });
 
 export type OrganizationFormData = z.infer<typeof organizationSchema>;

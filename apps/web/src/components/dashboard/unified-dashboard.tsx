@@ -43,6 +43,7 @@ import {
   Zap,
   Activity,
 } from "lucide-react";
+import { FlywheelSetupGuide } from "./flywheel-setup-guide";
 
 interface DashboardData {
   brandBrain: {
@@ -255,69 +256,29 @@ export function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* Getting Started - Show prominently for new users */}
+      {/* Flywheel Setup Guide - Show prominently for new users */}
       {onboarding && !onboarding.isComplete && (
-        <Card className="border-2 border-primary/50 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <CardBody className="p-6">
-            <div className="flex items-start gap-6">
-              <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary items-center justify-center flex-shrink-0">
-                <Zap className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold mb-1">Let's get you started! 🚀</h2>
-                <p className="text-default-500 mb-4">
-                  Complete these {onboarding.total - onboarding.completed} steps to unlock AI-powered content creation
-                </p>
-                
-                <div className="space-y-3">
-                  {onboarding.steps.map((step, index) => (
-                    <div
-                      key={step.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                        step.done 
-                          ? 'bg-success/10 border border-success/20' 
-                          : 'bg-default-100 hover:bg-default-200 cursor-pointer'
-                      }`}
-                      onClick={() => !step.done && router.push(step.href)}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        step.done ? 'bg-success text-white' : 'bg-default-300 text-default-600'
-                      }`}>
-                        {step.done ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : (
-                          <span className="text-sm font-bold">{index + 1}</span>
-                        )}
-                      </div>
-                      <span className={`flex-1 font-medium ${step.done ? 'text-success line-through' : ''}`}>
-                        {step.label}
-                      </span>
-                      {!step.done && (
-                        <Button 
-                          size="sm" 
-                          color="primary"
-                          onPress={() => router.push(step.href)}
-                        >
-                          Start
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+        <FlywheelSetupGuide
+          dashboardData={{
+            brandBrain: data.brandBrain,
+            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
+            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
+            publishing: { autoEnabled: data.flywheel?.status === "optimal" },
+          }}
+        />
+      )}
 
-                <Progress 
-                  value={(onboarding.completed / onboarding.total) * 100} 
-                  className="mt-4"
-                  color="primary"
-                  size="sm"
-                />
-                <p className="text-xs text-default-400 mt-2">
-                  {onboarding.completed} of {onboarding.total} complete
-                </p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+      {/* Compact flywheel guide for returning users who haven't finished setup */}
+      {onboarding && onboarding.isComplete && data.flywheel?.status === "inactive" && (
+        <FlywheelSetupGuide
+          dashboardData={{
+            brandBrain: data.brandBrain,
+            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
+            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
+            publishing: { autoEnabled: false },
+          }}
+          compact
+        />
       )}
 
       {/* Flywheel Status */}
