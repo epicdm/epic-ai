@@ -187,16 +187,13 @@ workers:
         scope: RUN_TIME
         value: "3001"
 
-# ===========================================
-# JOBS (Scheduled tasks)
-# ===========================================
-
-jobs:
+  # Scheduler worker for cron-based job scheduling
+  # Runs continuously alongside the main worker
   - name: content-scheduler
-    kind: PRE_DEPLOY
     github:
       repo: epicdm/epic-ai
       branch: staging
+      deploy_on_push: true
     # NO source_dir - build from monorepo root for workspace dependencies
     build_command: |
       corepack enable
@@ -214,6 +211,17 @@ jobs:
       - key: REDIS_URL
         scope: RUN_TIME
         type: SECRET
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+
+# ===========================================
+# JOBS (Scheduled tasks)
+# ===========================================
+
+# NOTE: content-scheduler is now a worker (see workers section)
+# PRE_DEPLOY jobs must complete and exit. The scheduler runs continuously
+# with cron tasks, so it belongs in the workers section.
 
 # ===========================================
 # DATABASES
