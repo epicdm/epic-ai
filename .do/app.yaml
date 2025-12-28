@@ -150,14 +150,20 @@ services:
 workers:
   # Background worker for content generation, scraping, etc.
   # T050: Health check available on internal port 3001 (/health)
+  # NOTE: Builds from monorepo root to resolve @epic-ai/database workspace dependency
   - name: content-worker
     github:
       repo: epicdm/epic-ai
-      branch: main
+      branch: staging
       deploy_on_push: true
-    source_dir: apps/workers
-    build_command: pnpm install && pnpm build
-    run_command: pnpm start
+    # NO source_dir - build from monorepo root for workspace dependencies
+    build_command: |
+      corepack enable
+      corepack prepare pnpm@9.0.0 --activate
+      pnpm install --frozen-lockfile
+      cd packages/database && pnpm build && cd ../..
+      cd apps/workers && pnpm build
+    run_command: node apps/workers/dist/index.js
     instance_count: 1
     instance_size_slug: basic-xxs
     envs:
@@ -190,10 +196,15 @@ jobs:
     kind: PRE_DEPLOY
     github:
       repo: epicdm/epic-ai
-      branch: main
-    source_dir: apps/workers
-    build_command: pnpm install && pnpm build
-    run_command: pnpm run schedule
+      branch: staging
+    # NO source_dir - build from monorepo root for workspace dependencies
+    build_command: |
+      corepack enable
+      corepack prepare pnpm@9.0.0 --activate
+      pnpm install --frozen-lockfile
+      cd packages/database && pnpm build && cd ../..
+      cd apps/workers && pnpm build
+    run_command: node apps/workers/dist/scheduler.js
     instance_count: 1
     instance_size_slug: basic-xxs
     envs:
