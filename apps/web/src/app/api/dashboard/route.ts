@@ -201,6 +201,11 @@ export async function GET(request: NextRequest) {
     const costPerLead = adLeads > 0 ? adSpend / adLeads : 0;
 
     return NextResponse.json({
+      // Brand info (for child components that need brandId)
+      brand: {
+        id: brand?.id || null,
+      },
+
       // Brand Brain status
       brandBrain: {
         isSetup: !!brandBrain?.companyName,

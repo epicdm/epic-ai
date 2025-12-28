@@ -33,102 +33,148 @@ interface NavItem {
   children?: { name: string; href: string }[];
 }
 
-const navigation: NavItem[] = [
+interface NavSection {
+  title: string;
+  subtitle: string;
+  items: NavItem[];
+}
+
+// Organized by Flywheel stages: Understand → Create → Distribute → Learn → Automate
+const navigationSections: NavSection[] = [
   {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Brand Brain",
-    href: "/dashboard/brand",
-    icon: Brain,
-    children: [
-      { name: "Overview", href: "/dashboard/brand" },
-      { name: "Voice & Style", href: "/dashboard/brand/voice" },
-      { name: "Strategy", href: "/dashboard/brand/strategy" },
+    title: "",
+    subtitle: "",
+    items: [
+      {
+        name: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+      },
     ],
   },
   {
-    name: "Context Engine",
-    href: "/dashboard/context",
-    icon: Database,
-    children: [
-      { name: "Sources", href: "/dashboard/context" },
-      { name: "Documents", href: "/dashboard/context?tab=documents" },
-      { name: "Search", href: "/dashboard/context?tab=search" },
+    title: "Understand",
+    subtitle: "Your brand identity",
+    items: [
+      {
+        name: "Brand Brain",
+        href: "/dashboard/brand",
+        icon: Brain,
+        children: [
+          { name: "Overview", href: "/dashboard/brand" },
+          { name: "Voice & Style", href: "/dashboard/brand/voice" },
+          { name: "Strategy", href: "/dashboard/brand/strategy" },
+        ],
+      },
+      {
+        name: "Context Engine",
+        href: "/dashboard/context",
+        icon: Database,
+        children: [
+          { name: "Sources", href: "/dashboard/context" },
+          { name: "Documents", href: "/dashboard/context?tab=documents" },
+          { name: "Search", href: "/dashboard/context?tab=search" },
+        ],
+      },
     ],
   },
   {
-    name: "Content",
-    href: "/dashboard/content",
-    icon: FileText,
-    children: [
-      { name: "Queue", href: "/dashboard/content" },
-      { name: "Approval Queue", href: "/dashboard/content/approval" },
-      { name: "Generate", href: "/dashboard/content/generate" },
-      { name: "Published", href: "/dashboard/content/published" },
+    title: "Create",
+    subtitle: "Content factory",
+    items: [
+      {
+        name: "Content",
+        href: "/dashboard/content",
+        icon: FileText,
+        children: [
+          { name: "Queue", href: "/dashboard/content" },
+          { name: "Approval Queue", href: "/dashboard/content/approval" },
+          { name: "Generate", href: "/dashboard/content/generate" },
+          { name: "Published", href: "/dashboard/content/published" },
+        ],
+      },
+      {
+        name: "Calendar",
+        href: "/dashboard/calendar",
+        icon: Calendar,
+      },
     ],
   },
   {
-    name: "Calendar",
-    href: "/dashboard/calendar",
-    icon: Calendar,
-  },
-  {
-    name: "Social Accounts",
-    href: "/dashboard/social",
-    icon: Share2,
-    children: [
-      { name: "Overview", href: "/dashboard/social" },
-      { name: "AI Suggestions", href: "/dashboard/social/suggestions" },
-      { name: "Autopilot Settings", href: "/dashboard/social/settings" },
-      { name: "Create Post", href: "/dashboard/social/create" },
-      { name: "Accounts", href: "/dashboard/social/accounts" },
+    title: "Distribute",
+    subtitle: "Reach your audience",
+    items: [
+      {
+        name: "Social Accounts",
+        href: "/dashboard/social",
+        icon: Share2,
+        children: [
+          { name: "Overview", href: "/dashboard/social" },
+          { name: "AI Suggestions", href: "/dashboard/social/suggestions" },
+          { name: "Autopilot Settings", href: "/dashboard/social/settings" },
+          { name: "Create Post", href: "/dashboard/social/create" },
+          { name: "Accounts", href: "/dashboard/social/accounts" },
+        ],
+      },
+      {
+        name: "Voice AI",
+        href: "/dashboard/voice",
+        icon: Phone,
+        children: [
+          { name: "Agents", href: "/dashboard/voice" },
+          { name: "Calls", href: "/dashboard/voice/calls" },
+          { name: "Phone Numbers", href: "/dashboard/voice/numbers" },
+        ],
+      },
+      {
+        name: "Ads",
+        href: "/dashboard/ads",
+        icon: Megaphone,
+        children: [
+          { name: "Dashboard", href: "/dashboard/ads" },
+          { name: "Create Campaign", href: "/dashboard/ads/create" },
+          { name: "Ad Accounts", href: "/dashboard/ads/accounts" },
+        ],
+      },
     ],
   },
   {
-    name: "Voice AI",
-    href: "/dashboard/voice",
-    icon: Phone,
-    children: [
-      { name: "Agents", href: "/dashboard/voice" },
-      { name: "Calls", href: "/dashboard/voice/calls" },
-      { name: "Phone Numbers", href: "/dashboard/voice/numbers" },
+    title: "Learn",
+    subtitle: "Measure & improve",
+    items: [
+      {
+        name: "Analytics",
+        href: "/dashboard/analytics",
+        icon: BarChart3,
+      },
+      {
+        name: "Leads",
+        href: "/dashboard/leads",
+        icon: Users,
+      },
     ],
   },
   {
-    name: "Leads",
-    href: "/dashboard/leads",
-    icon: Users,
-  },
-  {
-    name: "Ads",
-    href: "/dashboard/ads",
-    icon: Megaphone,
-    children: [
-      { name: "Dashboard", href: "/dashboard/ads" },
-      { name: "Create Campaign", href: "/dashboard/ads/create" },
-      { name: "Ad Accounts", href: "/dashboard/ads/accounts" },
+    title: "Automate",
+    subtitle: "Set it & forget it",
+    items: [
+      {
+        name: "Automations",
+        href: "/dashboard/automations",
+        icon: Zap,
+      },
+      {
+        name: "Integration Tests",
+        href: "/dashboard/test",
+        icon: FlaskConical,
+        badge: "Dev",
+      },
     ],
-  },
-  {
-    name: "Automations",
-    href: "/dashboard/automations",
-    icon: Zap,
-  },
-  {
-    name: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
-    name: "Integration Tests",
-    href: "/dashboard/test",
-    icon: FlaskConical,
-    badge: "Dev",
   },
 ];
+
+// Flatten for auto-expand logic
+const allNavItems = navigationSections.flatMap((section) => section.items);
 
 const bottomNavigation: NavItem[] = [
   {
@@ -153,7 +199,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
   // Auto-expand parent when child is active
   useEffect(() => {
-    navigation.forEach((item) => {
+    allNavItems.forEach((item) => {
       if (item.children?.some((child) => pathname.startsWith(child.href))) {
         setExpandedItems((prev) =>
           prev.includes(item.href) ? prev : [...prev, item.href]
@@ -279,7 +325,30 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       {/* Navigation */}
       <div className="flex flex-col h-[calc(100vh-4rem)] py-4">
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          {navigation.map(renderNavItem)}
+          {navigationSections.map((section, sectionIndex) => (
+            <div key={section.title || sectionIndex}>
+              {/* Section Header */}
+              {section.title && !collapsed && (
+                <div className="pt-4 pb-2 first:pt-0">
+                  <div className="flex items-center gap-2 px-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      {section.title}
+                    </span>
+                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700" />
+                  </div>
+                  {section.subtitle && (
+                    <span className="px-2 text-[10px] text-gray-400 dark:text-gray-600">
+                      {section.subtitle}
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* Section Items */}
+              <div className="space-y-1">
+                {section.items.map(renderNavItem)}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Bottom Navigation */}

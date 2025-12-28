@@ -44,8 +44,12 @@ import {
   Activity,
 } from "lucide-react";
 import { FlywheelSetupGuide } from "./flywheel-setup-guide";
+import { LearningLoopCard } from "./learning-loop-card";
 
 interface DashboardData {
+  brand: {
+    id: string | null;
+  };
   brandBrain: {
     isSetup: boolean;
     companyName: string | null;
@@ -358,6 +362,11 @@ export function UnifiedDashboard() {
           </div>
         </CardBody>
       </Card>
+
+      {/* Learning Loop - Show for users with active flywheel */}
+      {onboarding?.isComplete && data.brand.id && (
+        <LearningLoopCard brandId={data.brand.id} compact />
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

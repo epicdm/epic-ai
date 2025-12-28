@@ -33,7 +33,7 @@ import {
 
 interface FlywheelSetupGuideProps {
   dashboardData?: {
-    brandBrain?: { isSetup: boolean };
+    brandBrain?: { isSetup: boolean; learningCount?: number };
     accounts?: { connected: number; total: number };
     content?: { total: number; published: number };
     publishing?: { autoEnabled: boolean };
@@ -66,6 +66,7 @@ export function FlywheelSetupGuide({
     contentCreated: (dashboardData?.content?.total ?? 0) > 0,
     contentPublished: (dashboardData?.content?.published ?? 0) > 0,
     autoPublishing: dashboardData?.publishing?.autoEnabled ?? false,
+    hasLearnings: (dashboardData?.brandBrain?.learningCount ?? 0) > 0,
   });
 
   const [loading, setLoading] = useState(!dashboardData);
@@ -78,6 +79,7 @@ export function FlywheelSetupGuide({
         contentCreated: (dashboardData.content?.total ?? 0) > 0,
         contentPublished: (dashboardData.content?.published ?? 0) > 0,
         autoPublishing: dashboardData.publishing?.autoEnabled ?? false,
+        hasLearnings: (dashboardData.brandBrain?.learningCount ?? 0) > 0,
       });
       setLoading(false);
     }
@@ -96,6 +98,7 @@ export function FlywheelSetupGuide({
               contentCreated: (data.content?.total ?? 0) > 0,
               contentPublished: (data.content?.published ?? 0) > 0,
               autoPublishing: data.publishing?.autoEnabled ?? false,
+              hasLearnings: (data.brandBrain?.learningCount ?? 0) > 0,
             });
           }
         } catch (error) {
@@ -192,6 +195,23 @@ export function FlywheelSetupGuide({
         "Start with 'Auto-approve similar content' for safety",
         "Set posting frequency per platform",
         "Enable notifications for published content",
+      ],
+    },
+    {
+      id: "learn",
+      number: 6,
+      title: "Watch AI Learn",
+      description: "See the flywheel in action",
+      detailedDescription:
+        "As your content performs, the AI analyzes engagement patterns and automatically improves your Brand Brain. Best posting times, trending topics, and audience preferences feed back into future content.",
+      href: "/dashboard/brand",
+      action: "View Learnings",
+      icon: <BarChart3 className="w-5 h-5" />,
+      done: status.hasLearnings,
+      tips: [
+        "AI discovers best posting times from your data",
+        "Topic performance feeds back into content suggestions",
+        "The more you post, the smarter your AI gets",
       ],
     },
   ];
