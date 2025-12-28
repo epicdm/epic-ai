@@ -154,7 +154,7 @@ workers:
   - name: content-worker
     github:
       repo: epicdm/epic-ai
-      branch: main
+      branch: staging
       deploy_on_push: true
     # NO source_dir - build from monorepo root for workspace dependencies
     build_command: |
@@ -196,7 +196,7 @@ jobs:
     kind: PRE_DEPLOY
     github:
       repo: epicdm/epic-ai
-      branch: main
+      branch: staging
     # NO source_dir - build from monorepo root for workspace dependencies
     build_command: |
       corepack enable
