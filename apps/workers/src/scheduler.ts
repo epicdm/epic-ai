@@ -801,8 +801,10 @@ async function main(): Promise<void> {
   logger.info(COMPONENT, 'Starting Epic AI Job Scheduler...');
 
   try {
-    // Connect to Redis
-    await redis.connect();
+    // Connect to Redis (only if not already connecting/connected)
+    if (redis.status === 'wait') {
+      await redis.connect();
+    }
     logger.info(COMPONENT, 'Connected to Redis');
 
     // Register default schedules

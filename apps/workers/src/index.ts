@@ -430,8 +430,11 @@ async function main(): Promise<void> {
   logger.info(COMPONENT, 'Starting Epic AI Background Worker...');
 
   try {
-    // Connect to Redis
-    await redis.connect();
+    // Connect to Redis (only if not already connecting/connected)
+    // With lazyConnect: true, this ensures connection is established before workers start
+    if (redis.status === 'wait') {
+      await redis.connect();
+    }
     logger.info(COMPONENT, 'Connected to Redis');
 
     // T049: Recover stalled jobs from previous worker crash
