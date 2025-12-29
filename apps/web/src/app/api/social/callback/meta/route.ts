@@ -9,27 +9,35 @@ import { SocialPublisher, MetaClient } from '@/lib/services/social-publishing';
 import { safeEncryptToken } from '@/lib/encryption';
 
 const TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
-const REDIRECT_URI = `${BASE_URL}/api/social/callback/meta`;
+
+function getBaseUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
+
+function getRedirectUri(request: NextRequest): string {
+  return `${getBaseUrl(request)}/api/social/callback/meta`;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
+  const baseUrl = getBaseUrl(request);
 
   // Check for OAuth errors
   if (error) {
     const errorDescription = searchParams.get('error_description');
     console.error('Meta OAuth error:', error, errorDescription);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
+      `${baseUrl}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=missing_params`
+      `${baseUrl}/dashboard/social/accounts?error=missing_params`
     );
   }
 
@@ -43,7 +51,7 @@ export async function GET(request: NextRequest) {
       await prisma.oAuthState.delete({ where: { id: oauthState.id } });
     }
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=invalid_state`
+      `${baseUrl}/dashboard/social/accounts?error=invalid_state`
     );
   }
 
@@ -72,7 +80,7 @@ export async function GET(request: NextRequest) {
         new URLSearchParams({
           client_id: process.env.META_APP_ID || '',
           client_secret: process.env.META_APP_SECRET || '',
-          redirect_uri: REDIRECT_URI,
+          redirect_uri: getRedirectUri(request),
           code,
         })
     );
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.json();
       console.error('Meta token exchange failed:', errorData);
       return NextResponse.redirect(
-        `${BASE_URL}/dashboard/social/accounts?error=token_exchange_failed`
+        `${baseUrl}/dashboard/social/accounts?error=token_exchange_failed`
       );
     }
 
@@ -93,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     if (pages.length === 0) {
       return NextResponse.redirect(
-        `${BASE_URL}/dashboard/social/accounts?error=no_pages_found`
+        `${baseUrl}/dashboard/social/accounts?error=no_pages_found`
       );
     }
 
@@ -294,7 +302,7 @@ export async function GET(request: NextRequest) {
 
     // Standard redirect
     const response = NextResponse.redirect(
-      `${BASE_URL}${returnUrl}?success=meta`
+      `${baseUrl}${returnUrl}?success=meta`
     );
     response.cookies.delete('meta_oauth_state');
 
@@ -302,7 +310,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Meta OAuth callback error:', error);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=callback_failed`
+      `${baseUrl}/dashboard/social/accounts?error=callback_failed`
     );
   }
 }

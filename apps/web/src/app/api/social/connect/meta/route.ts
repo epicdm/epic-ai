@@ -9,7 +9,11 @@ import { prisma } from '@epic-ai/database';
 import crypto from 'crypto';
 
 const META_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
-const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/api/social/callback/meta`;
+
+function getRedirectUri(request: NextRequest): string {
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}/api/social/callback/meta`;
+}
 
 // Required scopes for posting to pages and Instagram
 // Also request business info for Brand Brain enrichment
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
 
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID || '',
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: getRedirectUri(request),
     scope: SCOPES,
     state,
     response_type: 'code',

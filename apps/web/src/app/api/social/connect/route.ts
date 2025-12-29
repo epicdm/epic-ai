@@ -8,7 +8,11 @@ import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function getBaseUrl(request: NextRequest): string {
+  // Use request origin for dynamic URL (works in all environments)
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
 
 const PLATFORM_ROUTES = {
   twitter: "/api/social/connect/twitter",
@@ -88,7 +92,7 @@ export async function GET(request: NextRequest) {
       params.set("returnUrl", returnUrl);
     }
 
-    const connectUrl = `${BASE_URL}${route}?${params.toString()}`;
+    const connectUrl = `${getBaseUrl(request)}${route}?${params.toString()}`;
 
     return NextResponse.json({
       url: connectUrl,
