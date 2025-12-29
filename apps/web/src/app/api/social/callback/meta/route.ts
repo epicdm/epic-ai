@@ -193,17 +193,12 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Update or create Brand Brain with extracted data
+        // Update or create Brand Brain with extracted data (industry only)
         if (brand.brandBrain) {
           await prisma.brandBrain.update({
             where: { id: brand.brandBrain.id },
             data: {
               industry: brand.brandBrain.industry || businessData.category,
-              // Store Facebook data as context
-              contextData: {
-                ...(brand.brandBrain.contextData as object || {}),
-                facebookPageData: businessData,
-              },
             },
           });
         } else {
@@ -211,9 +206,6 @@ export async function GET(request: NextRequest) {
             data: {
               brandId: brandId,
               industry: businessData.category,
-              contextData: {
-                facebookPageData: businessData,
-              },
             },
           });
         }
