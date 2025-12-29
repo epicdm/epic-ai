@@ -10,6 +10,7 @@ export interface CreateBrandInput {
   organizationId: string;
   name: string;
   website?: string;
+  logo?: string;
 }
 
 /**
@@ -61,7 +62,7 @@ export async function createOrganization(input: CreateOrganizationInput) {
  * Create a brand within an organization.
  */
 export async function createBrand(input: CreateBrandInput) {
-  const { organizationId, name, website } = input;
+  const { organizationId, name, website, logo } = input;
 
   // Generate slug from name
   let slug = slugify(name);
@@ -96,6 +97,7 @@ export async function createBrand(input: CreateBrandInput) {
       name,
       slug,
       website: website || null,
+      logo: logo || null,
       settings: {},
     },
   });

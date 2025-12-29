@@ -58,10 +58,10 @@ export function SettingsContent({
       });
 
       if (response.ok) {
-        setResetMessage({ type: "success", text: "Onboarding reset! Redirecting to onboarding..." });
-        // Redirect to onboarding after a short delay
+        setResetMessage({ type: "success", text: "Onboarding reset! Redirecting..." });
+        // Redirect to dashboard with force param to show onboarding
         setTimeout(() => {
-          window.location.href = "/onboarding";
+          window.location.href = "/dashboard?showOnboarding=true";
         }, 1500);
       } else {
         const error = await response.json();

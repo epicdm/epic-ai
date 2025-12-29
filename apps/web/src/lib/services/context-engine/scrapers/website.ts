@@ -14,6 +14,24 @@ interface PageContent {
   type: ScrapedContent['contentType'];
 }
 
+/**
+ * Brand metadata extracted from a website for brand setup wizard
+ */
+export interface BrandMetadata {
+  companyName: string | null;
+  description: string | null;
+  logo: string | null;
+  favicon: string | null;
+  socialLinks: {
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+  };
+  colors: string[];
+  keywords: string[];
+}
+
 export class WebsiteScraper {
   private config: WebsiteScraperConfig;
   private visitedUrls: Set<string> = new Set();
@@ -216,5 +234,220 @@ export class WebsiteScraper {
     } catch {
       return [];
     }
+  }
+
+  /**
+   * Extract brand metadata from a website (used for brand setup wizard)
+   */
+  async extractBrandMetadata(): Promise<BrandMetadata> {
+    try {
+      const response = await fetch(this.config.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; EpicAI/1.0; +https://epic.dm)',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const html = await response.text();
+      const baseUrl = new URL(this.config.url);
+
+      return {
+        companyName: this.extractCompanyName(html),
+        description: this.extractDescription(html),
+        logo: this.extractLogo(html, baseUrl.origin),
+        favicon: this.extractFavicon(html, baseUrl.origin),
+        socialLinks: this.extractSocialLinks(html),
+        colors: this.extractBrandColors(html),
+        keywords: this.extractKeywords(html),
+      };
+    } catch (error) {
+      console.error('Failed to extract brand metadata:', error);
+      return {
+        companyName: null,
+        description: null,
+        logo: null,
+        favicon: null,
+        socialLinks: {},
+        colors: [],
+        keywords: [],
+      };
+    }
+  }
+
+  /**
+   * Extract company name from og:site_name or title
+   */
+  private extractCompanyName(html: string): string | null {
+    // Try og:site_name first (most reliable for company name)
+    const ogSiteName = html.match(/<meta[^>]*property="og:site_name"[^>]*content="([^"]*)"[^>]*>/i);
+    if (ogSiteName?.[1]) return ogSiteName[1].trim();
+
+    // Try application-name
+    const appName = html.match(/<meta[^>]*name="application-name"[^>]*content="([^"]*)"[^>]*>/i);
+    if (appName?.[1]) return appName[1].trim();
+
+    // Fall back to title, but clean it up
+    const title = this.extractTitle(html);
+    if (title) {
+      // Remove common suffixes like " - Home", " | Official Site", etc.
+      return title
+        .split(/\s*[|\-–—]\s*/)[0]
+        .trim();
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract description from og:description or meta description
+   */
+  private extractDescription(html: string): string | null {
+    // Try og:description first
+    const ogDesc = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"[^>]*>/i);
+    if (ogDesc?.[1]) return ogDesc[1].trim();
+
+    // Also try the other attribute order
+    const ogDescAlt = html.match(/<meta[^>]*content="([^"]*)"[^>]*property="og:description"[^>]*>/i);
+    if (ogDescAlt?.[1]) return ogDescAlt[1].trim();
+
+    // Fall back to meta description
+    const metaDesc = html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"[^>]*>/i);
+    if (metaDesc?.[1]) return metaDesc[1].trim();
+
+    // Also try alternate order
+    const metaDescAlt = html.match(/<meta[^>]*content="([^"]*)"[^>]*name="description"[^>]*>/i);
+    if (metaDescAlt?.[1]) return metaDescAlt[1].trim();
+
+    return null;
+  }
+
+  /**
+   * Extract logo from og:image or other common locations
+   */
+  private extractLogo(html: string, origin: string): string | null {
+    // Try og:image first (often used for social sharing)
+    const ogImage = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]*)"[^>]*>/i);
+    if (ogImage?.[1]) return this.resolveUrl(ogImage[1], origin);
+
+    // Also try alternate order
+    const ogImageAlt = html.match(/<meta[^>]*content="([^"]*)"[^>]*property="og:image"[^>]*>/i);
+    if (ogImageAlt?.[1]) return this.resolveUrl(ogImageAlt[1], origin);
+
+    // Try twitter:image
+    const twitterImage = html.match(/<meta[^>]*name="twitter:image"[^>]*content="([^"]*)"[^>]*>/i);
+    if (twitterImage?.[1]) return this.resolveUrl(twitterImage[1], origin);
+
+    // Look for logo in img tags with common naming patterns
+    const logoImg = html.match(/<img[^>]*(?:class|id|alt)="[^"]*logo[^"]*"[^>]*src="([^"]*)"[^>]*>/i);
+    if (logoImg?.[1]) return this.resolveUrl(logoImg[1], origin);
+
+    // Try src first, then class/id
+    const logoImgAlt = html.match(/<img[^>]*src="([^"]*)"[^>]*(?:class|id|alt)="[^"]*logo[^"]*"[^>]*>/i);
+    if (logoImgAlt?.[1]) return this.resolveUrl(logoImgAlt[1], origin);
+
+    return null;
+  }
+
+  /**
+   * Extract favicon
+   */
+  private extractFavicon(html: string, origin: string): string | null {
+    // Try apple-touch-icon first (higher res)
+    const appleIcon = html.match(/<link[^>]*rel="apple-touch-icon"[^>]*href="([^"]*)"[^>]*>/i);
+    if (appleIcon?.[1]) return this.resolveUrl(appleIcon[1], origin);
+
+    // Try icon
+    const icon = html.match(/<link[^>]*rel="icon"[^>]*href="([^"]*)"[^>]*>/i);
+    if (icon?.[1]) return this.resolveUrl(icon[1], origin);
+
+    // Try shortcut icon
+    const shortcutIcon = html.match(/<link[^>]*rel="shortcut icon"[^>]*href="([^"]*)"[^>]*>/i);
+    if (shortcutIcon?.[1]) return this.resolveUrl(shortcutIcon[1], origin);
+
+    // Default to /favicon.ico
+    return `${origin}/favicon.ico`;
+  }
+
+  /**
+   * Extract social media links
+   */
+  private extractSocialLinks(html: string): BrandMetadata['socialLinks'] {
+    const links: BrandMetadata['socialLinks'] = {};
+
+    // Twitter/X
+    const twitter = html.match(/href="(https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[^"]+)"/i);
+    if (twitter?.[1]) links.twitter = twitter[1];
+
+    // LinkedIn
+    const linkedin = html.match(/href="(https?:\/\/(?:www\.)?linkedin\.com\/(?:company|in)\/[^"]+)"/i);
+    if (linkedin?.[1]) links.linkedin = linkedin[1];
+
+    // Facebook
+    const facebook = html.match(/href="(https?:\/\/(?:www\.)?facebook\.com\/[^"]+)"/i);
+    if (facebook?.[1]) links.facebook = facebook[1];
+
+    // Instagram
+    const instagram = html.match(/href="(https?:\/\/(?:www\.)?instagram\.com\/[^"]+)"/i);
+    if (instagram?.[1]) links.instagram = instagram[1];
+
+    return links;
+  }
+
+  /**
+   * Extract brand colors from CSS variables or common elements
+   */
+  private extractBrandColors(html: string): string[] {
+    const colors: string[] = [];
+
+    // Try to find theme-color meta tag
+    const themeColor = html.match(/<meta[^>]*name="theme-color"[^>]*content="([^"]*)"[^>]*>/i);
+    if (themeColor?.[1]) colors.push(themeColor[1]);
+
+    // Look for CSS custom properties for brand colors
+    const cssVars = html.match(/--(?:primary|brand|main|accent)(?:-color)?:\s*([^;]+);/gi);
+    if (cssVars) {
+      for (const match of cssVars) {
+        const color = match.match(/:\s*([^;]+)/)?.[1]?.trim();
+        if (color && !colors.includes(color)) {
+          colors.push(color);
+        }
+      }
+    }
+
+    return colors.slice(0, 5); // Limit to 5 colors
+  }
+
+  /**
+   * Extract keywords from meta tags
+   */
+  private extractKeywords(html: string): string[] {
+    const metaKeywords = html.match(/<meta[^>]*name="keywords"[^>]*content="([^"]*)"[^>]*>/i);
+    if (metaKeywords?.[1]) {
+      return metaKeywords[1]
+        .split(',')
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0)
+        .slice(0, 10);
+    }
+    return [];
+  }
+
+  /**
+   * Resolve relative URLs to absolute
+   */
+  private resolveUrl(url: string, origin: string): string {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('//')) {
+      return `https:${url}`;
+    }
+    if (url.startsWith('/')) {
+      return `${origin}${url}`;
+    }
+    return `${origin}/${url}`;
   }
 }
