@@ -10,6 +10,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Parse request body for options
+    let removeBrand = false;
+    try {
+      const body = await request.json();
+      removeBrand = body.removeBrand === true;
+    } catch {
+      // No body or invalid JSON - use defaults
+    }
+
+    // If removeBrand is requested, delete all brands for the user's organization
+    if (removeBrand) {
+      // Get user's organization
+      const membership = await prisma.membership.findFirst({
+        where: { userId },
+        select: { organizationId: true },
+      });
+
+      if (membership) {
+        // Delete all brands and related data for this organization
+        // BrandBrain, BrandAudience, ContentPillar, etc. will cascade delete
+        await prisma.brand.deleteMany({
+          where: { organizationId: membership.organizationId },
+        });
+      }
+    }
+
     // Reset the onboarding progress for this user
     await prisma.userOnboardingProgress.upsert({
       where: { userId },

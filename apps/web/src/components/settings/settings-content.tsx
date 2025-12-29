@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, CardHeader, Divider, Button } from "@heroui/react";
+import { Card, CardBody, CardHeader, Divider, Button, Checkbox } from "@heroui/react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { BrandsList } from "./brands-list";
@@ -43,9 +43,14 @@ export function SettingsContent({
 }: SettingsContentProps) {
   const [resettingOnboarding, setResettingOnboarding] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [removeBrandOnReset, setRemoveBrandOnReset] = useState(false);
 
   const handleResetOnboarding = async () => {
-    if (!confirm("Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.")) {
+    const confirmMessage = removeBrandOnReset
+      ? "Are you sure you want to reset onboarding AND delete all brands? This cannot be undone."
+      : "Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.";
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -55,6 +60,8 @@ export function SettingsContent({
     try {
       const response = await fetch("/api/onboarding/reset", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ removeBrand: removeBrandOnReset }),
       });
 
       if (response.ok) {
@@ -189,15 +196,27 @@ export function SettingsContent({
                 Reset your onboarding to test the setup flow again. This will show
                 the onboarding wizard on your next page load.
               </p>
+              <div className="mb-3">
+                <Checkbox
+                  isSelected={removeBrandOnReset}
+                  onValueChange={setRemoveBrandOnReset}
+                  color="danger"
+                  size="sm"
+                >
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Also remove all brands (start completely fresh)
+                  </span>
+                </Checkbox>
+              </div>
               <div className="flex items-center gap-3">
                 <Button
-                  color="warning"
+                  color={removeBrandOnReset ? "danger" : "warning"}
                   variant="flat"
                   startContent={<RefreshCw className={`w-4 h-4 ${resettingOnboarding ? "animate-spin" : ""}`} />}
                   isLoading={resettingOnboarding}
                   onPress={handleResetOnboarding}
                 >
-                  Reset Onboarding
+                  {removeBrandOnReset ? "Reset & Delete Brands" : "Reset Onboarding"}
                 </Button>
                 {resetMessage && (
                   <span className={`text-sm ${resetMessage.type === "success" ? "text-success" : "text-danger"}`}>
