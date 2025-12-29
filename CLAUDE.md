@@ -17,8 +17,8 @@ Brand Brain → Content Factory → Publishing Engine → Analytics → Learning
 | Platform | Service | URL |
 |----------|---------|-----|
 | **Vercel** | Next.js web app | https://leads.epic.dm |
-| **DigitalOcean** | n8n workflows, background workers | (App Platform) |
-| **Render** | PostgreSQL database, Voice AI service | (Managed services) |
+| **DigitalOcean** | PostgreSQL database, n8n workflows, background workers | (App Platform + Managed DB) |
+| **Render** | Voice AI service | (Managed services) |
 
 **Note:** Social media integration uses native OAuth 2.0 with direct platform APIs (Twitter, LinkedIn, Meta).
 
@@ -142,8 +142,9 @@ User Topic → Brand Brain + Context → GPT-4o → Platform Variations
 ### Infrastructure
 - **Monorepo:** Turborepo + pnpm workspaces
 - **Frontend Hosting:** Vercel
-- **Backend Hosting:** DigitalOcean App Platform, Render
-- **Voice:** LiveKit Cloud
+- **Database:** DigitalOcean Managed PostgreSQL
+- **Backend Hosting:** DigitalOcean App Platform (workers, n8n)
+- **Voice:** Render (Voice AI service) + LiveKit Cloud
 
 ---
 
@@ -362,7 +363,7 @@ Key variables:
 
 ## Active Technologies
 - TypeScript 5.x (Node.js 20+) + BullMQ 5.7.0 (already installed), Prisma ORM, ioredis (001-background-workers)
-- PostgreSQL (Render) + Redis (Upstash) for queue backend (001-background-workers)
+- PostgreSQL (DigitalOcean Managed DB) + Redis (Upstash) for queue backend (001-background-workers)
 
 ## Recent Changes
 - 001-background-workers: Added TypeScript 5.x (Node.js 20+) + BullMQ 5.7.0 (already installed), Prisma ORM, ioredis
