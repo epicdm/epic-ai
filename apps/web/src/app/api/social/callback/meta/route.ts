@@ -47,8 +47,20 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { brandId, redirectUrl: platformPref } = oauthState;
-  const platform = (platformPref as 'facebook' | 'instagram') || 'facebook';
+  const { brandId, redirectUrl: storedData } = oauthState;
+
+  // Parse stored data (JSON with platform and returnUrl)
+  let platform: 'facebook' | 'instagram' = 'facebook';
+  let returnUrl = '/dashboard/social/accounts';
+
+  try {
+    const parsed = JSON.parse(storedData || '{}');
+    platform = parsed.platform || 'facebook';
+    returnUrl = parsed.returnUrl || '/dashboard/social/accounts';
+  } catch {
+    // Legacy format - just platform string
+    platform = (storedData as 'facebook' | 'instagram') || 'facebook';
+  }
 
   // Delete the used state
   await prisma.oAuthState.delete({ where: { id: oauthState.id } });
@@ -117,6 +129,89 @@ export async function GET(request: NextRequest) {
     );
     const profile = await client.getProfile();
 
+    // Fetch extended business data from Facebook page for Brand Brain enrichment
+    const businessDataResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${page.id}?` +
+        new URLSearchParams({
+          fields: 'name,about,description,category,website,picture.type(large),cover,phone,emails,location,single_line_address',
+          access_token: pageAccessToken,
+        })
+    );
+
+    let businessData: {
+      name?: string;
+      about?: string;
+      description?: string;
+      category?: string;
+      website?: string;
+      logo?: string;
+      coverPhoto?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+    } = {};
+
+    if (businessDataResponse.ok) {
+      const fbData = await businessDataResponse.json();
+      businessData = {
+        name: fbData.name,
+        about: fbData.about || fbData.description,
+        description: fbData.description || fbData.about,
+        category: fbData.category,
+        website: fbData.website,
+        logo: fbData.picture?.data?.url,
+        coverPhoto: fbData.cover?.source,
+        phone: fbData.phone,
+        email: fbData.emails?.[0],
+        address: fbData.single_line_address || (fbData.location ?
+          `${fbData.location.street || ''}, ${fbData.location.city || ''}, ${fbData.location.state || ''} ${fbData.location.zip || ''}`.trim() : undefined),
+      };
+
+      // Enrich Brand Brain with Facebook business data
+      const brand = await prisma.brand.findUnique({
+        where: { id: brandId },
+        include: { brandBrain: true },
+      });
+
+      if (brand) {
+        // Update brand with Facebook data (only if fields are empty)
+        await prisma.brand.update({
+          where: { id: brandId },
+          data: {
+            name: brand.name || businessData.name || brand.name,
+            description: brand.description || businessData.about || businessData.description,
+            logoUrl: brand.logoUrl || businessData.logo,
+            website: brand.website || businessData.website,
+          },
+        });
+
+        // Update or create Brand Brain with extracted data
+        if (brand.brandBrain) {
+          await prisma.brandBrain.update({
+            where: { id: brand.brandBrain.id },
+            data: {
+              industry: brand.brandBrain.industry || businessData.category,
+              // Store Facebook data as context
+              contextData: {
+                ...(brand.brandBrain.contextData as object || {}),
+                facebookPageData: businessData,
+              },
+            },
+          });
+        } else {
+          await prisma.brandBrain.create({
+            data: {
+              brandId: brandId,
+              industry: businessData.category,
+              contextData: {
+                facebookPageData: businessData,
+              },
+            },
+          });
+        }
+      }
+    }
+
     // Save Facebook page with encrypted token
     await SocialPublisher.connectAccount(brandId, 'FACEBOOK', {
       accessToken: safeEncryptToken(pageAccessToken),
@@ -125,7 +220,7 @@ export async function GET(request: NextRequest) {
       platformUserId: page.id,
       platformUsername: profile.username,
       displayName: profile.displayName,
-      avatar: profile.avatar,
+      avatar: businessData.logo || profile.avatar,
       profileUrl: profile.profileUrl,
     });
 
@@ -155,9 +250,51 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Clear state cookie and redirect to success
+    // Clear state cookie and redirect with success
+    // If opened in popup (returnUrl is set), show close page
+    const isPopup = returnUrl && returnUrl !== '/dashboard/social/accounts';
+
+    if (isPopup) {
+      // Return HTML that closes the popup and notifies the parent
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Connected Successfully</title>
+            <style>
+              body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8f9fa; }
+              .success { text-align: center; padding: 40px; }
+              .icon { font-size: 48px; margin-bottom: 16px; }
+              h1 { color: #22c55e; margin: 0 0 8px; font-size: 24px; }
+              p { color: #6b7280; margin: 0; }
+            </style>
+          </head>
+          <body>
+            <div class="success">
+              <div class="icon">✓</div>
+              <h1>Connected!</h1>
+              <p>You can close this window now.</p>
+            </div>
+            <script>
+              // Notify parent window and close
+              if (window.opener) {
+                window.opener.postMessage({ type: 'SOCIAL_CONNECT_SUCCESS', platform: 'meta' }, '*');
+              }
+              setTimeout(() => window.close(), 1500);
+            </script>
+          </body>
+        </html>
+      `;
+      const response = new NextResponse(html, {
+        headers: { 'Content-Type': 'text/html' },
+      });
+      response.cookies.delete('meta_oauth_state');
+      return response;
+    }
+
+    // Standard redirect
     const response = NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?success=meta`
+      `${BASE_URL}${returnUrl}?success=meta`
     );
     response.cookies.delete('meta_oauth_state');
 

@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build the OAuth URL with brand ID
+    // Build the OAuth URL with brand ID and return URL
+    const returnUrl = searchParams.get("returnUrl");
     const params = new URLSearchParams({
       brandId: brand.id,
     });
@@ -80,6 +81,11 @@ export async function GET(request: NextRequest) {
     // For Instagram, add platform param
     if (platform === "instagram") {
       params.set("platform", "instagram");
+    }
+
+    // Pass return URL for popup handling
+    if (returnUrl) {
+      params.set("returnUrl", returnUrl);
     }
 
     const connectUrl = `${BASE_URL}${route}?${params.toString()}`;

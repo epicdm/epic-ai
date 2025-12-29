@@ -46,34 +46,51 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
   const [existingAccounts, setExistingAccounts] = useState<ConnectedAccountData[]>([]);
   const [isFetching, setIsFetching] = useState(true);
 
+  // Fetch accounts helper
+  const fetchAccounts = async () => {
+    try {
+      const response = await fetch("/api/social/accounts");
+      if (response.ok) {
+        const result = await response.json();
+        const accounts: ConnectedAccountData[] = (result.accounts || []).map(
+          (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
+            id: acc.id,
+            platform: acc.platform,
+            handle: acc.handle,
+            connected: true,
+            connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
+          })
+        );
+        setExistingAccounts(accounts);
+        updateData({ socialProfiles: accounts });
+      }
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+    }
+  };
+
   // Fetch existing connected accounts on mount
   useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const response = await fetch("/api/social/accounts");
-        if (response.ok) {
-          const result = await response.json();
-          const accounts: ConnectedAccountData[] = (result.accounts || []).map(
-            (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
-              id: acc.id,
-              platform: acc.platform,
-              handle: acc.handle,
-              connected: true,
-              connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
-            })
-          );
-          setExistingAccounts(accounts);
-          updateData({ socialProfiles: accounts });
-        }
-      } catch (error) {
-        console.error("Error fetching accounts:", error);
-      } finally {
-        setIsFetching(false);
+    const initFetch = async () => {
+      await fetchAccounts();
+      setIsFetching(false);
+    };
+    initFetch();
+  }, [updateData]);
+
+  // Listen for postMessage from OAuth popup
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS') {
+        // Refresh accounts when OAuth completes
+        await fetchAccounts();
+        setIsLoading({});
       }
     };
 
-    fetchAccounts();
-  }, [updateData]);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const connectedAccounts = data.socialProfiles || existingAccounts;
 
@@ -89,21 +106,49 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
   const handleConnect = async (platformId: string) => {
     setIsLoading((prev) => ({ ...prev, [platformId]: true }));
     try {
-      // Open OAuth popup/redirect
-      const response = await fetch(`/api/social/connect/${platformId}`);
+      // Map platform IDs to API platform names
+      const platformMap: Record<string, string> = {
+        twitter: "twitter",
+        linkedin: "linkedin",
+        facebook: "facebook",
+        instagram: "instagram",
+      };
+      const platform = platformMap[platformId] || platformId;
+
+      // Get OAuth connect URL with return URL for wizard
+      const returnUrl = encodeURIComponent(window.location.pathname);
+      const response = await fetch(`/api/social/connect?platform=${platform}&returnUrl=${returnUrl}`);
+
       if (response.ok) {
-        const { authUrl } = await response.json();
+        const { url } = await response.json();
         // Open OAuth in new window
-        const popup = window.open(authUrl, "_blank", "width=600,height=700");
+        const popup = window.open(url, "_blank", "width=600,height=700");
 
         // Listen for OAuth completion
-        const checkClosed = setInterval(() => {
+        const checkClosed = setInterval(async () => {
           if (popup?.closed) {
             clearInterval(checkClosed);
-            // Refresh accounts
-            window.location.reload();
+            // Refresh accounts list
+            const accountsResponse = await fetch("/api/social/accounts");
+            if (accountsResponse.ok) {
+              const result = await accountsResponse.json();
+              const accounts: ConnectedAccountData[] = (result.accounts || []).map(
+                (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
+                  id: acc.id,
+                  platform: acc.platform,
+                  handle: acc.handle,
+                  connected: true,
+                  connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
+                })
+              );
+              setExistingAccounts(accounts);
+              updateData({ socialProfiles: accounts });
+            }
           }
         }, 500);
+      } else {
+        const errorData = await response.json();
+        console.error("Error getting connect URL:", errorData);
       }
     } catch (error) {
       console.error("Error connecting:", error);

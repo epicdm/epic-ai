@@ -90,20 +90,20 @@ export function UnderstandWizard({
     switch (currentStep) {
       case 0: // Industry
         return !!data.industry;
-      case 1: // Website
-        return true; // Optional
-      case 2: // Identity
-        return !!data.brandName;
-      case 3: // Voice
-        return data.formality !== undefined;
-      case 4: // Audiences
-        return (data.audiences?.length ?? 0) >= 1;
-      case 5: // Pillars
-        return (data.contentPillars?.length ?? 0) >= 1;
-      case 6: // Competitors
-        return true; // Optional
-      case 7: // Social Profiles
+      case 1: // Social Profiles
         return true; // Optional - can skip and connect later
+      case 2: // Website
+        return true; // Optional
+      case 3: // Identity
+        return !!data.brandName;
+      case 4: // Voice
+        return data.formality !== undefined;
+      case 5: // Audiences
+        return (data.audiences?.length ?? 0) >= 1;
+      case 6: // Pillars
+        return (data.contentPillars?.length ?? 0) >= 1;
+      case 7: // Competitors
+        return true; // Optional
       case 8: // Review
         return data.confirmed === true;
       default:
@@ -116,19 +116,19 @@ export function UnderstandWizard({
       case 0:
         return <IndustryStep data={data} updateData={updateData} />;
       case 1:
-        return <WebsiteStep data={data} updateData={updateData} />;
-      case 2:
-        return <IdentityStep data={data} updateData={updateData} />;
-      case 3:
-        return <VoiceStep data={data} updateData={updateData} />;
-      case 4:
-        return <AudiencesStep data={data} updateData={updateData} />;
-      case 5:
-        return <PillarsStep data={data} updateData={updateData} />;
-      case 6:
-        return <CompetitorsStep data={data} updateData={updateData} />;
-      case 7:
         return <SocialProfilesStep data={data} updateData={updateData} />;
+      case 2:
+        return <WebsiteStep data={data} updateData={updateData} />;
+      case 3:
+        return <IdentityStep data={data} updateData={updateData} />;
+      case 4:
+        return <VoiceStep data={data} updateData={updateData} />;
+      case 5:
+        return <AudiencesStep data={data} updateData={updateData} />;
+      case 6:
+        return <PillarsStep data={data} updateData={updateData} />;
+      case 7:
+        return <CompetitorsStep data={data} updateData={updateData} />;
       case 8:
         return <ReviewStep data={data} updateData={updateData} />;
       default:

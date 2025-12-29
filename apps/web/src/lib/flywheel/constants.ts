@@ -92,9 +92,17 @@ export const UNDERSTAND_STEPS: WizardStep[] = [
     aiAssisted: true,
   },
   {
+    id: "social-profiles",
+    title: "Social Profiles",
+    description: "Connect Facebook/Instagram to pull business info (logo, description, etc.)",
+    optional: true,
+    aiAssisted: true,
+  },
+  {
     id: "website",
     title: "Website Analysis",
-    description: "Enter your website URL for AI to extract brand information",
+    description: "Add your website URL for additional brand context",
+    optional: true,
     aiAssisted: true,
   },
   {
@@ -127,12 +135,6 @@ export const UNDERSTAND_STEPS: WizardStep[] = [
     description: "Add 2-3 competitors for AI to analyze and differentiate from",
     optional: true,
     aiAssisted: true,
-  },
-  {
-    id: "social-profiles",
-    title: "Social Profiles",
-    description: "Connect your social media accounts for publishing",
-    optional: true,
   },
   {
     id: "review",
