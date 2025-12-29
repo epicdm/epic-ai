@@ -43,8 +43,10 @@ import {
   Zap,
   Activity,
 } from "lucide-react";
-import { FlywheelSetupGuide } from "./flywheel-setup-guide";
+import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
+import type { FlywheelState, FlywheelPhase, PhaseState, PhaseStatusType } from "@/lib/flywheel/types";
+import { PHASE_DEPENDENCIES } from "@/lib/flywheel/constants";
 
 interface DashboardData {
   brand: {
@@ -152,10 +154,50 @@ const FLYWHEEL_STATUS_COLORS: Record<string, string> = {
   optimal: "text-success",
 };
 
+// Transform API response to FlywheelState format
+function transformFlywheelData(apiData: Record<string, unknown>): FlywheelState {
+  const phases: Record<FlywheelPhase, PhaseState> = {} as Record<FlywheelPhase, PhaseState>;
+  const phaseKeys: FlywheelPhase[] = ["UNDERSTAND", "CREATE", "DISTRIBUTE", "LEARN", "AUTOMATE"];
+
+  for (const phase of phaseKeys) {
+    const phaseData = (apiData.phases as Record<string, unknown>)?.[phase] as Record<string, unknown> | undefined;
+    const status = (phaseData?.status as PhaseStatusType) || "NOT_STARTED";
+    const step = (phaseData?.step as number) ?? -1;
+    const totalSteps = (phaseData?.totalSteps as number) ?? 8;
+
+    // Calculate blocked state based on dependencies
+    const deps = PHASE_DEPENDENCIES[phase] || [];
+    const blockedBy = deps.filter((dep) => {
+      const depData = (apiData.phases as Record<string, unknown>)?.[dep] as Record<string, unknown> | undefined;
+      return depData?.status !== "COMPLETED";
+    });
+
+    phases[phase] = {
+      phase,
+      status,
+      currentStep: step,
+      totalSteps,
+      data: null,
+      isBlocked: blockedBy.length > 0,
+      blockedBy,
+    };
+  }
+
+  return {
+    phases,
+    overallProgress: (apiData.overallProgress as number) ?? 0,
+    flywheelActive: (apiData.flywheelActive as boolean) ?? false,
+    activatedAt: apiData.activatedAt ? new Date(apiData.activatedAt as string) : undefined,
+    lastActivePhase: apiData.lastActivePhase as FlywheelPhase | undefined,
+    lastActiveAt: apiData.lastActiveAt ? new Date(apiData.lastActiveAt as string) : new Date(),
+  };
+}
+
 export function UnifiedDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [flywheelState, setFlywheelState] = useState<FlywheelState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
 
@@ -173,13 +215,24 @@ export function UnifiedDashboard() {
   const loadDashboard = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch(`/api/dashboard?period=${period}`);
-      if (res.ok) {
-        const dashboardData = await res.json();
+      // Fetch both dashboard and flywheel data in parallel
+      const [dashboardRes, flywheelRes] = await Promise.all([
+        fetch(`/api/dashboard?period=${period}`),
+        fetch("/api/flywheel/progress"),
+      ]);
+
+      if (dashboardRes.ok) {
+        const dashboardData = await dashboardRes.json();
         setData(dashboardData);
       } else {
-        const errorData = await res.json().catch(() => ({}));
-        setError(errorData.error || `Failed to load dashboard (${res.status})`);
+        const errorData = await dashboardRes.json().catch(() => ({}));
+        setError(errorData.error || `Failed to load dashboard (${dashboardRes.status})`);
+      }
+
+      // Flywheel data is optional - don't fail if it's missing
+      if (flywheelRes.ok) {
+        const flywheelData = await flywheelRes.json();
+        setFlywheelState(transformFlywheelData(flywheelData));
       }
     } catch (error) {
       console.error("Error loading dashboard:", error);
@@ -260,28 +313,11 @@ export function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* Flywheel Setup Guide - Show prominently for new users */}
-      {onboarding && !onboarding.isComplete && (
-        <FlywheelSetupGuide
-          dashboardData={{
-            brandBrain: data.brandBrain,
-            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
-            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
-            publishing: { autoEnabled: data.flywheel?.status === "optimal" },
-          }}
-        />
-      )}
-
-      {/* Compact flywheel guide for returning users who haven't finished setup */}
-      {onboarding && onboarding.isComplete && data.flywheel?.status === "inactive" && (
-        <FlywheelSetupGuide
-          dashboardData={{
-            brandBrain: data.brandBrain,
-            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
-            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
-            publishing: { autoEnabled: false },
-          }}
-          compact
+      {/* Flywheel Progress Card - Show for all users who haven't completed setup */}
+      {flywheelState && !flywheelState.flywheelActive && (
+        <FlywheelProgressCard
+          flywheelState={flywheelState}
+          compact={flywheelState.overallProgress > 50}
         />
       )}
 
