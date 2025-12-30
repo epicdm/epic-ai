@@ -21,7 +21,7 @@ export const metadata = {
 };
 
 interface DashboardPageProps {
-  searchParams: Promise<{ showOnboarding?: string }>;
+  searchParams: Promise<{ showOnboarding?: string; flywheel?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -88,9 +88,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     );
   }
 
+  // Check if flywheel was just activated
+  const flywheelJustActivated = params.flywheel === "activated";
+
   return (
     <div className="p-6">
-      <UnifiedDashboard />
+      <UnifiedDashboard flywheelJustActivated={flywheelJustActivated} />
     </div>
   );
 }

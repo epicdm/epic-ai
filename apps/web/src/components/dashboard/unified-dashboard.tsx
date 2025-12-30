@@ -17,6 +17,11 @@ import {
   Select,
   SelectItem,
   Tooltip,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import {
@@ -42,6 +47,8 @@ import {
   FileText,
   Zap,
   Activity,
+  Rocket,
+  PartyPopper,
 } from "lucide-react";
 import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
@@ -193,13 +200,18 @@ function transformFlywheelData(apiData: Record<string, unknown>): FlywheelState 
   };
 }
 
-export function UnifiedDashboard() {
+interface UnifiedDashboardProps {
+  flywheelJustActivated?: boolean;
+}
+
+export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashboardProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const [flywheelState, setFlywheelState] = useState<FlywheelState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
+  const [showActivationModal, setShowActivationModal] = useState(flywheelJustActivated);
 
   // Calculate onboarding progress
   const getOnboardingStatus = (dashboardData: DashboardData) => {
@@ -771,6 +783,89 @@ export function UnifiedDashboard() {
           </CardBody>
         </Card>
       )}
+
+      {/* Flywheel Activation Celebration Modal */}
+      <Modal
+        isOpen={showActivationModal}
+        onClose={() => {
+          setShowActivationModal(false);
+          // Remove the query param from URL without reload
+          router.replace("/dashboard", { scroll: false });
+        }}
+        size="lg"
+        classNames={{
+          body: "py-6",
+          backdrop: "bg-gradient-to-t from-primary/20 to-secondary/20 backdrop-opacity-40",
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-success to-primary flex items-center justify-center mb-2">
+                  <Rocket className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent">
+                  Flywheel Activated! 🎉
+                </h2>
+              </ModalHeader>
+              <ModalBody className="text-center">
+                <p className="text-lg text-default-600 mb-4">
+                  Congratulations! Your AI-powered marketing flywheel is now spinning.
+                </p>
+
+                <div className="bg-gradient-to-r from-success/10 to-primary/10 rounded-xl p-4 mb-4">
+                  <h4 className="font-semibold text-default-800 mb-3 flex items-center justify-center gap-2">
+                    <PartyPopper className="w-5 h-5 text-success" />
+                    What happens now?
+                  </h4>
+                  <ul className="text-sm text-default-600 space-y-2 text-left">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Your AI autopilot will generate content based on your brand voice</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Content will be published according to your schedule</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Analytics will track performance and feed AI learnings</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>The more it runs, the smarter it gets!</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <p className="text-sm text-default-500">
+                  Check your dashboard regularly to monitor performance and review AI-generated content.
+                </p>
+              </ModalBody>
+              <ModalFooter className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button
+                  color="default"
+                  variant="bordered"
+                  onPress={onClose}
+                >
+                  Explore Dashboard
+                </Button>
+                <Button
+                  color="primary"
+                  endContent={<ArrowRight className="w-4 h-4" />}
+                  onPress={() => {
+                    onClose();
+                    router.push("/dashboard/content");
+                  }}
+                >
+                  Create Content
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
