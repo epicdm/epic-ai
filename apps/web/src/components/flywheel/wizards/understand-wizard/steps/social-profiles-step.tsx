@@ -53,10 +53,10 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
       if (response.ok) {
         const result = await response.json();
         const accounts: ConnectedAccountData[] = (result.accounts || []).map(
-          (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
+          (acc: { id: string; platform: string; username?: string; displayName?: string; connectedAt?: string }) => ({
             id: acc.id,
             platform: acc.platform,
-            handle: acc.handle,
+            handle: acc.username || acc.displayName || 'Connected',
             connected: true,
             connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
           })
@@ -134,10 +134,10 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
             if (accountsResponse.ok) {
               const result = await accountsResponse.json();
               const accounts: ConnectedAccountData[] = (result.accounts || []).map(
-                (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
+                (acc: { id: string; platform: string; username?: string; displayName?: string; connectedAt?: string }) => ({
                   id: acc.id,
                   platform: acc.platform,
-                  handle: acc.handle,
+                  handle: acc.username || acc.displayName || 'Connected',
                   connected: true,
                   connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
                 })
