@@ -26,9 +26,11 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
   const connectedAccounts = data.connectedAccounts || [];
   const platformSettings = data.platformSettings || {};
 
+  // Normalize platform IDs to lowercase for case-insensitive comparison
+  // DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
   const connectedPlatformIds = connectedAccounts
     .filter((a) => a.connected)
-    .map((a) => a.platform);
+    .map((a) => a.platform.toLowerCase());
 
   const getSettings = (platformId: string): PlatformSettings => {
     return platformSettings[platformId] || { ...DEFAULT_SETTINGS };
@@ -50,7 +52,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
   };
 
   const connectedPlatforms = PLATFORMS.filter((p) =>
-    connectedPlatformIds.includes(p.id)
+    connectedPlatformIds.includes(p.id.toLowerCase())
   );
 
   if (connectedPlatforms.length === 0) {
