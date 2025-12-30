@@ -241,10 +241,24 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         setError(errorData.error || `Failed to load dashboard (${dashboardRes.status})`);
       }
 
-      // Flywheel data is optional - don't fail if it's missing
+      // Flywheel data - provide default state if missing
       if (flywheelRes.ok) {
         const flywheelData = await flywheelRes.json();
         setFlywheelState(transformFlywheelData(flywheelData));
+      } else {
+        // Provide default state so wizard card still shows
+        setFlywheelState({
+          phases: {
+            UNDERSTAND: { phase: "UNDERSTAND", status: "NOT_STARTED", currentStep: -1, totalSteps: 8, data: null, isBlocked: false, blockedBy: [] },
+            CREATE: { phase: "CREATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["UNDERSTAND"] },
+            DISTRIBUTE: { phase: "DISTRIBUTE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["CREATE"] },
+            LEARN: { phase: "LEARN", status: "NOT_STARTED", currentStep: -1, totalSteps: 5, data: null, isBlocked: true, blockedBy: ["DISTRIBUTE"] },
+            AUTOMATE: { phase: "AUTOMATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["LEARN"] },
+          },
+          overallProgress: 0,
+          flywheelActive: false,
+          lastActiveAt: new Date(),
+        });
       }
     } catch (error) {
       console.error("Error loading dashboard:", error);
