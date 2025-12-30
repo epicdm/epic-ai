@@ -126,9 +126,11 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Twitter OAuth callback error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Twitter OAuth callback error:', errorMessage);
+    console.error('Twitter OAuth error details:', error);
     return NextResponse.redirect(
-      `${baseUrl}/dashboard/social/accounts?error=callback_failed`
+      `${baseUrl}/dashboard/social/accounts?error=callback_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }
