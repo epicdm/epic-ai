@@ -71,18 +71,18 @@ export default async function UnderstandPage() {
       where: { brandId: brand.id },
       include: {
         audiences: true,
-        contentPillars: true,
-        competitors: true,
+        pillars: true,
+        brandCompetitors: true,
       },
     });
 
     if (brandBrain) {
       initialData = {
         brandName: brand.name,
-        brandDescription: brandBrain.brandDescription ?? undefined,
+        brandDescription: brandBrain.description ?? undefined,
         mission: brandBrain.mission ?? undefined,
         formality: brandBrain.formalityLevel ?? 3,
-        personality: brandBrain.personalityTraits ?? [],
+        personality: [], // Personality traits not stored in BrandBrain
         writingStyle: brandBrain.writingStyle ?? undefined,
         audiences: brandBrain.audiences.map((a) => ({
           id: a.id,
@@ -92,13 +92,13 @@ export default async function UnderstandPage() {
           painPoints: a.painPoints ?? [],
           goals: a.goals ?? [],
         })),
-        contentPillars: brandBrain.contentPillars.map((p) => ({
+        contentPillars: brandBrain.pillars.map((p) => ({
           id: p.id,
           name: p.name,
           description: p.description ?? "",
           topics: p.topics ?? [],
         })),
-        competitors: brandBrain.competitors.map((c) => ({
+        competitors: brandBrain.brandCompetitors.map((c) => ({
           id: c.id,
           name: c.name,
           website: c.website ?? undefined,
