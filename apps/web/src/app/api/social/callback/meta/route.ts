@@ -19,6 +19,39 @@ function getRedirectUri(request: NextRequest): string {
   return `${getBaseUrl(request)}/api/social/callback/meta`;
 }
 
+// Helper function to create error HTML for popup mode
+function createErrorHtml(errorMessage: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Connection Failed</title>
+        <style>
+          body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fef2f2; }
+          .error { text-align: center; padding: 40px; max-width: 400px; }
+          .icon { font-size: 48px; margin-bottom: 16px; }
+          h1 { color: #dc2626; margin: 0 0 8px; font-size: 24px; }
+          p { color: #6b7280; margin: 0 0 16px; }
+          .details { background: #fee2e2; padding: 12px; border-radius: 8px; text-align: left; font-size: 12px; color: #991b1b; word-break: break-word; }
+        </style>
+      </head>
+      <body>
+        <div class="error">
+          <div class="icon">✕</div>
+          <h1>Connection Failed</h1>
+          <p>Unable to connect your Facebook account.</p>
+          <div class="details"><strong>Error:</strong> ${errorMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        </div>
+        <script>
+          if (window.opener) {
+            window.opener.postMessage({ type: 'SOCIAL_CONNECT_ERROR', platform: 'meta', error: ${JSON.stringify(errorMessage)} }, '*');
+          }
+        </script>
+      </body>
+    </html>
+  `;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
@@ -26,18 +59,19 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
   const baseUrl = getBaseUrl(request);
 
-  // Check for OAuth errors
+  // Check for OAuth errors from Facebook
   if (error) {
-    const errorDescription = searchParams.get('error_description');
+    const errorDescription = searchParams.get('error_description') || error;
     console.error('Meta OAuth error:', error, errorDescription);
+    // Can't check popup mode here since we haven't validated state yet
     return NextResponse.redirect(
-      `${baseUrl}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
+      `${baseUrl}/dashboard/social/accounts?error=${encodeURIComponent(error)}&details=${encodeURIComponent(errorDescription)}`
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      `${baseUrl}/dashboard/social/accounts?error=missing_params`
+      `${baseUrl}/dashboard/social/accounts?error=missing_params&details=${encodeURIComponent('Missing code or state parameter from Facebook')}`
     );
   }
 
@@ -51,7 +85,7 @@ export async function GET(request: NextRequest) {
       await prisma.oAuthState.delete({ where: { id: oauthState.id } });
     }
     return NextResponse.redirect(
-      `${baseUrl}/dashboard/social/accounts?error=invalid_state`
+      `${baseUrl}/dashboard/social/accounts?error=invalid_state&details=${encodeURIComponent('OAuth state expired or invalid. Please try connecting again.')}`
     );
   }
 
@@ -319,6 +353,17 @@ export async function GET(request: NextRequest) {
     console.error('[Meta OAuth] CALLBACK ERROR:', errorMessage);
     console.error('[Meta OAuth] Stack trace:', errorStack);
     console.error('[Meta OAuth] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+
+    // Check if this was opened in popup mode
+    const isPopup = returnUrl && returnUrl !== '/dashboard/social/accounts';
+
+    if (isPopup) {
+      // Return HTML that shows error in the popup
+      return new NextResponse(createErrorHtml(errorMessage), {
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+
     return NextResponse.redirect(
       `${baseUrl}/dashboard/social/accounts?error=callback_failed&details=${encodeURIComponent(errorMessage)}`
     );
