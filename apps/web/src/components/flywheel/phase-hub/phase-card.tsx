@@ -225,6 +225,7 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
               className={`${isBlocked ? "pointer-events-none" : ""}`}
               endContent={!isBlocked && <ChevronRight className="w-4 h-4" />}
               isDisabled={isBlocked}
+              onPress={!isBlocked ? onClick : undefined}
             >
               {getButtonLabel()}
             </Button>
