@@ -27,9 +27,10 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
   );
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Normalize to lowercase since DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
   const connectedPlatforms = data.connectedAccounts
     ?.filter((a) => a.connected)
-    .map((a) => a.platform) || [];
+    .map((a) => a.platform.toLowerCase()) || [];
 
   // Fetch available content
   useEffect(() => {

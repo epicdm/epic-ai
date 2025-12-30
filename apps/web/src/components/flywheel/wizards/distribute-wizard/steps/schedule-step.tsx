@@ -43,9 +43,10 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
 
   const schedule = data.schedule || {};
   const connectedAccounts = data.connectedAccounts || [];
+  // Normalize to lowercase since DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
   const connectedPlatformIds = connectedAccounts
     .filter((a) => a.connected)
-    .map((a) => a.platform);
+    .map((a) => a.platform.toLowerCase());
 
   const getDaySlots = (day: keyof ScheduleData): TimeSlot[] => {
     return schedule[day] || [];
@@ -80,11 +81,12 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
 
   const useDefaultSchedule = () => {
     // Filter default schedule to only include connected platforms
+    // Both are lowercase now so comparison works
     const filteredSchedule: ScheduleData = {};
     for (const [day, slots] of Object.entries(DEFAULT_SCHEDULE)) {
       filteredSchedule[day as keyof ScheduleData] = slots.map((slot) => ({
         ...slot,
-        platforms: slot.platforms.filter((p) => connectedPlatformIds.includes(p)),
+        platforms: slot.platforms.filter((p) => connectedPlatformIds.includes(p.toLowerCase())),
       }));
     }
     updateData({ schedule: filteredSchedule });

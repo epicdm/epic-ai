@@ -32,8 +32,9 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
   }, 0);
 
   // Get enabled platforms
+  // Normalize to lowercase since DB stores uppercase (FACEBOOK) but platformSettings uses lowercase (facebook)
   const enabledPlatforms = connectedAccounts.filter(
-    (a) => platformSettings[a.platform]?.enabled !== false
+    (a) => platformSettings[a.platform.toLowerCase()]?.enabled !== false
   );
 
   // Check completion status
@@ -152,7 +153,8 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
             </h4>
             <div className="flex flex-wrap gap-2">
               {connectedAccounts.map((account) => {
-                const settings = platformSettings[account.platform];
+                // Use lowercase for platformSettings lookup since keys are lowercase
+                const settings = platformSettings[account.platform.toLowerCase()];
                 const isEnabled = settings?.enabled !== false;
                 const autoPost = settings?.autoPost;
 
@@ -165,7 +167,7 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                         : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-60"
                     }`}
                   >
-                    <span className="font-medium capitalize">{account.platform}</span>
+                    <span className="font-medium capitalize">{account.platform.toLowerCase()}</span>
                     {account.handle && (
                       <span className="text-sm text-gray-500">@{account.handle}</span>
                     )}
