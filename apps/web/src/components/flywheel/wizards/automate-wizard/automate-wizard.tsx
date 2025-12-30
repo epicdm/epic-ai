@@ -87,46 +87,30 @@ export function AutomateWizard({
     ...DEFAULT_DATA,
     ...initialData,
   });
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const updateData = useCallback((updates: Partial<AutomateWizardData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const saveProgress = async (status: string = "IN_PROGRESS") => {
-    setIsSaving(true);
+  const handleSave = useCallback(async () => {
     try {
       await fetch("/api/flywheel/phases/automate", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status,
+          status: "IN_PROGRESS",
           currentStep,
           data,
         }),
       });
     } catch (error) {
       console.error("Failed to save progress:", error);
-    } finally {
-      setIsSaving(false);
     }
-  };
+  }, [currentStep, data]);
 
-  const handleNext = async () => {
-    await saveProgress();
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleComplete = async () => {
-    setIsSaving(true);
+  const handleComplete = useCallback(async () => {
+    setIsLoading(true);
     try {
       // Save as completed with activated flywheel
       await fetch("/api/flywheel/phases/automate", {
@@ -149,14 +133,9 @@ export function AutomateWizard({
     } catch (error) {
       console.error("Failed to complete wizard:", error);
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
-  };
-
-  const handleClose = async () => {
-    await saveProgress();
-    router.push("/setup");
-  };
+  }, [currentStep, data, router]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -199,19 +178,17 @@ export function AutomateWizard({
 
   return (
     <WizardLayout
-      phase="AUTOMATE"
-      phaseName="Automate"
-      phaseIcon={<Zap className="w-6 h-6" />}
-      phaseColor="orange"
+      title="Automate"
+      description="Configure your AI autopilot to manage content automatically"
+      icon={<Zap className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
+      color="orange"
       steps={STEPS}
       currentStep={currentStep}
-      onNext={currentStep === STEPS.length - 1 ? handleComplete : handleNext}
-      onBack={handleBack}
-      onClose={handleClose}
+      onStepChange={setCurrentStep}
+      onComplete={handleComplete}
+      onSave={handleSave}
       canProceed={canProceed()}
-      isSaving={isSaving}
-      isLastStep={currentStep === STEPS.length - 1}
-      completionText="Activate Flywheel"
+      isLoading={isLoading}
     >
       {renderStep()}
     </WizardLayout>
