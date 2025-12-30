@@ -100,7 +100,8 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
   };
 
   const getAccountHandle = (platformId: string) => {
-    const account = connectedAccounts.find((a) => a.platform === platformId);
+    // Compare case-insensitively since DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
+    const account = connectedAccounts.find((a) => a.platform.toLowerCase() === platformId.toLowerCase());
     return account?.handle;
   };
 
@@ -165,8 +166,8 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
         method: "POST",
       });
       if (response.ok) {
-        // Update local state
-        const updated = connectedAccounts.filter((a) => a.platform !== platformId);
+        // Update local state (case-insensitive comparison)
+        const updated = connectedAccounts.filter((a) => a.platform.toLowerCase() !== platformId.toLowerCase());
         updateData({ socialProfiles: updated });
         setExistingAccounts(updated);
       }
