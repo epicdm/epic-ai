@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardBody, Progress, Button } from "@heroui/react";
-import { Rocket, RefreshCw, ArrowRight, ArrowLeft, LayoutDashboard } from "lucide-react";
+import { Rocket, RefreshCw, ArrowRight, ArrowLeft, LayoutDashboard, Sparkles, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PhaseCard } from "./phase-card";
 import {
@@ -53,6 +53,39 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
           Back to Dashboard
         </Button>
       </div>
+
+      {/* AI Quick Setup Banner */}
+      {!allComplete && (
+        <Card className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">
+          <CardBody className="p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Eye className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Bird&apos;s Eye AI Setup
+                  </h2>
+                  <p className="text-sm text-white/80">
+                    Let AI configure all 5 phases automatically from your website
+                  </p>
+                </div>
+              </div>
+              <Button
+                color="default"
+                variant="flat"
+                className="bg-white/20 text-white hover:bg-white/30 border-white/30"
+                startContent={<Sparkles className="w-4 h-4" />}
+                endContent={<ArrowRight className="w-4 h-4" />}
+                onPress={() => router.push("/setup/ai-setup")}
+              >
+                AI Full Setup
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
