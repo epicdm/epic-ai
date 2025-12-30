@@ -54,15 +54,25 @@ export function FlywheelProgressCard({
               </div>
             </div>
 
-            <Button
-              size="sm"
-              color="primary"
-              variant="flat"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={handleContinue}
-            >
-              {nextPhase ? "Continue" : "View"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="light"
+                onPress={() => router.push("/setup")}
+                className="text-brand-600 dark:text-brand-400"
+              >
+                All Phases
+              </Button>
+              <Button
+                size="sm"
+                color="primary"
+                variant="flat"
+                endContent={<ArrowRight className="w-4 h-4" />}
+                onPress={handleContinue}
+              >
+                {nextPhase ? "Continue" : "View"}
+              </Button>
+            </div>
           </div>
         </CardBody>
       </Card>
@@ -91,17 +101,27 @@ export function FlywheelProgressCard({
             </div>
           </div>
 
-          {flywheelState.flywheelActive && (
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                Active
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {flywheelState.flywheelActive && (
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                  Active
+                </span>
+              </div>
+            )}
+            <Button
+              size="sm"
+              variant="light"
+              onPress={() => router.push("/setup")}
+              className="text-brand-600 dark:text-brand-400"
+            >
+              All Phases
+            </Button>
+          </div>
         </div>
 
         {/* Progress Bar */}
