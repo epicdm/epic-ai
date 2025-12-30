@@ -339,16 +339,16 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         </div>
       </div>
 
-      {/* Flywheel Progress Card - Show for all users who haven't completed setup */}
-      {flywheelState && !flywheelState.flywheelActive && (
+      {/* Flywheel Progress Card - Show when setup is incomplete (progress < 100%) */}
+      {flywheelState && flywheelState.overallProgress < 100 && (
         <FlywheelProgressCard
           flywheelState={flywheelState}
           compact={flywheelState.overallProgress > 50}
         />
       )}
 
-      {/* Flywheel Status - Only show full version when flywheel is active or setup is complete */}
-      {flywheelState?.flywheelActive ? (
+      {/* Flywheel Status - Only show full version when flywheel is active AND setup is complete */}
+      {flywheelState?.flywheelActive && flywheelState.overallProgress >= 100 ? (
         <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
           <CardBody>
             <div className="flex items-center justify-between">
