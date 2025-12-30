@@ -229,8 +229,7 @@ export async function GET(request: NextRequest) {
           where: { id: brandId },
           data: {
             name: brand.name || businessData.name || brand.name,
-            description: brand.description || businessData.about || businessData.description,
-            logoUrl: brand.logoUrl || businessData.logo,
+            logo: brand.logo || businessData.logo,
             website: brand.website || businessData.website,
           },
         });
