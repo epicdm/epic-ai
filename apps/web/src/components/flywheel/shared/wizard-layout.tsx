@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardBody, CardHeader, Progress, Button } from "@heroui/react";
-import { ChevronLeft, ChevronRight, X, Check, Sparkles } from "lucide-react";
+import { Card, CardBody, CardHeader, Progress, Button, Link } from "@heroui/react";
+import { ChevronLeft, ChevronRight, X, Check, Sparkles, Home, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { WizardStep, WizardNavigation } from "@/lib/flywheel/types";
 
@@ -92,6 +92,26 @@ export function WizardLayout({
 
   return (
     <div className="max-w-3xl mx-auto p-6">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center gap-2 text-sm mb-4" aria-label="Breadcrumb">
+        <Link
+          href="/dashboard"
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+        >
+          <Home className="w-4 h-4" />
+          <span>Dashboard</span>
+        </Link>
+        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+        <Link
+          href="/setup"
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          Setup
+        </Link>
+        <ChevronRightIcon className="w-4 h-4 text-gray-400" />
+        <span className="text-gray-900 dark:text-white font-medium">{title}</span>
+      </nav>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">

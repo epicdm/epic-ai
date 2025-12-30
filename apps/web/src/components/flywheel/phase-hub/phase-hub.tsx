@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardBody, Progress, Button } from "@heroui/react";
-import { Rocket, RefreshCw, ArrowRight } from "lucide-react";
+import { Rocket, RefreshCw, ArrowRight, ArrowLeft, LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PhaseCard } from "./phase-card";
 import {
@@ -41,6 +41,19 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Button
+          variant="light"
+          size="sm"
+          startContent={<ArrowLeft className="w-4 h-4" />}
+          onPress={() => router.push("/dashboard")}
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white -ml-2"
+        >
+          Back to Dashboard
+        </Button>
+      </div>
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
