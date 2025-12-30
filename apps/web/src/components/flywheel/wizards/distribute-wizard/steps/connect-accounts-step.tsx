@@ -53,10 +53,10 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
         if (response.ok) {
           const result = await response.json();
           const accounts: ConnectedAccountData[] = (result.accounts || []).map(
-            (acc: { id: string; platform: string; handle: string; connectedAt?: string }) => ({
+            (acc: { id: string; platform: string; username?: string; displayName?: string; connectedAt?: string }) => ({
               id: acc.id,
               platform: acc.platform,
-              handle: acc.handle,
+              handle: acc.username || acc.displayName || 'Connected',
               connected: true,
               connectedAt: acc.connectedAt ? new Date(acc.connectedAt) : undefined,
             })
@@ -75,11 +75,12 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
   const connectedAccounts = data.connectedAccounts || existingAccounts;
 
   const isConnected = (platformId: string) => {
-    return connectedAccounts.some((a) => a.platform === platformId && a.connected);
+    // Compare case-insensitively since DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
+    return connectedAccounts.some((a) => a.platform.toLowerCase() === platformId.toLowerCase() && a.connected);
   };
 
   const getAccountHandle = (platformId: string) => {
-    const account = connectedAccounts.find((a) => a.platform === platformId);
+    const account = connectedAccounts.find((a) => a.platform.toLowerCase() === platformId.toLowerCase());
     return account?.handle;
   };
 
@@ -116,8 +117,8 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
         method: "POST",
       });
       if (response.ok) {
-        // Update local state
-        const updated = connectedAccounts.filter((a) => a.platform !== platformId);
+        // Update local state (case-insensitive comparison)
+        const updated = connectedAccounts.filter((a) => a.platform.toLowerCase() !== platformId.toLowerCase());
         updateData({ connectedAccounts: updated });
         setExistingAccounts(updated);
       }
