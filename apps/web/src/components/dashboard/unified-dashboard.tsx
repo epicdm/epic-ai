@@ -333,83 +333,122 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         />
       )}
 
-      {/* Flywheel Status */}
-      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
-        <CardBody>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div
-                  className={`w-20 h-20 rounded-full border-4 ${
-                    data.flywheel.status === "optimal"
-                      ? "border-success"
-                      : data.flywheel.status === "accelerating"
-                        ? "border-secondary"
-                        : data.flywheel.status === "spinning"
-                          ? "border-primary"
-                          : "border-default-300"
-                  } flex items-center justify-center`}
-                >
-                  <Zap
-                    className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
-                  />
-                </div>
-                {data.flywheel.status !== "inactive" && (
-                  <div className="absolute -top-1 -right-1">
-                    <span className="relative flex h-4 w-4">
-                      <span
-                        className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                          data.flywheel.status === "optimal"
-                            ? "bg-success"
-                            : "bg-primary"
-                        } opacity-75`}
-                      ></span>
-                      <span
-                        className={`relative inline-flex rounded-full h-4 w-4 ${
-                          data.flywheel.status === "optimal"
-                            ? "bg-success"
-                            : "bg-primary"
-                        }`}
-                      ></span>
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold capitalize">
-                  Flywheel: {data.flywheel.status}
-                </h2>
-                <Progress
-                  value={data.flywheel.score}
-                  className="w-48 mt-2"
-                  color={
-                    data.flywheel.score >= 90
-                      ? "success"
-                      : data.flywheel.score >= 60
-                        ? "primary"
-                        : "warning"
-                  }
-                />
-                <p className="text-sm text-default-500 mt-1">
-                  {data.flywheel.score}% complete
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              {data.flywheel.components.map((comp, i) => (
-                <Tooltip key={i} content={comp.name}>
+      {/* Flywheel Status - Only show full version when flywheel is active or setup is complete */}
+      {flywheelState?.flywheelActive ? (
+        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardBody>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="relative">
                   <div
-                    className={`w-3 h-3 rounded-full ${
-                      comp.active ? "bg-success" : "bg-default-300"
-                    }`}
+                    className={`w-20 h-20 rounded-full border-4 ${
+                      data.flywheel.status === "optimal"
+                        ? "border-success"
+                        : data.flywheel.status === "accelerating"
+                          ? "border-secondary"
+                          : data.flywheel.status === "spinning"
+                            ? "border-primary"
+                            : "border-default-300"
+                    } flex items-center justify-center`}
+                  >
+                    <Zap
+                      className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
+                    />
+                  </div>
+                  {data.flywheel.status !== "inactive" && (
+                    <div className="absolute -top-1 -right-1">
+                      <span className="relative flex h-4 w-4">
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                            data.flywheel.status === "optimal"
+                              ? "bg-success"
+                              : "bg-primary"
+                          } opacity-75`}
+                        ></span>
+                        <span
+                          className={`relative inline-flex rounded-full h-4 w-4 ${
+                            data.flywheel.status === "optimal"
+                              ? "bg-success"
+                              : "bg-primary"
+                          }`}
+                        ></span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold capitalize">
+                    Flywheel: {data.flywheel.status}
+                  </h2>
+                  <Progress
+                    value={data.flywheel.score}
+                    className="w-48 mt-2"
+                    color={
+                      data.flywheel.score >= 90
+                        ? "success"
+                        : data.flywheel.score >= 60
+                          ? "primary"
+                          : "warning"
+                    }
                   />
-                </Tooltip>
-              ))}
+                  <p className="text-sm text-default-500 mt-1">
+                    System Health: {data.flywheel.score}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {data.flywheel.components.map((comp, i) => (
+                  <Tooltip key={i} content={comp.name}>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        comp.active ? "bg-success" : "bg-default-300"
+                      }`}
+                    />
+                  </Tooltip>
+                ))}
+              </div>
             </div>
-          </div>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      ) : (
+        /* During setup: Show minimal system health indicator with clear labeling */
+        <Card className="border border-default-200">
+          <CardBody className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-default-100 rounded-lg">
+                  <Activity className="w-4 h-4 text-default-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-default-600">
+                    System Health
+                  </p>
+                  <p className="text-xs text-default-400">
+                    {data.flywheel.components.filter(c => c.active).length} of {data.flywheel.components.length} components active
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  {data.flywheel.components.map((comp, i) => (
+                    <Tooltip key={i} content={comp.name}>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          comp.active ? "bg-success" : "bg-default-300"
+                        }`}
+                      />
+                    </Tooltip>
+                  ))}
+                </div>
+                <Chip size="sm" variant="flat" color="default">
+                  {data.flywheel.score}%
+                </Chip>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Learning Loop - Show for users with active flywheel */}
       {onboarding?.isComplete && data.brand.id && (

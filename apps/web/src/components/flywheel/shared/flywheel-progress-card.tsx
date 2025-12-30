@@ -157,6 +157,33 @@ export function FlywheelProgressCard({
           })}
         </div>
 
+        {/* Next Step Guidance */}
+        {nextPhase && (
+          <div className="mb-4 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+            <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+              Up Next: {PHASE_INFO[nextPhase].name}
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {nextPhase === "UNDERSTAND" && "Set up your brand identity, voice, and target audiences."}
+              {nextPhase === "CREATE" && "Configure your content types and AI generation preferences."}
+              {nextPhase === "DISTRIBUTE" && "Connect social accounts and set up your posting schedule."}
+              {nextPhase === "LEARN" && "Set up analytics tracking and performance goals."}
+              {nextPhase === "AUTOMATE" && "Enable AI autopilot to manage content automatically."}
+            </p>
+          </div>
+        )}
+
+        {allComplete && !flywheelState.flywheelActive && (
+          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
+              Setup Complete!
+            </p>
+            <p className="text-xs text-green-700 dark:text-green-300">
+              All phases are configured. Activate your flywheel to start generating and publishing content.
+            </p>
+          </div>
+        )}
+
         {/* Action Button */}
         <Button
           color="primary"
@@ -164,7 +191,7 @@ export function FlywheelProgressCard({
           endContent={<ArrowRight className="w-4 h-4" />}
           onPress={handleContinue}
         >
-          {nextPhase ? `Continue: ${PHASE_INFO[nextPhase].name}` : "View Setup"}
+          {nextPhase ? `Continue: ${PHASE_INFO[nextPhase].name}` : allComplete && !flywheelState.flywheelActive ? "Activate Flywheel" : "View Setup"}
         </Button>
       </CardBody>
     </Card>
