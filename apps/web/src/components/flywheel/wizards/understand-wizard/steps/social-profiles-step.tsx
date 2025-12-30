@@ -95,7 +95,8 @@ export function SocialProfilesStep({ data, updateData }: SocialProfilesStepProps
   const connectedAccounts = data.socialProfiles || existingAccounts;
 
   const isConnected = (platformId: string) => {
-    return connectedAccounts.some((a) => a.platform === platformId && a.connected);
+    // Compare case-insensitively since DB stores uppercase (FACEBOOK) but UI uses lowercase (facebook)
+    return connectedAccounts.some((a) => a.platform.toLowerCase() === platformId.toLowerCase() && a.connected);
   };
 
   const getAccountHandle = (platformId: string) => {
