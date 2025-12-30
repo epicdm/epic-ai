@@ -74,6 +74,8 @@ export async function GET(request: NextRequest) {
   await prisma.oAuthState.delete({ where: { id: oauthState.id } });
 
   try {
+    console.log('[Meta OAuth] Step 1: Starting token exchange...');
+
     // Exchange code for user access token
     const tokenResponse = await fetch(
       `${TOKEN_URL}?` +
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
-      console.error('Meta token exchange failed:', errorData);
+      console.error('[Meta OAuth] Token exchange failed:', errorData);
       return NextResponse.redirect(
         `${baseUrl}/dashboard/social/accounts?error=token_exchange_failed`
       );
@@ -95,9 +97,12 @@ export async function GET(request: NextRequest) {
 
     const tokenData = await tokenResponse.json();
     const userAccessToken = tokenData.access_token;
+    console.log('[Meta OAuth] Step 2: Token exchange successful');
 
     // Get pages the user manages
+    console.log('[Meta OAuth] Step 3: Fetching user pages...');
     const pages = await MetaClient.getPages(userAccessToken);
+    console.log('[Meta OAuth] Step 3: Found', pages.length, 'pages');
 
     if (pages.length === 0) {
       return NextResponse.redirect(
@@ -130,14 +135,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Get page profile
+    console.log('[Meta OAuth] Step 5: Fetching page profile...');
     const client = new MetaClient(
       { accessToken: pageAccessToken },
       'FACEBOOK',
       page.id
     );
     const profile = await client.getProfile();
+    console.log('[Meta OAuth] Step 5: Got profile for', profile.displayName);
 
     // Fetch extended business data from Facebook page for Brand Brain enrichment
+    console.log('[Meta OAuth] Step 6: Fetching business data...');
     const businessDataResponse = await fetch(
       `https://graph.facebook.com/v18.0/${page.id}?` +
         new URLSearchParams({
@@ -213,6 +221,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Save Facebook page with encrypted token
+    console.log('[Meta OAuth] Step 7: Saving Facebook account...');
     await SocialPublisher.connectAccount(brandId, 'FACEBOOK', {
       accessToken: safeEncryptToken(pageAccessToken),
       expiresAt,
@@ -224,7 +233,10 @@ export async function GET(request: NextRequest) {
       profileUrl: profile.profileUrl,
     });
 
+    console.log('[Meta OAuth] Step 7: Facebook account saved');
+
     // Check if there's an Instagram account connected
+    console.log('[Meta OAuth] Step 8: Checking for Instagram account...');
     if (platform === 'instagram' || platform === 'facebook') {
       const igAccount = await MetaClient.getInstagramAccount(page.id, pageAccessToken);
 
@@ -249,6 +261,8 @@ export async function GET(request: NextRequest) {
         });
       }
     }
+
+    console.log('[Meta OAuth] Step 9: Complete - redirecting to success');
 
     // Clear state cookie and redirect with success
     // If opened in popup (returnUrl is set), show close page
@@ -300,9 +314,13 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Meta OAuth callback error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[Meta OAuth] CALLBACK ERROR:', errorMessage);
+    console.error('[Meta OAuth] Stack trace:', errorStack);
+    console.error('[Meta OAuth] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return NextResponse.redirect(
-      `${baseUrl}/dashboard/social/accounts?error=callback_failed`
+      `${baseUrl}/dashboard/social/accounts?error=callback_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }
