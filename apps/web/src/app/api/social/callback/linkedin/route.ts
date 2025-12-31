@@ -9,27 +9,35 @@ import { SocialPublisher, LinkedInClient } from '@/lib/services/social-publishin
 import { safeEncryptToken } from '@/lib/encryption';
 
 const TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
-const REDIRECT_URI = `${BASE_URL}/api/social/callback/linkedin`;
+
+function getBaseUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
+
+function getRedirectUri(request: NextRequest): string {
+  return `${getBaseUrl(request)}/api/social/callback/linkedin`;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
+  const baseUrl = getBaseUrl(request);
 
   // Check for OAuth errors
   if (error) {
     const errorDescription = searchParams.get('error_description');
     console.error('LinkedIn OAuth error:', error, errorDescription);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
+      `${baseUrl}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=missing_params`
+      `${baseUrl}/dashboard/social/accounts?error=missing_params`
     );
   }
 
@@ -43,7 +51,7 @@ export async function GET(request: NextRequest) {
       await prisma.oAuthState.delete({ where: { id: oauthState.id } });
     }
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=invalid_state`
+      `${baseUrl}/dashboard/social/accounts?error=invalid_state`
     );
   }
 
@@ -62,7 +70,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: getRedirectUri(request),
         client_id: process.env.LINKEDIN_CLIENT_ID || '',
         client_secret: process.env.LINKEDIN_CLIENT_SECRET || '',
       }),
@@ -72,7 +80,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.json();
       console.error('LinkedIn token exchange failed:', errorData);
       return NextResponse.redirect(
-        `${BASE_URL}/dashboard/social/accounts?error=token_exchange_failed`
+        `${baseUrl}/dashboard/social/accounts?error=token_exchange_failed`
       );
     }
 
@@ -102,15 +110,17 @@ export async function GET(request: NextRequest) {
 
     // Clear state cookie and redirect to success
     const response = NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?success=linkedin`
+      `${baseUrl}/dashboard/social/accounts?success=linkedin`
     );
     response.cookies.delete('linkedin_oauth_state');
 
     return response;
   } catch (error) {
-    console.error('LinkedIn OAuth callback error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('LinkedIn OAuth callback error:', errorMessage);
+    console.error('LinkedIn OAuth error details:', error);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=callback_failed`
+      `${baseUrl}/dashboard/social/accounts?error=callback_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }

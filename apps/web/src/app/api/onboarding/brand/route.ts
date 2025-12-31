@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { organizationId, templateId, templateData, ...brandData } = body;
+    const { organizationId, templateId, templateData, logo, ...brandData } = body;
 
     // Verify user has access to this organization
     const membership = await prisma.membership.findUnique({
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       organizationId,
       name,
       website: website || undefined,
+      logo: logo || undefined,
     });
 
     // Create BrandBrain with template data if provided

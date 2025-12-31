@@ -13,4 +13,6 @@ export const prisma =
         : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+// Cache the Prisma client globally to prevent connection pool exhaustion
+// This is important for serverless environments like Vercel
+globalForPrisma.prisma = prisma;

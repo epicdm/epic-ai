@@ -9,7 +9,11 @@ import { prisma } from '@epic-ai/database';
 import crypto from 'crypto';
 
 const TWITTER_AUTH_URL = 'https://twitter.com/i/oauth2/authorize';
-const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/api/social/callback/twitter`;
+
+function getRedirectUri(request: NextRequest): string {
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}/api/social/callback/twitter`;
+}
 
 // Required scopes for posting
 const SCOPES = [
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.TWITTER_CLIENT_ID || '',
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: getRedirectUri(request),
     scope: SCOPES,
     state,
     code_challenge: codeChallenge,

@@ -9,27 +9,35 @@ import { SocialPublisher, TwitterClient } from '@/lib/services/social-publishing
 import { safeEncryptToken } from '@/lib/encryption';
 
 const TOKEN_URL = 'https://api.twitter.com/2/oauth2/token';
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
-const REDIRECT_URI = `${BASE_URL}/api/social/callback/twitter`;
+
+function getBaseUrl(request: NextRequest): string {
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
+
+function getRedirectUri(request: NextRequest): string {
+  return `${getBaseUrl(request)}/api/social/callback/twitter`;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
   const error = searchParams.get('error');
+  const baseUrl = getBaseUrl(request);
 
   // Check for OAuth errors
   if (error) {
     const errorDescription = searchParams.get('error_description');
     console.error('Twitter OAuth error:', error, errorDescription);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
+      `${baseUrl}/dashboard/social/accounts?error=${encodeURIComponent(error)}`
     );
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=missing_params`
+      `${baseUrl}/dashboard/social/accounts?error=missing_params`
     );
   }
 
@@ -44,7 +52,7 @@ export async function GET(request: NextRequest) {
       await prisma.oAuthState.delete({ where: { id: oauthState.id } });
     }
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=invalid_state`
+      `${baseUrl}/dashboard/social/accounts?error=invalid_state`
     );
   }
 
@@ -55,7 +63,7 @@ export async function GET(request: NextRequest) {
 
   if (!codeVerifier) {
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=missing_verifier`
+      `${baseUrl}/dashboard/social/accounts?error=missing_verifier`
     );
   }
 
@@ -72,7 +80,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: getRedirectUri(request),
         code_verifier: codeVerifier,
       }),
     });
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
       const errorData = await tokenResponse.json();
       console.error('Twitter token exchange failed:', errorData);
       return NextResponse.redirect(
-        `${BASE_URL}/dashboard/social/accounts?error=token_exchange_failed`
+        `${baseUrl}/dashboard/social/accounts?error=token_exchange_failed`
       );
     }
 
@@ -112,15 +120,17 @@ export async function GET(request: NextRequest) {
 
     // Clear state cookie and redirect to success
     const response = NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?success=twitter`
+      `${baseUrl}/dashboard/social/accounts?success=twitter`
     );
     response.cookies.delete('twitter_oauth_state');
 
     return response;
   } catch (error) {
-    console.error('Twitter OAuth callback error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Twitter OAuth callback error:', errorMessage);
+    console.error('Twitter OAuth error details:', error);
     return NextResponse.redirect(
-      `${BASE_URL}/dashboard/social/accounts?error=callback_failed`
+      `${baseUrl}/dashboard/social/accounts?error=callback_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }

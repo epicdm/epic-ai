@@ -23,6 +23,7 @@ model User {
 
   memberships            Membership[]
   onboardingProgress     UserOnboardingProgress?
+  flywheelProgress       FlywheelProgress?
   wizardSessions         WizardSession[]
   featureDiscoveryStates FeatureDiscoveryState[]
   demoModeData           DemoModeData?
@@ -33,6 +34,63 @@ model User {
 // ============================================
 // ONBOARDING & UX TRACKING
 // ============================================
+
+// Phase status for Flywheel wizard progression
+enum PhaseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+// Flywheel Progress tracks the 5-phase wizard system:
+// UNDERSTAND → CREATE → DISTRIBUTE → LEARN → AUTOMATE
+model FlywheelProgress {
+  id                String      @id @default(cuid())
+  userId            String      @unique @map("user_id")
+  brandId           String?     @map("brand_id")
+
+  // Phase Status (NOT_STARTED | IN_PROGRESS | COMPLETED | SKIPPED)
+  understandPhase   PhaseStatus @default(NOT_STARTED) @map("understand_phase")
+  createPhase       PhaseStatus @default(NOT_STARTED) @map("create_phase")
+  distributePhase   PhaseStatus @default(NOT_STARTED) @map("distribute_phase")
+  learnPhase        PhaseStatus @default(NOT_STARTED) @map("learn_phase")
+  automatePhase     PhaseStatus @default(NOT_STARTED) @map("automate_phase")
+
+  // Current step in each wizard (-1 = not started)
+  understandStep    Int         @default(-1) @map("understand_step")
+  createStep        Int         @default(-1) @map("create_step")
+  distributeStep    Int         @default(-1) @map("distribute_step")
+  learnStep         Int         @default(-1) @map("learn_step")
+  automateStep      Int         @default(-1) @map("automate_step")
+
+  // Wizard data (JSON for flexibility)
+  understandData    Json?       @map("understand_data")
+  createData        Json?       @map("create_data")
+  distributeData    Json?       @map("distribute_data")
+  learnData         Json?       @map("learn_data")
+  automateData      Json?       @map("automate_data")
+
+  // Smart Defaults cache (AI analysis results)
+  websiteAnalysis   Json?       @map("website_analysis")
+  industryAnalysis  Json?       @map("industry_analysis")
+
+  // Overall progress
+  overallProgress   Int         @default(0) @map("overall_progress") // 0-100
+  flywheelActive    Boolean     @default(false) @map("flywheel_active")
+  activatedAt       DateTime?   @map("activated_at")
+
+  // Timestamps
+  lastActivePhase   String?     @map("last_active_phase")
+  lastActiveAt      DateTime    @default(now()) @map("last_active_at")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("flywheel_progress")
+}
 
 model UserOnboardingProgress {
   id                    String    @id @default(cuid())

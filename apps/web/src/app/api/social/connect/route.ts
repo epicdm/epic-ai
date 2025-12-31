@@ -8,7 +8,11 @@ import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function getBaseUrl(request: NextRequest): string {
+  // Use request origin for dynamic URL (works in all environments)
+  const url = new URL(request.url);
+  return `${url.protocol}//${url.host}`;
+}
 
 const PLATFORM_ROUTES = {
   twitter: "/api/social/connect/twitter",
@@ -72,7 +76,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build the OAuth URL with brand ID
+    // Build the OAuth URL with brand ID and return URL
+    const returnUrl = searchParams.get("returnUrl");
     const params = new URLSearchParams({
       brandId: brand.id,
     });
@@ -82,7 +87,12 @@ export async function GET(request: NextRequest) {
       params.set("platform", "instagram");
     }
 
-    const connectUrl = `${BASE_URL}${route}?${params.toString()}`;
+    // Pass return URL for popup handling
+    if (returnUrl) {
+      params.set("returnUrl", returnUrl);
+    }
+
+    const connectUrl = `${getBaseUrl(request)}${route}?${params.toString()}`;
 
     return NextResponse.json({
       url: connectUrl,

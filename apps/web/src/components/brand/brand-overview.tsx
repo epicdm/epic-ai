@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardBody,
@@ -9,23 +9,14 @@ import {
   Button,
   Progress,
   Chip,
-  Avatar,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Textarea,
-  useDisclosure,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import { BrandSetupWizard } from "@/components/brand/wizard";
 import {
   Brain,
   Globe,
   FileText,
   Sparkles,
-  Plus,
   ArrowRight,
   BookOpen,
   Target,
@@ -71,119 +62,24 @@ interface BrandOverviewProps {
 }
 
 export function BrandOverview({ brand, organizationId }: BrandOverviewProps) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    website: "",
-    industry: "",
-  });
-
-  const handleCreateBrand = async () => {
-    if (!formData.name.trim()) return;
-    setCreating(true);
-
-    try {
-      const res = await fetch("/api/brands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          organizationId,
-        }),
-      });
-
-      if (res.ok) {
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error("Error creating brand:", error);
-    } finally {
-      setCreating(false);
-    }
-  };
+  const router = useRouter();
 
   // No brand exists - show setup wizard
   if (!brand) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <PageHeader
           title="Brand Brain"
           description="Set up your brand to start generating AI-powered content."
         />
 
-        <Card className="max-w-2xl mx-auto">
-          <CardBody className="py-12 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Brain className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              Create Your Brand Brain
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-              Your Brand Brain learns from your context sources and generates content
-              that matches your voice, style, and goals.
-            </p>
-            <Button
-              color="primary"
-              size="lg"
-              startContent={<Plus className="w-5 h-5" />}
-              onPress={onOpen}
-            >
-              Set Up Brand
-            </Button>
-          </CardBody>
-        </Card>
-
-        {/* Setup Modal */}
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
-          <ModalContent>
-            <ModalHeader>Create Your Brand</ModalHeader>
-            <ModalBody className="space-y-4">
-              <Input
-                label="Brand Name"
-                placeholder="e.g., Acme Corp"
-                value={formData.name}
-                onValueChange={(v) => setFormData({ ...formData, name: v })}
-                isRequired
-              />
-              <Textarea
-                label="Description"
-                placeholder="What does your brand do? Who do you serve?"
-                value={formData.description}
-                onValueChange={(v) => setFormData({ ...formData, description: v })}
-                minRows={3}
-              />
-              <Input
-                label="Website"
-                placeholder="https://example.com"
-                value={formData.website}
-                onValueChange={(v) => setFormData({ ...formData, website: v })}
-                description="We'll scrape your website to understand your brand"
-              />
-              <Input
-                label="Industry"
-                placeholder="e.g., SaaS, E-commerce, Healthcare"
-                value={formData.industry}
-                onValueChange={(v) => setFormData({ ...formData, industry: v })}
-              />
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="flat" onPress={onClose}>
-                Cancel
-              </Button>
-              <Button
-                color="primary"
-                onPress={handleCreateBrand}
-                isLoading={creating}
-                isDisabled={!formData.name.trim()}
-              >
-                Create Brand
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+        <BrandSetupWizard
+          organizationId={organizationId}
+          onComplete={(brandId) => {
+            // Router push happens in the wizard's complete step
+            router.refresh();
+          }}
+        />
       </div>
     );
   }

@@ -95,6 +95,7 @@ export function SocialAccountsPage() {
 
   const successParam = searchParams.get("success");
   const errorParam = searchParams.get("error");
+  const errorDetails = searchParams.get("details");
 
   useEffect(() => {
     if (successParam) {
@@ -105,13 +106,16 @@ export function SocialAccountsPage() {
       // Clear the URL param
       window.history.replaceState({}, "", "/dashboard/social/accounts");
     } else if (errorParam) {
+      const errorMessage = errorDetails
+        ? `Failed to connect: ${errorDetails}`
+        : `Failed to connect: ${errorParam.replace(/_/g, " ")}`;
       setToast({
         type: "error",
-        message: `Failed to connect: ${errorParam.replace(/_/g, " ")}`,
+        message: errorMessage,
       });
       window.history.replaceState({}, "", "/dashboard/social/accounts");
     }
-  }, [successParam, errorParam]);
+  }, [successParam, errorParam, errorDetails]);
 
   useEffect(() => {
     fetchAccounts();

@@ -17,6 +17,11 @@ import {
   Select,
   SelectItem,
   Tooltip,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import {
@@ -42,9 +47,13 @@ import {
   FileText,
   Zap,
   Activity,
+  Rocket,
+  PartyPopper,
 } from "lucide-react";
-import { FlywheelSetupGuide } from "./flywheel-setup-guide";
+import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
+import type { FlywheelState, FlywheelPhase, PhaseState, PhaseStatusType } from "@/lib/flywheel/types";
+import { PHASE_DEPENDENCIES } from "@/lib/flywheel/constants";
 
 interface DashboardData {
   brand: {
@@ -152,12 +161,57 @@ const FLYWHEEL_STATUS_COLORS: Record<string, string> = {
   optimal: "text-success",
 };
 
-export function UnifiedDashboard() {
+// Transform API response to FlywheelState format
+function transformFlywheelData(apiData: Record<string, unknown>): FlywheelState {
+  const phases: Record<FlywheelPhase, PhaseState> = {} as Record<FlywheelPhase, PhaseState>;
+  const phaseKeys: FlywheelPhase[] = ["UNDERSTAND", "CREATE", "DISTRIBUTE", "LEARN", "AUTOMATE"];
+
+  for (const phase of phaseKeys) {
+    const phaseData = (apiData.phases as Record<string, unknown>)?.[phase] as Record<string, unknown> | undefined;
+    const status = (phaseData?.status as PhaseStatusType) || "NOT_STARTED";
+    const step = (phaseData?.step as number) ?? -1;
+    const totalSteps = (phaseData?.totalSteps as number) ?? 8;
+
+    // Calculate blocked state based on dependencies
+    const deps = PHASE_DEPENDENCIES[phase] || [];
+    const blockedBy = deps.filter((dep) => {
+      const depData = (apiData.phases as Record<string, unknown>)?.[dep] as Record<string, unknown> | undefined;
+      return depData?.status !== "COMPLETED";
+    });
+
+    phases[phase] = {
+      phase,
+      status,
+      currentStep: step,
+      totalSteps,
+      data: null,
+      isBlocked: blockedBy.length > 0,
+      blockedBy,
+    };
+  }
+
+  return {
+    phases,
+    overallProgress: (apiData.overallProgress as number) ?? 0,
+    flywheelActive: (apiData.flywheelActive as boolean) ?? false,
+    activatedAt: apiData.activatedAt ? new Date(apiData.activatedAt as string) : undefined,
+    lastActivePhase: apiData.lastActivePhase as FlywheelPhase | undefined,
+    lastActiveAt: apiData.lastActiveAt ? new Date(apiData.lastActiveAt as string) : new Date(),
+  };
+}
+
+interface UnifiedDashboardProps {
+  flywheelJustActivated?: boolean;
+}
+
+export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashboardProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [flywheelState, setFlywheelState] = useState<FlywheelState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
+  const [showActivationModal, setShowActivationModal] = useState(flywheelJustActivated);
 
   // Calculate onboarding progress
   const getOnboardingStatus = (dashboardData: DashboardData) => {
@@ -173,13 +227,38 @@ export function UnifiedDashboard() {
   const loadDashboard = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch(`/api/dashboard?period=${period}`);
-      if (res.ok) {
-        const dashboardData = await res.json();
+      // Fetch both dashboard and flywheel data in parallel
+      const [dashboardRes, flywheelRes] = await Promise.all([
+        fetch(`/api/dashboard?period=${period}`),
+        fetch("/api/flywheel/progress"),
+      ]);
+
+      if (dashboardRes.ok) {
+        const dashboardData = await dashboardRes.json();
         setData(dashboardData);
       } else {
-        const errorData = await res.json().catch(() => ({}));
-        setError(errorData.error || `Failed to load dashboard (${res.status})`);
+        const errorData = await dashboardRes.json().catch(() => ({}));
+        setError(errorData.error || `Failed to load dashboard (${dashboardRes.status})`);
+      }
+
+      // Flywheel data - provide default state if missing
+      if (flywheelRes.ok) {
+        const flywheelData = await flywheelRes.json();
+        setFlywheelState(transformFlywheelData(flywheelData));
+      } else {
+        // Provide default state so wizard card still shows
+        setFlywheelState({
+          phases: {
+            UNDERSTAND: { phase: "UNDERSTAND", status: "NOT_STARTED", currentStep: -1, totalSteps: 8, data: null, isBlocked: false, blockedBy: [] },
+            CREATE: { phase: "CREATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["UNDERSTAND"] },
+            DISTRIBUTE: { phase: "DISTRIBUTE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["CREATE"] },
+            LEARN: { phase: "LEARN", status: "NOT_STARTED", currentStep: -1, totalSteps: 5, data: null, isBlocked: true, blockedBy: ["DISTRIBUTE"] },
+            AUTOMATE: { phase: "AUTOMATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["LEARN"] },
+          },
+          overallProgress: 0,
+          flywheelActive: false,
+          lastActiveAt: new Date(),
+        });
       }
     } catch (error) {
       console.error("Error loading dashboard:", error);
@@ -260,108 +339,130 @@ export function UnifiedDashboard() {
         </div>
       </div>
 
-      {/* Flywheel Setup Guide - Show prominently for new users */}
-      {onboarding && !onboarding.isComplete && (
-        <FlywheelSetupGuide
-          dashboardData={{
-            brandBrain: data.brandBrain,
-            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
-            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
-            publishing: { autoEnabled: data.flywheel?.status === "optimal" },
-          }}
+      {/* Flywheel Progress Card - Show when setup is incomplete (progress < 100%) */}
+      {flywheelState && flywheelState.overallProgress < 100 && (
+        <FlywheelProgressCard
+          flywheelState={flywheelState}
+          compact={flywheelState.overallProgress > 50}
         />
       )}
 
-      {/* Compact flywheel guide for returning users who haven't finished setup */}
-      {onboarding && onboarding.isComplete && data.flywheel?.status === "inactive" && (
-        <FlywheelSetupGuide
-          dashboardData={{
-            brandBrain: data.brandBrain,
-            accounts: { connected: data.accounts?.total ?? 0, total: data.accounts?.total ?? 0 },
-            content: { total: data.content?.total ?? 0, published: data.content?.published ?? 0 },
-            publishing: { autoEnabled: false },
-          }}
-          compact
-        />
-      )}
-
-      {/* Flywheel Status */}
-      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
-        <CardBody>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div
-                  className={`w-20 h-20 rounded-full border-4 ${
-                    data.flywheel.status === "optimal"
-                      ? "border-success"
-                      : data.flywheel.status === "accelerating"
-                        ? "border-secondary"
-                        : data.flywheel.status === "spinning"
-                          ? "border-primary"
-                          : "border-default-300"
-                  } flex items-center justify-center`}
-                >
-                  <Zap
-                    className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
-                  />
-                </div>
-                {data.flywheel.status !== "inactive" && (
-                  <div className="absolute -top-1 -right-1">
-                    <span className="relative flex h-4 w-4">
-                      <span
-                        className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                          data.flywheel.status === "optimal"
-                            ? "bg-success"
-                            : "bg-primary"
-                        } opacity-75`}
-                      ></span>
-                      <span
-                        className={`relative inline-flex rounded-full h-4 w-4 ${
-                          data.flywheel.status === "optimal"
-                            ? "bg-success"
-                            : "bg-primary"
-                        }`}
-                      ></span>
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold capitalize">
-                  Flywheel: {data.flywheel.status}
-                </h2>
-                <Progress
-                  value={data.flywheel.score}
-                  className="w-48 mt-2"
-                  color={
-                    data.flywheel.score >= 90
-                      ? "success"
-                      : data.flywheel.score >= 60
-                        ? "primary"
-                        : "warning"
-                  }
-                />
-                <p className="text-sm text-default-500 mt-1">
-                  {data.flywheel.score}% complete
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              {data.flywheel.components.map((comp, i) => (
-                <Tooltip key={i} content={comp.name}>
+      {/* Flywheel Status - Only show full version when flywheel is active AND setup is complete */}
+      {flywheelState?.flywheelActive && flywheelState.overallProgress >= 100 ? (
+        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardBody>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="relative">
                   <div
-                    className={`w-3 h-3 rounded-full ${
-                      comp.active ? "bg-success" : "bg-default-300"
-                    }`}
+                    className={`w-20 h-20 rounded-full border-4 ${
+                      data.flywheel.status === "optimal"
+                        ? "border-success"
+                        : data.flywheel.status === "accelerating"
+                          ? "border-secondary"
+                          : data.flywheel.status === "spinning"
+                            ? "border-primary"
+                            : "border-default-300"
+                    } flex items-center justify-center`}
+                  >
+                    <Zap
+                      className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
+                    />
+                  </div>
+                  {data.flywheel.status !== "inactive" && (
+                    <div className="absolute -top-1 -right-1">
+                      <span className="relative flex h-4 w-4">
+                        <span
+                          className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                            data.flywheel.status === "optimal"
+                              ? "bg-success"
+                              : "bg-primary"
+                          } opacity-75`}
+                        ></span>
+                        <span
+                          className={`relative inline-flex rounded-full h-4 w-4 ${
+                            data.flywheel.status === "optimal"
+                              ? "bg-success"
+                              : "bg-primary"
+                          }`}
+                        ></span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold capitalize">
+                    Flywheel: {data.flywheel.status}
+                  </h2>
+                  <Progress
+                    value={data.flywheel.score}
+                    className="w-48 mt-2"
+                    color={
+                      data.flywheel.score >= 90
+                        ? "success"
+                        : data.flywheel.score >= 60
+                          ? "primary"
+                          : "warning"
+                    }
                   />
-                </Tooltip>
-              ))}
+                  <p className="text-sm text-default-500 mt-1">
+                    System Health: {data.flywheel.score}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {data.flywheel.components.map((comp, i) => (
+                  <Tooltip key={i} content={comp.name}>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        comp.active ? "bg-success" : "bg-default-300"
+                      }`}
+                    />
+                  </Tooltip>
+                ))}
+              </div>
             </div>
-          </div>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      ) : (
+        /* During setup: Show minimal system health indicator with clear labeling */
+        <Card className="border border-default-200">
+          <CardBody className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-default-100 rounded-lg">
+                  <Activity className="w-4 h-4 text-default-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-default-600">
+                    System Health
+                  </p>
+                  <p className="text-xs text-default-400">
+                    {data.flywheel.components.filter(c => c.active).length} of {data.flywheel.components.length} components active
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  {data.flywheel.components.map((comp, i) => (
+                    <Tooltip key={i} content={comp.name}>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          comp.active ? "bg-success" : "bg-default-300"
+                        }`}
+                      />
+                    </Tooltip>
+                  ))}
+                </div>
+                <Chip size="sm" variant="flat" color="default">
+                  {data.flywheel.score}%
+                </Chip>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Learning Loop - Show for users with active flywheel */}
       {onboarding?.isComplete && data.brand.id && (
@@ -735,6 +836,89 @@ export function UnifiedDashboard() {
           </CardBody>
         </Card>
       )}
+
+      {/* Flywheel Activation Celebration Modal */}
+      <Modal
+        isOpen={showActivationModal}
+        onClose={() => {
+          setShowActivationModal(false);
+          // Remove the query param from URL without reload
+          router.replace("/dashboard", { scroll: false });
+        }}
+        size="lg"
+        classNames={{
+          body: "py-6",
+          backdrop: "bg-gradient-to-t from-primary/20 to-secondary/20 backdrop-opacity-40",
+        }}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-success to-primary flex items-center justify-center mb-2">
+                  <Rocket className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent">
+                  Flywheel Activated! 🎉
+                </h2>
+              </ModalHeader>
+              <ModalBody className="text-center">
+                <p className="text-lg text-default-600 mb-4">
+                  Congratulations! Your AI-powered marketing flywheel is now spinning.
+                </p>
+
+                <div className="bg-gradient-to-r from-success/10 to-primary/10 rounded-xl p-4 mb-4">
+                  <h4 className="font-semibold text-default-800 mb-3 flex items-center justify-center gap-2">
+                    <PartyPopper className="w-5 h-5 text-success" />
+                    What happens now?
+                  </h4>
+                  <ul className="text-sm text-default-600 space-y-2 text-left">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Your AI autopilot will generate content based on your brand voice</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Content will be published according to your schedule</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Analytics will track performance and feed AI learnings</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>The more it runs, the smarter it gets!</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <p className="text-sm text-default-500">
+                  Check your dashboard regularly to monitor performance and review AI-generated content.
+                </p>
+              </ModalBody>
+              <ModalFooter className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button
+                  color="default"
+                  variant="bordered"
+                  onPress={onClose}
+                >
+                  Explore Dashboard
+                </Button>
+                <Button
+                  color="primary"
+                  endContent={<ArrowRight className="w-4 h-4" />}
+                  onPress={() => {
+                    onClose();
+                    router.push("/dashboard/content");
+                  }}
+                >
+                  Create Content
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

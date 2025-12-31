@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, CardHeader, Divider, Button } from "@heroui/react";
+import { Card, CardBody, CardHeader, Divider, Button, Checkbox } from "@heroui/react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { SettingsForm } from "./settings-form";
 import { BrandsList } from "./brands-list";
@@ -43,29 +43,57 @@ export function SettingsContent({
 }: SettingsContentProps) {
   const [resettingOnboarding, setResettingOnboarding] = useState(false);
   const [resetMessage, setResetMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [removeBrandOnReset, setRemoveBrandOnReset] = useState(false);
+  const [removeOrganizationOnReset, setRemoveOrganizationOnReset] = useState(false);
 
   const handleResetOnboarding = async () => {
-    if (!confirm("Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.")) {
+    let confirmMessage = "Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.";
+
+    if (removeOrganizationOnReset) {
+      confirmMessage = "⚠️ FULL RESET: This will DELETE your organization, all brands, all data, and reset the 5-phase wizard. You will start completely from scratch. This CANNOT be undone. Are you absolutely sure?";
+    } else if (removeBrandOnReset) {
+      confirmMessage = "Are you sure you want to reset onboarding AND delete all brands? This cannot be undone.";
+    }
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
     setResettingOnboarding(true);
     setResetMessage(null);
 
+    const payload = {
+      removeBrand: removeBrandOnReset,
+      removeOrganization: removeOrganizationOnReset,
+    };
+    console.log("[Reset UI] Sending payload:", payload);
+
     try {
       const response = await fetch("/api/onboarding/reset", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
+      const data = await response.json();
+      console.log("[Reset UI] Response:", { ok: response.ok, status: response.status, data });
+
       if (response.ok) {
-        setResetMessage({ type: "success", text: "Onboarding reset! Redirecting to onboarding..." });
-        // Redirect to onboarding after a short delay
+        console.log("[Reset UI] Success! Full response data:", data);
+        const debugInfo = data.organizationDeleted
+          ? `Org deleted: ${data.deletedOrgId}, Remaining memberships: ${data.remainingMemberships}`
+          : "No organization deleted";
+        console.log("[Reset UI]", debugInfo);
+        setResetMessage({ type: "success", text: data.message || "Reset complete! Redirecting..." });
+        // Redirect to setup hub if organization was deleted, otherwise dashboard
         setTimeout(() => {
-          window.location.href = "/onboarding";
+          window.location.href = removeOrganizationOnReset
+            ? "/setup"
+            : "/dashboard?showOnboarding=true";
         }, 1500);
       } else {
-        const error = await response.json();
-        setResetMessage({ type: "error", text: error.error || "Failed to reset onboarding" });
+        console.error("[Reset UI] Error response:", data);
+        setResetMessage({ type: "error", text: data.error || "Failed to reset onboarding" });
       }
     } catch {
       setResetMessage({ type: "error", text: "Failed to reset onboarding" });
@@ -189,15 +217,49 @@ export function SettingsContent({
                 Reset your onboarding to test the setup flow again. This will show
                 the onboarding wizard on your next page load.
               </p>
+              <div className="space-y-2 mb-3">
+                <Checkbox
+                  isSelected={removeBrandOnReset}
+                  onValueChange={(checked) => {
+                    setRemoveBrandOnReset(checked);
+                    if (!checked) setRemoveOrganizationOnReset(false);
+                  }}
+                  color="danger"
+                  size="sm"
+                >
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Also remove all brands (start completely fresh)
+                  </span>
+                </Checkbox>
+                <Checkbox
+                  isSelected={removeOrganizationOnReset}
+                  onValueChange={(checked) => {
+                    setRemoveOrganizationOnReset(checked);
+                    if (checked) setRemoveBrandOnReset(true);
+                  }}
+                  color="danger"
+                  size="sm"
+                  isDisabled={!removeBrandOnReset}
+                  className="ml-4"
+                >
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Also remove organization (full reset - restart 5-phase wizard)
+                  </span>
+                </Checkbox>
+              </div>
               <div className="flex items-center gap-3">
                 <Button
-                  color="warning"
-                  variant="flat"
+                  color={removeOrganizationOnReset ? "danger" : removeBrandOnReset ? "danger" : "warning"}
+                  variant={removeOrganizationOnReset ? "solid" : "flat"}
                   startContent={<RefreshCw className={`w-4 h-4 ${resettingOnboarding ? "animate-spin" : ""}`} />}
                   isLoading={resettingOnboarding}
                   onPress={handleResetOnboarding}
                 >
-                  Reset Onboarding
+                  {removeOrganizationOnReset
+                    ? "Full Reset (Delete Everything)"
+                    : removeBrandOnReset
+                      ? "Reset & Delete Brands"
+                      : "Reset Onboarding"}
                 </Button>
                 {resetMessage && (
                   <span className={`text-sm ${resetMessage.type === "success" ? "text-success" : "text-danger"}`}>

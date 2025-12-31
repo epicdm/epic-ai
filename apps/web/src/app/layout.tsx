@@ -26,7 +26,7 @@ export default function RootLayout({
       signUpFallbackRedirectUrl="/onboarding"
     >
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.variable} font-sans antialiased`}>
+        <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
           <Providers>{children}</Providers>
         </body>
       </html>
