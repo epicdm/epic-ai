@@ -8,7 +8,8 @@ export type AnalyticsEvent =
   // Onboarding Events
   | { name: "onboarding_started"; properties: { goal?: string } }
   | { name: "onboarding_step_completed"; properties: { step: string; goal?: string } }
-  | { name: "onboarding_completed"; properties: { goal: string; duration_seconds?: number } }
+  | { name: "onboarding_completed"; properties: { goal: string; setup_path?: string; template?: string; duration_seconds?: number } }
+  | { name: "onboarding_business_created"; properties: { template_id?: string; has_website: boolean } }
   | { name: "onboarding_skipped"; properties: { step: string } }
 
   // Voice Agent Events
@@ -50,7 +51,18 @@ export type AnalyticsEvent =
 
   // General Navigation
   | { name: "page_viewed"; properties: { path: string; title?: string } }
-  | { name: "feature_used"; properties: { feature: string } };
+  | { name: "feature_used"; properties: { feature: string } }
+
+  // Wizard Funnel Events (Phase 3: Polish)
+  | { name: "wizard_started"; properties: { setup_path: string; brand_id?: string } }
+  | { name: "wizard_step_completed"; properties: { setup_path: string; step: number; step_id: string; duration_seconds?: number } }
+  | { name: "wizard_step_skipped"; properties: { setup_path: string; step: number; step_id: string } }
+  | { name: "wizard_ai_assist_used"; properties: { step_id: string; assist_type: string } }
+  | { name: "wizard_progress_saved"; properties: { setup_path: string; step: number; progress: number } }
+  | { name: "wizard_resumed"; properties: { setup_path: string; step: number; time_away_seconds: number } }
+  | { name: "wizard_abandoned"; properties: { setup_path: string; step: number; progress: number } }
+  | { name: "wizard_completed"; properties: { setup_path: string; duration_seconds: number; steps_completed: number } }
+  | { name: "flywheel_activated"; properties: { setup_path: string; phases_completed: number } };
 
 // Event names as constants for easier tracking
 export const ANALYTICS_EVENTS = {
@@ -58,6 +70,7 @@ export const ANALYTICS_EVENTS = {
   ONBOARDING_STARTED: "onboarding_started",
   ONBOARDING_STEP_COMPLETED: "onboarding_step_completed",
   ONBOARDING_COMPLETED: "onboarding_completed",
+  ONBOARDING_BUSINESS_CREATED: "onboarding_business_created",
   ONBOARDING_SKIPPED: "onboarding_skipped",
 
   // Voice
@@ -100,4 +113,15 @@ export const ANALYTICS_EVENTS = {
   // General
   PAGE_VIEWED: "page_viewed",
   FEATURE_USED: "feature_used",
+
+  // Wizard Funnel (Phase 3: Polish)
+  WIZARD_STARTED: "wizard_started",
+  WIZARD_STEP_COMPLETED: "wizard_step_completed",
+  WIZARD_STEP_SKIPPED: "wizard_step_skipped",
+  WIZARD_AI_ASSIST_USED: "wizard_ai_assist_used",
+  WIZARD_PROGRESS_SAVED: "wizard_progress_saved",
+  WIZARD_RESUMED: "wizard_resumed",
+  WIZARD_ABANDONED: "wizard_abandoned",
+  WIZARD_COMPLETED: "wizard_completed",
+  FLYWHEEL_ACTIVATED: "flywheel_activated",
 } as const;

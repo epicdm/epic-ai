@@ -1,7 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { syncUser } from "@/lib/sync-user";
-import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { UnifiedOnboardingWizard } from "@/components/onboarding/unified-onboarding-wizard";
 
 export default async function OnboardingPage() {
   const { userId } = await auth();
@@ -37,9 +37,13 @@ export default async function OnboardingPage() {
     redirect("/dashboard");
   }
 
+  const userName = clerkUser?.firstName || clerkUser?.emailAddresses?.[0]?.emailAddress || "there";
+  const userEmail = clerkUser?.emailAddresses?.[0]?.emailAddress || "";
+
   return (
-    <OnboardingWizard
-      userName={clerkUser?.firstName || clerkUser?.emailAddresses?.[0]?.emailAddress || "there"}
+    <UnifiedOnboardingWizard
+      userName={userName}
+      userEmail={userEmail}
     />
   );
 }

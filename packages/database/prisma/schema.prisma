@@ -43,6 +43,13 @@ enum PhaseStatus {
   SKIPPED
 }
 
+// Setup path for wizard mode selection
+enum SetupPath {
+  AI_EXPRESS
+  GUIDED
+  EXPERT
+}
+
 // Flywheel Progress tracks the 5-phase wizard system:
 // UNDERSTAND → CREATE → DISTRIBUTE → LEARN → AUTOMATE
 model FlywheelProgress {
@@ -79,6 +86,13 @@ model FlywheelProgress {
   overallProgress   Int         @default(0) @map("overall_progress") // 0-100
   flywheelActive    Boolean     @default(false) @map("flywheel_active")
   activatedAt       DateTime?   @map("activated_at")
+
+  // Setup path tracking (Phase 3: Polish)
+  setupPath         SetupPath   @default(EXPERT) @map("setup_path")
+  guidedCurrentStep Int         @default(0) @map("guided_current_step")
+  guidedStepData    Json?       @map("guided_step_data")
+  aiConfidence      Json?       @map("ai_confidence") // Per-phase confidence scores
+  lastSavedAt       DateTime?   @map("last_saved_at")
 
   // Timestamps
   lastActivePhase   String?     @map("last_active_phase")

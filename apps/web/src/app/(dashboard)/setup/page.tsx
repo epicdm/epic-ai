@@ -1,11 +1,15 @@
 /**
  * Setup Hub Page - Main entry point for the 5-Phase Flywheel Wizard
+ *
+ * Supports multiple setup modes via query parameter:
+ * - ?mode=guided → Streamlined wizard (12 essential steps)
+ * - Default → Expert mode (Full PhaseHub with all 32 steps)
  */
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma, PhaseStatus } from "@epic-ai/database";
-import { PhaseHub } from "@/components/flywheel";
+import { StreamlinedFlywheelWizard } from "@/components/flywheel/streamlined-flywheel-wizard";
 import {
   FLYWHEEL_PHASES,
   PHASE_INFO,
@@ -13,17 +17,59 @@ import {
   getBlockingPhases,
 } from "@/lib/flywheel/constants";
 import type { FlywheelState, FlywheelPhase, PhaseState } from "@/lib/flywheel/types";
+import { SetupDashboard } from "./setup-dashboard";
 
 export const metadata = {
   title: "Setup | Epic AI",
   description: "Set up your AI marketing flywheel",
 };
 
-export default async function SetupPage() {
+interface SetupPageProps {
+  searchParams: Promise<{ mode?: string; "first-time"?: string }>;
+}
+
+export default async function SetupPage({ searchParams }: SetupPageProps) {
   const { userId } = await auth();
+  const params = await searchParams;
+  const mode = params.mode || "expert";
+  const isFirstTime = params["first-time"] === "true";
 
   if (!userId) {
     redirect("/sign-in");
+  }
+
+  // Get user's organization and brand
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      memberships: {
+        include: {
+          organization: {
+            include: {
+              brands: {
+                take: 1,
+                orderBy: { createdAt: "desc" },
+                include: {
+                  brandBrain: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!user || user.memberships.length === 0) {
+    redirect("/onboarding");
+  }
+
+  const organization = user.memberships[0].organization;
+  const brand = organization.brands[0];
+
+  // For guided mode, we need a brand
+  if (mode === "guided" && !brand) {
+    redirect("/onboarding");
   }
 
   // Get or create flywheel progress
@@ -114,13 +160,46 @@ export default async function SetupPage() {
     activatedAt: progress.activatedAt ?? undefined,
     lastActivePhase: progress.lastActivePhase as FlywheelPhase | undefined,
     lastActiveAt: progress.lastActiveAt,
-    websiteAnalysis: progress.websiteAnalysis as FlywheelState["websiteAnalysis"],
-    industryAnalysis: progress.industryAnalysis as FlywheelState["industryAnalysis"],
+    websiteAnalysis: progress.websiteAnalysis as unknown as FlywheelState["websiteAnalysis"],
+    industryAnalysis: progress.industryAnalysis as unknown as FlywheelState["industryAnalysis"],
   };
 
+  // For guided mode, show the streamlined wizard
+  if (mode === "guided" && brand) {
+    // Build initial data for streamlined wizard from existing progress
+    const initialData = {
+      // From UNDERSTAND phase data
+      ...(progress.understandData as Record<string, unknown> || {}),
+      // From CREATE phase data
+      ...(progress.createData as Record<string, unknown> || {}),
+      // From DISTRIBUTE phase data
+      ...(progress.distributeData as Record<string, unknown> || {}),
+      // From LEARN phase data
+      ...(progress.learnData as Record<string, unknown> || {}),
+      // From AUTOMATE phase data
+      ...(progress.automateData as Record<string, unknown> || {}),
+      // Pre-fill from brand if available
+      brandName: brand.name || undefined,
+      brandDescription: brand.brandBrain?.description || undefined,
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <StreamlinedFlywheelWizard
+          initialData={initialData}
+          brandId={brand.id}
+        />
+      </div>
+    );
+  }
+
+  // Default: Expert mode - show setup dashboard with progress tracking
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <PhaseHub flywheelState={flywheelState} />
-    </div>
+    <SetupDashboard
+      flywheelState={flywheelState}
+      currentMode="expert"
+      isFirstTime={isFirstTime}
+      brandId={brand?.id}
+    />
   );
 }
