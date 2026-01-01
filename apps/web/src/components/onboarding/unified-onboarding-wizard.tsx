@@ -9,7 +9,7 @@
  * - Expert: Full control via setup hub (~30+ min)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -43,6 +43,10 @@ import {
   WrenchIcon,
   ClockIcon,
   ArrowRightIcon,
+  FacebookIcon,
+  InstagramIcon,
+  LinkIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates";
@@ -158,6 +162,7 @@ const wizardSteps: WizardStep[] = [
   { id: "welcome", title: "Welcome", description: "What brings you here?" },
   { id: "business", title: "Business", description: "Your workspace info" },
   { id: "path", title: "Setup Path", description: "Choose your journey" },
+  { id: "social", title: "Connect", description: "Link your accounts" },
   { id: "ready", title: "Ready", description: "Let's go!" },
 ];
 
@@ -241,7 +246,10 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
           onPathSelect={setSelectedPath}
         />
 
-        {/* Step 4: Ready */}
+        {/* Step 4: Social Connection */}
+        <SocialConnectStep brandId={brandId} />
+
+        {/* Step 5: Ready */}
         <ReadyStep
           selectedPath={selectedPath}
           selectedGoal={selectedGoal}
@@ -611,7 +619,191 @@ function PathSelectionStep({ selectedPath, onPathSelect }: PathSelectionStepProp
   );
 }
 
-// Step 4: Ready
+// Step 4: Social Connection
+interface SocialConnectStepProps {
+  brandId: string | null;
+}
+
+interface SocialPlatform {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  connected: boolean;
+  connectUrl: string;
+}
+
+function SocialConnectStep({ brandId }: SocialConnectStepProps) {
+  const [platforms, setPlatforms] = useState<SocialPlatform[]>([
+    {
+      id: "facebook",
+      name: "Facebook",
+      description: "Connect your Facebook Page to publish content and pull brand insights",
+      icon: <FacebookIcon className="w-6 h-6" />,
+      connected: false,
+      connectUrl: brandId ? `/api/social/connect/meta?brandId=${brandId}&platform=facebook&returnUrl=/onboarding` : "",
+    },
+    {
+      id: "instagram",
+      name: "Instagram",
+      description: "Connect your Instagram Business account for visual content",
+      icon: <InstagramIcon className="w-6 h-6" />,
+      connected: false,
+      connectUrl: brandId ? `/api/social/connect/meta?brandId=${brandId}&platform=instagram&returnUrl=/onboarding` : "",
+    },
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check connection status on mount and when brandId changes
+  useEffect(() => {
+    if (!brandId) return;
+
+    const checkStatus = async () => {
+      try {
+        const response = await fetch("/api/social/status");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.platforms) {
+            setPlatforms((prev) =>
+              prev.map((p) => ({
+                ...p,
+                connected: data.platforms.includes(p.id.toUpperCase()) ||
+                           data.platforms.includes(p.id),
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check social status:", err);
+      }
+    };
+
+    checkStatus();
+  }, [brandId]);
+
+  const handleConnect = (platform: SocialPlatform) => {
+    if (!brandId) {
+      setError("Please complete the business info step first");
+      return;
+    }
+
+    // Track the connection attempt
+    trackEvent("onboarding_social_connect_attempt", {
+      platform: platform.id,
+    });
+
+    // Redirect to OAuth flow
+    window.location.href = platform.connectUrl;
+  };
+
+  const connectedCount = platforms.filter((p) => p.connected).length;
+
+  return (
+    <WizardStepContainer stepIndex={3}>
+      <WizardStepHeader
+        icon={<LinkIcon className="w-8 h-8 text-primary" />}
+        title="Connect Your Accounts"
+        description="Link your social accounts to enable content publishing and AI-powered insights"
+      />
+
+      <WizardStepContent>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+            {error}
+          </div>
+        )}
+
+        {connectedCount > 0 && (
+          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <CheckCircleIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">
+                {connectedCount} account{connectedCount > 1 ? "s" : ""} connected
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {platforms.map((platform) => (
+            <Card
+              key={platform.id}
+              className={`transition-all ${
+                platform.connected
+                  ? "border-2 border-green-500 bg-green-50/50 dark:bg-green-900/10"
+                  : "border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+              }`}
+            >
+              <CardBody className="flex flex-row items-center gap-4 p-4">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    platform.connected
+                      ? "bg-green-500 text-white"
+                      : platform.id === "facebook"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white"
+                  }`}
+                >
+                  {platform.connected ? (
+                    <CheckCircleIcon className="w-6 h-6" />
+                  ) : (
+                    platform.icon
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {platform.name}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {platform.connected ? "Connected" : platform.description}
+                  </p>
+                </div>
+                {platform.connected ? (
+                  <Chip color="success" variant="flat" size="sm">
+                    Connected
+                  </Chip>
+                ) : (
+                  <Button
+                    size="sm"
+                    color="primary"
+                    variant="flat"
+                    isDisabled={!brandId}
+                    startContent={<ExternalLinkIcon className="w-4 h-4" />}
+                    onPress={() => handleConnect(platform)}
+                  >
+                    Connect
+                  </Button>
+                )}
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+          <div className="flex items-start gap-3">
+            <SparklesIcon className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-blue-900 dark:text-blue-100 text-sm">
+                Why connect now?
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                Connected accounts let AI analyze your existing content for better brand insights.
+                This helps create more authentic, on-brand content from day one.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-xs text-center text-gray-500 mt-4">
+          You can skip this and connect accounts later in Settings → Social Accounts
+        </p>
+      </WizardStepContent>
+    </WizardStepContainer>
+  );
+}
+
+// Step 5: Ready
 interface ReadyStepProps {
   selectedPath: SetupPath | null;
   selectedGoal: UserGoal | null;
@@ -635,7 +827,7 @@ function ReadyStep({ selectedPath, selectedGoal }: ReadyStepProps) {
   };
 
   return (
-    <WizardStepContainer stepIndex={3} completeLabel="Start Setup" hidePrev>
+    <WizardStepContainer stepIndex={4} completeLabel="Start Setup" hidePrev>
       <WizardStepHeader
         icon={<span className="text-4xl">🚀</span>}
         title="You're All Set!"
