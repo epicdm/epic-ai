@@ -5,7 +5,7 @@
  * Routes to BirdEyeWizard for automated flywheel configuration.
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { BirdEyeWizard } from "@/components/flywheel/shared/birdeye-wizard";
@@ -16,24 +16,44 @@ export const metadata = {
 };
 
 export default async function AIExpressSetupPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
   }
 
-  // Check if user has completed onboarding
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  // Check if user has completed onboarding and get brand data
+  const membership = await prisma.membership.findFirst({
+    where: { userId },
     include: {
-      memberships: true,
+      organization: {
+        include: {
+          brands: {
+            take: 1,
+            include: {
+              socialAccounts: {
+                where: { status: "CONNECTED" },
+                select: { platform: true, username: true, displayName: true },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
-  if (!user || user.memberships.length === 0) {
+  if (!membership) {
     // No organization - redirect to onboarding
     redirect("/onboarding");
   }
+
+  // Get the brand's website URL if available (from onboarding)
+  const brand = membership.organization?.brands[0];
+  const initialWebsiteUrl = brand?.website || "";
+  const connectedFacebookPage = brand?.socialAccounts?.find(
+    (acc: { platform: string; username: string | null; displayName: string | null }) =>
+      acc.platform === "FACEBOOK" || acc.platform === "META"
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -54,7 +74,12 @@ export default async function AIExpressSetupPage() {
         </div>
 
         {/* Wizard */}
-        <BirdEyeWizard />
+        <BirdEyeWizard
+          initialWebsiteUrl={initialWebsiteUrl}
+          connectedFacebookPage={connectedFacebookPage ? {
+            name: connectedFacebookPage.displayName || connectedFacebookPage.username || "",
+          } : undefined}
+        />
       </div>
     </div>
   );

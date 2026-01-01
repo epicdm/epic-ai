@@ -15,6 +15,11 @@ import {
   Spinner,
   Divider,
   Slider,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "@heroui/react";
 import {
   Sparkles,
@@ -33,6 +38,8 @@ import {
   Edit,
   X,
   Settings2,
+  Facebook,
+  CheckCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type {
@@ -71,15 +78,20 @@ function getConfidenceTextColor(confidence: number): string {
 
 interface BirdEyeWizardProps {
   onComplete?: () => void;
+  initialWebsiteUrl?: string;
+  connectedFacebookPage?: { name: string };
 }
 
 type SetupStep = "input" | "analyzing" | "preview" | "applying" | "complete";
+type DataSource = "website" | "facebook";
 
-export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
+export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebookPage }: BirdEyeWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>("input");
-  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState(initialWebsiteUrl || "");
   const [industry, setIndustry] = useState("");
+  const [dataSource, setDataSource] = useState<DataSource>("website");
+  const [showSummary, setShowSummary] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [configuration, setConfiguration] = useState<FullSetupConfiguration | null>(null);
   const [applyingPhase, setApplyingPhase] = useState<string | null>(null);
@@ -114,8 +126,13 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
   }, []);
 
   const handleAnalyze = useCallback(async () => {
-    if (!websiteUrl) {
+    if (dataSource === "website" && !websiteUrl) {
       setError("Please enter your website URL");
+      return;
+    }
+
+    if (dataSource === "facebook" && !connectedFacebookPage) {
+      setError("Please connect a Facebook page first");
       return;
     }
 
@@ -132,13 +149,18 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
       const response = await fetch("/api/flywheel/ai-full-setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteUrl, industry }),
+        body: JSON.stringify({
+          websiteUrl: dataSource === "website" ? websiteUrl : undefined,
+          facebookPage: dataSource === "facebook" ? connectedFacebookPage?.name : undefined,
+          industry,
+          dataSource,
+        }),
       });
 
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error("Failed to analyze website");
+        throw new Error(`Failed to analyze ${dataSource === "facebook" ? "Facebook page" : "website"}`);
       }
 
       const data = await response.json();
@@ -150,10 +172,10 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
     } catch (err) {
       clearInterval(progressInterval);
       console.error("Analysis error:", err);
-      setError("Failed to analyze website. Please try again.");
+      setError(`Failed to analyze ${dataSource === "facebook" ? "Facebook page" : "website"}. Please try again.`);
       setStep("input");
     }
-  }, [websiteUrl, industry]);
+  }, [websiteUrl, industry, dataSource, connectedFacebookPage]);
 
   const handleApplyAll = useCallback(async () => {
     // Use editedConfig if available, otherwise fall back to configuration
@@ -292,19 +314,111 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
               <h2 className="text-lg font-semibold">AI-Powered Setup</h2>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your website URL to get started
+              Choose a data source for AI to analyze your brand
             </p>
           </CardHeader>
           <CardBody className="gap-4">
-            <Input
-              label="Website URL"
-              placeholder="https://yourcompany.com"
-              value={websiteUrl}
-              onValueChange={setWebsiteUrl}
-              startContent={<Globe className="w-4 h-4 text-gray-400" />}
-              isRequired
-              description="We'll analyze your website to understand your brand"
-            />
+            {/* Data Source Selection */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Data Source</p>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Website Option */}
+                <button
+                  type="button"
+                  onClick={() => setDataSource("website")}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    dataSource === "website"
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      dataSource === "website" ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                    }`}>
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Website</p>
+                      <p className="text-xs text-gray-500">Analyze your website</p>
+                    </div>
+                  </div>
+                  {initialWebsiteUrl && dataSource === "website" && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>URL provided from onboarding</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Facebook Option */}
+                <button
+                  type="button"
+                  onClick={() => connectedFacebookPage && setDataSource("facebook")}
+                  disabled={!connectedFacebookPage}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    dataSource === "facebook"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                      : connectedFacebookPage
+                        ? "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                        : "border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      dataSource === "facebook" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                    }`}>
+                      <Facebook className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Facebook Page</p>
+                      <p className="text-xs text-gray-500">
+                        {connectedFacebookPage ? connectedFacebookPage.name : "Not connected"}
+                      </p>
+                    </div>
+                  </div>
+                  {connectedFacebookPage && dataSource === "facebook" && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>Page connected</span>
+                    </div>
+                  )}
+                  {!connectedFacebookPage && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      Connect in Settings → Social
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <Divider className="my-2" />
+
+            {/* Website URL Input - show if website source selected */}
+            {dataSource === "website" && (
+              <Input
+                label="Website URL"
+                placeholder="https://yourcompany.com"
+                value={websiteUrl}
+                onValueChange={setWebsiteUrl}
+                startContent={<Globe className="w-4 h-4 text-gray-400" />}
+                isRequired
+                description={initialWebsiteUrl ? "Pre-filled from onboarding - you can change it" : "We'll analyze your website to understand your brand"}
+              />
+            )}
+
+            {/* Facebook info - show if facebook source selected */}
+            {dataSource === "facebook" && connectedFacebookPage && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Facebook className="w-5 h-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{connectedFacebookPage.name}</p>
+                    <p className="text-xs text-gray-500">We&apos;ll analyze your page info, posts, and audience</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Input
               label="Industry (Optional)"
@@ -324,6 +438,7 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
               className="w-full mt-2"
               startContent={<Sparkles className="w-5 h-5" />}
               onPress={handleAnalyze}
+              isDisabled={dataSource === "website" && !websiteUrl}
             >
               Analyze & Configure
             </Button>
@@ -1081,10 +1196,10 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   variant="flat"
-                  startContent={<Settings2 className="w-4 h-4" />}
-                  onPress={() => router.push("/setup")}
+                  startContent={<Eye className="w-4 h-4" />}
+                  onPress={() => setShowSummary(true)}
                 >
-                  Review All Phases
+                  Review All Changes
                 </Button>
                 <Button
                   color="success"
@@ -1099,6 +1214,165 @@ export function BirdEyeWizard({ onComplete }: BirdEyeWizardProps) {
           </Card>
         </div>
       )}
+
+      {/* Summary Modal */}
+      <Modal
+        isOpen={showSummary}
+        onOpenChange={setShowSummary}
+        size="3xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-purple-500" />
+                  <span>Configuration Summary</span>
+                </div>
+                <p className="text-sm font-normal text-gray-500">
+                  Review all changes applied by AI to your flywheel
+                </p>
+              </ModalHeader>
+              <ModalBody>
+                {editedConfig && (
+                  <div className="space-y-6">
+                    {/* Understand Phase Summary */}
+                    <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Brain className="w-5 h-5 text-purple-500" />
+                        <h3 className="font-semibold">Understand (Brand Brain)</h3>
+                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Brand:</span>{" "}
+                          <span className="font-medium">{editedConfig.understand.brandName || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Industry:</span>{" "}
+                          <span className="font-medium">{editedConfig.understand.industry || "—"}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-500">Audiences:</span>{" "}
+                          <span className="font-medium">{editedConfig.understand.audiences?.length || 0} defined</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-500">Content Pillars:</span>{" "}
+                          <span className="font-medium">{editedConfig.understand.contentPillars?.length || 0} defined</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Create Phase Summary */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Palette className="w-5 h-5 text-blue-500" />
+                        <h3 className="font-semibold">Create (Content Factory)</h3>
+                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="col-span-2">
+                          <span className="text-gray-500">Content Types:</span>{" "}
+                          <span className="font-medium">{editedConfig.create.enabledTypes?.join(", ") || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Image Generation:</span>{" "}
+                          <span className="font-medium">{editedConfig.create.imageGeneration ? "Enabled" : "Disabled"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Hashtag Strategy:</span>{" "}
+                          <span className="font-medium capitalize">{editedConfig.create.hashtagStrategy || "moderate"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Distribute Phase Summary */}
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Share2 className="w-5 h-5 text-green-500" />
+                        <h3 className="font-semibold">Distribute (Publishing)</h3>
+                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Timezone:</span>{" "}
+                          <span className="font-medium">{editedConfig.distribute.timezone || "Auto-detected"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Platforms:</span>{" "}
+                          <span className="font-medium">
+                            {Object.entries(editedConfig.distribute.platformSettings || {})
+                              .filter(([, s]) => s.enabled)
+                              .map(([p]) => p)
+                              .join(", ") || "None"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Learn Phase Summary */}
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BarChart3 className="w-5 h-5 text-amber-500" />
+                        <h3 className="font-semibold">Learn (Analytics)</h3>
+                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="col-span-2">
+                          <span className="text-gray-500">Priority Metrics:</span>{" "}
+                          <span className="font-medium">{editedConfig.learn.priorityMetrics?.join(", ") || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Reports:</span>{" "}
+                          <span className="font-medium capitalize">{editedConfig.learn.reportFrequency || "Weekly"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Automate Phase Summary */}
+                    <div className="p-4 bg-pink-50 dark:bg-pink-950/30 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Zap className="w-5 h-5 text-pink-500" />
+                        <h3 className="font-semibold">Automate (AI Autopilot)</h3>
+                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Approval Mode:</span>{" "}
+                          <span className="font-medium capitalize">{editedConfig.automate.approvalMode?.replace("_", " ") || "Review"}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Posts/Week:</span>{" "}
+                          <span className="font-medium">{editedConfig.automate.postsPerWeek || 7}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  variant="light"
+                  onPress={onClose}
+                >
+                  Close
+                </Button>
+                <Button
+                  color="primary"
+                  startContent={<Settings2 className="w-4 h-4" />}
+                  onPress={() => {
+                    onClose();
+                    router.push("/setup");
+                  }}
+                >
+                  Edit in Expert Mode
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
