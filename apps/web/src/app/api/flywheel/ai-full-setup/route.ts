@@ -1,13 +1,14 @@
 /**
  * AI Full Setup API Route
  * Generates complete wizard configurations for ALL 5 flywheel phases at once
- * from minimal user input (website URL)
+ * from minimal user input (website URL or Facebook page data)
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import OpenAI from "openai";
+import { safeDecryptToken } from "@/lib/encryption";
 import type {
   UnderstandWizardData,
   CreateWizardData,
@@ -21,8 +22,27 @@ const openai = new OpenAI({
 });
 
 interface AIFullSetupRequest {
-  websiteUrl: string;
+  websiteUrl?: string;
+  facebookPage?: string;
   industry?: string;
+  dataSource?: "website" | "facebook";
+}
+
+interface FacebookPageData {
+  name: string;
+  about?: string;
+  description?: string;
+  category?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  posts?: Array<{
+    message?: string;
+    created_time: string;
+    likes?: number;
+    comments?: number;
+  }>;
 }
 
 type PhaseWithConfidence<T> = Partial<T> & {
@@ -46,18 +66,26 @@ interface FullSetupAPIResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthWithBypass();
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body: AIFullSetupRequest = await request.json();
-    const { websiteUrl, industry } = body;
+    const { websiteUrl, facebookPage, industry, dataSource = "website" } = body;
 
-    if (!websiteUrl) {
+    // Validate based on data source
+    if (dataSource === "website" && !websiteUrl) {
       return NextResponse.json(
         { error: "Website URL is required" },
+        { status: 400 }
+      );
+    }
+
+    if (dataSource === "facebook" && !facebookPage) {
+      return NextResponse.json(
+        { error: "Facebook page is required" },
         { status: 400 }
       );
     }
@@ -73,6 +101,7 @@ export async function POST(request: NextRequest) {
                 brands: {
                   include: {
                     socialAccounts: true,
+                    brandBrain: true,
                   },
                 },
               },
@@ -85,21 +114,28 @@ export async function POST(request: NextRequest) {
     const brand = user?.memberships[0]?.organization?.brands[0];
     const socialAccounts = brand?.socialAccounts || [];
 
-    // Fetch website content for analysis
     let htmlContent = "";
-    try {
-      const url = new URL(websiteUrl);
-      const response = await fetch(url.toString(), {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; EpicAI/1.0; +https://epic.dm)",
-        },
-      });
-      if (response.ok) {
-        htmlContent = await response.text();
-        htmlContent = htmlContent.slice(0, 50000);
+    let facebookData: FacebookPageData | null = null;
+
+    if (dataSource === "website" && websiteUrl) {
+      // Fetch website content for analysis
+      try {
+        const url = new URL(websiteUrl);
+        const response = await fetch(url.toString(), {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; EpicAI/1.0; +https://epic.dm)",
+          },
+        });
+        if (response.ok) {
+          htmlContent = await response.text();
+          htmlContent = htmlContent.slice(0, 50000);
+        }
+      } catch (error) {
+        console.error("Error fetching website:", error);
       }
-    } catch (error) {
-      console.error("Error fetching website:", error);
+    } else if (dataSource === "facebook") {
+      // Fetch Facebook page data
+      facebookData = await fetchFacebookPageData(brand?.id, facebookPage);
     }
 
     // Track analysis time
@@ -107,10 +143,12 @@ export async function POST(request: NextRequest) {
 
     // Generate all 5 phase configurations in a single AI call
     const configuration = await generateFullConfiguration(
-      websiteUrl,
+      websiteUrl || "",
       htmlContent,
       industry,
-      socialAccounts
+      socialAccounts,
+      dataSource,
+      facebookData
     );
 
     const analysisTime = Math.round((Date.now() - startTime) / 1000);
@@ -137,6 +175,110 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * Fetch Facebook page data using the Meta Graph API
+ */
+async function fetchFacebookPageData(
+  brandId: string | undefined,
+  facebookPageName: string | undefined
+): Promise<FacebookPageData | null> {
+  if (!brandId || !facebookPageName) {
+    return null;
+  }
+
+  try {
+    // Get the Facebook social account for this brand
+    const facebookAccount = await prisma.socialAccount.findFirst({
+      where: {
+        brandId,
+        platform: "FACEBOOK",
+      },
+    });
+
+    if (!facebookAccount || !facebookAccount.accessToken) {
+      console.error("[AI Full Setup] No Facebook account found for brand:", brandId);
+      return null;
+    }
+
+    // Decrypt the access token
+    const accessToken = safeDecryptToken(facebookAccount.accessToken);
+    if (!accessToken) {
+      console.error("[AI Full Setup] Failed to decrypt Facebook access token");
+      return null;
+    }
+
+    const pageId = facebookAccount.platformId;
+    if (!pageId) {
+      console.error("[AI Full Setup] No Facebook page ID found");
+      return null;
+    }
+
+    // Fetch page info
+    console.log("[AI Full Setup] Fetching Facebook page data for:", facebookPageName);
+    const pageResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}?` +
+        new URLSearchParams({
+          fields: "name,about,description,category,website,phone,emails,single_line_address",
+          access_token: accessToken,
+        })
+    );
+
+    let pageData: FacebookPageData = {
+      name: facebookPageName,
+    };
+
+    if (pageResponse.ok) {
+      const fbData = await pageResponse.json();
+      pageData = {
+        name: fbData.name || facebookPageName,
+        about: fbData.about,
+        description: fbData.description,
+        category: fbData.category,
+        website: fbData.website,
+        phone: fbData.phone,
+        email: fbData.emails?.[0],
+        address: fbData.single_line_address,
+      };
+    }
+
+    // Fetch recent posts for content analysis
+    const postsResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}/posts?` +
+        new URLSearchParams({
+          fields: "message,created_time,likes.summary(true),comments.summary(true)",
+          limit: "25",
+          access_token: accessToken,
+        })
+    );
+
+    if (postsResponse.ok) {
+      const postsData = await postsResponse.json();
+      pageData.posts = postsData.data?.map((post: {
+        message?: string;
+        created_time: string;
+        likes?: { summary?: { total_count?: number } };
+        comments?: { summary?: { total_count?: number } };
+      }) => ({
+        message: post.message,
+        created_time: post.created_time,
+        likes: post.likes?.summary?.total_count || 0,
+        comments: post.comments?.summary?.total_count || 0,
+      })) || [];
+    }
+
+    console.log("[AI Full Setup] Fetched Facebook page data:", {
+      name: pageData.name,
+      category: pageData.category,
+      postsCount: pageData.posts?.length || 0,
+    });
+
+    return pageData;
+  } catch (error) {
+    console.error("[AI Full Setup] Error fetching Facebook page data:", error);
+    return null;
+  }
+}
+
+/**
  * Calculate confidence score based on data richness and source quality
  */
 function calculateConfidence(
@@ -147,6 +289,7 @@ function calculateConfidence(
     hasHtmlContent: boolean;
     hasIndustry: boolean;
     hasSocialAccounts: boolean;
+    hasFacebookData: boolean;
     phase: string;
   }
 ): number {
@@ -155,6 +298,7 @@ function calculateConfidence(
   // Increase confidence based on data sources
   if (context.hasWebsite) score += 0.15;
   if (context.hasHtmlContent) score += 0.15;
+  if (context.hasFacebookData) score += 0.2; // Facebook data is rich
   if (context.hasIndustry) score += 0.05;
   if (context.hasSocialAccounts) score += 0.1;
 
@@ -185,19 +329,53 @@ async function generateFullConfiguration(
   htmlContent: string,
   industry?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  socialAccounts?: any[]
+  socialAccounts?: any[],
+  dataSource: "website" | "facebook" = "website",
+  facebookData?: FacebookPageData | null
 ): Promise<FullSetupResponse> {
   const connectedPlatforms = socialAccounts
     ?.filter((acc) => acc.isConnected)
     .map((acc) => acc.platform.toLowerCase()) || [];
 
-  const prompt = `You are an expert AI marketing strategist. Analyze this website and generate a COMPLETE marketing flywheel configuration for all 5 phases.
+  // Build source-specific content for the prompt
+  let sourceContent = "";
+  let sourceDescription = "";
 
-Website URL: ${websiteUrl}
-Industry Hint: ${industry || "Auto-detect from website content"}
+  if (dataSource === "facebook" && facebookData) {
+    sourceDescription = `Facebook Page: ${facebookData.name}`;
+    sourceContent = `
+Facebook Page Information:
+- Page Name: ${facebookData.name}
+- Category: ${facebookData.category || "Not specified"}
+- About: ${facebookData.about || "Not specified"}
+- Description: ${facebookData.description || "Not specified"}
+- Website: ${facebookData.website || "Not specified"}
+- Phone: ${facebookData.phone || "Not specified"}
+- Email: ${facebookData.email || "Not specified"}
+- Address: ${facebookData.address || "Not specified"}
+
+${facebookData.posts && facebookData.posts.length > 0 ? `
+Recent Facebook Posts (analyze for voice, tone, and content themes):
+${facebookData.posts
+  .filter(p => p.message)
+  .slice(0, 15)
+  .map((p, i) => `
+[Post ${i + 1}] (Likes: ${p.likes || 0}, Comments: ${p.comments || 0})
+${p.message}
+`).join("\n")}
+` : ""}`;
+  } else if (websiteUrl) {
+    sourceDescription = `Website URL: ${websiteUrl}`;
+    sourceContent = htmlContent ? `Website Content (partial):\n${htmlContent.slice(0, 25000)}` : "";
+  }
+
+  const prompt = `You are an expert AI marketing strategist. Analyze this ${dataSource === "facebook" ? "Facebook page" : "website"} and generate a COMPLETE marketing flywheel configuration for all 5 phases.
+
+${sourceDescription}
+Industry Hint: ${industry || `Auto-detect from ${dataSource === "facebook" ? "Facebook page data" : "website content"}`}
 Connected Social Platforms: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(", ") : "None yet - suggest optimal platforms"}
 
-${htmlContent ? `Website Content (partial):\n${htmlContent.slice(0, 25000)}` : ""}
+${sourceContent}
 
 Generate a comprehensive JSON configuration for ALL 5 PHASES of the marketing flywheel:
 
@@ -471,6 +649,7 @@ Respond ONLY with valid JSON.`;
     hasHtmlContent: !!htmlContent && htmlContent.length > 100,
     hasIndustry: !!industry,
     hasSocialAccounts: (socialAccounts?.length || 0) > 0,
+    hasFacebookData: !!facebookData && (!!facebookData.about || (facebookData.posts?.length || 0) > 0),
   };
 
   return {
