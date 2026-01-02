@@ -25,7 +25,7 @@ interface AIFullSetupRequest {
   websiteUrl?: string;
   facebookPage?: string;
   industry?: string;
-  dataSource?: "website" | "facebook";
+  dataSource?: "website" | "facebook" | "both";
 }
 
 interface FacebookPageData {
@@ -90,6 +90,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For dual-source "both" mode, require at least one source
+    if (dataSource === "both" && !websiteUrl && !facebookPage) {
+      return NextResponse.json(
+        { error: "At least one data source is required" },
+        { status: 400 }
+      );
+    }
+
     // Get user's organization and brand for context
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -117,8 +125,8 @@ export async function POST(request: NextRequest) {
     let htmlContent = "";
     let facebookData: FacebookPageData | null = null;
 
-    if (dataSource === "website" && websiteUrl) {
-      // Fetch website content for analysis
+    // Fetch website content if website source is enabled
+    if ((dataSource === "website" || dataSource === "both") && websiteUrl) {
       try {
         const url = new URL(websiteUrl);
         const response = await fetch(url.toString(), {
@@ -133,8 +141,10 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error("Error fetching website:", error);
       }
-    } else if (dataSource === "facebook") {
-      // Fetch Facebook page data
+    }
+
+    // Fetch Facebook page data if Facebook source is enabled
+    if ((dataSource === "facebook" || dataSource === "both") && facebookPage) {
       facebookData = await fetchFacebookPageData(brand?.id, facebookPage);
     }
 
@@ -330,7 +340,7 @@ async function generateFullConfiguration(
   industry?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   socialAccounts?: any[],
-  dataSource: "website" | "facebook" = "website",
+  dataSource: "website" | "facebook" | "both" = "website",
   facebookData?: FacebookPageData | null
 ): Promise<FullSetupResponse> {
   const connectedPlatforms = socialAccounts
@@ -341,9 +351,8 @@ async function generateFullConfiguration(
   let sourceContent = "";
   let sourceDescription = "";
 
-  if (dataSource === "facebook" && facebookData) {
-    sourceDescription = `Facebook Page: ${facebookData.name}`;
-    sourceContent = `
+  // Build Facebook content section if available
+  const facebookContent = facebookData ? `
 Facebook Page Information:
 - Page Name: ${facebookData.name}
 - Category: ${facebookData.category || "Not specified"}
@@ -363,16 +372,46 @@ ${facebookData.posts
 [Post ${i + 1}] (Likes: ${p.likes || 0}, Comments: ${p.comments || 0})
 ${p.message}
 `).join("\n")}
-` : ""}`;
+` : ""}` : "";
+
+  // Build website content section if available
+  const websiteContent = htmlContent ? `Website Content (partial):\n${htmlContent.slice(0, 25000)}` : "";
+
+  // Combine sources based on dataSource mode
+  if (dataSource === "both") {
+    const sources = [];
+    if (websiteUrl) sources.push(`Website: ${websiteUrl}`);
+    if (facebookData) sources.push(`Facebook Page: ${facebookData.name}`);
+    sourceDescription = sources.join(" + ");
+
+    // Combine both content sources (reduce individual limits to fit both)
+    const combinedContent = [];
+    if (websiteContent) {
+      combinedContent.push("=== WEBSITE ANALYSIS ===\n" + htmlContent.slice(0, 15000));
+    }
+    if (facebookContent) {
+      combinedContent.push("=== FACEBOOK PAGE ANALYSIS ===\n" + facebookContent);
+    }
+    sourceContent = combinedContent.join("\n\n");
+  } else if (dataSource === "facebook" && facebookData) {
+    sourceDescription = `Facebook Page: ${facebookData.name}`;
+    sourceContent = facebookContent;
   } else if (websiteUrl) {
     sourceDescription = `Website URL: ${websiteUrl}`;
-    sourceContent = htmlContent ? `Website Content (partial):\n${htmlContent.slice(0, 25000)}` : "";
+    sourceContent = websiteContent;
   }
 
-  const prompt = `You are an expert AI marketing strategist. Analyze this ${dataSource === "facebook" ? "Facebook page" : "website"} and generate a COMPLETE marketing flywheel configuration for all 5 phases.
+  // Build source type description for prompt
+  const sourceTypeLabel = dataSource === "both"
+    ? "website and Facebook page"
+    : dataSource === "facebook"
+      ? "Facebook page"
+      : "website";
+
+  const prompt = `You are an expert AI marketing strategist. Analyze this ${sourceTypeLabel} and generate a COMPLETE marketing flywheel configuration for all 5 phases.
 
 ${sourceDescription}
-Industry Hint: ${industry || `Auto-detect from ${dataSource === "facebook" ? "Facebook page data" : "website content"}`}
+Industry Hint: ${industry || `Auto-detect from ${dataSource === "both" ? "combined data sources" : dataSource === "facebook" ? "Facebook page data" : "website content"}`}
 Connected Social Platforms: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(", ") : "None yet - suggest optimal platforms"}
 
 ${sourceContent}

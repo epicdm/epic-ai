@@ -80,22 +80,27 @@ interface BirdEyeWizardProps {
   onComplete?: () => void;
   initialWebsiteUrl?: string;
   connectedFacebookPage?: { name: string };
+  brandId?: string;
 }
 
 type SetupStep = "input" | "analyzing" | "preview" | "applying" | "complete";
-type DataSource = "website" | "facebook";
 
-export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebookPage }: BirdEyeWizardProps) {
+export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebookPage: initialFacebookPage, brandId }: BirdEyeWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState<SetupStep>("input");
   const [websiteUrl, setWebsiteUrl] = useState(initialWebsiteUrl || "");
   const [industry, setIndustry] = useState("");
-  const [dataSource, setDataSource] = useState<DataSource>("website");
   const [showSummary, setShowSummary] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [configuration, setConfiguration] = useState<FullSetupConfiguration | null>(null);
   const [applyingPhase, setApplyingPhase] = useState<string | null>(null);
   const [appliedPhases, setAppliedPhases] = useState<string[]>([]);
+
+  // Dual-source state: both Facebook and Website can be used together
+  const [connectedFacebookPage, setConnectedFacebookPage] = useState<{ name: string } | undefined>(initialFacebookPage);
+  const [isConnectingFacebook, setIsConnectingFacebook] = useState(false);
+  const [useFacebook, setUseFacebook] = useState(!!initialFacebookPage);
+  const [useWebsite, setUseWebsite] = useState(true); // Website is default ON
 
   // New state for enhanced features
   const [timeSaved, setTimeSaved] = useState<number>(25);
@@ -103,6 +108,66 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
   const [analysisProgress, setAnalysisProgress] = useState<number>(0);
   const [editingPhase, setEditingPhase] = useState<string | null>(null);
   const [editedConfig, setEditedConfig] = useState<FullSetupConfiguration | null>(null);
+
+  // Listen for OAuth popup completion
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
+        // Facebook connected successfully
+        setIsConnectingFacebook(false);
+        setUseFacebook(true);
+        // Fetch the connected page info
+        fetchConnectedFacebookPage();
+      } else if (event.data?.type === 'SOCIAL_CONNECT_ERROR' && event.data?.platform === 'meta') {
+        setIsConnectingFacebook(false);
+        setError('Failed to connect Facebook. Please try again.');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Fetch connected Facebook page info
+  const fetchConnectedFacebookPage = useCallback(async () => {
+    try {
+      const response = await fetch('/api/social/accounts');
+      if (response.ok) {
+        const accounts = await response.json();
+        const facebookAccount = accounts.find((acc: { platform: string; accountName?: string; username?: string }) =>
+          acc.platform === 'FACEBOOK' || acc.platform === 'facebook'
+        );
+        if (facebookAccount) {
+          setConnectedFacebookPage({ name: facebookAccount.accountName || facebookAccount.username || 'Facebook Page' });
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching Facebook page:', err);
+    }
+  }, []);
+
+  // Handle Facebook connection
+  const handleConnectFacebook = useCallback(async () => {
+    if (!brandId) {
+      setError('Brand not found. Please complete onboarding first.');
+      return;
+    }
+
+    setIsConnectingFacebook(true);
+    setError(null);
+
+    // Open Facebook OAuth in popup window
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    window.open(
+      `/api/social/connect/meta?brandId=${brandId}&platform=facebook&returnUrl=/setup/ai-setup`,
+      'facebook-oauth',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+    );
+  }, [brandId]);
 
   // Sync editedConfig when configuration changes
   useEffect(() => {
@@ -126,12 +191,18 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
   }, []);
 
   const handleAnalyze = useCallback(async () => {
-    if (dataSource === "website" && !websiteUrl) {
+    // Validate at least one source is selected and has data
+    if (!useWebsite && !useFacebook) {
+      setError("Please select at least one data source");
+      return;
+    }
+
+    if (useWebsite && !websiteUrl) {
       setError("Please enter your website URL");
       return;
     }
 
-    if (dataSource === "facebook" && !connectedFacebookPage) {
+    if (useFacebook && !connectedFacebookPage) {
       setError("Please connect a Facebook page first");
       return;
     }
@@ -146,12 +217,15 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
     }, 12000); // Every 12 seconds = 5 phases in 60 seconds
 
     try {
+      // Determine data source type for API
+      const dataSource = useFacebook && useWebsite ? "both" : (useFacebook ? "facebook" : "website");
+
       const response = await fetch("/api/flywheel/ai-full-setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          websiteUrl: dataSource === "website" ? websiteUrl : undefined,
-          facebookPage: dataSource === "facebook" ? connectedFacebookPage?.name : undefined,
+          websiteUrl: useWebsite ? websiteUrl : undefined,
+          facebookPage: useFacebook ? connectedFacebookPage?.name : undefined,
           industry,
           dataSource,
         }),
@@ -160,7 +234,8 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error(`Failed to analyze ${dataSource === "facebook" ? "Facebook page" : "website"}`);
+        const sourceLabel = useFacebook && useWebsite ? "sources" : (useFacebook ? "Facebook page" : "website");
+        throw new Error(`Failed to analyze ${sourceLabel}`);
       }
 
       const data = await response.json();
@@ -172,10 +247,11 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
     } catch (err) {
       clearInterval(progressInterval);
       console.error("Analysis error:", err);
-      setError(`Failed to analyze ${dataSource === "facebook" ? "Facebook page" : "website"}. Please try again.`);
+      const sourceLabel = useFacebook && useWebsite ? "your sources" : (useFacebook ? "Facebook page" : "website");
+      setError(`Failed to analyze ${sourceLabel}. Please try again.`);
       setStep("input");
     }
-  }, [websiteUrl, industry, dataSource, connectedFacebookPage]);
+  }, [websiteUrl, industry, useFacebook, useWebsite, connectedFacebookPage]);
 
   const handleApplyAll = useCallback(async () => {
     // Use editedConfig if available, otherwise fall back to configuration
@@ -314,88 +390,128 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               <h2 className="text-lg font-semibold">AI-Powered Setup</h2>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Choose a data source for AI to analyze your brand
+              Connect your data sources and let AI build your marketing flywheel
             </p>
           </CardHeader>
           <CardBody className="gap-4">
-            {/* Data Source Selection */}
+            {/* Dual-Source Selection - Toggle cards */}
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Data Source</p>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Website Option */}
-                <button
-                  type="button"
-                  onClick={() => setDataSource("website")}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    dataSource === "website"
-                      ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                  }`}
-                >
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Data Sources <span className="text-gray-400 font-normal">(select one or both)</span>
+              </p>
+
+              {/* Website Source Card */}
+              <button
+                type="button"
+                onClick={() => setUseWebsite(!useWebsite)}
+                className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                  useWebsite
+                    ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      dataSource === "website" ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                      useWebsite ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-800"
                     }`}>
                       <Globe className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">Website</p>
-                      <p className="text-xs text-gray-500">Analyze your website</p>
+                      <p className="text-xs text-gray-500">Analyze your website content</p>
                     </div>
                   </div>
-                  {initialWebsiteUrl && dataSource === "website" && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span>URL provided from onboarding</span>
-                    </div>
-                  )}
-                </button>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                    useWebsite ? "border-purple-500 bg-purple-500" : "border-gray-300"
+                  }`}>
+                    {useWebsite && <Check className="w-4 h-4 text-white" />}
+                  </div>
+                </div>
+                {initialWebsiteUrl && useWebsite && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>URL provided from onboarding</span>
+                  </div>
+                )}
+              </button>
 
-                {/* Facebook Option */}
-                <button
-                  type="button"
-                  onClick={() => connectedFacebookPage && setDataSource("facebook")}
-                  disabled={!connectedFacebookPage}
-                  className={`p-4 rounded-xl border-2 transition-all text-left ${
-                    dataSource === "facebook"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                      : connectedFacebookPage
-                        ? "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                        : "border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed"
-                  }`}
-                >
+              {/* Facebook Source Card */}
+              <div
+                className={`w-full p-4 rounded-xl border-2 transition-all ${
+                  useFacebook && connectedFacebookPage
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                    : "border-gray-200 dark:border-gray-700"
+                }`}
+              >
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      dataSource === "facebook" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                      useFacebook && connectedFacebookPage ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-800"
                     }`}>
                       <Facebook className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">Facebook Page</p>
                       <p className="text-xs text-gray-500">
-                        {connectedFacebookPage ? connectedFacebookPage.name : "Not connected"}
+                        {connectedFacebookPage ? connectedFacebookPage.name : "Connect to analyze posts & engagement"}
                       </p>
                     </div>
                   </div>
-                  {connectedFacebookPage && dataSource === "facebook" && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span>Page connected</span>
-                    </div>
+                  {connectedFacebookPage ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUseFacebook(!useFacebook);
+                      }}
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        useFacebook ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                      }`}
+                    >
+                      {useFacebook && <Check className="w-4 h-4 text-white" />}
+                    </button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      color="primary"
+                      variant="flat"
+                      isLoading={isConnectingFacebook}
+                      onPress={handleConnectFacebook}
+                      startContent={!isConnectingFacebook && <Facebook className="w-4 h-4" />}
+                    >
+                      {isConnectingFacebook ? "Connecting..." : "Connect"}
+                    </Button>
                   )}
-                  {!connectedFacebookPage && (
-                    <div className="mt-2 text-xs text-gray-400">
-                      Connect in Settings → Social
-                    </div>
-                  )}
-                </button>
+                </div>
+                {connectedFacebookPage && useFacebook && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>Page connected - will analyze posts & engagement</span>
+                  </div>
+                )}
+                {!brandId && !connectedFacebookPage && (
+                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    Complete onboarding first to connect Facebook
+                  </p>
+                )}
               </div>
+
+              {/* Dual-source benefit callout */}
+              {useWebsite && useFacebook && connectedFacebookPage && (
+                <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <Sparkles className="w-4 h-4 text-purple-500" />
+                  <p className="text-xs text-purple-700 dark:text-purple-300">
+                    <span className="font-medium">Dual-source analysis:</span> Combining website + Facebook for richer insights
+                  </p>
+                </div>
+              )}
             </div>
 
             <Divider className="my-2" />
 
-            {/* Website URL Input - show if website source selected */}
-            {dataSource === "website" && (
+            {/* Website URL Input - show if website source enabled */}
+            {useWebsite && (
               <Input
                 label="Website URL"
                 placeholder="https://yourcompany.com"
@@ -405,19 +521,6 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 isRequired
                 description={initialWebsiteUrl ? "Pre-filled from onboarding - you can change it" : "We'll analyze your website to understand your brand"}
               />
-            )}
-
-            {/* Facebook info - show if facebook source selected */}
-            {dataSource === "facebook" && connectedFacebookPage && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Facebook className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{connectedFacebookPage.name}</p>
-                    <p className="text-xs text-gray-500">We&apos;ll analyze your page info, posts, and audience</p>
-                  </div>
-                </div>
-              </div>
             )}
 
             <Input
@@ -438,9 +541,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               className="w-full mt-2"
               startContent={<Sparkles className="w-5 h-5" />}
               onPress={handleAnalyze}
-              isDisabled={dataSource === "website" && !websiteUrl}
+              isDisabled={(!useWebsite && !useFacebook) || (useWebsite && !websiteUrl) || (useFacebook && !connectedFacebookPage)}
             >
-              Analyze & Configure
+              {useFacebook && useWebsite ? "Analyze Both Sources" : useFacebook ? "Analyze Facebook Page" : "Analyze Website"}
             </Button>
           </CardBody>
         </Card>
@@ -460,9 +563,16 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-purple-500 animate-pulse" />
             </div>
 
-            <h3 className="text-lg font-semibold mb-2">Analyzing Your Website...</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {useFacebook && useWebsite ? "Analyzing Your Sources..." : useFacebook ? "Analyzing Facebook Page..." : "Analyzing Your Website..."}
+            </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              AI is scanning your website and generating configurations for all 5 phases.
+              {useFacebook && useWebsite
+                ? "AI is analyzing your website and Facebook page to generate configurations for all 5 phases."
+                : useFacebook
+                  ? "AI is analyzing your Facebook posts and engagement to generate configurations for all 5 phases."
+                  : "AI is scanning your website and generating configurations for all 5 phases."
+              }
             </p>
 
             {/* Progress indicators */}
