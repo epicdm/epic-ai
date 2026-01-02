@@ -9,7 +9,7 @@
  * - Expert: Full control via setup hub (~30+ min)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -46,6 +46,7 @@ import {
   FacebookIcon,
   InstagramIcon,
   LinkIcon,
+  CheckIcon,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates";
@@ -327,6 +328,24 @@ interface BusinessInfoStepProps {
 function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete }: BusinessInfoStepProps) {
   const { setData, setError, setLoading, isLoading } = useWizard();
   const [showForm, setShowForm] = useState(false);
+  const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
+
+  // Listen for OAuth popup completion
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
+        // Mark both Facebook and Instagram as connected (Meta connects both)
+        setConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
+        setLoading(false);
+      } else if (event.data?.type === 'SOCIAL_CONNECT_ERROR' && event.data?.platform === 'meta') {
+        setError(event.data.error || 'Failed to connect social account');
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setError, setLoading]);
 
   const form = useForm<BusinessInfoFormData>({
     resolver: zodResolver(businessInfoSchema),
@@ -530,9 +549,9 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
             <Button
               size="sm"
               variant="flat"
-              className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-              startContent={<FacebookIcon className="w-4 h-4" />}
-              isDisabled={isLoading}
+              className={`flex-1 ${connectedAccounts.includes('facebook') ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+              startContent={connectedAccounts.includes('facebook') ? <CheckIcon className="w-4 h-4" /> : <FacebookIcon className="w-4 h-4" />}
+              isDisabled={isLoading || connectedAccounts.includes('facebook')}
               onPress={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
@@ -583,22 +602,30 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
                   // Store IDs before redirect
                   onSetupComplete(org.id, brand.id);
 
-                  // Redirect to Facebook OAuth
-                  window.location.href = `/api/social/connect/meta?brandId=${brand.id}&platform=facebook&returnUrl=/onboarding`;
+                  // Open Facebook OAuth in popup window
+                  const width = 600;
+                  const height = 700;
+                  const left = window.screenX + (window.outerWidth - width) / 2;
+                  const top = window.screenY + (window.outerHeight - height) / 2;
+                  window.open(
+                    `/api/social/connect/meta?brandId=${brand.id}&platform=facebook&returnUrl=/onboarding`,
+                    'facebook-oauth',
+                    `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+                  );
                 } catch (err) {
                   setError(err instanceof Error ? err.message : "Failed to connect");
                   setLoading(false);
                 }
               }}
             >
-              Facebook
+              {connectedAccounts.includes('facebook') ? 'Connected' : 'Facebook'}
             </Button>
             <Button
               size="sm"
               variant="flat"
-              className="flex-1 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white"
-              startContent={<InstagramIcon className="w-4 h-4" />}
-              isDisabled={isLoading}
+              className={`flex-1 ${connectedAccounts.includes('instagram') ? 'bg-green-600 text-white' : 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white'}`}
+              startContent={connectedAccounts.includes('instagram') ? <CheckIcon className="w-4 h-4" /> : <InstagramIcon className="w-4 h-4" />}
+              isDisabled={isLoading || connectedAccounts.includes('instagram')}
               onPress={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
@@ -649,15 +676,23 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
                   // Store IDs before redirect
                   onSetupComplete(org.id, brand.id);
 
-                  // Redirect to Instagram OAuth
-                  window.location.href = `/api/social/connect/meta?brandId=${brand.id}&platform=instagram&returnUrl=/onboarding`;
+                  // Open Instagram OAuth in popup window
+                  const width = 600;
+                  const height = 700;
+                  const left = window.screenX + (window.outerWidth - width) / 2;
+                  const top = window.screenY + (window.outerHeight - height) / 2;
+                  window.open(
+                    `/api/social/connect/meta?brandId=${brand.id}&platform=instagram&returnUrl=/onboarding`,
+                    'instagram-oauth',
+                    `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+                  );
                 } catch (err) {
                   setError(err instanceof Error ? err.message : "Failed to connect");
                   setLoading(false);
                 }
               }}
             >
-              Instagram
+              {connectedAccounts.includes('instagram') ? 'Connected' : 'Instagram'}
             </Button>
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">
