@@ -267,15 +267,13 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
       try {
         const phaseData = configToApply[phase as keyof FullSetupConfiguration];
 
-        // Save phase data to flywheel progress
-        const response = await fetch("/api/flywheel/progress", {
-          method: "POST",
+        // Save phase data to flywheel progress using the correct PATCH endpoint
+        const response = await fetch(`/api/flywheel/phases/${phase}`, {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            phase: phase.toUpperCase(),
-            data: phaseData,
-            step: 0,
             status: "COMPLETED",
+            data: phaseData,
           }),
         });
 
