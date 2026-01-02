@@ -325,7 +325,7 @@ interface BusinessInfoStepProps {
 }
 
 function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete }: BusinessInfoStepProps) {
-  const { setData, setError, setLoading } = useWizard();
+  const { setData, setError, setLoading, isLoading } = useWizard();
   const [showForm, setShowForm] = useState(false);
 
   const form = useForm<BusinessInfoFormData>({
