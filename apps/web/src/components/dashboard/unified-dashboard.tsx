@@ -469,6 +469,78 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         <LearningLoopCard brandId={data.brand.id} compact />
       )}
 
+      {/* Next Steps Guidance - Show when flywheel is not fully active */}
+      {data.flywheel.score < 100 && (() => {
+        const inactiveComponents = data.flywheel.components.filter(c => !c.active);
+        const needsContent = inactiveComponents.some(c => c.name === "Published Content");
+        const needsAccounts = inactiveComponents.some(c => c.name === "Social Accounts");
+        const needsAnalytics = inactiveComponents.some(c => c.name === "Analytics Active");
+        const needsLearnings = inactiveComponents.some(c => c.name === "AI Learnings");
+
+        // Determine the primary next action
+        let nextStep: { title: string; description: string; action: string; href: string; icon: React.ReactNode } | null = null;
+
+        if (needsAccounts && data.accounts.total === 0) {
+          nextStep = {
+            title: "Connect a Social Account",
+            description: "Link your social profiles to start publishing content",
+            action: "Connect Account",
+            href: "/dashboard/social/accounts",
+            icon: <Send className="w-5 h-5" />,
+          };
+        } else if (needsContent) {
+          nextStep = {
+            title: "Create Your First Post",
+            description: "Use AI to generate on-brand content and publish to your connected accounts",
+            action: "Create Content",
+            href: "/dashboard/social/create",
+            icon: <Sparkles className="w-5 h-5" />,
+          };
+        } else if (needsAnalytics || needsLearnings) {
+          nextStep = {
+            title: "Waiting for Data",
+            description: "Analytics and AI Learnings will activate automatically once your posts collect engagement",
+            action: "View Analytics",
+            href: "/dashboard/analytics",
+            icon: <BarChart3 className="w-5 h-5" />,
+          };
+        }
+
+        if (!nextStep) return null;
+
+        return (
+          <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+            <CardBody className="py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-xl">
+                    {nextStep.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-lg">{nextStep.title}</p>
+                      <Chip size="sm" color="primary" variant="flat">Next Step</Chip>
+                    </div>
+                    <p className="text-sm text-default-500 mt-0.5">{nextStep.description}</p>
+                    <p className="text-xs text-default-400 mt-1">
+                      {inactiveComponents.length} component{inactiveComponents.length > 1 ? 's' : ''} remaining to reach 100% system health
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  color="primary"
+                  size="lg"
+                  endContent={<ArrowRight className="w-4 h-4" />}
+                  onPress={() => router.push(nextStep!.href)}
+                >
+                  {nextStep.action}
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+        );
+      })()}
+
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card isPressable onPress={() => router.push("/dashboard/content")}>
