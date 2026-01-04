@@ -323,9 +323,13 @@ export async function GET(request: NextRequest) {
               <p>You can close this window now.</p>
             </div>
             <script>
-              // Notify parent window and close
+              // Notify parent window and close with business data
               if (window.opener) {
-                window.opener.postMessage({ type: 'SOCIAL_CONNECT_SUCCESS', platform: 'meta' }, '*');
+                window.opener.postMessage({
+                  type: 'SOCIAL_CONNECT_SUCCESS',
+                  platform: 'meta',
+                  businessData: ${JSON.stringify(businessData)}
+                }, '*');
               }
               setTimeout(() => window.close(), 1500);
             </script>

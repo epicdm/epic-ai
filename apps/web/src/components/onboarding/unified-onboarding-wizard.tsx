@@ -329,23 +329,9 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
   const { setData, setError, setLoading, isLoading } = useWizard();
   const [showForm, setShowForm] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
-
-  // Listen for OAuth popup completion
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
-        // Mark both Facebook and Instagram as connected (Meta connects both)
-        setConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
-        setLoading(false);
-      } else if (event.data?.type === 'SOCIAL_CONNECT_ERROR' && event.data?.platform === 'meta') {
-        setError(event.data.error || 'Failed to connect social account');
-        setLoading(false);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [setError, setLoading]);
+  const [facebookConnecting, setFacebookConnecting] = useState(false);
+  const [pendingBrandId, setPendingBrandId] = useState<string | null>(null);
+  const [pendingOrgId, setPendingOrgId] = useState<string | null>(null);
 
   const form = useForm<BusinessInfoFormData>({
     resolver: zodResolver(businessInfoSchema),
@@ -355,6 +341,91 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
       website: "",
     },
   });
+
+  // Listen for OAuth popup completion and auto-populate form
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
+        // Mark both Facebook and Instagram as connected (Meta connects both)
+        setConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
+        setFacebookConnecting(false);
+        setLoading(false);
+
+        // Auto-populate form with Facebook business data
+        const businessData = event.data.businessData;
+        if (businessData) {
+          if (businessData.name) {
+            form.setValue('organizationName', businessData.name);
+            form.setValue('brandName', businessData.name);
+          }
+          if (businessData.website) {
+            form.setValue('website', businessData.website);
+          }
+        }
+
+        // If we have pending org/brand IDs, mark setup as complete
+        if (pendingOrgId && pendingBrandId) {
+          setData("organizationId", pendingOrgId);
+          setData("brandId", pendingBrandId);
+          onSetupComplete(pendingOrgId, pendingBrandId);
+        }
+      } else if (event.data?.type === 'SOCIAL_CONNECT_ERROR' && event.data?.platform === 'meta') {
+        setError(event.data.error || 'Failed to connect social account');
+        setFacebookConnecting(false);
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setError, setLoading, form, pendingOrgId, pendingBrandId, setData, onSetupComplete]);
+
+  // Quick connect with Facebook - creates org/brand then opens OAuth
+  const handleQuickFacebookConnect = async () => {
+    setFacebookConnecting(true);
+    setLoading(true);
+
+    try {
+      // Create org with temporary name
+      const orgResponse = await fetch("/api/onboarding/organization", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "My Organization" }),
+      });
+      if (!orgResponse.ok) throw new Error("Failed to create organization");
+      const org = await orgResponse.json();
+      setPendingOrgId(org.id);
+
+      // Create brand with temporary name
+      const brandResponse = await fetch("/api/onboarding/brand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "My Brand",
+          organizationId: org.id,
+          templateId: selectedTemplate?.id || "custom",
+        }),
+      });
+      if (!brandResponse.ok) throw new Error("Failed to create brand");
+      const brand = await brandResponse.json();
+      setPendingBrandId(brand.id);
+
+      // Open Facebook OAuth in popup
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      window.open(
+        `/api/social/connect/meta?brandId=${brand.id}&platform=facebook&returnUrl=/onboarding`,
+        'facebook-oauth',
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to connect");
+      setFacebookConnecting(false);
+      setLoading(false);
+    }
+  };
 
   const handleTemplateSelect = (template: BrandTemplate) => {
     onTemplateSelect(template);
@@ -439,12 +510,47 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
       <WizardStepContainer stepIndex={1} disableNext>
         <WizardStepHeader
           icon={<BuildingIcon className="w-8 h-8 text-primary" />}
-          title="What type of business are you?"
-          description="Choose a template to pre-configure your settings"
+          title="Set Up Your Business"
+          description="Connect Facebook for instant setup, or choose a template"
         />
 
         <WizardStepContent>
-          <ScrollShadow className="max-h-[350px]">
+          {/* Quick Setup with Facebook - PROMINENT at top */}
+          <div className="mb-6">
+            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0">
+              <CardBody className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 rounded-full p-3">
+                    <FacebookIcon className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-white text-lg">
+                      Quick Setup with Facebook
+                    </p>
+                    <p className="text-white/80 text-sm">
+                      Auto-fill your business name, website & connect your page in one click
+                    </p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="bg-white text-blue-600 font-semibold hover:bg-white/90"
+                    isLoading={facebookConnecting}
+                    onPress={handleQuickFacebookConnect}
+                  >
+                    {facebookConnecting ? 'Connecting...' : 'Connect Facebook'}
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+
+          <div className="relative flex items-center gap-4 my-4">
+            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            <span className="text-sm text-gray-500">or choose a template</span>
+            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          </div>
+
+          <ScrollShadow className="max-h-[280px]">
             <div className="grid grid-cols-2 gap-3">
               {brandTemplates.map((template) => (
                 <Card
