@@ -85,11 +85,19 @@ export function SettingsContent({
           : "No organization deleted";
         console.log("[Reset UI]", debugInfo);
         setResetMessage({ type: "success", text: data.message || "Reset complete! Redirecting..." });
-        // Redirect to setup hub if organization was deleted, otherwise dashboard
+        // Redirect to appropriate page based on reset type:
+        // - Full reset (org deleted): /setup → which will redirect to /onboarding (no org)
+        // - Brand reset (org kept): /onboarding?force=true → show full wizard with Facebook option
+        // - Simple reset: /dashboard?showOnboarding=true
         setTimeout(() => {
-          window.location.href = removeOrganizationOnReset
-            ? "/setup"
-            : "/dashboard?showOnboarding=true";
+          if (removeOrganizationOnReset) {
+            window.location.href = "/setup";
+          } else if (removeBrandOnReset) {
+            // Force onboarding wizard with Facebook option
+            window.location.href = "/onboarding?force=true";
+          } else {
+            window.location.href = "/dashboard?showOnboarding=true";
+          }
         }, 1500);
       } else {
         console.error("[Reset UI] Error response:", data);
