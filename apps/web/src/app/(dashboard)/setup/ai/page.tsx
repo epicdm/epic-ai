@@ -42,13 +42,40 @@ export default async function AIExpressSetupPage() {
     },
   });
 
-  if (!membership) {
+  if (!membership?.organization) {
     // No organization - redirect to onboarding
     redirect("/onboarding");
   }
 
-  // Get the brand's website URL if available (from onboarding)
-  const brand = membership.organization?.brands[0];
+  const organization = membership.organization;
+
+  // Get existing brand or create one if needed (for users after data reset)
+  let brand = organization.brands[0];
+
+  if (!brand) {
+    // Auto-create a brand so users can proceed with AI Setup
+    const orgName = organization.name || "My Brand";
+    const slug = orgName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "my-brand";
+
+    const createdBrand = await prisma.brand.create({
+      data: {
+        organizationId: organization.id,
+        name: orgName,
+        slug,
+      },
+      include: {
+        socialAccounts: {
+          where: { status: "CONNECTED" },
+          select: { platform: true, username: true, displayName: true },
+        },
+      },
+    });
+    brand = createdBrand;
+  }
+
   const initialWebsiteUrl = brand?.website || "";
   const connectedFacebookPage = brand?.socialAccounts?.find(
     (acc: { platform: string; username: string | null; displayName: string | null }) =>
@@ -75,6 +102,7 @@ export default async function AIExpressSetupPage() {
 
         {/* Wizard */}
         <BirdEyeWizard
+          brandId={brand.id}
           initialWebsiteUrl={initialWebsiteUrl}
           connectedFacebookPage={connectedFacebookPage ? {
             name: connectedFacebookPage.displayName || connectedFacebookPage.username || "",
