@@ -87,16 +87,14 @@ export function SettingsContent({
         setResetMessage({ type: "success", text: data.message || "Reset complete! Redirecting..." });
         // Redirect to appropriate page based on reset type:
         // - Full reset (org deleted): /setup → which will redirect to /onboarding (no org)
-        // - Brand reset (org kept): /onboarding?force=true → show full wizard with Facebook option
-        // - Simple reset: /dashboard?showOnboarding=true
+        // - Brand reset OR simple reset: /onboarding?force=true → show full wizard with Facebook option
+        //   (MasterOnboardingWizard on dashboard lacks Facebook option, so always use UnifiedOnboardingWizard)
         setTimeout(() => {
           if (removeOrganizationOnReset) {
             window.location.href = "/setup";
-          } else if (removeBrandOnReset) {
-            // Force onboarding wizard with Facebook option
-            window.location.href = "/onboarding?force=true";
           } else {
-            window.location.href = "/dashboard?showOnboarding=true";
+            // Force onboarding wizard with Facebook option for all resets
+            window.location.href = "/onboarding?force=true";
           }
         }, 1500);
       } else {
