@@ -21,18 +21,25 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // Get brand for this org
-    const brand = await prisma.brand.findFirst({
+    // Get brand for this org, or auto-create if missing
+    let brand = await prisma.brand.findFirst({
       where: { organizationId: org.id },
     });
 
+    // Auto-create brand if it doesn't exist (for users after data reset or incomplete onboarding)
     if (!brand) {
-      return NextResponse.json({
-        configured: false,
-        status: "no_brand",
-        connectedAccounts: 0,
-        platforms: [],
-        message: "No brand configured. Create a brand first.",
+      const baseName = org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
+      brand = await prisma.brand.create({
+        data: {
+          organizationId: org.id,
+          name: baseName,
+          slug,
+        },
       });
     }
 
