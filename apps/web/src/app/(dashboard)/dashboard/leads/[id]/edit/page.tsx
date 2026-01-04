@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { needsOnboarding, getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
@@ -9,7 +9,7 @@ export default async function EditLeadPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");

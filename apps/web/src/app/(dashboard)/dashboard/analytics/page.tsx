@@ -3,7 +3,7 @@
  * Social media performance analytics and AI insights
  */
 
-import { auth } from '@/lib/auth';
+import { getAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@epic-ai/database';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
@@ -14,10 +14,10 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
-    redirect('/login');
+    redirect('/sign-in');
   }
 
   // Get user's organization and brand

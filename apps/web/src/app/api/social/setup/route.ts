@@ -12,8 +12,10 @@ import { getUserOrganization } from "@/lib/sync-user";
 
 /**
  * GET - Check/provision social setup
+ * Query params:
+ * - includeBrand=true: Also return brand brain data (pillars, voice) for AI content generation
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await getAuthWithBypass();
     if (!userId) {
@@ -25,9 +27,19 @@ export async function GET() {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
-    // Get brand for this org
+    const { searchParams } = new URL(request.url);
+    const includeBrand = searchParams.get("includeBrand") === "true";
+
+    // Get brand for this org (with brain data if requested)
     const brand = await prisma.brand.findFirst({
       where: { organizationId: org.id },
+      include: includeBrand ? {
+        brandBrain: true,
+        contentPillars: {
+          select: { id: true, name: true, description: true },
+          orderBy: { createdAt: "asc" },
+        },
+      } : undefined,
     });
 
     if (!brand) {
@@ -49,21 +61,40 @@ export async function GET() {
         displayName: true,
         status: true,
         tokenExpires: true,
+        avatarUrl: true,
       },
     });
 
     const platforms = [...new Set(accounts.map((a) => a.platform))];
 
-    return NextResponse.json({
+    // Build response
+    const response: Record<string, unknown> = {
       connected: accounts.length > 0,
       hasBrand: true,
       brandId: brand.id,
-      accounts,
+      brandName: brand.name,
+      accounts: accounts.map(a => ({
+        ...a,
+        isActive: a.status === "CONNECTED",
+      })),
       platforms,
       message: accounts.length > 0
         ? `${accounts.length} account(s) connected`
         : "No accounts connected. Use the connect buttons to link your social accounts.",
-    });
+    };
+
+    // Include brand brain data for AI content generation
+    if (includeBrand && "brandBrain" in brand && brand.brandBrain) {
+      const brain = brand.brandBrain as Record<string, unknown>;
+      response.pillars = "contentPillars" in brand ? brand.contentPillars : [];
+      response.voice = {
+        tone: brain.tone,
+        formality: brain.formality,
+        emojiUsage: brain.emojiUsage,
+      };
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error in social setup:", error);
     return NextResponse.json({ error: "Setup check failed" }, { status: 500 });

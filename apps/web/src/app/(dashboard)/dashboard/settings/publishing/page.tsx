@@ -3,7 +3,7 @@
  * Configure publishing schedules and automation
  */
 
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { PublishingSettings } from "@/components/publishing/PublishingSettings";
@@ -14,9 +14,9 @@ export const metadata = {
 };
 
 export default async function PublishingSettingsPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
   if (!userId) {
-    redirect("/login");
+    redirect("/sign-in");
   }
 
   // Get user's organization

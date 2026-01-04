@@ -3,7 +3,7 @@
  * Visual calendar view for scheduled content
  */
 
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { ContentCalendar } from "@/components/calendar/ContentCalendar";
@@ -14,9 +14,9 @@ export const metadata = {
 };
 
 export default async function CalendarPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
   if (!userId) {
-    redirect("/login");
+    redirect("/sign-in");
   }
 
   // Get user's organization

@@ -1,5 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getAuth } from "@/lib/auth";
 import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { BrandBrainPage } from "@/components/brand/brand-brain-page";
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function BrandPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");

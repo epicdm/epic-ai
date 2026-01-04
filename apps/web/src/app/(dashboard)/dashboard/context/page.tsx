@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function ContextPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");

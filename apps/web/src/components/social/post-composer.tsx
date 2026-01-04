@@ -12,9 +12,10 @@ import {
   Avatar,
   Checkbox,
   Input,
+  Tooltip,
 } from "@heroui/react";
 import Link from "next/link";
-import { Send, Calendar, Sparkles } from "lucide-react";
+import { Send, Calendar, Sparkles, Wand2, RefreshCw, Lightbulb, MessageSquare } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/analytics";
 
 interface SocialAccount {
@@ -26,11 +27,27 @@ interface SocialAccount {
   isActive: boolean;
 }
 
+interface ContentPillar {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface BrandVoice {
+  tone?: string;
+  formality?: number;
+  emojiUsage?: string;
+}
+
 interface SetupStatus {
   connected: boolean;
   hasBrand: boolean;
+  brandId?: string;
   accounts: SocialAccount[];
   message?: string;
+  brandName?: string;
+  pillars?: ContentPillar[];
+  voice?: BrandVoice;
 }
 
 export function PostComposer() {
@@ -41,11 +58,14 @@ export function PostComposer() {
   const [postNow, setPostNow] = useState(true);
   const [scheduleDate, setScheduleDate] = useState("");
   const [posting, setPosting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [selectedPillar, setSelectedPillar] = useState<string | null>(null);
+  const [customTopic, setCustomTopic] = useState("");
 
   useEffect(() => {
     async function checkStatus() {
       try {
-        const response = await fetch("/api/social/setup");
+        const response = await fetch("/api/social/setup?includeBrand=true");
         if (response.ok) {
           const data = await response.json();
           setStatus(data);
@@ -59,6 +79,56 @@ export function PostComposer() {
 
     checkStatus();
   }, []);
+
+  // AI Content Generation
+  const handleGenerateContent = async (topic?: string) => {
+    if (!status?.brandId) {
+      console.error("No brand ID available for content generation");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      // Determine target platforms from selected accounts
+      const selectedPlatforms = selectedAccounts
+        .map(id => status?.accounts.find(a => a.id === id)?.platform?.toUpperCase())
+        .filter((p): p is string => !!p);
+
+      // Default to common platforms if none selected
+      const targetPlatforms = selectedPlatforms.length > 0
+        ? selectedPlatforms
+        : ["TWITTER", "LINKEDIN"];
+
+      const response = await fetch("/api/content/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandId: status.brandId,
+          topic: topic || customTopic || selectedPillar,
+          targetPlatforms,
+          contentType: "POST",
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // The generator returns content with variations, get the first one
+        const generatedContent = data.content?.text || data.content?.variations?.[0]?.text || "";
+        setContent(generatedContent);
+        trackEvent("ai_content_generated", {
+          topic: topic || customTopic || selectedPillar,
+          platforms: targetPlatforms,
+        });
+      } else {
+        const error = await response.json();
+        console.error("Content generation failed:", error);
+      }
+    } catch (err) {
+      console.error("Error generating content:", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const toggleAccount = (id: string) => {
     setSelectedAccounts((prev) =>
@@ -168,17 +238,90 @@ export function PostComposer() {
           {/* Composer */}
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <h2 className="text-lg font-semibold">Compose</h2>
+                {status?.brandName && (
+                  <Chip size="sm" variant="flat" color="secondary" startContent={<MessageSquare className="w-3 h-3" />}>
+                    Posting as {status.brandName}
+                  </Chip>
+                )}
               </CardHeader>
               <CardBody className="space-y-4">
+                {/* AI Generation Section */}
+                {status?.pillars && status.pillars.length > 0 && (
+                  <div className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Wand2 className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium">AI-Powered Content</span>
+                    </div>
+
+                    {/* Topic Suggestions from Content Pillars */}
+                    <div className="mb-3">
+                      <p className="text-xs text-default-500 mb-2">Choose a topic from your content pillars:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {status.pillars.map((pillar) => (
+                          <Tooltip key={pillar.id} content={pillar.description || `Generate content about ${pillar.name}`}>
+                            <Chip
+                              variant={selectedPillar === pillar.name ? "solid" : "bordered"}
+                              color={selectedPillar === pillar.name ? "primary" : "default"}
+                              className="cursor-pointer"
+                              startContent={<Lightbulb className="w-3 h-3" />}
+                              onClick={() => setSelectedPillar(selectedPillar === pillar.name ? null : pillar.name)}
+                            >
+                              {pillar.name}
+                            </Chip>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom Topic or Generate */}
+                    <div className="flex gap-2">
+                      <Input
+                        size="sm"
+                        placeholder="Or enter a custom topic..."
+                        value={customTopic}
+                        onChange={(e) => {
+                          setCustomTopic(e.target.value);
+                          if (e.target.value) setSelectedPillar(null);
+                        }}
+                        className="flex-1"
+                      />
+                      <Button
+                        color="primary"
+                        size="sm"
+                        isLoading={generating}
+                        isDisabled={!selectedPillar && !customTopic}
+                        startContent={!generating && <Sparkles className="w-4 h-4" />}
+                        onPress={() => handleGenerateContent()}
+                      >
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <Textarea
                   label="What's on your mind?"
-                  placeholder="Write your post content here..."
+                  placeholder={status?.pillars?.length ? "Select a topic above and click Generate, or write your own..." : "Write your post content here..."}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   minRows={6}
                   maxRows={12}
+                  endContent={
+                    content && (
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        className="absolute bottom-2 right-2"
+                        onPress={() => handleGenerateContent(content.split(' ').slice(0, 5).join(' '))}
+                        isLoading={generating}
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    )
+                  }
                 />
 
                 {/* Platform selection */}
@@ -305,31 +448,85 @@ export function PostComposer() {
               </CardBody>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold">Tips</h2>
-              </CardHeader>
-              <CardBody>
-                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <li className="flex items-start gap-2">
-                    <span>•</span>
-                    <span>Keep posts concise for better engagement</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>•</span>
-                    <span>Use images or videos to boost visibility</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>•</span>
-                    <span>Schedule posts for optimal times</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span>•</span>
-                    <span>Cross-post to multiple platforms</span>
-                  </li>
-                </ul>
-              </CardBody>
-            </Card>
+            {/* Brand Voice Card */}
+            {status?.voice && (
+              <Card className="border border-secondary/20">
+                <CardHeader>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-secondary" />
+                    Your Brand Voice
+                  </h2>
+                </CardHeader>
+                <CardBody className="space-y-3">
+                  {status.voice.tone && (
+                    <div>
+                      <p className="text-xs text-default-500 uppercase tracking-wide">Tone</p>
+                      <p className="text-sm font-medium capitalize">{status.voice.tone}</p>
+                    </div>
+                  )}
+                  {status.voice.formality && (
+                    <div>
+                      <p className="text-xs text-default-500 uppercase tracking-wide">Formality</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-2 bg-default-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-secondary rounded-full"
+                            style={{ width: `${(status.voice.formality / 5) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-default-500">
+                          {status.voice.formality <= 2 ? "Casual" : status.voice.formality >= 4 ? "Formal" : "Balanced"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {status.voice.emojiUsage && (
+                    <div>
+                      <p className="text-xs text-default-500 uppercase tracking-wide">Emoji Usage</p>
+                      <p className="text-sm font-medium capitalize">{status.voice.emojiUsage}</p>
+                    </div>
+                  )}
+                  <Button
+                    as={Link}
+                    href="/dashboard/brand"
+                    variant="flat"
+                    size="sm"
+                    className="w-full mt-2"
+                  >
+                    Edit Brand Voice
+                  </Button>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Tips Card - only show if no voice data */}
+            {!status?.voice && (
+              <Card>
+                <CardHeader>
+                  <h2 className="text-lg font-semibold">Tips</h2>
+                </CardHeader>
+                <CardBody>
+                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Keep posts concise for better engagement</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Use images or videos to boost visibility</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Schedule posts for optimal times</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>Cross-post to multiple platforms</span>
+                    </li>
+                  </ul>
+                </CardBody>
+              </Card>
+            )}
           </div>
         </div>
       )}

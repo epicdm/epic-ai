@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { needsOnboarding } from "@/lib/sync-user";
 import { AutomationDetail } from "@/components/automations/automation-detail";
@@ -8,7 +8,7 @@ export default async function AutomationDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");

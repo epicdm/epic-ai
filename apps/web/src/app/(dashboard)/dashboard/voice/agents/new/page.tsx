@@ -1,11 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { needsOnboarding, getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { AgentForm } from "@/components/voice/agent-form";
 
 export default async function NewAgentPage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");

@@ -1,23 +1,24 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getAuthWithBypass } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUserOrganization, needsOnboarding } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { SettingsContent } from "@/components/settings/settings-content";
 
 export default async function SettingsPage() {
-  const { userId } = await auth();
+  const { userId, isUATBypass } = await getAuthWithBypass();
 
   if (!userId) {
     redirect("/sign-in");
   }
 
-  // Check if user needs onboarding
-  const needs = await needsOnboarding();
-  if (needs) {
-    redirect("/onboarding");
+  // Check if user needs onboarding (skip for UAT bypass)
+  if (!isUATBypass) {
+    const needs = await needsOnboarding();
+    if (needs) {
+      redirect("/onboarding");
+    }
   }
 
-  const user = await currentUser();
   const organization = await getUserOrganization();
 
   if (!organization) {
@@ -46,12 +47,15 @@ export default async function SettingsPage() {
     console.error("Error fetching subscription:", error);
   }
 
+  // For UAT bypass, use a placeholder email
+  const userEmail = isUATBypass ? "uat-test@epic.dm" : null;
+
   return (
     <SettingsContent
       organization={organization}
       brands={brands}
       subscription={subscription}
-      userEmail={user?.emailAddresses[0]?.emailAddress || null}
+      userEmail={userEmail}
     />
   );
 }
