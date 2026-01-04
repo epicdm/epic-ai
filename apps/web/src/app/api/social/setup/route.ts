@@ -18,13 +18,34 @@ import { getUserOrganization } from "@/lib/sync-user";
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await getAuthWithBypass();
+    console.log("[social/setup] userId:", userId);
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    // Try syncUser-based lookup first, fall back to direct lookup
+    let org = await getUserOrganization();
+    console.log("[social/setup] getUserOrganization result:", org ? { id: org.id, name: org.name } : null);
+
+    // Fallback: Direct lookup if syncUser-based lookup fails
     if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      console.log("[social/setup] Trying direct membership lookup for userId:", userId);
+      const membership = await prisma.membership.findFirst({
+        where: { userId },
+        include: { organization: true },
+      });
+
+      if (membership) {
+        console.log("[social/setup] Found org via direct lookup:", {
+          orgId: membership.organization.id,
+          orgName: membership.organization.name
+        });
+        org = membership.organization;
+      } else {
+        console.log("[social/setup] No membership found for userId:", userId);
+        return NextResponse.json({ error: "No organization" }, { status: 404 });
+      }
     }
 
     const { searchParams } = new URL(request.url);
