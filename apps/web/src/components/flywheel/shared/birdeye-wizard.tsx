@@ -262,18 +262,29 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
     setAppliedPhases([]);
     const phases = ["understand", "create", "distribute", "learn", "automate"];
 
+    // Review step indices for each phase (last step of each wizard)
+    const reviewStepIndices: Record<string, number> = {
+      understand: 8,
+      create: 5,
+      distribute: 5,
+      learn: 4,
+      automate: 5,
+    };
+
     for (const phase of phases) {
       setApplyingPhase(phase);
       try {
         const phaseData = configToApply[phase as keyof FullSetupConfiguration];
 
         // Save phase data to flywheel progress using the correct PATCH endpoint
+        // Include currentStep so Review button shows the review step
         const response = await fetch(`/api/flywheel/phases/${phase}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "COMPLETED",
             data: phaseData,
+            currentStep: reviewStepIndices[phase],
           }),
         });
 
@@ -307,7 +318,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
     if (onComplete) {
       onComplete();
     } else {
-      router.push("/setup");
+      router.push("/dashboard");
     }
   };
 

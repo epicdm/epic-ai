@@ -1,11 +1,19 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { LearnWizard } from "@/components/flywheel/wizards/learn-wizard";
 import type { LearnWizardData } from "@/lib/flywheel/types";
 
-export default async function LearnSetupPage() {
-  const { userId } = await auth();
+interface PageProps {
+  searchParams: Promise<{ review?: string; step?: string }>;
+}
+
+export default async function LearnSetupPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const isReviewMode = params.review === "true";
+  const stepParam = params.step ? parseInt(params.step, 10) : undefined;
+
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
@@ -40,7 +48,16 @@ export default async function LearnSetupPage() {
     ...(progress?.learnData as Partial<LearnWizardData> || {}),
   };
 
-  const initialStep = progress?.learnStep ?? 0;
+  // Review step is the last step (index 4 for learn wizard)
+  const REVIEW_STEP = 4;
+  let initialStep = stepParam ?? 0;
+
+  // If in review mode and we have data, jump to review step
+  if (isReviewMode && (progress?.learnData && Object.keys(progress.learnData as object).length > 0)) {
+    initialStep = REVIEW_STEP;
+  } else if (stepParam === undefined) {
+    initialStep = progress?.learnStep ?? 0;
+  }
 
   return (
     <LearnWizard

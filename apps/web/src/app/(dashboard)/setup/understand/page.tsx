@@ -3,7 +3,7 @@
  * Builds the Brand Brain: voice, tone, audiences, and content pillars
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { UnderstandWizard } from "@/components/flywheel/wizards/understand-wizard";
@@ -14,8 +14,16 @@ export const metadata = {
   description: "Define your brand voice, audiences, and content strategy",
 };
 
-export default async function UnderstandPage() {
-  const { userId } = await auth();
+interface PageProps {
+  searchParams: Promise<{ review?: string; step?: string }>;
+}
+
+export default async function UnderstandPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const isReviewMode = params.review === "true";
+  const stepParam = params.step ? parseInt(params.step, 10) : undefined;
+
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
@@ -60,11 +68,19 @@ export default async function UnderstandPage() {
 
   // Extract initial data from progress or brand brain
   let initialData: UnderstandWizardData = {};
-  let initialStep = 0;
+  // Review step is the last step (index 8 for understand wizard)
+  const REVIEW_STEP = 8;
+  let initialStep = stepParam ?? 0;
 
   if (progress.understandData) {
     initialData = progress.understandData as UnderstandWizardData;
-    initialStep = progress.understandStep >= 0 ? progress.understandStep : 0;
+    // If in review mode and we have data, jump to review step
+    // Otherwise use the step from URL param or saved progress
+    if (isReviewMode && Object.keys(initialData).length > 0) {
+      initialStep = REVIEW_STEP;
+    } else if (stepParam === undefined) {
+      initialStep = progress.understandStep >= 0 ? progress.understandStep : 0;
+    }
   } else if (brand) {
     // Try to pull existing brand brain data
     const brandBrain = await prisma.brandBrain.findUnique({

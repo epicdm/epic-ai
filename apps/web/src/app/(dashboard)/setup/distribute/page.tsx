@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { DistributeWizard } from "@/components/flywheel/wizards/distribute-wizard";
 
@@ -8,8 +8,16 @@ export const metadata = {
   description: "Connect your social accounts and set up your publishing schedule",
 };
 
-export default async function DistributeSetupPage() {
-  const { userId } = await auth();
+interface PageProps {
+  searchParams: Promise<{ review?: string; step?: string }>;
+}
+
+export default async function DistributeSetupPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const isReviewMode = params.review === "true";
+  const stepParam = params.step ? parseInt(params.step, 10) : undefined;
+
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
@@ -49,7 +57,16 @@ export default async function DistributeSetupPage() {
 
   // Load existing data
   const initialData = (progress?.distributeData as Record<string, unknown>) || {};
-  const initialStep = progress?.distributeStep ?? 0;
+  // Review step is the last step (index 5 for distribute wizard)
+  const REVIEW_STEP = 5;
+  let initialStep = stepParam ?? 0;
+
+  // If in review mode and we have data, jump to review step
+  if (isReviewMode && Object.keys(initialData).length > 0) {
+    initialStep = REVIEW_STEP;
+  } else if (stepParam === undefined) {
+    initialStep = progress?.distributeStep ?? 0;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

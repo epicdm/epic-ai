@@ -1,11 +1,19 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { AutomateWizard } from "@/components/flywheel/wizards/automate-wizard";
 import type { AutomateWizardData } from "@/lib/flywheel/types";
 
-export default async function AutomateSetupPage() {
-  const { userId } = await auth();
+interface PageProps {
+  searchParams: Promise<{ review?: string; step?: string }>;
+}
+
+export default async function AutomateSetupPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const isReviewMode = params.review === "true";
+  const stepParam = params.step ? parseInt(params.step, 10) : undefined;
+
+  const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
@@ -51,7 +59,16 @@ export default async function AutomateSetupPage() {
     confirmed: savedData?.confirmed ?? false,
   };
 
-  const initialStep = progress.automateStep >= 0 ? progress.automateStep : 0;
+  // Review step is the last step (index 5 for automate wizard)
+  const REVIEW_STEP = 5;
+  let initialStep = stepParam ?? 0;
+
+  // If in review mode and we have data, jump to review step
+  if (isReviewMode && (progress.automateData && Object.keys(progress.automateData as object).length > 0)) {
+    initialStep = REVIEW_STEP;
+  } else if (stepParam === undefined) {
+    initialStep = progress.automateStep >= 0 ? progress.automateStep : 0;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
