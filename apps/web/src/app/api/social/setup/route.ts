@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const includeBrand = searchParams.get("includeBrand") === "true";
 
     // Get brand for this org (with brain data if requested)
-    const brand = await prisma.brand.findFirst({
+    let brand = await prisma.brand.findFirst({
       where: { organizationId: org.id },
       include: includeBrand ? {
         brandBrain: true,
@@ -42,12 +42,27 @@ export async function GET(request: NextRequest) {
       } : undefined,
     });
 
+    // Auto-create brand if it doesn't exist (for users after data reset or incomplete onboarding)
     if (!brand) {
-      return NextResponse.json({
-        connected: false,
-        hasBrand: false,
-        accounts: [],
-        message: "No brand configured. Create a brand first.",
+      const baseName = org.name || "My Brand";
+      const slug = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "my-brand";
+
+      brand = await prisma.brand.create({
+        data: {
+          organizationId: org.id,
+          name: baseName,
+          slug,
+        },
+        include: includeBrand ? {
+          brandBrain: true,
+          contentPillars: {
+            select: { id: true, name: true, description: true },
+            orderBy: { createdAt: "asc" },
+          },
+        } : undefined,
       });
     }
 
