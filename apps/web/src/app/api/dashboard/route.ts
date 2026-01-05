@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     }
 
     const org = await getUserOrganization();
+    console.log('[Dashboard API] userId:', userId, 'org:', org?.id, org?.name);
 
     const { searchParams } = new URL(request.url);
     const period = parseInt(searchParams.get("period") || "30");
@@ -29,13 +30,52 @@ export async function GET(request: NextRequest) {
 
     // If no organization, return empty dashboard data for setup state
     if (!org) {
+      console.log('[Dashboard API] No organization found for user');
       return NextResponse.json(getEmptyDashboardData(period, startDate));
     }
 
-    // Get brand for this org
-    const brand = await prisma.brand.findFirst({
-      where: { organizationId: org.id },
+    // Get brand for this org - prefer brands with connected social accounts,
+    // otherwise get the most recently created one
+    let brand = await prisma.brand.findFirst({
+      where: {
+        organizationId: org.id,
+        socialAccounts: { some: { status: "CONNECTED" } },
+      },
+      orderBy: { createdAt: 'desc' },
     });
+
+    // If no brand with connected accounts, get the most recent brand
+    if (!brand) {
+      brand = await prisma.brand.findFirst({
+        where: { organizationId: org.id },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+    console.log('[Dashboard API] brand:', brand?.id, brand?.name);
+
+    // DIAGNOSTIC: Check all brands and social accounts for this org
+    const allBrandsForOrg = await prisma.brand.findMany({
+      where: { organizationId: org.id },
+      select: { id: true, name: true },
+    });
+    console.log('[Dashboard API] DIAGNOSTIC - All brands for org:', JSON.stringify(allBrandsForOrg));
+
+    if (brand) {
+      // Check ALL social accounts for this brand (regardless of status)
+      const allAccountsForBrand = await prisma.socialAccount.findMany({
+        where: { brandId: brand.id },
+        select: { id: true, platform: true, status: true, displayName: true, connectedAt: true },
+      });
+      console.log('[Dashboard API] DIAGNOSTIC - All social accounts for brand', brand.id, ':', JSON.stringify(allAccountsForBrand));
+
+      // Check if there are ANY social accounts in the entire database for debugging
+      const recentSocialAccounts = await prisma.socialAccount.findMany({
+        take: 5,
+        orderBy: { connectedAt: 'desc' },
+        select: { id: true, brandId: true, platform: true, status: true, displayName: true, connectedAt: true },
+      });
+      console.log('[Dashboard API] DIAGNOSTIC - Recent 5 social accounts in DB:', JSON.stringify(recentSocialAccounts));
+    }
 
     // Parallel fetch all dashboard data with error handling for each query
     const [
@@ -78,6 +118,9 @@ export async function GET(request: NextRequest) {
               avatar: true,
               followerCount: true,
             },
+          }).then((accounts) => {
+            console.log('[Dashboard API] Found', accounts.length, 'social accounts for brand', brand.id);
+            return accounts;
           }).catch((e) => { console.error("Error fetching socialAccounts:", e); return []; })
         : [],
 

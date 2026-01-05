@@ -65,6 +65,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if organization already has a brand (similar to how org route handles existing orgs)
+    // This prevents creating duplicate brands when user goes through onboarding multiple times
+    const existingBrand = await prisma.brand.findFirst({
+      where: { organizationId },
+      include: { brandBrain: true },
+    });
+
+    if (existingBrand) {
+      console.log('[Onboarding Brand API] Returning existing brand:', existingBrand.id, 'name:', existingBrand.name, 'for org:', organizationId);
+      return NextResponse.json(existingBrand);
+    }
+
     // Validate input
     const validationResult = brandSchema.safeParse(brandData);
 
@@ -84,6 +96,7 @@ export async function POST(request: NextRequest) {
       website: website || undefined,
       logo: logo || undefined,
     });
+    console.log('[Onboarding Brand API] Created brand:', brand.id, 'name:', brand.name, 'for org:', organizationId);
 
     // Create BrandBrain with template data if provided
     if (templateData && templateId !== "custom") {

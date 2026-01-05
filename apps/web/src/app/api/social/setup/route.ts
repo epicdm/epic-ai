@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         displayName: true,
         status: true,
         tokenExpires: true,
-        avatarUrl: true,
+        avatar: true,
       },
     });
 
