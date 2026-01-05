@@ -43,7 +43,50 @@ export async function syncUser() {
       return null;
     }
 
-    // Use upsert to handle race conditions
+    // Check if user with this email exists with a different Clerk ID (re-registration)
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email: primaryEmail },
+    });
+
+    if (existingUserByEmail && existingUserByEmail.id !== clerkUser.id) {
+      // User re-registered with same email but different Clerk ID
+      const oldUserId = existingUserByEmail.id;
+
+      // Update all memberships to use the new userId first
+      await prisma.membership.updateMany({
+        where: { userId: oldUserId },
+        data: { userId: clerkUser.id },
+      });
+
+      // Update FlywheelProgress if it exists
+      await prisma.flywheelProgress.updateMany({
+        where: { userId: oldUserId },
+        data: { userId: clerkUser.id },
+      });
+
+      // Now update the User record with the new Clerk ID
+      const user = await prisma.user.update({
+        where: { email: primaryEmail },
+        data: {
+          id: clerkUser.id,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+      });
+
+      console.log(`[syncUser] Updated user ${primaryEmail} from old Clerk ID ${oldUserId} to new ID ${clerkUser.id}`);
+      return user;
+    }
+
+    // Normal upsert - either new user or same Clerk ID
     const user = await prisma.user.upsert({
       where: { id: clerkUser.id },
       update: {

@@ -41,6 +41,22 @@ export async function POST(request: NextRequest) {
 
     if (existingUserByEmail && existingUserByEmail.id !== userId) {
       // User re-registered with same email - update their Clerk ID
+      const oldUserId = existingUserByEmail.id;
+
+      // First, update all memberships to use the new userId
+      // This must happen BEFORE updating User.id due to foreign key constraints
+      await prisma.membership.updateMany({
+        where: { userId: oldUserId },
+        data: { userId: userId },
+      });
+
+      // Also update FlywheelProgress if it exists
+      await prisma.flywheelProgress.updateMany({
+        where: { userId: oldUserId },
+        data: { userId: userId },
+      });
+
+      // Now update the User record with the new Clerk ID
       await prisma.user.update({
         where: { email: primaryEmail },
         data: {
@@ -50,6 +66,25 @@ export async function POST(request: NextRequest) {
           imageUrl: clerkUser.imageUrl,
         },
       });
+
+      console.log(`[onboarding/organization] Updated user ${primaryEmail} from old Clerk ID ${oldUserId} to new ID ${userId}`);
+
+      // After updating IDs, check if user already has an organization
+      const existingMembership = await prisma.membership.findFirst({
+        where: { userId },
+        include: {
+          organization: {
+            include: {
+              brands: true,
+            },
+          },
+        },
+      });
+
+      if (existingMembership?.organization) {
+        console.log(`[onboarding/organization] Re-registered user already has org: ${existingMembership.organization.name}`);
+        return NextResponse.json(existingMembership.organization);
+      }
     } else {
       // Normal upsert - either new user or same Clerk ID
       await prisma.user.upsert({
@@ -68,6 +103,23 @@ export async function POST(request: NextRequest) {
           imageUrl: clerkUser.imageUrl,
         },
       });
+
+      // Check if user already has an organization (shouldn't create duplicate)
+      const existingMembership = await prisma.membership.findFirst({
+        where: { userId },
+        include: {
+          organization: {
+            include: {
+              brands: true,
+            },
+          },
+        },
+      });
+
+      if (existingMembership?.organization) {
+        console.log(`[onboarding/organization] User already has org: ${existingMembership.organization.name}`);
+        return NextResponse.json(existingMembership.organization);
+      }
     }
 
     const body = await request.json();
@@ -84,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     const { name } = validationResult.data;
 
-    // Create organization
+    // Create organization (only if user doesn't have one)
     const organization = await createOrganization({
       name,
       userId,
