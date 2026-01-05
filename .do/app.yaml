@@ -154,7 +154,7 @@ workers:
   - name: content-worker
     github:
       repo: epicdm/epic-ai
-      branch: staging
+      branch: main
       deploy_on_push: true
     # NO source_dir - build from monorepo root for workspace dependencies
     build_command: |
@@ -192,7 +192,7 @@ workers:
   - name: content-scheduler
     github:
       repo: epicdm/epic-ai
-      branch: staging
+      branch: main
       deploy_on_push: true
     # NO source_dir - build from monorepo root for workspace dependencies
     build_command: |

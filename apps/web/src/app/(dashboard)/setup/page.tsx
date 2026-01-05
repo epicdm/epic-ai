@@ -6,7 +6,7 @@
  * - Default → Expert mode (Full PhaseHub with all 32 steps)
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma, PhaseStatus } from "@epic-ai/database";
 import { StreamlinedFlywheelWizard } from "@/components/flywheel/streamlined-flywheel-wizard";
@@ -29,7 +29,7 @@ interface SetupPageProps {
 }
 
 export default async function SetupPage({ searchParams }: SetupPageProps) {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
   const params = await searchParams;
   const mode = params.mode || "expert";
   const isFirstTime = params["first-time"] === "true";

@@ -20,7 +20,10 @@
     "db:generate": "pnpm --filter @epic-ai/database generate",
     "db:push": "pnpm --filter @epic-ai/database push",
     "db:migrate": "pnpm --filter @epic-ai/database migrate",
-    "db:studio": "pnpm --filter @epic-ai/database studio"
+    "db:studio": "pnpm --filter @epic-ai/database studio",
+    "validate": "pnpm --filter @epic-ai/web test:e2e",
+    "test:e2e": "pnpm --filter @epic-ai/web test:e2e",
+    "test:e2e:ui": "pnpm --filter @epic-ai/web test:e2e:ui"
   },
   "devDependencies": {
     "next": "^16.0.10",
