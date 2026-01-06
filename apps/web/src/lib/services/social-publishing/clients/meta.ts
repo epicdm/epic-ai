@@ -203,6 +203,13 @@ export class MetaClient implements SocialClient {
 
   private async publishToInstagram(options: PublishOptions): Promise<PublishResult> {
     try {
+      console.log('[MetaClient] publishToInstagram called:', {
+        hasInstagramAccountId: !!this.instagramAccountId,
+        mediaUrls: options.mediaUrls,
+        mediaType: options.mediaType,
+        contentLength: options.content?.length,
+      });
+
       if (!this.instagramAccountId) {
         return {
           success: false,
@@ -227,6 +234,13 @@ export class MetaClient implements SocialClient {
 
       // Single image/video post
       const mediaType = options.mediaType === 'video' ? 'VIDEO' : 'IMAGE';
+      const imageUrl = options.mediaUrls[0];
+
+      console.log('[MetaClient] Creating Instagram media container:', {
+        instagramAccountId: this.instagramAccountId,
+        mediaType,
+        imageUrl: imageUrl?.substring(0, 100) + '...',
+      });
 
       // Create media container
       const containerResponse = await fetch(
@@ -237,8 +251,8 @@ export class MetaClient implements SocialClient {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            image_url: mediaType === 'IMAGE' ? options.mediaUrls[0] : undefined,
-            video_url: mediaType === 'VIDEO' ? options.mediaUrls[0] : undefined,
+            image_url: mediaType === 'IMAGE' ? imageUrl : undefined,
+            video_url: mediaType === 'VIDEO' ? imageUrl : undefined,
             caption: options.content,
             access_token: this.accessToken,
           }),
@@ -247,6 +261,11 @@ export class MetaClient implements SocialClient {
 
       if (!containerResponse.ok) {
         const error = await containerResponse.json();
+        console.error('[MetaClient] Instagram media container creation failed:', {
+          status: containerResponse.status,
+          error: error.error,
+          imageUrl: imageUrl?.substring(0, 100),
+        });
         return {
           success: false,
           platform: 'INSTAGRAM',
