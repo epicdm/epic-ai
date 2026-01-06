@@ -9,6 +9,7 @@ import { BrandBrainService } from '../brand-brain/service';
 import { ContextManager } from '../context-engine/manager';
 import type { ContentRequest, GeneratedContent, PlatformVariation } from './types';
 import { PLATFORM_LIMITS } from './types';
+import { persistImageFromUrl, generateImagePath, isStorageConfigured } from '@/lib/storage';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -37,8 +38,15 @@ export class ContentGenerator {
       ? await this.getContextByIds(request.contextItemIds)
       : await this.getRelevantContext(request.topic, request.category);
 
+    // Auto-enable image generation for Instagram (Instagram requires media)
+    const needsImage = request.includeImage || request.targetPlatforms.includes('INSTAGRAM');
+
     // Build the generation prompt
-    const contentPrompt = this.buildContentPrompt(request, brandPrompt, contextItems);
+    const contentPrompt = this.buildContentPrompt(
+      { ...request, includeImage: needsImage },
+      brandPrompt,
+      contextItems
+    );
 
     // Generate with AI
     const response = await openai.chat.completions.create({
@@ -66,11 +74,26 @@ export class ContentGenerator {
     // Get suggested hashtags
     const hashtags = await this.brandBrain.suggestHashtags(request.topic || parsed.category);
 
+    // Auto-generate image for Instagram if needed
+    let generatedImageUrl: string | undefined;
+    if (needsImage) {
+      try {
+        console.log('[ContentGenerator] Auto-generating image for content...');
+        const imagePrompt = await this.generateImagePrompt(parsed.content);
+        generatedImageUrl = await this.generateImage(imagePrompt);
+        console.log('[ContentGenerator] Image generated successfully');
+      } catch (error) {
+        console.error('[ContentGenerator] Failed to generate image:', error);
+        // Continue without image - will fail for Instagram but work for other platforms
+      }
+    }
+
     return {
       ...parsed,
       contentType: request.contentType,
       variations,
       suggestedHashtags: hashtags,
+      generatedImageUrl,
     };
   }
 
@@ -141,7 +164,11 @@ Return only the prompt, no explanation.`,
   }
 
   /**
-   * Generate an image using DALL-E
+   * Generate an image using DALL-E and persist to permanent storage
+   *
+   * DALL-E returns temporary URLs that expire after ~1 hour.
+   * This method downloads the image and uploads it to DigitalOcean Spaces
+   * for permanent storage before returning the URL.
    */
   async generateImage(prompt: string): Promise<string> {
     const response = await openai.images.generate({
@@ -152,7 +179,24 @@ Return only the prompt, no explanation.`,
       quality: 'standard',
     });
 
-    return response.data?.[0]?.url || '';
+    const tempUrl = response.data?.[0]?.url;
+    if (!tempUrl) {
+      throw new Error('No image URL returned from DALL-E');
+    }
+
+    // Persist to permanent storage (DigitalOcean Spaces)
+    // This prevents Instagram publish failures from expired DALL-E URLs
+    if (isStorageConfigured()) {
+      const targetPath = generateImagePath(this.brandId, 'ai-generated');
+      console.log('[ContentGenerator] Persisting DALL-E image to storage:', targetPath);
+      const permanentUrl = await persistImageFromUrl(tempUrl, targetPath);
+      console.log('[ContentGenerator] Image persisted successfully');
+      return permanentUrl;
+    }
+
+    // Fallback to temporary URL if storage not configured
+    console.warn('[ContentGenerator] Storage not configured, using temporary DALL-E URL');
+    return tempUrl;
   }
 
   // Private methods
@@ -190,6 +234,9 @@ Return only the prompt, no explanation.`,
       ? `\n\nRelevant brand context:\n${contextItems.join('\n\n')}`
       : '';
 
+    // Platform-specific guidance
+    const platformGuidance = this.getPlatformGuidance(request.targetPlatforms);
+
     return `${brandPrompt.brandContext}
 
 ${brandPrompt.styleGuidelines}
@@ -200,19 +247,53 @@ ${request.category ? `Category/Topic: ${request.category}` : ''}
 ${request.topic ? `Specific topic: ${request.topic}` : ''}
 ${request.customInstructions ? `Additional instructions: ${request.customInstructions}` : ''}
 
-Requirements:
-1. Write engaging, shareable content
-2. Match the brand voice and tone exactly
-3. Include a subtle call-to-action if appropriate
-4. Make it feel authentic, not salesy
-5. ${request.includeImage ? 'This will include an image, so reference visuals' : 'This is text-only'}
+${platformGuidance}
+
+IMPORTANT REQUIREMENTS FOR HIGH-QUALITY CONTENT:
+1. START WITH A HOOK - Open with something attention-grabbing (a bold statement, question, surprising fact, or relatable situation)
+2. PROVIDE VALUE - Share actionable insights, tips, or information your audience can use
+3. BE SPECIFIC - Use concrete examples, numbers, or stories instead of generic statements
+4. CREATE EMOTION - Make readers feel something (inspired, curious, understood, excited)
+5. CONVERSATIONAL TONE - Write like you're talking to a friend, not giving a lecture
+6. INCLUDE A CTA - End with a clear next step (comment, share, click, try something)
+7. ${request.includeImage ? 'This will include an image - reference visuals naturally' : 'This is text-only - paint a picture with words'}
+
+AVOID:
+- Generic corporate speak ("We are committed to excellence")
+- Vague statements ("Great things are coming")
+- Pushy sales language ("Buy now!", "Don't miss out!")
+- Clichés and overused phrases
+- Starting with "We" - focus on the audience instead
 
 Respond with JSON:
 {
-  "content": "The main post content",
+  "content": "The main post content (engaging, specific, valuable)",
   "category": "detected or provided category",
-  "suggestedEmojis": ["emoji1", "emoji2"]
+  "suggestedEmojis": ["emoji1", "emoji2"],
+  "hook": "The opening hook used"
 }`;
+  }
+
+  /**
+   * Get platform-specific writing guidance
+   */
+  private getPlatformGuidance(platforms: SocialPlatform[]): string {
+    const guides: string[] = [];
+
+    if (platforms.includes('TWITTER')) {
+      guides.push('Twitter/X: Punchy and provocative. Use threads for longer content. Encourage replies.');
+    }
+    if (platforms.includes('LINKEDIN')) {
+      guides.push('LinkedIn: Professional but personal. Share insights and lessons. Use line breaks for readability.');
+    }
+    if (platforms.includes('FACEBOOK')) {
+      guides.push('Facebook: Conversational and community-focused. Ask questions. Encourage sharing.');
+    }
+    if (platforms.includes('INSTAGRAM')) {
+      guides.push('Instagram: Visual storytelling with captions. Use emojis strategically. Strong first line (shows in preview).');
+    }
+
+    return guides.length > 0 ? `PLATFORM-SPECIFIC GUIDANCE:\n${guides.join('\n')}` : '';
   }
 
   private parseGeneratedContent(
