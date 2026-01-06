@@ -15,6 +15,7 @@ import { TwitterClient } from './clients/twitter';
 import { LinkedInClient } from './clients/linkedin';
 import { MetaClient } from './clients/meta';
 import type { PublishOptions, PublishResult, OAuthTokens, SocialClient } from './types';
+import { decryptToken, encryptToken } from '@/lib/encryption';
 
 export class SocialPublisher {
   private brandId: string;
@@ -32,17 +33,23 @@ export class SocialPublisher {
   ): Promise<{ platform: SocialPlatform; result: PublishResult }[]> {
     const results: { platform: SocialPlatform; result: PublishResult }[] = [];
 
+    console.log(`[SocialPublisher] Starting publish for content ${contentId} to platforms:`, platforms);
+
     // Get content item
     const contentItem = await prisma.contentItem.findUnique({
       where: { id: contentId },
     });
 
     if (!contentItem) {
+      console.error(`[SocialPublisher] Content ${contentId} not found`);
       return platforms.map((platform) => ({
         platform,
         result: { success: false, platform, error: 'Content not found' },
       }));
     }
+
+    console.log(`[SocialPublisher] Content found: ${contentItem.content.substring(0, 50)}...`);
+    console.log(`[SocialPublisher] Media URLs: ${JSON.stringify(contentItem.mediaUrls)}`);
 
     // Mock mode for local testing
     if (process.env.MOCK_SOCIAL_API === 'true') {
@@ -216,9 +223,13 @@ export class SocialPublisher {
       return null;
     }
 
+    // Decrypt tokens before using them
+    const decryptedAccessToken = decryptToken(account.accessToken);
+    const decryptedRefreshToken = account.refreshToken ? decryptToken(account.refreshToken) : undefined;
+
     const tokens: OAuthTokens = {
-      accessToken: account.accessToken,
-      refreshToken: account.refreshToken || undefined,
+      accessToken: decryptedAccessToken,
+      refreshToken: decryptedRefreshToken,
       expiresAt: account.tokenExpires || undefined,
     };
 
@@ -272,8 +283,8 @@ export class SocialPublisher {
     await prisma.socialAccount.update({
       where: { id: accountId },
       data: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: encryptToken(tokens.accessToken),
+        refreshToken: tokens.refreshToken ? encryptToken(tokens.refreshToken) : null,
         tokenExpires: tokens.expiresAt,
         status: 'CONNECTED',
       },
@@ -295,6 +306,13 @@ export class SocialPublisher {
       profileUrl?: string;
     }
   ): Promise<SocialAccount> {
+    console.log('[SocialPublisher.connectAccount] Connecting account:', {
+      brandId,
+      platform,
+      platformUserId: profile.platformUserId,
+      displayName: profile.displayName,
+    });
+
     // Check if account already exists
     const existing = await prisma.socialAccount.findFirst({
       where: {
