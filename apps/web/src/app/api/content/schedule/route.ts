@@ -64,6 +64,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = scheduleContentSchema.parse(body);
 
+    console.log('[Content Schedule API] Request:', {
+      brandId: validated.brandId,
+      hasGeneratedImageUrl: !!validated.generatedImageUrl,
+      generatedImageUrl: validated.generatedImageUrl?.substring(0, 50),
+      platforms: validated.variations.map(v => v.platform),
+    });
+
     // Verify user has access
     const brand = await prisma.brand.findFirst({
       where: {

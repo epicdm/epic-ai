@@ -59,7 +59,18 @@ export async function POST(request: NextRequest) {
     }
 
     const generator = new ContentGenerator(validated.brandId);
+    console.log('[Content Generate API] Request:', {
+      brandId: validated.brandId,
+      targetPlatforms: validated.targetPlatforms,
+      includeImage: validated.includeImage,
+    });
+
     const content = await generator.generate(validated);
+
+    console.log('[Content Generate API] Response:', {
+      hasGeneratedImageUrl: !!content.generatedImageUrl,
+      generatedImageUrl: content.generatedImageUrl?.substring(0, 50) + '...',
+    });
 
     // Track usage
     await prisma.usage.upsert({

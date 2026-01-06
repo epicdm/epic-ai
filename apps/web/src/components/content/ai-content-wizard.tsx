@@ -242,6 +242,7 @@ export function AIContentWizard({
         })) || [],
         suggestedHashtags: data.content?.suggestedHashtags || [],
         imagePrompt: data.content?.imagePrompt,
+        generatedImageUrl: data.content?.generatedImageUrl, // Capture AI-generated image URL
       };
 
       setGeneratedContent(content);
