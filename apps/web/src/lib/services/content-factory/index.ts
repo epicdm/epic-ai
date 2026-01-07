@@ -10,6 +10,7 @@
 export { ContentGenerator } from './generator';
 export { ContentScheduler } from './scheduler';
 export { ContentQueueManager } from './queue-manager';
+export { VideoGenerator, isVideoGenerationConfigured } from './video-generator';
 export type {
   GeneratedContent,
   ContentRequest,
@@ -17,5 +18,6 @@ export type {
   QueuedContent,
   SavedVariation,
   BatchRequest,
+  VideoGenerationOptions,
 } from './types';
 export { PLATFORM_LIMITS, PLATFORM_BEST_PRACTICES } from './types';

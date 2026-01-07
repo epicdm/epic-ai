@@ -5,6 +5,47 @@ import { prisma } from "@epic-ai/database";
 import { createOrganization } from "@/lib/services/organization";
 import { organizationSchema } from "@/lib/validations/onboarding";
 
+// PATCH - Update organization name
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, name } = body;
+
+    if (!id || !name) {
+      return NextResponse.json({ error: "Missing id or name" }, { status: 400 });
+    }
+
+    // Verify user has access to this organization
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: "Not authorized to update this organization" }, { status: 403 });
+    }
+
+    const organization = await prisma.organization.update({
+      where: { id },
+      data: { name },
+    });
+
+    return NextResponse.json(organization);
+  } catch (error) {
+    console.error("Error updating organization:", error);
+    return NextResponse.json({ error: "Failed to update organization" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await getAuthWithBypass();
@@ -141,6 +182,7 @@ export async function POST(request: NextRequest) {
       name,
       userId,
     });
+    console.log('[Onboarding Org API] Created org:', organization.id, 'name:', organization.name, 'for userId:', userId);
 
     return NextResponse.json(organization);
   } catch (error) {

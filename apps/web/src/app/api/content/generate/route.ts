@@ -9,6 +9,13 @@ import { prisma } from '@epic-ai/database';
 import { ContentGenerator } from '@/lib/services/content-factory/generator';
 import { z } from 'zod';
 
+const videoOptionsSchema = z.object({
+  aspectRatio: z.enum(['16:9', '9:16', '1:1', '4:5', '5:4', '3:2', '2:3']).optional(),
+  resolution: z.enum(['720p', '1080p']).optional(),
+  duration: z.union([z.literal(5), z.literal(10)]).optional(),
+  animateImage: z.boolean().optional(),
+}).optional();
+
 const generateSchema = z.object({
   brandId: z.string(),
   contentType: z.enum(['POST', 'STORY', 'REEL', 'THREAD', 'AD', 'BLOG_EXCERPT']).default('POST'),
@@ -19,6 +26,8 @@ const generateSchema = z.object({
   category: z.string().optional(),
   contextItemIds: z.array(z.string()).optional(),
   includeImage: z.boolean().default(false),
+  includeVideo: z.boolean().default(false),
+  videoOptions: videoOptionsSchema,
   customInstructions: z.string().optional(),
 });
 
@@ -63,6 +72,8 @@ export async function POST(request: NextRequest) {
       brandId: validated.brandId,
       targetPlatforms: validated.targetPlatforms,
       includeImage: validated.includeImage,
+      includeVideo: validated.includeVideo,
+      videoOptions: validated.videoOptions,
     });
 
     const content = await generator.generate(validated);
@@ -70,9 +81,12 @@ export async function POST(request: NextRequest) {
     console.log('[Content Generate API] Response:', {
       hasGeneratedImageUrl: !!content.generatedImageUrl,
       generatedImageUrl: content.generatedImageUrl?.substring(0, 50) + '...',
+      hasGeneratedVideoUrl: !!content.generatedVideoUrl,
+      videoCost: content.videoCost,
     });
 
     // Track usage
+    const videoCostCents = content.videoCost ? Math.round(content.videoCost * 100) : 0;
     await prisma.usage.upsert({
       where: {
         organizationId_periodStart: {
@@ -86,10 +100,14 @@ export async function POST(request: NextRequest) {
         periodEnd: getMonthEnd(),
         postsGenerated: 1,
         imagesGenerated: validated.includeImage ? 1 : 0,
+        videosGenerated: content.generatedVideoUrl ? 1 : 0,
+        videoCostCents,
       },
       update: {
         postsGenerated: { increment: 1 },
         imagesGenerated: validated.includeImage ? { increment: 1 } : undefined,
+        videosGenerated: content.generatedVideoUrl ? { increment: 1 } : undefined,
+        videoCostCents: videoCostCents ? { increment: videoCostCents } : undefined,
       },
     });
 

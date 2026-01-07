@@ -21,6 +21,7 @@
     "@epic-ai/database": "workspace:*",
     "@epic-ai/shared": "workspace:*",
     "@epic-ai/ui": "workspace:*",
+    "@fal-ai/client": "^1.8.1",
     "@heroicons/react": "^2.2.0",
     "@heroui/react": "^2.8.5",
     "@heroui/system": "^2.4.5",

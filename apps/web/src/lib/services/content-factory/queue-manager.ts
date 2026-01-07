@@ -36,6 +36,10 @@ export class ContentQueueManager {
     // Extract target platforms from variations
     const targetPlatforms = generated.variations?.map(v => v.platform) || [];
 
+    // Build media URLs array from generated image
+    const mediaUrls = generated.generatedImageUrl ? [generated.generatedImageUrl] : [];
+    const mediaType = generated.generatedImageUrl ? 'image' : null;
+
     // Create content item with variations
     const contentItem = await prisma.contentItem.create({
       data: {
@@ -47,6 +51,8 @@ export class ContentQueueManager {
         approvalStatus,
         targetPlatforms,
         scheduledFor: options.scheduledFor || null,
+        mediaUrls,
+        mediaType,
         contentVariations: generated.variations && generated.variations.length > 0 ? {
           create: generated.variations.map(v => ({
             platform: v.platform,

@@ -11,6 +11,14 @@ import crypto from 'crypto';
 const META_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
 
 function getRedirectUri(request: NextRequest): string {
+  // Use forwarded headers when behind a proxy (nginx)
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+
+  if (forwardedHost && forwardedProto) {
+    return `${forwardedProto}://${forwardedHost}/api/social/callback/meta`;
+  }
+
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}/api/social/callback/meta`;
 }

@@ -1697,6 +1697,8 @@ model Usage {
   postsGenerated  Int      @default(0) @map("posts_generated")
   postsPublished  Int      @default(0) @map("posts_published")
   imagesGenerated Int      @default(0) @map("images_generated")
+  videosGenerated Int      @default(0) @map("videos_generated")
+  videoCostCents  Int      @default(0) @map("video_cost_cents")
   aiTokensUsed    BigInt   @default(0) @map("ai_tokens_used")
 
   createdAt       DateTime @default(now()) @map("created_at")

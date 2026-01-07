@@ -10,6 +10,7 @@ import { ContextManager } from '../context-engine/manager';
 import type { ContentRequest, GeneratedContent, PlatformVariation } from './types';
 import { PLATFORM_LIMITS } from './types';
 import { persistImageFromUrl, generateImagePath, isStorageConfigured } from '@/lib/storage';
+import { VideoGenerator, isVideoGenerationConfigured } from './video-generator';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -76,15 +77,60 @@ export class ContentGenerator {
 
     // Auto-generate image for Instagram if needed
     let generatedImageUrl: string | undefined;
+    let imagePrompt: string | undefined;
     if (needsImage) {
       try {
         console.log('[ContentGenerator] Auto-generating image for content...');
-        const imagePrompt = await this.generateImagePrompt(parsed.content);
+        imagePrompt = await this.generateImagePrompt(parsed.content);
         generatedImageUrl = await this.generateImage(imagePrompt);
         console.log('[ContentGenerator] Image generated successfully');
       } catch (error) {
         console.error('[ContentGenerator] Failed to generate image:', error);
         // Continue without image - will fail for Instagram but work for other platforms
+      }
+    }
+
+    // Generate video if requested and configured
+    let generatedVideoUrl: string | undefined;
+    let videoDuration: number | undefined;
+    let videoResolution: '720p' | '1080p' | undefined;
+    let videoCost: number | undefined;
+
+    if (request.includeVideo && isVideoGenerationConfigured()) {
+      try {
+        console.log('[ContentGenerator] Generating video for content...');
+        const videoGenerator = new VideoGenerator(this.brandId);
+        const videoOptions = request.videoOptions || {};
+
+        // If animateImage is true and we have an image, use image-to-video
+        if (videoOptions.animateImage && generatedImageUrl) {
+          const videoPrompt = await videoGenerator.generateVideoPrompt(parsed.content);
+          const result = await videoGenerator.animateImage(generatedImageUrl, videoPrompt, {
+            aspectRatio: videoOptions.aspectRatio || '16:9',
+            resolution: videoOptions.resolution || '720p',
+            duration: videoOptions.duration || 5,
+          });
+          generatedVideoUrl = result.videoUrl;
+          videoDuration = result.duration;
+          videoResolution = result.resolution;
+          videoCost = result.cost;
+        } else {
+          // Otherwise use text-to-video
+          const videoPrompt = await videoGenerator.generateVideoPrompt(parsed.content);
+          const result = await videoGenerator.generateVideoAd(videoPrompt, {
+            aspectRatio: videoOptions.aspectRatio || '16:9',
+            resolution: videoOptions.resolution || '720p',
+            duration: videoOptions.duration || 5,
+          });
+          generatedVideoUrl = result.videoUrl;
+          videoDuration = result.duration;
+          videoResolution = result.resolution;
+          videoCost = result.cost;
+        }
+        console.log('[ContentGenerator] Video generated successfully, cost: $' + videoCost);
+      } catch (error) {
+        console.error('[ContentGenerator] Failed to generate video:', error);
+        // Continue without video
       }
     }
 
@@ -94,6 +140,11 @@ export class ContentGenerator {
       variations,
       suggestedHashtags: hashtags,
       generatedImageUrl,
+      imagePrompt,
+      generatedVideoUrl,
+      videoDuration,
+      videoResolution,
+      videoCost,
     };
   }
 

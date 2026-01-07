@@ -4,6 +4,68 @@ import { prisma, VoiceTone, EmojiFrequency } from "@epic-ai/database";
 import { createBrand } from "@/lib/services/organization";
 import { brandSchema } from "@/lib/validations/onboarding";
 
+// PATCH - Update brand name and website
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, name, website } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing brand id" }, { status: 400 });
+    }
+
+    // Get brand and verify user has access
+    const brand = await prisma.brand.findUnique({
+      where: { id },
+      include: { organization: true },
+    });
+
+    if (!brand) {
+      return NextResponse.json({ error: "Brand not found" }, { status: 404 });
+    }
+
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: brand.organizationId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: "Not authorized to update this brand" }, { status: 403 });
+    }
+
+    const updateData: { name?: string; website?: string | null } = {};
+    if (name) updateData.name = name;
+    if (website !== undefined) updateData.website = website || null;
+
+    const updatedBrand = await prisma.brand.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Also update BrandBrain company name if exists
+    if (name) {
+      await prisma.brandBrain.updateMany({
+        where: { brandId: id },
+        data: { companyName: name },
+      });
+    }
+
+    return NextResponse.json(updatedBrand);
+  } catch (error) {
+    console.error("Error updating brand:", error);
+    return NextResponse.json({ error: "Failed to update brand" }, { status: 500 });
+  }
+}
+
 // Map template voice tones to VoiceTone enum
 function mapVoiceTone(tone: string): VoiceTone {
   const mapping: Record<string, VoiceTone> = {

@@ -39,7 +39,9 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  Wand2,
 } from "lucide-react";
+import { AIBrandSetup } from "@/components/brand/ai-brand-setup";
 
 interface BrandBrain {
   id: string;
@@ -234,6 +236,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
   const audienceModal = useDisclosure();
   const pillarModal = useDisclosure();
   const competitorModal = useDisclosure();
+  const aiSetupModal = useDisclosure();
 
   const [editingAudience, setEditingAudience] = useState<Partial<Audience> | null>(null);
   const [editingPillar, setEditingPillar] = useState<Partial<Pillar> | null>(null);
@@ -472,6 +475,14 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                 {message.text}
               </Chip>
             )}
+            <Button
+              variant="flat"
+              color="secondary"
+              startContent={<Wand2 className="w-4 h-4" />}
+              onPress={aiSetupModal.onOpen}
+            >
+              AI Auto-Setup
+            </Button>
             <TemplatePickerButton brandId={brandId} onTemplateApplied={refetchBrain} />
             <Button
               color="primary"
@@ -1227,6 +1238,32 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
             <Button variant="flat" onPress={competitorModal.onClose}>Cancel</Button>
             <Button color="primary" onPress={handleSaveCompetitor}>Save</Button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* AI Auto-Setup Modal */}
+      <Modal
+        isOpen={aiSetupModal.isOpen}
+        onClose={aiSetupModal.onClose}
+        size="3xl"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-purple-500" />
+            AI Auto-Setup
+          </ModalHeader>
+          <ModalBody>
+            <AIBrandSetup
+              brandId={brandId}
+              onComplete={() => {
+                aiSetupModal.onClose();
+                refetchBrain();
+              }}
+              onSkip={aiSetupModal.onClose}
+              showSkip={true}
+            />
+          </ModalBody>
         </ModalContent>
       </Modal>
     </div>

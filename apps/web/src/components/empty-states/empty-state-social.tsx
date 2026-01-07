@@ -44,7 +44,7 @@ export function EmptyStateSocial() {
             </Button>
             <Button
               as={Link}
-              href="/dashboard/social/create"
+              href="/dashboard/content/generate"
               variant="bordered"
               size="lg"
             >

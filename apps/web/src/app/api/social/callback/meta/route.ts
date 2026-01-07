@@ -11,6 +11,14 @@ import { safeEncryptToken } from '@/lib/encryption';
 const TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';
 
 function getBaseUrl(request: NextRequest): string {
+  // Use forwarded headers when behind a proxy (nginx)
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+
+  if (forwardedHost && forwardedProto) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
   const url = new URL(request.url);
   return `${url.protocol}//${url.host}`;
 }
@@ -183,41 +191,117 @@ export async function GET(request: NextRequest) {
     const businessDataResponse = await fetch(
       `https://graph.facebook.com/v18.0/${page.id}?` +
         new URLSearchParams({
-          fields: 'name,about,description,category,website,picture.type(large),cover,phone,emails,location,single_line_address',
+          fields: [
+            // Basic info
+            'name', 'about', 'description', 'bio', 'category', 'category_list',
+            'website', 'link', 'username',
+            // Contact
+            'phone', 'emails', 'whatsapp_number', 'location', 'single_line_address',
+            // Visual
+            'picture.type(large)', 'cover',
+            // Business details
+            'hours', 'price_range', 'founded', 'company_overview', 'mission',
+            'products', 'general_info', 'impressum',
+            // Engagement metrics
+            'fan_count', 'followers_count', 'talking_about_count',
+            'were_here_count', 'rating_count', 'overall_star_rating',
+          ].join(','),
           access_token: pageAccessToken,
         })
     );
 
     let businessData: {
+      // Basic
       name?: string;
       about?: string;
       description?: string;
+      bio?: string;
       category?: string;
+      categories?: string[];
       website?: string;
-      logo?: string;
-      coverPhoto?: string;
+      pageUrl?: string;
+      username?: string;
+      // Contact
       phone?: string;
       email?: string;
+      whatsapp?: string;
       address?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      zip?: string;
+      latitude?: number;
+      longitude?: number;
+      // Visual
+      logo?: string;
+      coverPhoto?: string;
+      // Business
+      hours?: Record<string, string>;
+      priceRange?: string;
+      founded?: string;
+      companyOverview?: string;
+      mission?: string;
+      products?: string;
+      generalInfo?: string;
+      // Engagement
+      fanCount?: number;
+      followersCount?: number;
+      talkingAboutCount?: number;
+      checkInCount?: number;
+      ratingCount?: number;
+      averageRating?: number;
     } = {};
 
     if (businessDataResponse.ok) {
       const fbData = await businessDataResponse.json();
+      console.log('[Meta OAuth] Raw Facebook data:', JSON.stringify(fbData, null, 2));
+
       businessData = {
+        // Basic info
         name: fbData.name,
-        about: fbData.about || fbData.description,
-        description: fbData.description || fbData.about,
+        about: fbData.about,
+        description: fbData.description,
+        bio: fbData.bio,
         category: fbData.category,
+        categories: fbData.category_list?.map((c: { name: string }) => c.name) || [],
         website: fbData.website,
-        logo: fbData.picture?.data?.url,
-        coverPhoto: fbData.cover?.source,
+        pageUrl: fbData.link,
+        username: fbData.username,
+        // Contact
         phone: fbData.phone,
         email: fbData.emails?.[0],
+        whatsapp: fbData.whatsapp_number,
         address: fbData.single_line_address || (fbData.location ?
-          `${fbData.location.street || ''}, ${fbData.location.city || ''}, ${fbData.location.state || ''} ${fbData.location.zip || ''}`.trim() : undefined),
+          `${fbData.location.street || ''}, ${fbData.location.city || ''}, ${fbData.location.state || ''} ${fbData.location.zip || ''}`.replace(/^,\s*/, '').replace(/,\s*,/g, ',').trim() : undefined),
+        city: fbData.location?.city,
+        state: fbData.location?.state,
+        country: fbData.location?.country,
+        zip: fbData.location?.zip,
+        latitude: fbData.location?.latitude,
+        longitude: fbData.location?.longitude,
+        // Visual
+        logo: fbData.picture?.data?.url,
+        coverPhoto: fbData.cover?.source,
+        // Business details
+        hours: fbData.hours,
+        priceRange: fbData.price_range,
+        founded: fbData.founded,
+        companyOverview: fbData.company_overview,
+        mission: fbData.mission,
+        products: fbData.products,
+        generalInfo: fbData.general_info,
+        // Engagement
+        fanCount: fbData.fan_count,
+        followersCount: fbData.followers_count,
+        talkingAboutCount: fbData.talking_about_count,
+        checkInCount: fbData.were_here_count,
+        ratingCount: fbData.rating_count,
+        averageRating: fbData.overall_star_rating,
       };
 
-      // Enrich Brand Brain with Facebook business data
+      console.log('[Meta OAuth] Parsed business data:', JSON.stringify(businessData, null, 2));
+
+      // Enrich Brand and Brand Brain with Facebook business data
       const brand = await prisma.brand.findUnique({
         where: { id: brandId },
         include: { brandBrain: true },
@@ -234,27 +318,83 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Update or create Brand Brain with extracted data (industry only)
+        // Build comprehensive Brand Brain data from Facebook
+        const brainUpdateData: Record<string, unknown> = {};
+
+        // Industry from categories
+        if (!brand.brandBrain?.industry && businessData.category) {
+          brainUpdateData.industry = businessData.category;
+        }
+
+        // Mission statement
+        if (!brand.brandBrain?.mission && businessData.mission) {
+          brainUpdateData.mission = businessData.mission;
+        }
+
+        // Company description (use company_overview, about, or description)
+        if (!brand.brandBrain?.description) {
+          const description = businessData.companyOverview || businessData.about || businessData.description;
+          if (description) {
+            brainUpdateData.description = description;
+          }
+        }
+
+        // Brand summary (use bio or general_info if available)
+        if (!brand.brandBrain?.brandSummary && (businessData.bio || businessData.generalInfo)) {
+          brainUpdateData.brandSummary = businessData.bio || businessData.generalInfo;
+        }
+
+        // Unique selling points / differentiators from products
+        if (!brand.brandBrain?.uniqueSellingPoints?.length && businessData.products) {
+          const usps = businessData.products.split(',').map(p => p.trim()).filter(Boolean);
+          if (usps.length > 0) {
+            brainUpdateData.uniqueSellingPoints = usps.slice(0, 10);
+          }
+        }
+
+        // Differentiators from categories (secondary categories as differentiators)
+        if (!brand.brandBrain?.differentiators?.length && businessData.categories?.length) {
+          brainUpdateData.differentiators = businessData.categories.slice(0, 5);
+        }
+
+        // Target market from engagement data (follower context)
+        if (!brand.brandBrain?.targetMarket && (businessData.fanCount || businessData.followersCount)) {
+          const followers = businessData.followersCount || businessData.fanCount || 0;
+          const engagement = businessData.talkingAboutCount || 0;
+          const rating = businessData.averageRating;
+
+          let marketContext = `Facebook audience: ${followers.toLocaleString()} followers`;
+          if (engagement > 0) marketContext += `, ${engagement.toLocaleString()} actively engaged`;
+          if (rating) marketContext += `, ${rating.toFixed(1)}/5 star rating`;
+          if (businessData.checkInCount) marketContext += `, ${businessData.checkInCount.toLocaleString()} check-ins`;
+
+          brainUpdateData.targetMarket = marketContext;
+        }
+
+        // Update or create Brand Brain with enriched data
         if (brand.brandBrain) {
-          await prisma.brandBrain.update({
-            where: { id: brand.brandBrain.id },
-            data: {
-              industry: brand.brandBrain.industry || businessData.category,
-            },
-          });
+          if (Object.keys(brainUpdateData).length > 0) {
+            await prisma.brandBrain.update({
+              where: { id: brand.brandBrain.id },
+              data: brainUpdateData,
+            });
+            console.log('[Meta OAuth] Updated BrandBrain with:', Object.keys(brainUpdateData));
+          }
         } else {
           await prisma.brandBrain.create({
             data: {
               brandId: brandId,
-              industry: businessData.category,
+              companyName: businessData.name,
+              ...brainUpdateData,
             },
           });
+          console.log('[Meta OAuth] Created BrandBrain with:', Object.keys(brainUpdateData));
         }
       }
     }
 
     // Save Facebook page with encrypted token
-    console.log('[Meta OAuth] Step 7: Saving Facebook account...');
+    console.log('[Meta OAuth] Step 7: Saving Facebook account for brandId:', brandId);
     await SocialPublisher.connectAccount(brandId, 'FACEBOOK', {
       accessToken: safeEncryptToken(pageAccessToken),
       expiresAt,

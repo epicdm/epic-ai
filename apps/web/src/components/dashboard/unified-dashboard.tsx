@@ -493,7 +493,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
             title: "Create Your First Post",
             description: "Use AI to generate on-brand content and publish to your connected accounts",
             action: "Create Content",
-            href: "/dashboard/social/create",
+            href: "/dashboard/content/generate",
             icon: <Sparkles className="w-5 h-5" />,
           };
         } else if (needsAnalytics || needsLearnings) {

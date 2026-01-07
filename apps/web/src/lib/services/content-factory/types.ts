@@ -12,9 +12,19 @@ export interface ContentRequest {
   contextItemIds?: string[];
   category?: string;
   includeImage?: boolean;
+  includeVideo?: boolean;
+  videoOptions?: VideoGenerationOptions;
   customInstructions?: string;
   templateId?: string;
   templateVariables?: Record<string, string>;
+}
+
+export interface VideoGenerationOptions {
+  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:5' | '5:4' | '3:2' | '2:3';
+  resolution?: '720p' | '1080p';
+  duration?: 5 | 10;
+  /** If true, animate the generated image instead of text-to-video */
+  animateImage?: boolean;
 }
 
 export interface GeneratedContent {
@@ -23,6 +33,11 @@ export interface GeneratedContent {
   suggestedHashtags: string[];
   suggestedEmojis: string[];
   imagePrompt?: string;
+  generatedImageUrl?: string;
+  generatedVideoUrl?: string;
+  videoDuration?: number;
+  videoResolution?: '720p' | '1080p';
+  videoCost?: number;
   category: string;
   contentType: ContentType;
 }

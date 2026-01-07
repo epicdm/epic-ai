@@ -53,7 +53,7 @@ import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates"
 
 // Types
 type UserGoal = "content" | "voice" | "campaigns" | "explore";
-type SetupPath = "ai_express" | "guided" | "expert";
+type SetupPath = "ai_express" | "ai_social" | "guided" | "expert";
 
 interface UnifiedOnboardingWizardProps {
   userName: string;
@@ -112,12 +112,25 @@ const pathOptions: PathOption[] = [
     description: "Let AI configure everything from your website",
     time: "~5 minutes",
     icon: <ZapIcon className="w-6 h-6" />,
-    recommended: true,
     features: [
       "Automatic brand voice detection",
       "Content pillars generated",
       "Optimal posting schedule",
       "AI configures all 5 phases",
+    ],
+  },
+  {
+    id: "ai_social",
+    title: "AI Social Setup",
+    description: "Let AI learn your brand from your social posts",
+    time: "~3 minutes",
+    icon: <SparklesIcon className="w-6 h-6" />,
+    recommended: true,
+    features: [
+      "Analyzes your existing posts",
+      "Learns your voice & style",
+      "Auto-detects content themes",
+      "Best results with connected accounts",
     ],
   },
   {
@@ -172,6 +185,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
   const [selectedTemplate, setSelectedTemplate] = useState<BrandTemplate | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<string | null>(null);
+  const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
 
   const handleComplete = useCallback(
     async (data: Record<string, unknown>) => {
@@ -195,8 +209,11 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
 
         // Navigate based on selected path
         if (selectedPath === "ai_express") {
-          // Go to Bird's Eye AI wizard
+          // Go to Bird's Eye AI wizard (website analysis)
           router.push("/setup/ai");
+        } else if (selectedPath === "ai_social") {
+          // Go to AI Social Setup (social posts analysis)
+          router.push("/setup/ai-social");
         } else if (selectedPath === "guided") {
           // Go to streamlined wizard
           router.push("/setup?mode=guided");
@@ -233,16 +250,18 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
         <BusinessInfoStep
           selectedTemplate={selectedTemplate}
           onTemplateSelect={setSelectedTemplate}
-          onSetupComplete={(orgId, brandId) => {
+          onSetupComplete={(orgId, bId) => {
             setOrganizationId(orgId);
-            setBrandId(brandId);
+            setBrandId(bId);
           }}
+          onAccountsConnected={setConnectedAccounts}
         />
 
         {/* Step 3: Path Selection */}
         <PathSelectionStep
           selectedPath={selectedPath}
           onPathSelect={setSelectedPath}
+          connectedAccounts={connectedAccounts}
         />
 
         {/* Step 4: Ready */}
@@ -323,15 +342,21 @@ interface BusinessInfoStepProps {
   selectedTemplate: BrandTemplate | null;
   onTemplateSelect: (template: BrandTemplate) => void;
   onSetupComplete: (orgId: string, brandId: string) => void;
+  onAccountsConnected: (accounts: string[]) => void;
 }
 
-function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete }: BusinessInfoStepProps) {
+function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete, onAccountsConnected }: BusinessInfoStepProps) {
   const { setData, setError, setLoading, isLoading } = useWizard();
   const [showForm, setShowForm] = useState(false);
-  const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
+  const [localConnectedAccounts, setLocalConnectedAccounts] = useState<string[]>([]);
   const [facebookConnecting, setFacebookConnecting] = useState(false);
   const [pendingBrandId, setPendingBrandId] = useState<string | null>(null);
   const [pendingOrgId, setPendingOrgId] = useState<string | null>(null);
+
+  // Notify parent when connected accounts change
+  useEffect(() => {
+    onAccountsConnected(localConnectedAccounts);
+  }, [localConnectedAccounts, onAccountsConnected]);
 
   const form = useForm<BusinessInfoFormData>({
     resolver: zodResolver(businessInfoSchema),
@@ -347,7 +372,7 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
         // Mark both Facebook and Instagram as connected (Meta connects both)
-        setConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
+        setLocalConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
         setFacebookConnecting(false);
         setLoading(false);
 
@@ -362,6 +387,9 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
             form.setValue('website', businessData.website);
           }
         }
+
+        // Show the form view with auto-filled data so user can review/proceed
+        setShowForm(true);
 
         // If we have pending org/brand IDs, mark setup as complete
         if (pendingOrgId && pendingBrandId) {
@@ -435,6 +463,39 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
   const handleSubmit = async (): Promise<boolean> => {
     const isValid = await form.trigger();
     if (!isValid) return false;
+
+    // If org/brand already created (e.g., via Facebook Quick Setup), just proceed
+    if (pendingOrgId && pendingBrandId) {
+      const data = form.getValues();
+
+      // Update brand/org names if user changed them
+      try {
+        await fetch("/api/onboarding/organization", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: pendingOrgId,
+            name: data.organizationName
+          }),
+        });
+
+        await fetch("/api/onboarding/brand", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: pendingBrandId,
+            name: data.brandName,
+            website: data.website || undefined,
+          }),
+        });
+      } catch (e) {
+        console.warn("Failed to update org/brand names:", e);
+        // Continue anyway - names are just cosmetic updates
+      }
+
+      setData("websiteUrl", data.website);
+      return true;
+    }
 
     const data = form.getValues();
     setLoading(true);
@@ -655,9 +716,9 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
             <Button
               size="sm"
               variant="flat"
-              className={`flex-1 ${connectedAccounts.includes('facebook') ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-              startContent={connectedAccounts.includes('facebook') ? <CheckIcon className="w-4 h-4" /> : <FacebookIcon className="w-4 h-4" />}
-              isDisabled={isLoading || connectedAccounts.includes('facebook')}
+              className={`flex-1 ${localConnectedAccounts.includes('facebook') ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+              startContent={localConnectedAccounts.includes('facebook') ? <CheckIcon className="w-4 h-4" /> : <FacebookIcon className="w-4 h-4" />}
+              isDisabled={isLoading || localConnectedAccounts.includes('facebook')}
               onPress={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
@@ -724,14 +785,14 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
                 }
               }}
             >
-              {connectedAccounts.includes('facebook') ? 'Connected' : 'Facebook'}
+              {localConnectedAccounts.includes('facebook') ? 'Connected' : 'Facebook'}
             </Button>
             <Button
               size="sm"
               variant="flat"
-              className={`flex-1 ${connectedAccounts.includes('instagram') ? 'bg-green-600 text-white' : 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white'}`}
-              startContent={connectedAccounts.includes('instagram') ? <CheckIcon className="w-4 h-4" /> : <InstagramIcon className="w-4 h-4" />}
-              isDisabled={isLoading || connectedAccounts.includes('instagram')}
+              className={`flex-1 ${localConnectedAccounts.includes('instagram') ? 'bg-green-600 text-white' : 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white'}`}
+              startContent={localConnectedAccounts.includes('instagram') ? <CheckIcon className="w-4 h-4" /> : <InstagramIcon className="w-4 h-4" />}
+              isDisabled={isLoading || localConnectedAccounts.includes('instagram')}
               onPress={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
@@ -798,7 +859,7 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
                 }
               }}
             >
-              {connectedAccounts.includes('instagram') ? 'Connected' : 'Instagram'}
+              {localConnectedAccounts.includes('instagram') ? 'Connected' : 'Instagram'}
             </Button>
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">
@@ -814,14 +875,27 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete 
 interface PathSelectionStepProps {
   selectedPath: SetupPath | null;
   onPathSelect: (path: SetupPath) => void;
+  connectedAccounts: string[];
 }
 
-function PathSelectionStep({ selectedPath, onPathSelect }: PathSelectionStepProps) {
+function PathSelectionStep({ selectedPath, onPathSelect, connectedAccounts }: PathSelectionStepProps) {
   const { setData } = useWizard();
+  const hasSocialAccounts = connectedAccounts.length > 0;
 
   const handlePathSelect = (path: SetupPath) => {
     onPathSelect(path);
     setData("setupPath", path);
+  };
+
+  // Show AI Social as recommended when user has connected accounts
+  const getPathOptions = () => {
+    return pathOptions.map(option => ({
+      ...option,
+      // AI Social is recommended when accounts are connected, AI Express when not
+      recommended: hasSocialAccounts
+        ? option.id === 'ai_social'
+        : option.id === 'ai_express',
+    }));
   };
 
   return (
@@ -829,12 +903,14 @@ function PathSelectionStep({ selectedPath, onPathSelect }: PathSelectionStepProp
       <WizardStepHeader
         icon={<RocketIcon className="w-8 h-8 text-primary" />}
         title="Choose Your Setup Path"
-        description="How would you like to configure your marketing flywheel?"
+        description={hasSocialAccounts
+          ? "You connected social accounts! AI Social Setup can analyze your posts."
+          : "How would you like to configure your marketing flywheel?"}
       />
 
       <WizardStepContent>
         <div className="space-y-3">
-          {pathOptions.map((option) => (
+          {getPathOptions().map((option) => (
             <Card
               key={option.id}
               isPressable

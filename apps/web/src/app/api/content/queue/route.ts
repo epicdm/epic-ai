@@ -27,6 +27,7 @@ const saveContentSchema = z.object({
   variations: z.array(platformVariationSchema).optional(),
   mediaUrls: z.array(z.string()).optional(),
   mediaType: z.string().optional(),
+  generatedImageUrl: z.string().optional(), // AI-generated image URL
   contentType: z.enum(['POST', 'STORY', 'REEL', 'THREAD', 'AD', 'BLOG_EXCERPT']).default('POST'),
   category: z.string().optional(),
   targetPlatforms: z.array(
@@ -160,6 +161,7 @@ export async function POST(request: NextRequest) {
           suggestedEmojis: [],
           category: validated.category || 'general',
           contentType: validated.contentType,
+          generatedImageUrl: validated.generatedImageUrl, // Pass AI-generated image
         },
         {
           scheduledFor: validated.scheduledFor ? new Date(validated.scheduledFor) : undefined,
@@ -188,12 +190,18 @@ export async function POST(request: NextRequest) {
         ? 'SCHEDULED'
         : 'DRAFT';
 
+    // Combine explicit mediaUrls with generatedImageUrl
+    const mediaUrls = validated.mediaUrls || [];
+    if (validated.generatedImageUrl && !mediaUrls.includes(validated.generatedImageUrl)) {
+      mediaUrls.push(validated.generatedImageUrl);
+    }
+
     const item = await prisma.contentItem.create({
       data: {
         brandId: validated.brandId,
         content: validated.content,
-        mediaUrls: validated.mediaUrls || [],
-        mediaType: validated.mediaType,
+        mediaUrls,
+        mediaType: validated.mediaType || (validated.generatedImageUrl ? 'image' : null),
         contentType: validated.contentType,
         category: validated.category,
         targetPlatforms: validated.targetPlatforms,

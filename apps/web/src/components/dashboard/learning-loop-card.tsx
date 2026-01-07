@@ -180,7 +180,7 @@ export function LearningLoopCard({ brandId, compact = false }: LearningLoopCardP
           <Button
             color="primary"
             className="w-full"
-            onPress={() => router.push("/dashboard/content")}
+            onPress={() => router.push("/dashboard/content/generate")}
           >
             Create Your First Post
           </Button>

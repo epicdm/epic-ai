@@ -55,10 +55,12 @@ export async function GET(request: NextRequest) {
     let brand = await prisma.brand.findFirst({
       where: { organizationId: org.id },
       include: includeBrand ? {
-        brandBrain: true,
-        contentPillars: {
-          select: { id: true, name: true, description: true },
-          orderBy: { createdAt: "asc" },
+        brandBrain: {
+          include: {
+            pillars: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
         },
       } : undefined,
     });
@@ -78,10 +80,12 @@ export async function GET(request: NextRequest) {
           slug,
         },
         include: includeBrand ? {
-          brandBrain: true,
-          contentPillars: {
-            select: { id: true, name: true, description: true },
-            orderBy: { createdAt: "asc" },
+          brandBrain: {
+            include: {
+              pillars: {
+                orderBy: { createdAt: "asc" },
+              },
+            },
           },
         } : undefined,
       });
@@ -122,11 +126,11 @@ export async function GET(request: NextRequest) {
     // Include brand brain data for AI content generation
     if (includeBrand && "brandBrain" in brand && brand.brandBrain) {
       const brain = brand.brandBrain as Record<string, unknown>;
-      response.pillars = "contentPillars" in brand ? brand.contentPillars : [];
+      response.pillars = "pillars" in brain ? brain.pillars : [];
       response.voice = {
-        tone: brain.tone,
-        formality: brain.formality,
-        emojiUsage: brain.emojiUsage,
+        tone: brain.voiceTone,
+        formality: brain.formalityLevel,
+        emojiUsage: brain.emojiFrequency,
       };
     }
 
