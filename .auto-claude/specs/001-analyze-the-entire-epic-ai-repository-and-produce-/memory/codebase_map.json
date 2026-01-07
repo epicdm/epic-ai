@@ -14,7 +14,12 @@
       "description": "Prisma schema contains 49 models mapping to 49 PostgreSQL tables. Tables organized into categories: Core (users, organizations, memberships, brands, brand_brains, subscriptions), Onboarding (flywheel_progress, user_onboarding_progress, wizard_sessions, feature_discovery_state, demo_mode_data), Brand Brain extensions (brand_audiences, content_pillars, brand_competitors, brand_learnings), Context Engine (context_sources, context_items, document_uploads), Content Factory (content_items, content_variations, content_templates, publish_results, content_analytics, autopilot_configs), Social/Publishing (social_accounts, oauth_states, publishing_schedules, publishing_logs, post_analytics), Voice Module (12 tables for voice agents, calls, campaigns), and Billing/Jobs. Verification command: docker exec epic-ai-postgres psql -U epic -d epic_ai -c \"\\dt\"",
       "category": "database",
       "discovered_at": "2026-01-07T20:51:38.515515+00:00"
+    },
+    "apps/web/package.json": {
+      "description": "Development server runs via 'pnpm dev' which triggers 'turbo dev' -> 'next dev --turbopack'. Uses Turbopack bundler for fast HMR. Server starts on http://localhost:3000. Entry point is apps/web/src/app/layout.tsx with ClerkProvider wrapper. Requires CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, and DATABASE_URL env vars. Landing page redirects authenticated users to /dashboard.",
+      "category": "development",
+      "discovered_at": "2026-01-07T20:54:51.926988+00:00"
     }
   },
-  "last_updated": "2026-01-07T20:51:38.515515+00:00"
+  "last_updated": "2026-01-07T20:54:51.926988+00:00"
 }

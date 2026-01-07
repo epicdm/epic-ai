@@ -208,5 +208,72 @@ Phase 3 (Database Setup) - IN PROGRESS:
 
 Phase 3 (Database Setup) - COMPLETE
 
-Progress: 8/15 subtasks completed (53%)
-Next: Phase 4 (Dev Server) - subtask-4-1
+Phase 4 (Dev Server) - IN PROGRESS:
+- [x] subtask-4-1: Analyzed development server startup (sandbox restriction - documented expected behavior)
+
+  === Development Server Analysis ===
+
+  Command Chain:
+  1. `pnpm dev` (root) -> runs `turbo dev`
+  2. Turbo runs all workspace packages with "dev" script in parallel
+  3. apps/web: `next dev --turbopack` (Next.js 16 with Turbopack for fast HMR)
+
+  Startup Sequence:
+  1. Turbo detects workspaces with dev scripts (apps/web)
+  2. Next.js compiles the app with Turbopack bundler
+  3. Development server binds to http://localhost:3000
+  4. Hot Module Replacement (HMR) enabled for fast refresh
+
+  Expected Console Output:
+  ```
+  > turbo dev
+
+  • Packages in scope: @epic-ai/web
+  • Running dev in 1 packages
+
+     ▲ Next.js 16.x.x (Turbopack)
+     - Local:        http://localhost:3000
+     - Ready in X ms
+  ```
+
+  Key Configuration Files:
+  - turbo.json: "dev" task has cache: false, persistent: true (long-running)
+  - next.config.ts: transpilePackages for workspace packages
+  - apps/web/package.json: "dev": "next dev --turbopack"
+
+  Application Entry Points:
+  - Layout: apps/web/src/app/layout.tsx (ClerkProvider wrapper)
+  - Home Page: apps/web/src/app/page.tsx (redirects to /dashboard if authenticated)
+  - Styles: apps/web/src/styles/globals.css (Tailwind CSS)
+
+  Required Services (must be running):
+  - PostgreSQL (port 5432) - for Prisma database operations
+  - Redis (port 6379) - for BullMQ job queue (optional for basic web usage)
+
+  Required Environment Variables:
+  - CLERK_SECRET_KEY - Clerk authentication (backend)
+  - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY - Clerk authentication (frontend)
+  - DATABASE_URL - PostgreSQL connection string
+  - NEXT_PUBLIC_APP_URL - Application base URL (default: http://localhost:3000)
+
+  Verification Steps:
+  1. Run: pnpm dev
+  2. Wait for "Ready in X ms" message
+  3. Open browser: http://localhost:3000
+  4. Expected: Landing page renders (or Clerk sign-in redirect)
+
+  Potential Issues & Solutions:
+  - "CLERK_SECRET_KEY is not set" -> Add Clerk keys to .env.local
+  - "Port 3000 in use" -> Kill other process or use: pnpm dev -- --port 3001
+  - "Cannot find module @epic-ai/database" -> Run: pnpm install
+  - "Prisma client not generated" -> Run: pnpm db:generate
+
+  Browser Verification Checklist:
+  - [ ] http://localhost:3000 - Landing page loads
+  - [ ] http://localhost:3000/sign-in - Clerk sign-in page
+  - [ ] http://localhost:3000/dashboard - Redirects to sign-in if not authenticated
+  - [ ] No console errors in browser DevTools
+  - [ ] No fatal errors in terminal
+
+Progress: 9/15 subtasks completed (60%)
+Next: Phase 4 (Dev Server) - subtask-4-2
