@@ -285,54 +285,406 @@ Opens at [http://localhost:5555](http://localhost:5555)
 
 ## Windows-Specific Notes
 
+This section covers Windows-specific considerations, workarounds, and best practices for developing on Windows.
+
 ### Terminal Recommendations
 
 | Terminal | Recommended | Notes |
 |----------|-------------|-------|
-| **Windows Terminal** | Yes | Best experience, supports tabs |
-| **PowerShell 7+** | Yes | Modern PowerShell with improved syntax |
-| **Git Bash** | Yes | Unix-like commands (`cp`, `ls`) |
+| **Windows Terminal** | ⭐ Best | Modern terminal with tabs, themes, and profiles |
+| **PowerShell 7+** | ⭐ Recommended | Modern shell with cross-platform support |
+| **Git Bash** | ⭐ Recommended | Unix-like commands, great for git workflows |
 | **CMD** | Acceptable | Use Windows commands (`copy`, `dir`) |
 | **WSL2** | Optional | Full Linux environment if preferred |
 
+#### PowerShell vs Git Bash: Command Differences
+
+| Task | PowerShell | Git Bash | CMD |
+|------|------------|----------|-----|
+| Copy file | `Copy-Item src dst` | `cp src dst` | `copy src dst` |
+| List files | `Get-ChildItem` or `ls` | `ls` | `dir` |
+| Create directory | `New-Item -ItemType Directory name` | `mkdir name` | `mkdir name` |
+| Delete directory | `Remove-Item -Recurse dir` | `rm -rf dir` | `rmdir /s /q dir` |
+| View file | `Get-Content file` | `cat file` | `type file` |
+| Set env var (session) | `$env:VAR="value"` | `export VAR=value` | `set VAR=value` |
+| Find text in files | `Select-String -Path * -Pattern "text"` | `grep -r "text" .` | `findstr /s "text" *` |
+
+**Recommendation:** Use Git Bash or Windows Terminal with PowerShell 7+ for the best experience with this project.
+
 ### Docker Desktop Requirements
 
-1. **Install Docker Desktop for Windows**
-   - Download from [docker.com](https://docker.com/products/docker-desktop)
-   - Enable WSL2 backend (recommended) during installation
+#### Installation
 
-2. **Verify Docker is running**
-   - Look for Docker whale icon in system tray
+1. **Download Docker Desktop for Windows**
+   - Get from [docker.com/products/docker-desktop](https://docker.com/products/docker-desktop)
+   - Requires Windows 10/11 Pro, Enterprise, or Education (64-bit) with Hyper-V
+   - Windows 10/11 Home users must use WSL2 backend
+
+2. **Choose Backend: WSL2 vs Hyper-V**
+
+   | Backend | Pros | Cons |
+   |---------|------|------|
+   | **WSL2** (Recommended) | Faster, lower resource usage, better file system performance | Requires WSL2 installation |
+   | **Hyper-V** | Native Windows virtualization | Higher memory usage, slower for file-heavy operations |
+
+3. **Enable WSL2 Backend (Recommended)**
+   ```powershell
+   # Install WSL2 (run as Administrator)
+   wsl --install
+
+   # Set WSL2 as default
+   wsl --set-default-version 2
+   ```
+
+4. **After Installation**
+   - Restart your computer after Docker Desktop installation
+   - Look for Docker whale icon in system tray (should turn from animating to static)
    - Run `docker ps` to verify connectivity
 
-3. **Resource allocation**
-   - Docker Desktop > Settings > Resources
-   - Recommended: 4GB+ RAM, 2+ CPUs
+#### Resource Allocation
+
+Configure Docker Desktop resources for optimal performance:
+
+1. Open Docker Desktop > Settings > Resources
+2. Recommended minimum settings:
+   - **CPUs:** 2 (4+ recommended)
+   - **Memory:** 4 GB (8 GB recommended)
+   - **Swap:** 1 GB
+   - **Disk image size:** 64 GB
+
+**For WSL2 backend:** Resources are managed differently. Create/edit `%USERPROFILE%\.wslconfig`:
+
+```ini
+[wsl2]
+memory=8GB
+processors=4
+swap=2GB
+```
+
+Then restart WSL: `wsl --shutdown`
+
+#### Troubleshooting Docker on Windows
+
+| Issue | Solution |
+|-------|----------|
+| "Docker daemon not running" | Start Docker Desktop from Start menu, wait for whale icon to stabilize |
+| "Hyper-V not enabled" | Enable in Windows Features or use WSL2 backend |
+| "WSL2 installation incomplete" | Run `wsl --update` in elevated PowerShell |
+| Slow container startup | Switch to WSL2 backend, increase allocated resources |
+| Containers can't reach internet | Check Windows Firewall, disable VPN temporarily |
 
 ### Path Considerations
 
-- Use forward slashes `/` in configuration files
-- Environment variables work with both `/` and `\` paths
-- Git may convert line endings - configure with:
-  ```bash
-  git config core.autocrlf input
-  ```
+Windows has unique path handling that can cause issues. Here are the key considerations:
+
+#### Forward vs Backslashes
+
+| Context | Use | Example |
+|---------|-----|---------|
+| Configuration files (`.env`, `package.json`) | Forward slashes `/` | `./apps/web/src` |
+| Windows command line | Either works | `cd apps\web` or `cd apps/web` |
+| Node.js/JavaScript | Forward slashes `/` | `path.join('apps', 'web')` |
+| PowerShell | Either works | `./apps/web` or `.\apps\web` |
+| Git Bash | Forward slashes `/` | `./apps/web` |
+
+#### Long Path Support
+
+Windows traditionally limits paths to 260 characters (MAX_PATH). Node.js projects with deep `node_modules` can exceed this.
+
+**Enable Long Path Support (Recommended):**
+
+1. **Via Group Policy (Windows 10/11 Pro/Enterprise):**
+   - Run `gpedit.msc`
+   - Navigate to: Computer Configuration > Administrative Templates > System > Filesystem
+   - Enable "Enable Win32 long paths"
+
+2. **Via Registry (All Windows versions):**
+   ```powershell
+   # Run PowerShell as Administrator
+   New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+     -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+   ```
+
+3. **Via Git config:**
+   ```bash
+   git config --system core.longpaths true
+   ```
+
+#### Case Sensitivity
+
+Windows file system is case-insensitive by default, but the codebase may have case-sensitive imports.
+
+**Potential issues:**
+- `import Button from './Button'` works even if file is `button.tsx`
+- Can cause build failures on Linux/macOS or in Docker
+
+**Recommendations:**
+- Always match exact case in imports
+- Use ESLint with case-sensitive plugin
+- Run builds in Docker to catch case issues early
+
+### Line Endings (CRLF vs LF)
+
+Windows uses CRLF (`\r\n`) while Linux/macOS use LF (`\n`). This can cause issues with:
+- Git showing all files as modified
+- Shell scripts failing to execute in Docker
+- Prettier/ESLint conflicts
+
+#### Git Configuration (Recommended)
+
+```bash
+# Configure for this repository (recommended)
+git config core.autocrlf input
+git config core.eol lf
+
+# Or configure globally
+git config --global core.autocrlf input
+```
+
+#### .gitattributes
+
+The project should include a `.gitattributes` file. If missing, create one:
+
+```gitattributes
+# Set default behavior to automatically normalize line endings
+* text=auto eol=lf
+
+# Explicitly declare text files to be normalized
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Denote files that should remain as CRLF on Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Denote binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+```
+
+### File Watching Limitations
+
+Windows has limitations with file system watching that can affect hot reload:
+
+#### Symptoms
+- Changes not detected by dev server
+- Need to restart `pnpm dev` frequently
+- "Too many open files" errors
+
+#### Solutions
+
+1. **Increase watchers (for WSL2):**
+   ```bash
+   # In WSL2 terminal
+   echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+   sudo sysctl -p
+   ```
+
+2. **Use polling mode (if watching fails):**
+   Add to `.env.local`:
+   ```bash
+   WATCHPACK_POLLING=true
+   ```
+   Note: Polling uses more CPU but is more reliable.
+
+3. **Exclude node_modules from Windows Defender:**
+   - Open Windows Security > Virus & threat protection > Manage settings
+   - Add exclusion for your project's `node_modules` folder
+   - This significantly improves file watching and installation speed
+
+### Native Module Compilation
+
+Some npm packages require native compilation. On Windows, this needs additional tools.
+
+#### Install Windows Build Tools
+
+```powershell
+# Option 1: Via npm (requires Admin PowerShell)
+npm install --global windows-build-tools
+
+# Option 2: Install Visual Studio Build Tools manually
+# Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+# Select "Desktop development with C++" workload
+```
+
+#### Common Packages Requiring Build Tools
+
+| Package | Purpose | Notes |
+|---------|---------|-------|
+| `sharp` | Image processing | Used for Next.js image optimization |
+| `bcrypt` | Password hashing | May fail without build tools |
+| `node-gyp` | Native module builder | Core dependency |
+| `@prisma/engines` | Prisma binaries | Usually downloads pre-built |
+
+#### If Build Fails
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and reinstall
+rmdir /s /q node_modules
+pnpm install
+
+# Or use pnpm's built-in clean
+pnpm store prune
+pnpm install
+```
 
 ### Port Conflicts
 
-If you have other services using required ports:
+Windows commonly has services using the same ports needed by this project.
 
-| Port | Service | Alternative |
-|------|---------|-------------|
-| 3000 | Next.js | `pnpm dev -- -p 3001` |
-| 5432 | PostgreSQL | Edit `docker-compose.yml` ports |
-| 6379 | Redis | Edit `docker-compose.yml` ports |
+#### Check for Port Conflicts
 
-### Firewall Notes
+```powershell
+# PowerShell: Check if port is in use
+netstat -ano | findstr :3000
+netstat -ano | findstr :5432
+netstat -ano | findstr :6379
 
-- Docker may prompt for firewall access on first run
-- Allow connections for proper container networking
-- Corporate VPNs may interfere with Docker networking
+# Get process using port
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess
+```
+
+#### Common Port Conflicts
+
+| Port | Service | Common Conflicts | Resolution |
+|------|---------|------------------|------------|
+| 3000 | Next.js | Other Node.js apps, Ruby on Rails | Use `pnpm dev -- -p 3001` |
+| 5432 | PostgreSQL | Local PostgreSQL installation | Stop local PostgreSQL or change Docker port |
+| 6379 | Redis | Local Redis, Windows Subsystem | Stop local Redis or change Docker port |
+| 5555 | Prisma Studio | Various apps | Usually no conflicts |
+
+#### Change Docker Ports
+
+Edit `docker-compose.yml` to use different ports:
+
+```yaml
+services:
+  postgres:
+    ports:
+      - "5433:5432"  # Use 5433 on host instead of 5432
+  redis:
+    ports:
+      - "6380:6379"  # Use 6380 on host instead of 6379
+```
+
+Then update `.env.local`:
+```bash
+DATABASE_URL="postgresql://epic:epicpassword@localhost:5433/epic_ai?schema=public"
+REDIS_URL="redis://localhost:6380"
+```
+
+### Windows Firewall & Network
+
+#### Firewall Configuration
+
+Docker may prompt for firewall access on first run. Allow both:
+- **Private networks** - For local development
+- **Public networks** - Only if needed for testing
+
+#### Corporate VPN Issues
+
+VPNs can interfere with Docker networking:
+
+| Symptom | Solution |
+|---------|----------|
+| Containers can't reach internet | Disconnect VPN or add exclusion for Docker networks |
+| Docker commands hang | Restart Docker after VPN connect/disconnect |
+| DNS resolution fails | Set explicit DNS in Docker settings |
+
+**Docker Desktop network settings:**
+1. Settings > Resources > Network
+2. Try disabling "Use kernel networking for UDP"
+3. Or use fixed DNS: 8.8.8.8, 8.8.4.4
+
+### Environment Variables on Windows
+
+#### Setting Environment Variables
+
+```powershell
+# PowerShell (session only)
+$env:DATABASE_URL = "postgresql://epic:epicpassword@localhost:5432/epic_ai"
+
+# PowerShell (permanent for user)
+[Environment]::SetEnvironmentVariable("DATABASE_URL", "your-value", "User")
+
+# CMD (session only)
+set DATABASE_URL=postgresql://epic:epicpassword@localhost:5432/epic_ai
+```
+
+#### .env.local File Encoding
+
+Ensure `.env.local` is saved with:
+- **Encoding:** UTF-8 (without BOM)
+- **Line endings:** LF (not CRLF)
+
+In VS Code:
+1. Click "CRLF" in status bar → Select "LF"
+2. Click "UTF-8" in status bar → "Save with Encoding" → "UTF-8"
+
+### pnpm-Specific Windows Considerations
+
+#### Global Store Location
+
+pnpm uses a global content-addressable store. On Windows:
+- Default location: `%LOCALAPPDATA%\pnpm\store`
+- Shared across all projects
+
+#### Symlink Support
+
+pnpm uses symlinks by default. Ensure symlinks are enabled:
+
+```powershell
+# Check if symlinks work (requires Admin or Developer Mode)
+fsutil behavior query SymlinkEvaluation
+```
+
+**Enable Developer Mode (Windows 10/11):**
+1. Settings > Update & Security > For developers
+2. Enable "Developer Mode"
+3. Restart terminal
+
+**Alternative (disable symlinks):**
+```bash
+pnpm config set node-linker hoisted
+```
+
+### Windows Performance Tips
+
+1. **Exclude from Windows Defender:**
+   - Add project folder to exclusions
+   - Add `node_modules` to exclusions
+   - Add pnpm store to exclusions
+
+2. **Disable Windows Search indexing:**
+   - Right-click project folder > Properties > Advanced
+   - Uncheck "Allow files in this folder to have contents indexed"
+
+3. **Use SSD:**
+   - Place project and Docker data on SSD
+   - Move Docker data: Settings > Resources > Disk image location
+
+4. **Close unnecessary apps:**
+   - Browser DevTools consumes significant resources
+   - Close other Electron apps (Slack, Discord, VS Code extensions)
 
 ---
 

@@ -326,5 +326,41 @@ Phase 4 (Dev Server) - IN PROGRESS:
 
 Phase 4 (Dev Server) - COMPLETE
 
-Progress: 10/15 subtasks completed (67%)
-Next: Phase 5 (Architecture Documentation) - subtask-5-1
+Phase 5 (Architecture Documentation) - COMPLETE:
+- [x] subtask-5-1: Created docs/ARCHITECTURE.md with comprehensive architecture map
+- [x] subtask-5-2: Created docs/ENVIRONMENT.md with environment variable reference
+
+Phase 6 (Readiness Checklist) - IN PROGRESS:
+- [x] subtask-6-1: Created docs/LOCAL_SETUP.md with step-by-step developer setup guide
+- [x] subtask-6-2: Enhanced Windows-Specific Notes section in LOCAL_SETUP.md
+
+  === Windows-Specific Documentation (subtask-6-2) ===
+
+  Expanded LOCAL_SETUP.md Windows section to include:
+
+  1. **Terminal Recommendations** - Command comparison table for PowerShell vs Git Bash vs CMD
+  2. **Docker Desktop Requirements** - WSL2 vs Hyper-V backends, resource allocation, troubleshooting
+  3. **Path Considerations**:
+     - Forward vs backslash usage by context
+     - Long path support (MAX_PATH 260 char limit) with registry/GPO fix
+     - Case sensitivity issues and recommendations
+  4. **Line Endings (CRLF vs LF)** - Git config and .gitattributes templates
+  5. **File Watching Limitations** - Polling mode, Windows Defender exclusions
+  6. **Native Module Compilation** - windows-build-tools installation, common packages
+  7. **Port Conflicts** - Detection commands, common conflicts, Docker port remapping
+  8. **Windows Firewall & Network** - VPN issues, Docker network settings
+  9. **Environment Variables on Windows** - PowerShell/CMD syntax, file encoding
+  10. **pnpm-Specific Considerations** - Global store, symlink support, Developer Mode
+  11. **Windows Performance Tips** - Defender exclusions, indexing, SSD recommendations
+
+  Key workarounds documented:
+  - Enable long paths via registry: LongPathsEnabled=1
+  - Enable Developer Mode for pnpm symlinks
+  - Use WATCHPACK_POLLING=true if file watching fails
+  - Exclude node_modules from Windows Defender
+  - Configure git core.autocrlf=input for line endings
+  - WSL2 backend recommended for Docker (better performance)
+  - Resource allocation via .wslconfig for WSL2
+
+Progress: 12/13 subtasks completed (92%)
+Next: Phase 7 (Final Validation) - subtask-7-1
