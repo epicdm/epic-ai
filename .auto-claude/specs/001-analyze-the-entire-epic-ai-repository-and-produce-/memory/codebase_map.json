@@ -19,7 +19,12 @@
       "description": "Development server runs via 'pnpm dev' which triggers 'turbo dev' -> 'next dev --turbopack'. Uses Turbopack bundler for fast HMR. Server starts on http://localhost:3000. Entry point is apps/web/src/app/layout.tsx with ClerkProvider wrapper. Requires CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, and DATABASE_URL env vars. Landing page redirects authenticated users to /dashboard.",
       "category": "development",
       "discovered_at": "2026-01-07T20:54:51.926988+00:00"
+    },
+    "apps/web/src/app/page.tsx": {
+      "description": "Home page (/) renders LandingHero for unauthenticated users with \"AI Marketing Engine - From Social to Sale\" hero section and 3 feature cards (Social Media, Voice AI Agents, The Flywheel). Authenticated users are redirected to /dashboard via server-side redirect (HTTP 307). ClerkProvider wraps entire app. Providers stack: PostHogProvider > NextThemesProvider > HeroUIProvider. Error boundary at error.tsx handles runtime errors gracefully.",
+      "category": "application-behavior",
+      "discovered_at": "2026-01-07T20:59:01.572044+00:00"
     }
   },
-  "last_updated": "2026-01-07T20:54:51.926988+00:00"
+  "last_updated": "2026-01-07T20:59:01.572044+00:00"
 }
