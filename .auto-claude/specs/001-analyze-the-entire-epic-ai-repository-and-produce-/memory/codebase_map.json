@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "docker-compose.yml": {
+      "description": "Redis service (epic-ai-redis) uses redis:7-alpine image on port 6379 with built-in healthcheck 'redis-cli ping'. When container shows 'healthy' status, Redis is guaranteed responding to PING with PONG. Used by apps/workers for BullMQ job queue processing.",
+      "category": "infrastructure",
+      "discovered_at": "2026-01-07T20:44:30.502364+00:00"
+    },
+    "packages/database/package.json": {
+      "description": "Database package 'push' script runs 'prisma db push' which syncs schema to PostgreSQL without creating migration files. Root 'db:push' delegates via 'pnpm --filter @epic-ai/database push'. Schema contains 49 models. Uses DATABASE_URL env var pointing to local postgres (epic:epicpassword@localhost:5432/epic_ai).",
+      "category": "database",
+      "discovered_at": "2026-01-07T20:49:11.341470+00:00"
+    },
+    "packages/database/prisma/schema.prisma": {
+      "description": "Prisma schema contains 49 models mapping to 49 PostgreSQL tables. Tables organized into categories: Core (users, organizations, memberships, brands, brand_brains, subscriptions), Onboarding (flywheel_progress, user_onboarding_progress, wizard_sessions, feature_discovery_state, demo_mode_data), Brand Brain extensions (brand_audiences, content_pillars, brand_competitors, brand_learnings), Context Engine (context_sources, context_items, document_uploads), Content Factory (content_items, content_variations, content_templates, publish_results, content_analytics, autopilot_configs), Social/Publishing (social_accounts, oauth_states, publishing_schedules, publishing_logs, post_analytics), Voice Module (12 tables for voice agents, calls, campaigns), and Billing/Jobs. Verification command: docker exec epic-ai-postgres psql -U epic -d epic_ai -c \"\\dt\"",
+      "category": "database",
+      "discovered_at": "2026-01-07T20:51:38.515515+00:00"
+    }
+  },
+  "last_updated": "2026-01-07T20:51:38.515515+00:00"
+}
