@@ -1,0 +1,464 @@
+{
+  "feature": "Epic AI Repository Analysis and Local Development Validation",
+  "workflow_type": "investigation",
+  "workflow_rationale": "This is primarily a discovery and documentation task. The focus is on understanding the existing system, validating setup procedures, and producing documentation. No new features - only minimal fixes for blocking issues.",
+  "phases": [
+    {
+      "id": "phase-1-environment-setup",
+      "name": "Environment Setup & Dependency Installation",
+      "type": "setup",
+      "description": "Validate that pnpm install works correctly on Windows and all dependencies resolve",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Run pnpm install and document any warnings or errors",
+          "service": "all",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [
+            "package.json",
+            "pnpm-workspace.yaml"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "pnpm install",
+            "expected": "Installation completes without errors"
+          },
+          "status": "failed",
+          "notes": "ENVIRONMENT RESTRICTION: The 'pnpm' command is not in the allowed commands list for this Claude Code sandbox. Cannot execute pnpm install directly. The pnpm-lock.yaml file exists (indicating project was previously set up). RECOMMENDATION: (1) This verification step must be performed manually by the developer outside the sandbox, OR (2) Add 'pnpm' to the allowed commands list. The dependency structure appears valid based on package.json analysis.",
+          "updated_at": "2026-01-07T17:16:24.031651+00:00"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Copy .env.example to .env.local and configure minimum required variables",
+          "service": "all",
+          "files_to_modify": [],
+          "files_to_create": [
+            ".env.local"
+          ],
+          "patterns_from": [
+            ".env.example"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "dir .env.local",
+            "expected": "File exists"
+          },
+          "status": "pending",
+          "notes": "Minimum required: DATABASE_URL (default works), CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-docker-services",
+      "name": "Docker Services Validation",
+      "type": "implementation",
+      "description": "Start Docker containers for PostgreSQL and Redis, verify they are healthy",
+      "depends_on": [
+        "phase-1-environment-setup"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Start docker-compose services (postgres and redis only)",
+          "service": "infrastructure",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [
+            "docker-compose.yml"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "docker-compose up -d postgres redis && docker-compose ps",
+            "expected": "Both containers show 'healthy' status"
+          },
+          "status": "pending",
+          "notes": "Voice-service container is optional and requires additional env vars"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Verify PostgreSQL is accessible and accepting connections",
+          "service": "infrastructure",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "docker exec epic-ai-postgres pg_isready -U epic -d epic_ai",
+            "expected": "accepting connections"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Verify Redis is accessible and responding to ping",
+          "service": "infrastructure",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "docker exec epic-ai-redis redis-cli ping",
+            "expected": "PONG"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-database-setup",
+      "name": "Database Schema Validation",
+      "type": "implementation",
+      "description": "Generate Prisma client and push schema to local PostgreSQL database",
+      "depends_on": [
+        "phase-2-docker-services"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Generate Prisma client from schema",
+          "service": "database",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [
+            "packages/database/prisma/schema.prisma"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "pnpm db:generate",
+            "expected": "Generated Prisma Client"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Push database schema to local PostgreSQL",
+          "service": "database",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "pnpm db:push",
+            "expected": "Database schema synced"
+          },
+          "status": "pending",
+          "notes": "This creates all tables defined in schema.prisma"
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Verify database tables were created successfully",
+          "service": "database",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "docker exec epic-ai-postgres psql -U epic -d epic_ai -c \"\\dt\"",
+            "expected": "List of tables appears"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-dev-server",
+      "name": "Development Server Validation",
+      "type": "implementation",
+      "description": "Start the Next.js development server and verify the web application loads",
+      "depends_on": [
+        "phase-3-database-setup"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Start development server with pnpm dev",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [
+            "apps/web/package.json"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "pnpm dev",
+            "expected": "Server starts without fatal errors, shows Ready on http://localhost:3000"
+          },
+          "status": "pending",
+          "notes": "May see Clerk authentication warnings if keys not configured - this is expected"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Verify web application responds at localhost:3000",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:3000",
+            "checks": [
+              "Page renders (even if auth redirect)",
+              "No fatal JavaScript errors in console"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-architecture-documentation",
+      "name": "Architecture Documentation",
+      "type": "investigation",
+      "description": "Create comprehensive documentation of repository structure, services, and patterns",
+      "depends_on": [
+        "phase-4-dev-server"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "Document all apps and packages with their purposes and tech stacks",
+          "service": "documentation",
+          "files_to_modify": [],
+          "files_to_create": [
+            "docs/ARCHITECTURE.md"
+          ],
+          "patterns_from": [
+            "README.md"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify ARCHITECTURE.md contains: (1) All 6 services documented, (2) Tech stack for each, (3) Entry points, (4) Production vs experimental classification"
+          },
+          "status": "pending",
+          "expected_output": "ARCHITECTURE.md with service inventory, dependency graph, port allocation"
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Create environment variable reference documentation",
+          "service": "documentation",
+          "files_to_modify": [],
+          "files_to_create": [
+            "docs/ENVIRONMENT.md"
+          ],
+          "patterns_from": [
+            ".env.example"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify ENVIRONMENT.md contains: (1) Minimum required vars, (2) Optional feature vars, (3) Default values where applicable"
+          },
+          "status": "pending",
+          "expected_output": "ENVIRONMENT.md with categorized environment variable reference"
+        }
+      ]
+    },
+    {
+      "id": "phase-6-readiness-checklist",
+      "name": "Developer Readiness Checklist",
+      "type": "cleanup",
+      "description": "Create actionable checklist that new developers can follow to set up local environment",
+      "depends_on": [
+        "phase-5-architecture-documentation"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-6-1",
+          "description": "Create step-by-step local development setup guide",
+          "service": "documentation",
+          "files_to_modify": [],
+          "files_to_create": [
+            "docs/LOCAL_SETUP.md"
+          ],
+          "patterns_from": [
+            "README.md"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify LOCAL_SETUP.md contains: (1) Prerequisites (pnpm, Docker, Node version), (2) Step-by-step commands, (3) Troubleshooting section for common issues"
+          },
+          "status": "pending",
+          "expected_output": "LOCAL_SETUP.md with complete developer onboarding guide"
+        },
+        {
+          "id": "subtask-6-2",
+          "description": "Document Windows-specific considerations and workarounds",
+          "service": "documentation",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify LOCAL_SETUP.md includes Windows-specific notes: path issues, Docker Desktop requirements, PowerShell vs Git Bash"
+          },
+          "status": "pending",
+          "notes": "Integrated into LOCAL_SETUP.md rather than separate file"
+        }
+      ]
+    },
+    {
+      "id": "phase-7-validation-signoff",
+      "name": "Final Validation & Sign-off",
+      "type": "integration",
+      "description": "End-to-end verification that a fresh developer can follow documentation and achieve working local environment",
+      "depends_on": [
+        "phase-6-readiness-checklist"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-7-1",
+          "description": "Execute complete setup workflow from scratch and document any issues",
+          "all_services": true,
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "e2e",
+            "steps": [
+              "1. Delete node_modules and .env.local (clean state)",
+              "2. Follow LOCAL_SETUP.md instructions exactly",
+              "3. Verify pnpm install succeeds",
+              "4. Verify docker-compose up -d succeeds",
+              "5. Verify pnpm db:push succeeds",
+              "6. Verify pnpm dev starts server",
+              "7. Verify http://localhost:3000 responds"
+            ]
+          },
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 7,
+    "total_subtasks": 13,
+    "services_involved": [
+      "web",
+      "workers",
+      "database",
+      "shared",
+      "ui",
+      "infrastructure",
+      "documentation"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 1,
+      "parallel_groups": [],
+      "recommended_workers": 1,
+      "speedup_estimate": "Sequential execution - investigation workflow with dependencies"
+    },
+    "startup_command": "source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 001 --parallel 1"
+  },
+  "verification_strategy": {
+    "risk_level": "low",
+    "skip_validation": false,
+    "test_creation_phase": "not_required",
+    "test_types_required": [],
+    "security_scanning_required": false,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "pnpm install completes without errors",
+      "Docker services (postgres, redis) start and show healthy",
+      "pnpm db:push succeeds without errors",
+      "pnpm dev starts development server",
+      "Web app accessible at http://localhost:3000",
+      "Documentation files created: ARCHITECTURE.md, ENVIRONMENT.md, LOCAL_SETUP.md"
+    ],
+    "verification_steps": [
+      {
+        "name": "Dependency Installation",
+        "command": "pnpm install",
+        "expected_outcome": "All dependencies installed",
+        "type": "setup",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Docker Services",
+        "command": "docker-compose up -d postgres redis",
+        "expected_outcome": "Containers healthy",
+        "type": "infrastructure",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Database Schema",
+        "command": "pnpm db:push",
+        "expected_outcome": "Schema synced to database",
+        "type": "database",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Development Server",
+        "command": "pnpm dev",
+        "expected_outcome": "Server starts on port 3000",
+        "type": "application",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "Investigation task with primary output being documentation. Validation focuses on setup workflow execution rather than code testing."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": false,
+      "commands": [],
+      "minimum_coverage": null
+    },
+    "integration_tests": {
+      "required": false,
+      "commands": [],
+      "services_to_test": []
+    },
+    "e2e_tests": {
+      "required": false,
+      "commands": [],
+      "flows": []
+    },
+    "browser_verification": {
+      "required": true,
+      "pages": [
+        {
+          "url": "http://localhost:3000/",
+          "checks": [
+            "renders",
+            "no-fatal-errors"
+          ]
+        }
+      ]
+    },
+    "database_verification": {
+      "required": true,
+      "checks": [
+        "schema-pushed",
+        "tables-created"
+      ]
+    },
+    "documentation_verification": {
+      "required": true,
+      "files": [
+        "docs/ARCHITECTURE.md",
+        "docs/ENVIRONMENT.md",
+        "docs/LOCAL_SETUP.md"
+      ],
+      "checks": [
+        "files-exist",
+        "content-complete",
+        "actionable-steps"
+      ]
+    }
+  },
+  "qa_signoff": null,
+  "created_at": "2026-01-07T18:15:00.000Z",
+  "updated_at": "2026-01-07T18:15:00.000Z",
+  "last_updated": "2026-01-07T17:16:24.031651+00:00"
+}
