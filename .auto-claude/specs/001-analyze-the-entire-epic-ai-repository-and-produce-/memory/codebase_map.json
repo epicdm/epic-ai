@@ -24,7 +24,17 @@
       "description": "Home page (/) renders LandingHero for unauthenticated users with \"AI Marketing Engine - From Social to Sale\" hero section and 3 feature cards (Social Media, Voice AI Agents, The Flywheel). Authenticated users are redirected to /dashboard via server-side redirect (HTTP 307). ClerkProvider wraps entire app. Providers stack: PostHogProvider > NextThemesProvider > HeroUIProvider. Error boundary at error.tsx handles runtime errors gracefully.",
       "category": "application-behavior",
       "discovered_at": "2026-01-07T20:59:01.572044+00:00"
+    },
+    "docs/ARCHITECTURE.md": {
+      "description": "Created comprehensive architecture documentation covering: 3 apps (web, workers, voice-service), 3 packages (database, shared, ui), dependency graph, build pipeline, infrastructure services, port allocation, and component classification (Production/Optional/Experimental).",
+      "category": "documentation",
+      "discovered_at": "2026-01-07T21:03:17.182116+00:00"
+    },
+    "docs/FINAL_VALIDATION_REPORT.md": {
+      "description": "Final validation report created with comprehensive setup workflow checklist, validation scripts (Bash and PowerShell), and issue documentation. Key finding: Clerk authentication keys must be manually configured before dev server will work properly.",
+      "category": "documentation",
+      "discovered_at": "2026-01-07T21:16:30.080521+00:00"
     }
   },
-  "last_updated": "2026-01-07T20:59:01.572044+00:00"
+  "last_updated": "2026-01-07T21:16:30.080521+00:00"
 }
