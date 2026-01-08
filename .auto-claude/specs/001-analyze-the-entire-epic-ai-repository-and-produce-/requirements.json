@@ -1,0 +1,4 @@
+{
+  "task_description": "Analyze the entire epic-ai repository and produce a concise internal map of:\n- Apps and packages (purpose of each)\n- How the system is started locally on Windows\n- Required environment variables and services\n- Which apps are production-critical vs experimental\n\nValidate that the project can be installed and run locally:\n- pnpm install\n- docker-compose services if required\n- identify the correct dev/start commands\n\nFix only what is required to make local dev parity work.\nDo not refactor or add features yet.\nProduce a short summary and readiness checklist.",
+  "workflow_type": "feature"
+}
