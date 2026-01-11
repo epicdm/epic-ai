@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save, DollarSign, Info, Phone } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus } from "lucide-react";
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
@@ -91,7 +91,10 @@ const OPENAI_VOICES = [
 export function AgentForm({ brands, initialData }: AgentFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phoneNumbers, setPhoneNumbers] = useState(initialData?.phoneNumbers || []);
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -170,6 +173,75 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!initialData) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${initialData.name}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/voice/agents/${initialData.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete agent");
+      }
+
+      trackEvent("voice_agent_deleted", { agent_id: initialData.id });
+      router.push("/dashboard/voice");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete agent");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleProvisionPhone = async () => {
+    if (!initialData) return;
+
+    setProvisioning(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/voice/agents/${initialData.id}/provision-phone`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to provision phone number");
+      }
+
+      const data = await response.json();
+
+      if (data.phoneNumber) {
+        setPhoneNumbers([{
+          id: data.phoneNumber.id,
+          number: data.phoneNumber.number,
+          isActive: true,
+          status: "active",
+        }]);
+        trackEvent("voice_phone_provisioned", {
+          agent_id: initialData.id,
+          phone_number: data.phoneNumber.number,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to provision phone number");
+    } finally {
+      setProvisioning(false);
     }
   };
 
@@ -268,9 +340,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               </Button>
             </CardHeader>
             <CardBody>
-              {initialData.phoneNumbers && initialData.phoneNumbers.length > 0 ? (
+              {phoneNumbers && phoneNumbers.length > 0 ? (
                 <div className="space-y-3">
-                  {initialData.phoneNumbers.map((phone) => (
+                  {phoneNumbers.map((phone) => (
                     <div
                       key={phone.id}
                       className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
@@ -302,9 +374,18 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                 <div className="text-center py-6 text-gray-500">
                   <Phone className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p>No phone numbers assigned</p>
-                  <p className="text-sm mt-1">
-                    A phone number will be automatically provisioned when you create an agent.
+                  <p className="text-sm mt-1 mb-4">
+                    Provision a phone number to receive inbound calls.
                   </p>
+                  <Button
+                    color="primary"
+                    size="sm"
+                    isLoading={provisioning}
+                    onPress={handleProvisionPhone}
+                    startContent={!provisioning && <Plus className="w-4 h-4" />}
+                  >
+                    Provision Phone Number
+                  </Button>
                 </div>
               )}
             </CardBody>
@@ -514,22 +595,37 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
         </Card>
 
         {/* Submit */}
-        <div className="flex justify-end gap-3">
-          <Button
-            as={Link}
-            href="/dashboard/voice"
-            variant="bordered"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            color="primary"
-            isLoading={loading}
-            startContent={!loading && <Save className="w-4 h-4" />}
-          >
-            {initialData ? "Save Changes" : "Create Agent"}
-          </Button>
+        <div className="flex justify-between gap-3">
+          {initialData ? (
+            <Button
+              color="danger"
+              variant="flat"
+              isLoading={deleting}
+              onPress={handleDelete}
+              startContent={!deleting && <Trash2 className="w-4 h-4" />}
+            >
+              Delete Agent
+            </Button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-3">
+            <Button
+              as={Link}
+              href="/dashboard/voice"
+              variant="bordered"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              color="primary"
+              isLoading={loading}
+              startContent={!loading && <Save className="w-4 h-4" />}
+            >
+              {initialData ? "Save Changes" : "Create Agent"}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
