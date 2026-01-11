@@ -143,6 +143,9 @@ class MagnusSDK:
             except ValueError:
                 response_data = {"raw": response.text}
 
+            # Log the response for debugging
+            logger.debug(f"Magnus API response ({response.status_code}): {response_data}")
+
             if not response.ok:
                 raise MagnusSDKError(
                     message=f"API request failed: {response.text}",
@@ -324,8 +327,9 @@ class MagnusSDK:
                 description=f"EpicAI_Agent_{agent_id}"
             )
 
+            logger.info(f"User creation response: {user_result}")
             if not user_result.get("success", False):
-                raise MagnusSDKError(f"Failed to create user: {user_result.get('msg', 'Unknown error')}")
+                raise MagnusSDKError(f"Failed to create user: {user_result.get('msg', 'Unknown error')} - Full response: {user_result}")
 
             # Step 2: Get the created user ID
             user_id = self.get_id("user", "username", username)
