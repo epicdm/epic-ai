@@ -62,7 +62,7 @@ class MagnusSDK:
 
     Based on:
     $magnusBilling = new MagnusBilling('api_key', 'api_secret');
-    $magnusBilling->public_url = "https://voice.epic.dm";
+    $magnusBilling->public_url = "https://voice00.epic.dm";
     """
 
     # Default configuration from PHP code
@@ -87,13 +87,13 @@ class MagnusSDK:
         Args:
             api_key: Magnus API key
             api_secret: Magnus API secret
-            public_url: Magnus public URL (e.g., https://voice.epic.dm)
+            public_url: Magnus public URL (e.g., https://voice00.epic.dm)
             sip_server: SIP server hostname (e.g., voice00.epic.dm)
             timeout: Request timeout in seconds
         """
         self.api_key = api_key or os.environ.get("MAGNUS_API_KEY", "")
         self.api_secret = api_secret or os.environ.get("MAGNUS_API_SECRET", "")
-        self.public_url = (public_url or os.environ.get("MAGNUS_PUBLIC_URL", "https://voice.epic.dm")).rstrip("/")
+        self.public_url = (public_url or os.environ.get("MAGNUS_PUBLIC_URL", "https://voice00.epic.dm")).rstrip("/")
         self.sip_server = sip_server or os.environ.get("MAGNUS_SIP_SERVER", "voice00.epic.dm")
         self.timeout = timeout
 
