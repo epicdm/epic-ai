@@ -2,7 +2,7 @@ import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { needsOnboarding, getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
-import { AgentForm } from "@/components/voice/agent-form";
+import { AgentWizard } from "@/components/voice/agent-wizard";
 
 export default async function NewAgentPage() {
   const { userId } = await getAuth();
@@ -25,5 +25,5 @@ export default async function NewAgentPage() {
       })
     : [];
 
-  return <AgentForm brands={brands} />;
+  return <AgentWizard brands={brands} />;
 }
