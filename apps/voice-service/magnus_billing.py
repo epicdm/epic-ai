@@ -92,14 +92,14 @@ class MagnusBillingClient:
         Initialize Magnus Billing client.
 
         Args:
-            api_url: Magnus Billing API URL (defaults to env MAGNUS_BILLING_API_URL)
-            api_key: API key for authentication (defaults to env MAGNUS_BILLING_API_KEY)
-            account_id: Account ID (defaults to env MAGNUS_BILLING_ACCOUNT_ID)
+            api_url: Magnus Billing API URL (defaults to env MAGNUS_PUBLIC_URL)
+            api_key: API key for authentication (defaults to env MAGNUS_API_KEY)
+            account_id: Account ID (defaults to env MAGNUS_ACCOUNT_ID)
             timeout: Request timeout in seconds
         """
-        self.api_url = (api_url or os.environ.get("MAGNUS_BILLING_API_URL", "")).rstrip("/")
-        self.api_key = api_key or os.environ.get("MAGNUS_BILLING_API_KEY", "")
-        self.account_id = account_id or os.environ.get("MAGNUS_BILLING_ACCOUNT_ID", "")
+        self.api_url = (api_url or os.environ.get("MAGNUS_PUBLIC_URL", "")).rstrip("/")
+        self.api_key = api_key or os.environ.get("MAGNUS_API_KEY", "")
+        self.account_id = account_id or os.environ.get("MAGNUS_ACCOUNT_ID", "")
         self.timeout = timeout
 
         if not self.api_url:
