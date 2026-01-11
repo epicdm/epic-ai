@@ -7,7 +7,11 @@ for DID management, SIP trunks, call routing, and billing.
 
 import os
 import requests
+import urllib3
 from typing import Optional, Dict, List, Any
+
+# Suppress SSL warnings for Magnus server (self-signed certificate)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from dataclasses import dataclass
 from datetime import datetime, date
 from enum import Enum
@@ -147,7 +151,8 @@ class MagnusBillingClient:
                 headers=self._get_headers(),
                 json=data,
                 params=params,
-                timeout=self.timeout
+                timeout=self.timeout,
+                verify=False  # Magnus server uses self-signed certificate
             )
 
             # Parse response
