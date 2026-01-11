@@ -9,8 +9,12 @@ import os
 import random
 import logging
 import requests
+import urllib3
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
+
+# Suppress SSL warnings for Magnus server (self-signed certificate)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +134,8 @@ class MagnusSDK:
                 method=method,
                 url=url,
                 data=form_data,
-                timeout=self.timeout
+                timeout=self.timeout,
+                verify=False  # Magnus server uses self-signed certificate
             )
 
             try:
