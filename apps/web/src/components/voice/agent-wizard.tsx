@@ -89,6 +89,12 @@ const wizardSteps: WizardStep[] = [
     icon: <User className="w-4 h-4" />,
   },
   {
+    id: "phone",
+    title: "Phone Number",
+    description: "Provision phone",
+    icon: <Phone className="w-4 h-4" />,
+  },
+  {
     id: "voice",
     title: "Voice Settings",
     description: "Voice and speech",
@@ -117,6 +123,7 @@ export function AgentWizard({ brands }: AgentWizardProps) {
     name: "",
     description: "",
     brandId: brands[0]?.id || "",
+    provisionPhone: true,
     llmProvider: "openai",
     llmModel: "gpt-4o-mini",
     ttsProvider: "openai",
@@ -140,6 +147,7 @@ export function AgentWizard({ brands }: AgentWizardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          provisionPhone: formData.provisionPhone, // Include phone provisioning flag
           voiceSettings: {
             voiceId: formData.voiceId,
             temperature: formData.temperature,
@@ -241,9 +249,10 @@ function WizardStepContent({ formData, setFormData, brands, loading }: WizardSte
   return (
     <div className="space-y-6">
       {currentStep === 0 && <BasicInfoStep formData={formData} setFormData={setFormData} brands={brands} />}
-      {currentStep === 1 && <VoiceSettingsStep formData={formData} setFormData={setFormData} />}
-      {currentStep === 2 && <AIConfigurationStep formData={formData} setFormData={setFormData} />}
-      {currentStep === 3 && <ReviewStep formData={formData} brands={brands} />}
+      {currentStep === 1 && <PhoneNumberStep formData={formData} setFormData={setFormData} />}
+      {currentStep === 2 && <VoiceSettingsStep formData={formData} setFormData={setFormData} />}
+      {currentStep === 3 && <AIConfigurationStep formData={formData} setFormData={setFormData} />}
+      {currentStep === 4 && <ReviewStep formData={formData} brands={brands} />}
 
       <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
         <Button
@@ -337,7 +346,126 @@ function BasicInfoStep({ formData, setFormData, brands }: { formData: any; setFo
   );
 }
 
-// Step 2: Voice Settings
+// Step 2: Phone Number
+function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData: any }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Phone Number
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Provision a phone number for your agent to receive inbound calls
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
+          <CardBody className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-200 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Phone className="w-6 h-6 text-blue-700 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                  Automatic Phone Provisioning
+                </h3>
+                <p className="text-blue-800 dark:text-blue-300 mb-4">
+                  We'll automatically provision a phone number from Magnus Billing (Dominica +1-767-818-XXXX range)
+                  and configure it to route calls to your agent.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>SIP Account:</strong> Automatically created with secure credentials
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>DID Number:</strong> Provisioned from available pool
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>Call Routing:</strong> Configured to route to your agent
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gray-50 dark:bg-gray-800/50">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Provision Phone Number
+                </p>
+                <p className="text-sm text-gray-500">
+                  Enable to automatically provision a phone number during creation
+                </p>
+              </div>
+              <Switch
+                isSelected={formData.provisionPhone}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, provisionPhone: value })
+                }
+              />
+            </div>
+          </CardBody>
+        </Card>
+
+        {!formData.provisionPhone && (
+          <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+            <CardBody className="p-4">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-700 dark:text-amber-400">
+                  <p className="font-medium mb-1">Manual Provisioning Required</p>
+                  <p>
+                    You can provision a phone number later from the agent's detail page or the phone numbers management page.
+                  </p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        <Card className="bg-gray-50 dark:bg-gray-800/50">
+          <CardBody className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-gray-500" />
+              <h4 className="font-medium text-gray-900 dark:text-white">Pricing</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-gray-500">Phone Number</p>
+                <p className="font-semibold text-gray-900 dark:text-white">$0.50/month</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Per Minute</p>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  ${PRICING.voice.perMinute.toFixed(2)}/min
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Phone number charges apply monthly. Call charges are per minute of active call time.
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Step 3: Voice Settings
 function VoiceSettingsStep({ formData, setFormData }: { formData: any; setFormData: any }) {
   return (
     <div className="space-y-6">
@@ -554,6 +682,44 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
                 {formData.isActive ? "Active" : "Inactive"}
               </Chip>
             </div>
+          </CardBody>
+        </Card>
+
+        {/* Phone Number */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Phone Number</h3>
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-500">Automatic Provisioning</p>
+              <Chip
+                size="sm"
+                color={formData.provisionPhone ? "success" : "default"}
+                variant="flat"
+                startContent={formData.provisionPhone ? <CheckCircle className="w-3 h-3" /> : undefined}
+              >
+                {formData.provisionPhone ? "Enabled" : "Disabled"}
+              </Chip>
+            </div>
+            {formData.provisionPhone && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  A phone number will be automatically provisioned from Magnus Billing (Dominica +1-767-818-XXXX range)
+                  with SIP account and call routing configured.
+                </p>
+              </div>
+            )}
+            {!formData.provisionPhone && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  You'll need to manually provision a phone number after the agent is created.
+                </p>
+              </div>
+            )}
           </CardBody>
         </Card>
 
