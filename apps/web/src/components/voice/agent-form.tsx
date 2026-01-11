@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save, DollarSign, Clock, Info } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Info, Phone } from "lucide-react";
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
@@ -25,6 +25,13 @@ import { trackEvent } from "@/lib/analytics";
 interface Brand {
   id: string;
   name: string;
+}
+
+interface PhoneNumber {
+  id: string;
+  number: string;
+  isActive: boolean;
+  status: string | null;
 }
 
 interface AgentFormProps {
@@ -43,6 +50,7 @@ interface AgentFormProps {
     voiceSettings: { voiceId?: string; temperature?: number };
     transferNumber: string | null;
     isActive: boolean;
+    phoneNumbers?: PhoneNumber[];
   };
 }
 
@@ -136,11 +144,24 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
       if (initialData) {
         trackEvent("voice_agent_edited", { agent_id: initialData.id });
       } else {
+        const agentId = responseData.id || responseData.agent?.id || "unknown";
+        const phoneNumber = responseData.phoneNumbers?.[0]?.number;
+        const provisioningError = responseData.provisioningError;
+
         trackEvent("voice_agent_created", {
-          agent_id: responseData.id || responseData.agent?.id || "unknown",
+          agent_id: agentId,
           llm_provider: formData.llmProvider,
           tts_provider: formData.ttsProvider,
+          phone_provisioned: !!phoneNumber,
+          provisioning_error: provisioningError || undefined,
         });
+
+        // Log provisioning result
+        if (phoneNumber) {
+          console.log(`Agent created with phone number: ${phoneNumber}`);
+        } else if (provisioningError) {
+          console.warn(`Agent created but phone provisioning failed: ${provisioningError}`);
+        }
       }
 
       router.push("/dashboard/voice");
@@ -230,6 +251,65 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             </div>
           </CardBody>
         </Card>
+
+        {/* Phone Numbers - Only shown for existing agents */}
+        {initialData && (
+          <Card>
+            <CardHeader className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Assigned Phone Numbers</h2>
+              <Button
+                as={Link}
+                href="/dashboard/voice/numbers"
+                size="sm"
+                variant="flat"
+                startContent={<Phone className="w-4 h-4" />}
+              >
+                Manage Numbers
+              </Button>
+            </CardHeader>
+            <CardBody>
+              {initialData.phoneNumbers && initialData.phoneNumbers.length > 0 ? (
+                <div className="space-y-3">
+                  {initialData.phoneNumbers.map((phone) => (
+                    <div
+                      key={phone.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                          <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {phone.number}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {phone.status === "active" ? "Active" : phone.status || "Unknown status"}
+                          </p>
+                        </div>
+                      </div>
+                      <Chip
+                        size="sm"
+                        color={phone.isActive ? "success" : "default"}
+                        variant="flat"
+                      >
+                        {phone.isActive ? "Enabled" : "Disabled"}
+                      </Chip>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <Phone className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No phone numbers assigned</p>
+                  <p className="text-sm mt-1">
+                    A phone number will be automatically provisioned when you create an agent.
+                  </p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        )}
 
         {/* AI Configuration */}
         <Card>

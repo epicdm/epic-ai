@@ -33,11 +33,21 @@ export default async function AgentDetailPage({ params }: PageProps) {
   });
   const brandIds = orgBrands.map(b => b.id);
 
-  // Fetch the agent (VoiceAgent doesn't have a direct brand relation)
+  // Fetch the agent with phone mappings
   const agent = await prisma.voiceAgent.findFirst({
     where: {
       id,
       brandId: { in: brandIds },
+    },
+    include: {
+      phoneMappings: {
+        select: {
+          id: true,
+          phoneNumber: true,
+          isActive: true,
+          magnusStatus: true,
+        },
+      },
     },
   });
 
@@ -71,6 +81,12 @@ export default async function AgentDetailPage({ params }: PageProps) {
     },
     transferNumber: (agentSettings.transferNumber as string) || "",
     isActive: agent.isActive,
+    phoneNumbers: agent.phoneMappings.map(pm => ({
+      id: pm.id,
+      number: pm.phoneNumber,
+      isActive: pm.isActive,
+      status: pm.magnusStatus,
+    })),
   };
 
   return <AgentForm brands={brands} initialData={initialData} />;

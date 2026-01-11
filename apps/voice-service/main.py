@@ -561,6 +561,129 @@ def magnus_get_rate(destination):
 
 
 # ============================================
+# Voice Agent Provisioning (Magnus SDK)
+# ============================================
+
+@app.route('/api/magnus/provision-agent', methods=['POST'])
+def provision_agent():
+    """
+    Provision a complete SIP/DID setup for a voice agent.
+
+    This creates:
+    1. Magnus user (which auto-creates SIP user)
+    2. DID (phone number)
+    3. DID destination (links DID to SIP)
+    4. Configures SIP settings
+
+    Request body:
+    {
+        "agent_id": "agent-123",
+        "agent_name": "Sales Assistant",
+        "email": "agent@example.com",
+        "phone": "1234567890" (optional),
+        "did_number": "17678189000" (optional, auto-generated if not provided)
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        data = request.get_json() or {}
+
+        required = ['agent_id', 'agent_name', 'email']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"{field} required"}), 400
+
+        sdk = get_magnus_sdk()
+        result = sdk.provision_voice_agent(
+            agent_id=data['agent_id'],
+            agent_name=data['agent_name'],
+            email=data['email'],
+            phone=data.get('phone', ''),
+            did_number=data.get('did_number')
+        )
+
+        if result.success:
+            return jsonify({
+                "success": True,
+                "data": {
+                    "magnus_user_id": result.magnus_user_id,
+                    "magnus_sip_id": result.magnus_sip_id,
+                    "magnus_did_id": result.magnus_did_id,
+                    "did_number": result.did_number,
+                    "sip_username": result.sip_username,
+                    "sip_password": result.sip_password,
+                    "sip_server": result.sip_server,
+                    "sip_url": f"sip:{result.sip_username}@{result.sip_server}"
+                }
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.error or "Provisioning failed"
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error provisioning agent: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/deprovision-agent', methods=['POST'])
+def deprovision_agent():
+    """
+    Remove Magnus resources for a voice agent.
+
+    Request body:
+    {
+        "magnus_user_id": "123" (optional),
+        "magnus_did_id": "456" (optional),
+        "username": "agentname_17678189000" (optional, used if user_id not provided)
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        data = request.get_json() or {}
+
+        sdk = get_magnus_sdk()
+        success = sdk.deprovision_voice_agent(
+            magnus_user_id=data.get('magnus_user_id'),
+            magnus_did_id=data.get('magnus_did_id'),
+            username=data.get('username')
+        )
+
+        return jsonify({
+            "success": success,
+            "message": "Agent deprovisioned" if success else "Deprovisioning may have partially failed"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error deprovisioning agent: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/generate-did', methods=['GET'])
+def generate_did():
+    """Generate a random DID number in the configured range."""
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        sdk = get_magnus_sdk()
+        did = sdk.generate_did()
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "did_number": did
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error generating DID: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================================
 # Main Entry Point
 # ============================================
 
