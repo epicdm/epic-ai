@@ -34,14 +34,24 @@ const assignNumberSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await getAuthWithBypass();
-    console.log("[phone-numbers API] userId:", userId);
+    const { userId, isUATBypass } = await getAuthWithBypass();
+    console.log("[phone-numbers API] userId:", userId, "isUATBypass:", isUATBypass);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get user directly to see memberships
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { memberships: { include: { organization: true } } }
+    });
+    console.log("[phone-numbers API] user found:", user?.id, "memberships:", user?.memberships?.length);
+    user?.memberships?.forEach((m, i) => {
+      console.log(`[phone-numbers API] membership[${i}]:`, m.organization.id, m.organization.name);
+    });
+
     const org = await getCurrentOrganization();
-    console.log("[phone-numbers API] org:", org?.id, org?.name);
+    console.log("[phone-numbers API] getCurrentOrganization returned:", org?.id, org?.name);
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
