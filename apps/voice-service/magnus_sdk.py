@@ -168,8 +168,8 @@ class MagnusSDK:
             except ValueError:
                 response_data = {"raw": response.text}
 
-            # Log the response for debugging
-            logger.debug(f"Magnus API response ({response.status_code}): {response_data}")
+            # Log the response for debugging (use INFO level to ensure visibility)
+            logger.info(f"Magnus API response ({response.status_code}): {response_data}")
 
             if not response.ok:
                 raise MagnusSDKError(
@@ -180,8 +180,9 @@ class MagnusSDK:
 
             # Check for API-level errors
             if isinstance(response_data, dict) and response_data.get("success") == False:
+                error_msg = response_data.get("msg") or response_data.get("error") or f"API returned failure: {response_data}"
                 raise MagnusSDKError(
-                    message=response_data.get("msg", "Unknown error"),
+                    message=error_msg,
                     response=response_data
                 )
 
