@@ -335,10 +335,12 @@ class MagnusSDK:
         # Generate credentials
         password = self.generate_password()
 
-        # Create username from agent name and DID
-        # Clean agent name: remove non-alphanumeric, lowercase, truncate
-        clean_name = ''.join(c for c in agent_name if c.isalnum())[:20].lower()
-        username = f"{clean_name}_{did}"
+        # Create username from agent name and DID suffix
+        # Magnus limits usernames to 20 characters
+        # Format: {name_prefix}_{last 4 digits of DID} = max 15 + 1 + 4 = 20
+        clean_name = ''.join(c for c in agent_name if c.isalnum())[:15].lower()
+        did_suffix = did[-4:]  # Last 4 digits for uniqueness
+        username = f"{clean_name}_{did_suffix}"
 
         logger.info(f"Provisioning voice agent: {agent_id} as {username}")
 
