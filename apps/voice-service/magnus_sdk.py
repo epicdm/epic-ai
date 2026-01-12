@@ -206,6 +206,9 @@ class MagnusSDK:
 
         Matches PHP: $magnusBilling->createUser([...])
         """
+        # Generate a unique callingcard PIN (8 digits)
+        callingcard_pin = str(random.randint(10000000, 99999999))
+
         data = {
             "id": "0",  # id=0 signals creation in Magnus API
             "username": username,
@@ -222,6 +225,7 @@ class MagnusSDK:
             "phone": phone,
             "mobile": phone,
             "id_offer": self.DEFAULT_ID_OFFER,
+            "callingcard_pin": callingcard_pin,
         }
 
         return self._make_request("save", "user", data)
