@@ -8,10 +8,14 @@ Used for creating SIP users, DIDs, and DID destinations for voice agents.
 import os
 import random
 import logging
+import hmac
+import hashlib
+import time
 import requests
 import urllib3
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
+from urllib.parse import urlencode
 
 # Suppress SSL warnings for Magnus server (self-signed certificate)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -114,18 +118,36 @@ class MagnusSDK:
         """
         Make an API request to Magnus Billing.
 
-        The Magnus API uses a form-based approach:
-        POST /mbilling/index.php/module/action
-        with form data including api_key and api_secret
+        The Magnus API uses HMAC-SHA512 authentication:
+        - POST data is URL-encoded
+        - Signature is HMAC-SHA512(post_data, api_secret)
+        - Headers: Key (api_key) and Sign (signature)
         """
         url = f"{self.public_url}/mbilling/index.php/{module}/{action}"
 
+        # Build form data with nonce for replay protection
         form_data = {
-            "api_key": self.api_key,
-            "api_secret": self.api_secret,
+            "nonce": str(int(time.time() * 1000000)),  # Microsecond precision like PHP
         }
         if data:
             form_data.update(data)
+
+        # URL-encode the POST data
+        post_data = urlencode(form_data)
+
+        # Compute HMAC-SHA512 signature
+        signature = hmac.new(
+            self.api_secret.encode('utf-8'),
+            post_data.encode('utf-8'),
+            hashlib.sha512
+        ).hexdigest()
+
+        # Set authentication headers
+        headers = {
+            "Key": self.api_key,
+            "Sign": signature,
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
 
         try:
             logger.debug(f"Magnus API request: {method} {url}")
@@ -133,7 +155,8 @@ class MagnusSDK:
             response = requests.request(
                 method=method,
                 url=url,
-                data=form_data,
+                data=post_data,
+                headers=headers,
                 timeout=self.timeout,
                 verify=False  # Magnus server uses self-signed certificate
             )
