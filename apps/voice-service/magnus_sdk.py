@@ -372,15 +372,30 @@ class MagnusSDK:
             logger.info(f"Created user ID: {user_id}")
 
             # Step 3: Get the auto-created SIP user ID
-            sip_id = self.get_id("sip", "id_user", user_id)
-            if not sip_id:
-                raise MagnusSDKError("Could not find SIP user")
+            # Try to find SIP account by user ID first
+            logger.info(f"Looking for SIP account with id_user={user_id}")
+            sip_record = self.get_record("sip", "id_user", user_id)
+            if sip_record:
+                sip_id = str(sip_record.get("id", ""))
+                sip_username_check = sip_record.get("name", "")
+                logger.info(f"Found SIP account: id={sip_id}, name={sip_username_check}")
+            else:
+                # Fallback: try to find by username/name
+                logger.info(f"No SIP by id_user, trying by name={username}")
+                sip_record = self.get_record("sip", "name", username)
+                if sip_record:
+                    sip_id = str(sip_record.get("id", ""))
+                    logger.info(f"Found SIP by name: id={sip_id}")
+                else:
+                    raise MagnusSDKError(f"Could not find SIP user for user {user_id}")
             logger.info(f"SIP user ID: {sip_id}")
 
-            # Step 4: Create DID
-            logger.info(f"Creating DID: {did}")
+            # Step 4: Create DID with user as owner
+            logger.info(f"Creating DID: {did} for user {user_id}")
             did_result = self.create("did", {
                 "did": did,
+                "id_user": user_id,
+                "reserved": "1",  # Reserve for this user
                 "country": "Dominica",
                 "activated": "1"
             })
