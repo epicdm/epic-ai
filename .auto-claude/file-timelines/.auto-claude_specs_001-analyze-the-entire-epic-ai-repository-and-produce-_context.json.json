@@ -1,0 +1,28 @@
+{
+  "file_path": ".auto-claude/specs/001-analyze-the-entire-epic-ai-repository-and-produce-/context.json",
+  "main_branch_history": [],
+  "task_views": {
+    "001-analyze-the-entire-epic-ai-repository-and-produce-": {
+      "task_id": "001-analyze-the-entire-epic-ai-repository-and-produce-",
+      "branch_point": {
+        "commit_hash": "b58a9479e557bc3c07f4bad1662da75aa8c2d871",
+        "content": "",
+        "timestamp": "2026-01-07T16:42:43.072659"
+      },
+      "worktree_state": {
+        "content": "{\n  \"task_description\": \"Analyze the epic-ai repository to produce an internal architecture map and validate local Windows development setup. Focus on documentation and validation - minimal code changes.\",\n  \"scoped_services\": [\n    {\n      \"name\": \"web\",\n      \"path\": \"apps/web\",\n      \"tech_stack\": [\"typescript\", \"next.js\", \"react\", \"clerk\", \"tailwind\"],\n      \"role\": \"Primary frontend application (production-critical)\"\n    },\n    {\n      \"name\": \"workers\",\n      \"path\": \"apps/workers\",\n      \"tech_stack\": [\"typescript\", \"bullmq\", \"node-cron\"],\n      \"role\": \"Background job processing (production-critical)\"\n    },\n    {\n      \"name\": \"voice-service\",\n      \"path\": \"apps/voice-service\",\n      \"tech_stack\": [\"python\", \"flask\", \"livekit\"],\n      \"role\": \"Voice AI features (experimental, disabled by default)\"\n    },\n    {\n      \"name\": \"database\",\n      \"path\": \"packages/database\",\n      \"tech_stack\": [\"typescript\", \"prisma\", \"postgresql\"],\n      \"role\": \"Database ORM and schema management (production-critical)\"\n    },\n    {\n      \"name\": \"shared\",\n      \"path\": \"packages/shared\",\n      \"tech_stack\": [\"typescript\", \"zod\"],\n      \"role\": \"Shared utilities and validation schemas (production-critical)\"\n    },\n    {\n      \"name\": \"ui\",\n      \"path\": \"packages/ui\",\n      \"tech_stack\": [\"typescript\", \"react\"],\n      \"role\": \"Shared React component library (production-critical)\"\n    }\n  ],\n  \"files_to_modify\": [],\n  \"files_to_reference\": [\n    \"package.json\",\n    \"turbo.json\",\n    \"pnpm-workspace.yaml\",\n    \"docker-compose.yml\",\n    \".env.example\",\n    \"apps/web/package.json\",\n    \"apps/workers/package.json\",\n    \"apps/voice-service/requirements.txt\",\n    \"packages/database/package.json\",\n    \"packages/shared/package.json\",\n    \"packages/ui/package.json\"\n  ],\n  \"patterns\": {\n    \"workspace_references\": \"Packages use workspace:* protocol for internal dependencies\",\n    \"build_order\": \"database -> shared -> ui -> web (enforced by turbo.json dependsOn)\",\n    \"dev_commands\": \"pnpm dev (root runs turbo dev), pnpm --filter @epic-ai/[app] dev for individual apps\",\n    \"db_commands\": \"pnpm db:generate, db:push, db:migrate, db:studio at root level\"\n  },\n  \"existing_implementations\": {\n    \"description\": \"Mature monorepo with established patterns for pnpm workspaces, turbo pipelines, and local Docker services\",\n    \"relevant_files\": [\n      \"turbo.json - defines task dependencies and caching\",\n      \"docker-compose.yml - PostgreSQL, Redis, voice-service\",\n      \".env.example - comprehensive env var documentation\"\n    ]\n  },\n  \"environment_requirements\": {\n    \"minimum_required\": [\n      \"DATABASE_URL - PostgreSQL connection (default: postgresql://epic:epicpassword@localhost:5432/epic_ai)\",\n      \"CLERK_SECRET_KEY - Authentication backend key (required from Clerk dashboard)\",\n      \"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY - Authentication frontend key (required)\",\n      \"NEXT_PUBLIC_APP_URL - App base URL (default: http://localhost:3000)\"\n    ],\n    \"optional_features\": [\n      \"OPENAI_API_KEY - AI content generation\",\n      \"STRIPE_SECRET_KEY - Payment processing\",\n      \"LIVEKIT_* - Voice AI features\",\n      \"TWITTER_*, LINKEDIN_*, META_*, GOOGLE_* - Social integrations\"\n    ]\n  },\n  \"created_at\": \"2026-01-07T13:05:01.745799\",\n  \"updated_at\": \"2026-01-07T18:00:00.000000\"\n}\n",
+        "last_modified": "2026-01-07T21:03:52.883611"
+      },
+      "task_intent": {
+        "title": "001-analyze-the-entire-epic-ai-repository-and-produce-",
+        "description": "",
+        "from_plan": false
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-01-07T13:17:41.356803",
+  "last_updated": "2026-01-07T16:42:43.123798"
+}

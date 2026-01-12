@@ -4,8 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthWithBypass } from "@/lib/auth";
-import { getUserOrganization } from "@/lib/sync-user";
+import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 
 // Voice service URL for Magnus Billing integration
 const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL || "http://localhost:5000";
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    const org = await getCurrentOrganization();
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }

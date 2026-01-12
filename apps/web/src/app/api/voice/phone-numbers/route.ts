@@ -5,9 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthWithBypass } from "@/lib/auth";
+import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
-import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
 // Voice service URL for Magnus Billing integration
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    const org = await getCurrentOrganization();
     console.log("[phone-numbers API] org:", org?.id, org?.name);
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
@@ -109,7 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    const org = await getCurrentOrganization();
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
@@ -205,7 +204,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getUserOrganization();
+    const org = await getCurrentOrganization();
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
