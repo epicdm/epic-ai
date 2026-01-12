@@ -125,8 +125,10 @@ class MagnusSDK:
         """
         url = f"{self.public_url}/mbilling/index.php/{module}/{action}"
 
-        # Build form data with nonce for replay protection
+        # Build form data with required parameters (matching PHP SDK)
         form_data = {
+            "module": module,
+            "action": action,
             "nonce": str(int(time.time() * 1000000)),  # Microsecond precision like PHP
         }
         if data:
@@ -204,6 +206,7 @@ class MagnusSDK:
         Matches PHP: $magnusBilling->createUser([...])
         """
         data = {
+            "id": "0",  # id=0 signals creation in Magnus API
             "username": username,
             "password": password,
             "active": "1",
@@ -228,6 +231,7 @@ class MagnusSDK:
 
         Matches PHP: $magnusBilling->create('module', [...])
         """
+        data["id"] = "0"  # id=0 signals creation in Magnus API
         return self._make_request("save", module, data)
 
     def update(self, module: str, record_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
