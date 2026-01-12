@@ -37,7 +37,13 @@ export function VoiceDashboard() {
   const [agents, setAgents] = useState<VoiceAgent[]>([]);
   const [stats, setStats] = useState<VoiceStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Hydration-safe mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // If in demo mode, use demo data
@@ -51,23 +57,31 @@ export function VoiceDashboard() {
 
     async function fetchData() {
       try {
+        console.log("[VoiceDashboard] Fetching agents and stats...");
         // Fetch agents and stats in parallel
         const [agentsRes, statsRes] = await Promise.all([
           fetch("/api/voice/agents"),
           fetch("/api/voice/stats"),
         ]);
 
+        console.log("[VoiceDashboard] Agents response:", agentsRes.status);
         if (!agentsRes.ok) throw new Error("Failed to fetch agents");
         const agentsData = await agentsRes.json();
+        console.log("[VoiceDashboard] Agents data:", {
+          count: agentsData.agents?.length || 0,
+          agents: agentsData.agents?.map((a: VoiceAgent) => ({ id: a.id, name: a.name })),
+        });
         setAgents(Array.isArray(agentsData.agents) ? agentsData.agents : []);
 
         if (statsRes.ok) {
           const statsData = await statsRes.json();
+          console.log("[VoiceDashboard] Stats data:", statsData);
           if (statsData.success && statsData.data) {
             setStats(statsData.data);
           }
         }
       } catch (err) {
+        console.error("[VoiceDashboard] Error:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
@@ -77,7 +91,8 @@ export function VoiceDashboard() {
     fetchData();
   }, [isDemo, demoData]);
 
-  if (loading) {
+  // Show loading state until mounted to prevent hydration mismatch
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner size="lg" />
@@ -86,7 +101,7 @@ export function VoiceDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" suppressHydrationWarning>
       <PageHeader
         title={
           <span className="flex items-center gap-3">
