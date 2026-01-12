@@ -140,6 +140,7 @@ export function PhoneNumbersPage() {
         console.log("[PhoneNumbers] Received data:", {
           count: data.phoneNumbers?.length || 0,
           magnusConfigured: data.magnusConfigured,
+          _debug: data._debug,
           phoneNumbers: data.phoneNumbers?.map((p: PhoneNumber) => ({
             id: p.id,
             number: p.phoneNumber,

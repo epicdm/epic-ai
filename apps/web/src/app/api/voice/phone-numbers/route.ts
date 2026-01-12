@@ -36,11 +36,13 @@ const assignNumberSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const { userId } = await getAuthWithBypass();
+    console.log("[phone-numbers API] userId:", userId);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const org = await getUserOrganization();
+    console.log("[phone-numbers API] org:", org?.id, org?.name);
     if (!org) {
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
@@ -61,6 +63,7 @@ export async function GET(request: NextRequest) {
       where.agentId = agentId;
     }
 
+    console.log("[phone-numbers API] query where:", JSON.stringify(where));
     const phoneNumbers = await prisma.phoneMapping.findMany({
       where,
       include: {
@@ -70,6 +73,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
     });
+    console.log("[phone-numbers API] found:", phoneNumbers.length, "numbers");
 
     // Check if Magnus is configured
     const sipConfig = await prisma.sIPConfig.findFirst({
@@ -79,6 +83,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       phoneNumbers,
       magnusConfigured: !!sipConfig,
+      // Debug info (temporary)
+      _debug: {
+        orgId: org.id,
+        orgName: org.name,
+        queryOrg: where.organizationId,
+      },
     });
   } catch (error) {
     console.error("Error fetching phone numbers:", error);
