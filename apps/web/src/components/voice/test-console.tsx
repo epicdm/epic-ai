@@ -233,6 +233,8 @@ export function TestConsole() {
       }
 
       const transcription = await transcribeResponse.json();
+      console.log("Transcription received:", transcription);
+
       const userText = transcription.text?.trim();
 
       if (!userText) {
@@ -240,6 +242,8 @@ export function TestConsole() {
         setIsProcessing(false);
         return;
       }
+
+      console.log("User said:", userText);
 
       // Add user message
       addMessage("user", userText);
@@ -262,13 +266,20 @@ export function TestConsole() {
 
       const chatData = await chatResponse.json();
 
+      console.log("Chat response received:", chatData);
+
       // Update conversation ID if new
       if (!conversationId) {
         setConversationId(chatData.conversationId);
       }
 
       // Add assistant message
-      addMessage("assistant", chatData.response);
+      if (chatData.response) {
+        addMessage("assistant", chatData.response);
+      } else {
+        console.error("No response in chatData:", chatData);
+        throw new Error("No response from AI");
+      }
 
       // Update stats
       if (chatData.stats) {
