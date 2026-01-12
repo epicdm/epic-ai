@@ -376,24 +376,37 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract user ID from creation response: {user_result}")
             logger.info(f"Created user ID: {user_id}")
 
-            # Step 3: Get the auto-created SIP user ID
-            # Try to find SIP account by user ID first
-            logger.info(f"Looking for SIP account with id_user={user_id}")
-            sip_record = self.get_record("sip", "id_user", user_id)
-            if sip_record:
-                sip_id = str(sip_record.get("id", ""))
-                sip_username_check = sip_record.get("name", "")
-                logger.info(f"Found SIP account: id={sip_id}, name={sip_username_check}")
+            # Step 3: Create SIP account explicitly (don't rely on auto-creation)
+            logger.info(f"Creating SIP account for user {user_id}: {username}")
+            sip_result = self.create("sip", {
+                "id_user": user_id,
+                "name": username,
+                "accountcode": username,
+                "secret": password,
+                "callerid": username,
+                "host": "dynamic",
+                "allow": "ulaw,alaw,g729,gsm",
+                "dtmfmode": "rfc2833",
+                "nat": "force_rport,comedia",
+                "qualify": "yes",
+                "context": "billing",
+                "insecure": "invite,port",
+                "status": "1"
+            })
+
+            logger.info(f"SIP creation response: {sip_result}")
+            if not sip_result.get("success", False):
+                raise MagnusSDKError(f"Failed to create SIP account: {sip_result.get('msg', 'Unknown error')} - Full response: {sip_result}")
+
+            # Extract SIP ID from creation response
+            sip_rows = sip_result.get("rows", [])
+            if sip_rows and len(sip_rows) > 0:
+                sip_id = str(sip_rows[0].get("id", ""))
             else:
-                # Fallback: try to find by username/name
-                logger.info(f"No SIP by id_user, trying by name={username}")
-                sip_record = self.get_record("sip", "name", username)
-                if sip_record:
-                    sip_id = str(sip_record.get("id", ""))
-                    logger.info(f"Found SIP by name: id={sip_id}")
-                else:
-                    raise MagnusSDKError(f"Could not find SIP user for user {user_id}")
-            logger.info(f"SIP user ID: {sip_id}")
+                sip_id = ""
+            if not sip_id:
+                raise MagnusSDKError(f"Could not extract SIP ID from creation response: {sip_result}")
+            logger.info(f"Created SIP account ID: {sip_id}")
 
             # Step 4: Create DID with user as owner
             logger.info(f"Creating DID: {did} for user {user_id}")
