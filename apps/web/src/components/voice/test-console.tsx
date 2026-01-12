@@ -50,6 +50,8 @@ export function TestConsole() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const selectedAgentIdRef = useRef<string>("");
+  const conversationIdRef = useRef<string | null>(null);
 
   // Fetch voice agents on mount
   useEffect(() => {
@@ -60,6 +62,15 @@ export function TestConsole() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Keep refs in sync with state (to avoid stale closures)
+  useEffect(() => {
+    selectedAgentIdRef.current = selectedAgentId;
+  }, [selectedAgentId]);
+
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
 
   const fetchAgents = async () => {
     try {
@@ -248,14 +259,23 @@ export function TestConsole() {
       // Add user message
       addMessage("user", userText);
 
-      // Send to AI
+      // Send to AI (use refs to avoid stale closure)
+      const currentAgentId = selectedAgentIdRef.current;
+      const currentConversationId = conversationIdRef.current;
+
+      console.log("Sending to AI - AgentId:", currentAgentId, "ConversationId:", currentConversationId);
+
+      if (!currentAgentId) {
+        throw new Error("No agent selected");
+      }
+
       const chatResponse = await fetch("/api/voice/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          agentId: selectedAgentId,
+          agentId: currentAgentId,
           message: userText,
-          conversationId,
+          conversationId: currentConversationId,
         }),
       });
 
