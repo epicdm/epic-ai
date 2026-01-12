@@ -205,6 +205,7 @@ export function TestConsole() {
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
+    setError(null);
 
     try {
       // Convert blob to base64 (browser-compatible)
@@ -226,7 +227,10 @@ export function TestConsole() {
         }),
       });
 
-      if (!transcribeResponse.ok) throw new Error("Transcription failed");
+      if (!transcribeResponse.ok) {
+        const errorData = await transcribeResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || "Transcription failed");
+      }
 
       const transcription = await transcribeResponse.json();
       const userText = transcription.text?.trim();
@@ -251,7 +255,10 @@ export function TestConsole() {
         }),
       });
 
-      if (!chatResponse.ok) throw new Error("Chat failed");
+      if (!chatResponse.ok) {
+        const errorData = await chatResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || "Chat failed");
+      }
 
       const chatData = await chatResponse.json();
 
@@ -278,8 +285,9 @@ export function TestConsole() {
       // Speak the response
       await speakText(chatData.response);
     } catch (err) {
-      setError("Error processing audio");
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : "Error processing audio";
+      setError(errorMessage);
+      console.error("Audio processing error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -299,7 +307,10 @@ export function TestConsole() {
         }),
       });
 
-      if (!response.ok) throw new Error("TTS failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "TTS failed");
+      }
 
       const data = await response.json();
 
@@ -308,11 +319,17 @@ export function TestConsole() {
       audioRef.current = audio;
 
       audio.onended = () => setIsSpeaking(false);
-      audio.onerror = () => setIsSpeaking(false);
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        setIsSpeaking(false);
+        setError("Failed to play audio response");
+      };
 
       await audio.play();
     } catch (err) {
-      console.error("Error speaking:", err);
+      const errorMessage = err instanceof Error ? err.message : "Error speaking";
+      console.error("TTS error:", err);
+      setError(errorMessage);
       setIsSpeaking(false);
     }
   };

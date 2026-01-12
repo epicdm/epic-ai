@@ -1,19 +1,10 @@
 /**
  * Voice TTS (Text-to-Speech) API
- * TODO: Implement when TTS service is completed
  */
 
 import { getAuthWithBypass } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-
-const VOICE_OPTIONS: Record<string, { name: string; description: string }> = {
-  alloy: { name: "Alloy", description: "Neutral, balanced voice" },
-  echo: { name: "Echo", description: "Warm, engaging voice" },
-  fable: { name: "Fable", description: "Expressive, dynamic voice" },
-  onyx: { name: "Onyx", description: "Deep, authoritative voice" },
-  nova: { name: "Nova", description: "Friendly, conversational voice" },
-  shimmer: { name: "Shimmer", description: "Clear, professional voice" },
-};
+import { textToSpeechBase64, VOICE_OPTIONS, isValidVoiceId, getContentType } from "@/lib/voice/tts";
 
 /**
  * POST /api/voice/speak
@@ -27,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { text, voice = "nova", speed = 1.0 } = body;
+    const { text, voice = "nova", speed = 1.0, returnBase64 = false } = body;
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -40,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!VOICE_OPTIONS[voice]) {
+    if (!isValidVoiceId(voice)) {
       return NextResponse.json(
         { error: `Invalid voice. Valid options: ${Object.keys(VOICE_OPTIONS).join(", ")}` },
         { status: 400 }
@@ -54,11 +45,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Implement TTS generation when service is completed
-    return NextResponse.json(
-      { error: "Text-to-speech not yet implemented" },
-      { status: 501 }
-    );
+    // Generate TTS
+    const result = await textToSpeechBase64(text, {
+      voice,
+      speed,
+      responseFormat: "mp3",
+    });
+
+    // Return based on preference
+    if (returnBase64) {
+      return NextResponse.json({
+        audio: result.audio,
+        format: result.format,
+        contentType: getContentType(result.format),
+      });
+    }
+
+    // Return as audio stream
+    const audioBuffer = Buffer.from(result.audio, "base64");
+    return new NextResponse(audioBuffer, {
+      headers: {
+        "Content-Type": getContentType(result.format),
+        "Content-Length": audioBuffer.length.toString(),
+      },
+    });
   } catch (error) {
     console.error("Error generating speech:", error);
     return NextResponse.json(
