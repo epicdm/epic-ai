@@ -47,6 +47,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface PhoneNumber {
@@ -107,6 +108,7 @@ const US_AREA_CODES = [
 export function PhoneNumbersPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [activeTab, setActiveTab] = useState<string>("owned");
+  const [mounted, setMounted] = useState(false);
 
   // Owned numbers state
   const [ownedNumbers, setOwnedNumbers] = useState<PhoneNumber[]>([]);
@@ -130,14 +132,27 @@ export function PhoneNumbersPage() {
   const fetchOwnedNumbers = useCallback(async () => {
     try {
       setLoadingOwned(true);
+      console.log("[PhoneNumbers] Fetching owned numbers...");
       const response = await fetch("/api/voice/phone-numbers");
+      console.log("[PhoneNumbers] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("[PhoneNumbers] Received data:", {
+          count: data.phoneNumbers?.length || 0,
+          magnusConfigured: data.magnusConfigured,
+          phoneNumbers: data.phoneNumbers?.map((p: PhoneNumber) => ({
+            id: p.id,
+            number: p.phoneNumber,
+            agent: p.agent?.name,
+          })),
+        });
         setOwnedNumbers(data.phoneNumbers || []);
         setMagnusConfigured(data.magnusConfigured || false);
+      } else {
+        console.error("[PhoneNumbers] API error:", response.status, await response.text());
       }
     } catch (error) {
-      console.error("Error fetching phone numbers:", error);
+      console.error("[PhoneNumbers] Error fetching phone numbers:", error);
     } finally {
       setLoadingOwned(false);
     }
@@ -179,6 +194,11 @@ export function PhoneNumbersPage() {
     } catch (error) {
       console.error("Error fetching agents:", error);
     }
+  }, []);
+
+  // Hydration-safe mounting
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -286,8 +306,27 @@ export function PhoneNumbersPage() {
     }
   };
 
+  // Show loading state until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          title="Phone Numbers"
+          description="Manage phone numbers for your voice agents via Magnus Billing."
+        />
+        <Card>
+          <CardBody>
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" suppressHydrationWarning>
       <PageHeader
         title="Phone Numbers"
         description="Manage phone numbers for your voice agents via Magnus Billing."
