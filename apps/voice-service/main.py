@@ -606,16 +606,14 @@ def provision_agent():
         if result.success:
             return jsonify({
                 "success": True,
-                "data": {
-                    "magnus_user_id": result.magnus_user_id,
-                    "magnus_sip_id": result.magnus_sip_id,
-                    "magnus_did_id": result.magnus_did_id,
-                    "did_number": result.did_number,
-                    "sip_username": result.sip_username,
-                    "sip_password": result.sip_password,
-                    "sip_server": result.sip_server,
-                    "sip_url": f"sip:{result.sip_username}@{result.sip_server}"
-                }
+                "magnus_user_id": result.magnus_user_id,
+                "magnus_sip_id": result.magnus_sip_id,
+                "magnus_did_id": result.magnus_did_id,
+                "did_number": result.did_number,
+                "sip_username": result.sip_username,
+                "sip_password": result.sip_password,
+                "sip_server": result.sip_server,
+                "sip_url": f"sip:{result.sip_username}@{result.sip_server}"
             }), 201
         else:
             return jsonify({
