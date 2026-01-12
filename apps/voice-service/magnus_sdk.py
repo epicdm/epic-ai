@@ -365,10 +365,15 @@ class MagnusSDK:
             if not user_result.get("success", False):
                 raise MagnusSDKError(f"Failed to create user: {user_result.get('msg', 'Unknown error')} - Full response: {user_result}")
 
-            # Step 2: Get the created user ID
-            user_id = self.get_id("user", "username", username)
+            # Step 2: Extract the created user ID from the response
+            # Note: Don't use get_id() as it may return a different user with similar criteria
+            rows = user_result.get("rows", [])
+            if rows and len(rows) > 0:
+                user_id = str(rows[0].get("id", ""))
+            else:
+                user_id = ""
             if not user_id:
-                raise MagnusSDKError("Could not find created user")
+                raise MagnusSDKError(f"Could not extract user ID from creation response: {user_result}")
             logger.info(f"Created user ID: {user_id}")
 
             # Step 3: Get the auto-created SIP user ID
@@ -403,10 +408,14 @@ class MagnusSDK:
             if not did_result.get("success", False):
                 raise MagnusSDKError(f"Failed to create DID: {did_result.get('msg', 'Unknown error')}")
 
-            # Step 5: Get the created DID ID
-            did_id = self.get_id("did", "did", did)
+            # Step 5: Extract the created DID ID from the response
+            did_rows = did_result.get("rows", [])
+            if did_rows and len(did_rows) > 0:
+                did_id = str(did_rows[0].get("id", ""))
+            else:
+                did_id = ""
             if not did_id:
-                raise MagnusSDKError("Could not find created DID")
+                raise MagnusSDKError(f"Could not extract DID ID from creation response: {did_result}")
             logger.info(f"Created DID ID: {did_id}")
 
             # Step 6: Create DID destination (link DID to SIP user)
