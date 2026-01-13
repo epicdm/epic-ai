@@ -13,7 +13,8 @@ import hashlib
 import time
 import requests
 import urllib3
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
+import warnings
 from dataclasses import dataclass
 from urllib.parse import urlencode
 
@@ -30,6 +31,52 @@ class MagnusSDKError(Exception):
         self.status_code = status_code
         self.response = response
         super().__init__(self.message)
+
+
+class DIDRangeExhaustedError(MagnusSDKError):
+    """
+    Exception raised when the DID range is completely exhausted.
+
+    This is a specific error that indicates no more phone numbers are available
+    in the configured range and requires administrative action to resolve.
+    """
+    def __init__(
+        self,
+        message: str,
+        total_in_range: int,
+        used_in_range: int,
+        range_start: str,
+        range_end: str
+    ):
+        self.total_in_range = total_in_range
+        self.used_in_range = used_in_range
+        self.available_in_range = total_in_range - used_in_range
+        self.range_start = range_start
+        self.range_end = range_end
+        self.utilization_percent = (used_in_range / total_in_range * 100) if total_in_range > 0 else 100
+
+        # Create a detailed, actionable error message
+        detailed_message = (
+            f"{message}\n\n"
+            f"DID Range Status:\n"
+            f"  - Range: {range_start} to {range_end}\n"
+            f"  - Total capacity: {total_in_range}\n"
+            f"  - Currently in use: {used_in_range}\n"
+            f"  - Available: {self.available_in_range}\n"
+            f"  - Utilization: {self.utilization_percent:.1f}%\n\n"
+            f"Action Required: Contact your administrator to either:\n"
+            f"  1. Release unused DIDs from the current range\n"
+            f"  2. Configure an additional DID range\n"
+            f"  3. Expand the current DID range allocation"
+        )
+
+        super().__init__(detailed_message)
+        self.original_message = message
+
+
+class DIDRangeNearlyExhaustedWarning(Warning):
+    """Warning raised when the DID range is nearly exhausted (>90% used)."""
+    pass
 
 
 @dataclass
@@ -62,6 +109,43 @@ class ProvisioningResult:
     sip_password: str
     sip_server: str
     error: Optional[str] = None
+
+
+@dataclass
+class DIDRangeStatus:
+    """
+    Status of DID range utilization.
+
+    Used for pre-emptive detection of range exhaustion and near-exhaustion warnings.
+    """
+    total_in_range: int
+    used_in_range: int
+    available_in_range: int
+    utilization_percent: float
+    range_start: str
+    range_end: str
+    is_exhausted: bool
+    is_nearly_exhausted: bool
+    warning_threshold_percent: float = 90.0
+    critical_threshold_percent: float = 99.0
+
+    @property
+    def status_message(self) -> str:
+        """Get a human-readable status message."""
+        if self.is_exhausted:
+            return f"CRITICAL: DID range exhausted. {self.used_in_range}/{self.total_in_range} DIDs in use (100%)."
+        elif self.is_nearly_exhausted:
+            return (
+                f"WARNING: DID range nearly exhausted. "
+                f"{self.used_in_range}/{self.total_in_range} DIDs in use ({self.utilization_percent:.1f}%). "
+                f"Only {self.available_in_range} DIDs remaining."
+            )
+        else:
+            return (
+                f"OK: DID range healthy. "
+                f"{self.used_in_range}/{self.total_in_range} DIDs in use ({self.utilization_percent:.1f}%). "
+                f"{self.available_in_range} DIDs available."
+            )
 
 
 class MagnusSDK:
@@ -304,7 +388,219 @@ class MagnusSDK:
         except MagnusSDKError:
             return None
 
-    def generate_unique_did(self) -> str:
+    def get_all_dids(self) -> set:
+        """
+        Fetch ALL DIDs from Magnus and return them as a set for fast lookup.
+
+        This is necessary because the Magnus API ignores filter parameters
+        and returns all records anyway. By fetching once and caching locally,
+        we can efficiently check for uniqueness without making repeated API calls.
+
+        Returns:
+            Set of DID numbers (as strings) currently in Magnus
+        """
+        try:
+            # Fetch all DIDs - no filter since Magnus ignores it anyway
+            response = self._make_request("read", "did", {})
+
+            existing_dids = set()
+            if isinstance(response, dict) and "rows" in response:
+                rows = response["rows"]
+                for row in rows:
+                    did_value = row.get("did", "")
+                    if did_value:
+                        existing_dids.add(str(did_value))
+
+                logger.info(f"Fetched {len(existing_dids)} existing DIDs from Magnus")
+
+            return existing_dids
+
+        except MagnusSDKError as e:
+            logger.error(f"Failed to fetch DIDs from Magnus: {e}")
+            # Return empty set on error - this will allow DID generation to proceed
+            # and let the create operation fail if there's actually a duplicate
+            return set()
+
+    def get_did_usage_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about DID usage in the configured range.
+
+        Returns:
+            Dict with usage statistics including:
+            - total_in_range: Total DIDs available in range (1000)
+            - used_in_range: Count of DIDs in use within the 9xxx range
+            - available_in_range: Count of available DIDs
+            - utilization_percent: Percentage of range in use
+            - all_dids_count: Total DIDs in Magnus (all ranges)
+            - range_start: Start of the DID range
+            - range_end: End of the DID range
+        """
+        existing_dids = self.get_all_dids()
+
+        # Count DIDs in our specific range (9000-9999)
+        range_prefix = f"{self.DID_PREFIX}9"  # 17678189xxx
+        used_in_range = sum(1 for did in existing_dids if did.startswith(range_prefix))
+
+        total_in_range = 1000  # 9000-9999
+        available_in_range = total_in_range - used_in_range
+        utilization_percent = (used_in_range / total_in_range) * 100
+
+        return {
+            "total_in_range": total_in_range,
+            "used_in_range": used_in_range,
+            "available_in_range": available_in_range,
+            "utilization_percent": round(utilization_percent, 2),
+            "all_dids_count": len(existing_dids),
+            "range_start": f"{self.DID_PREFIX}9000",
+            "range_end": f"{self.DID_PREFIX}9999",
+        }
+
+    def get_did_range_status(
+        self,
+        existing_dids: set = None,
+        warning_threshold: float = 90.0,
+        critical_threshold: float = 99.0
+    ) -> DIDRangeStatus:
+        """
+        Get detailed status of DID range utilization with exhaustion detection.
+
+        This method provides pre-emptive detection of:
+        - Complete range exhaustion (100% used)
+        - Near-exhaustion warnings (above warning threshold, default 90%)
+
+        Args:
+            existing_dids: Optional pre-fetched set of DIDs. If not provided,
+                          will fetch from Magnus.
+            warning_threshold: Percentage at which to flag as nearly exhausted (default 90%)
+            critical_threshold: Percentage at which to flag as critical (default 99%)
+
+        Returns:
+            DIDRangeStatus object with utilization details and exhaustion flags
+        """
+        if existing_dids is None:
+            existing_dids = self.get_all_dids()
+
+        # Count DIDs in our specific range (9000-9999)
+        range_prefix = f"{self.DID_PREFIX}9"  # 17678189xxx
+        used_in_range = sum(1 for did in existing_dids if did.startswith(range_prefix))
+
+        total_in_range = 1000  # 9000-9999
+        available_in_range = total_in_range - used_in_range
+        utilization_percent = (used_in_range / total_in_range) * 100 if total_in_range > 0 else 100
+
+        range_start = f"{self.DID_PREFIX}9000"
+        range_end = f"{self.DID_PREFIX}9999"
+
+        is_exhausted = available_in_range <= 0
+        is_nearly_exhausted = utilization_percent >= warning_threshold and not is_exhausted
+
+        return DIDRangeStatus(
+            total_in_range=total_in_range,
+            used_in_range=used_in_range,
+            available_in_range=available_in_range,
+            utilization_percent=round(utilization_percent, 2),
+            range_start=range_start,
+            range_end=range_end,
+            is_exhausted=is_exhausted,
+            is_nearly_exhausted=is_nearly_exhausted,
+            warning_threshold_percent=warning_threshold,
+            critical_threshold_percent=critical_threshold
+        )
+
+    def check_range_exhaustion(
+        self,
+        existing_dids: set = None,
+        raise_on_exhausted: bool = True,
+        warn_on_nearly_exhausted: bool = True
+    ) -> DIDRangeStatus:
+        """
+        Check if the DID range is exhausted or nearly exhausted.
+
+        This method should be called before provisioning to provide early
+        detection and clear error messages about range exhaustion.
+
+        Args:
+            existing_dids: Optional pre-fetched set of DIDs
+            raise_on_exhausted: If True, raises DIDRangeExhaustedError when range is full
+            warn_on_nearly_exhausted: If True, logs a warning when range is nearly full
+
+        Returns:
+            DIDRangeStatus object
+
+        Raises:
+            DIDRangeExhaustedError: If range is exhausted and raise_on_exhausted is True
+        """
+        status = self.get_did_range_status(existing_dids)
+
+        if status.is_exhausted:
+            error_msg = (
+                f"Cannot provision new phone number: DID range is completely exhausted. "
+                f"All {status.total_in_range} DIDs in range {status.range_start}-{status.range_end} are in use."
+            )
+            logger.error(error_msg)
+
+            if raise_on_exhausted:
+                raise DIDRangeExhaustedError(
+                    message=error_msg,
+                    total_in_range=status.total_in_range,
+                    used_in_range=status.used_in_range,
+                    range_start=status.range_start,
+                    range_end=status.range_end
+                )
+
+        elif status.is_nearly_exhausted and warn_on_nearly_exhausted:
+            warning_msg = (
+                f"DID range is nearly exhausted: {status.used_in_range}/{status.total_in_range} "
+                f"({status.utilization_percent:.1f}%) DIDs in use. "
+                f"Only {status.available_in_range} DIDs remaining in range "
+                f"{status.range_start}-{status.range_end}."
+            )
+            logger.warning(warning_msg)
+            warnings.warn(warning_msg, DIDRangeNearlyExhaustedWarning)
+
+        return status
+
+    def get_available_dids_in_range(self, existing_dids: set = None) -> list:
+        """
+        Get a list of all available (unused) DIDs in the configured range.
+
+        This is useful for diagnostics and understanding which specific DIDs
+        are still available.
+
+        Args:
+            existing_dids: Optional pre-fetched set of existing DIDs
+
+        Returns:
+            List of available DID numbers (as strings), sorted numerically
+        """
+        if existing_dids is None:
+            existing_dids = self.get_all_dids()
+
+        available = []
+        for suffix in range(9000, 10000):
+            did = f"{self.DID_PREFIX}{suffix}"
+            if did not in existing_dids:
+                available.append(did)
+
+        return available
+
+    def check_did_exists(self, did: str) -> bool:
+        """
+        Check if a specific DID exists in Magnus.
+
+        This uses the local filtering approach since Magnus API
+        ignores filter parameters.
+
+        Args:
+            did: The DID number to check
+
+        Returns:
+            True if the DID exists, False otherwise
+        """
+        existing_dids = self.get_all_dids()
+        return did in existing_dids
+
+    def generate_unique_did(self, existing_dids: set = None, use_sequential: bool = False, sequential_start: int = None) -> str:
         """
         Generate a unique DID number in the configured range.
 
@@ -316,30 +612,103 @@ class MagnusSDK:
         } while ($id_did);
 
         Range: 1-767-818-9xxx (9000-9999)
+
+        Args:
+            existing_dids: Optional set of DIDs already in use. If not provided,
+                          will fetch all DIDs from Magnus once and use that.
+            use_sequential: If True, skip random and go straight to sequential search.
+                           This is useful for fallback after race conditions.
+            sequential_start: Starting suffix for sequential search (9000-9999).
+                             If not provided, starts from 9000.
+
+        Returns:
+            A unique DID number string
+
+        Raises:
+            MagnusSDKError: If no unique DID can be found after checking all possibilities
         """
-        max_attempts = 100
-        for attempt in range(max_attempts):
-            # Generate DID in 9xxx range (9000-9999)
-            suffix = random.randint(9000, 9999)
+        # Fetch all existing DIDs once if not provided
+        if existing_dids is None:
+            existing_dids = self.get_all_dids()
+            logger.info(f"Loaded {len(existing_dids)} existing DIDs for uniqueness check")
+
+        # If sequential mode requested, skip random attempts
+        if not use_sequential:
+            # Try random DIDs first (faster for sparse ranges)
+            max_random_attempts = 50
+            for attempt in range(max_random_attempts):
+                # Generate DID in 9xxx range (9000-9999)
+                suffix = random.randint(9000, 9999)
+                did = f"{self.DID_PREFIX}{suffix}"
+
+                # Check against local cache of existing DIDs
+                if did not in existing_dids:
+                    logger.info(f"Generated unique DID: {did} (random attempt {attempt + 1})")
+                    return did
+
+                logger.debug(f"DID {did} already exists in cache, retrying...")
+
+            # If random didn't find one, switch to sequential
+            logger.warning(f"Random DID generation failed after {max_random_attempts} attempts, trying sequential search")
+
+        # Sequential search (for nearly-full ranges or fallback after race conditions)
+        start_suffix = sequential_start if sequential_start is not None else 9000
+        logger.info(f"Starting sequential DID search from {self.DID_PREFIX}{start_suffix}")
+
+        for suffix in range(start_suffix, 10000):
             did = f"{self.DID_PREFIX}{suffix}"
-
-            # Check if this DID already exists
-            existing_did = self.get_id("did", "did", did)
-            logger.debug(f"Checking DID {did}: existing_did={existing_did}, type={type(existing_did)}")
-
-            if not existing_did:
-                logger.info(f"Generated unique DID: {did} (attempt {attempt + 1})")
+            if did not in existing_dids:
+                logger.info(f"Generated unique DID via sequential search: {did}")
                 return did
 
-            logger.debug(f"DID {did} already exists (ID: {existing_did}), retrying...")
+        # If we started mid-range, wrap around and check the beginning
+        if start_suffix > 9000:
+            logger.info(f"Wrapping around to check DIDs from 9000 to {start_suffix - 1}")
+            for suffix in range(9000, start_suffix):
+                did = f"{self.DID_PREFIX}{suffix}"
+                if did not in existing_dids:
+                    logger.info(f"Generated unique DID via sequential search (wrapped): {did}")
+                    return did
 
-        raise MagnusSDKError(f"Could not generate unique DID after {max_attempts} attempts")
+        # Count DIDs actually in our range for accurate error reporting
+        range_prefix = f"{self.DID_PREFIX}9"
+        used_in_range = sum(1 for did in existing_dids if did.startswith(range_prefix))
+        total_in_range = 1000
+
+        raise DIDRangeExhaustedError(
+            message=(
+                f"Cannot generate unique DID: All DIDs in range are in use. "
+                f"Searched entire range {self.DID_PREFIX}9000-{self.DID_PREFIX}9999."
+            ),
+            total_in_range=total_in_range,
+            used_in_range=used_in_range,
+            range_start=f"{self.DID_PREFIX}9000",
+            range_end=f"{self.DID_PREFIX}9999"
+        )
 
     def generate_password(self, length: int = 12) -> str:
         """Generate a random password."""
         import string
         chars = string.ascii_letters + string.digits
         return ''.join(random.choice(chars) for _ in range(length))
+
+    def _is_duplicate_did_error(self, error_msg: str) -> bool:
+        """
+        Check if an error message indicates a duplicate DID (race condition).
+
+        Args:
+            error_msg: The error message to check
+
+        Returns:
+            True if the error is a duplicate DID error, False otherwise
+        """
+        error_lower = error_msg.lower()
+        return (
+            ("duplicate entry" in error_lower and "did" in error_lower) or
+            ("already exists" in error_lower and "did" in error_lower) or
+            "duplicate did" in error_lower or
+            "did already in use" in error_lower
+        )
 
     def provision_voice_agent(
         self,
@@ -359,6 +728,13 @@ class MagnusSDK:
         4. Create DID destination (link DID to SIP user)
         5. Update SIP user settings
 
+        Race Condition Handling:
+        - Phase 1: Try with random DIDs (fast for sparse ranges)
+        - Phase 2: On repeated failures, switch to sequential DID allocation
+                   starting from the last failed DID's position
+        - This ensures we eventually find an available DID even under
+          high concurrency, without hammering the same DIDs
+
         Args:
             agent_id: The voice agent ID (used in username)
             agent_name: Name of the agent
@@ -373,29 +749,160 @@ class MagnusSDK:
         if did_number:
             return self._provision_with_did(agent_id, agent_name, email, phone, did_number)
 
-        # Otherwise, retry with new DIDs if we hit duplicates (up to 10 attempts)
-        max_retries = 10
-        for retry_attempt in range(max_retries):
-            try:
-                # Generate unique DID
-                did = self.generate_unique_did()
-                logger.info(f"Attempting provisioning with DID {did} (attempt {retry_attempt + 1}/{max_retries})")
+        # Fetch all existing DIDs once upfront for efficient uniqueness checking
+        # This avoids making separate API calls for each DID check
+        existing_dids = self.get_all_dids()
+        logger.info(f"Loaded {len(existing_dids)} existing DIDs for provisioning")
 
-                return self._provision_with_did(agent_id, agent_name, email, phone, did)
+        # Pre-emptive check for range exhaustion before attempting provisioning
+        # This provides clear error messaging upfront instead of failing after retries
+        range_status = self.check_range_exhaustion(
+            existing_dids=existing_dids,
+            raise_on_exhausted=True,  # Fail fast if range is exhausted
+            warn_on_nearly_exhausted=True  # Log warning if range is nearly full
+        )
+        logger.info(f"DID range status: {range_status.status_message}")
+
+        # Configuration for retry strategy
+        max_random_retries = 5      # Max attempts using random DID generation
+        max_sequential_retries = 10  # Max attempts using sequential DID generation
+        total_max_retries = max_random_retries + max_sequential_retries
+
+        # Track state for sequential fallback
+        use_sequential = False
+        sequential_start = None
+        last_failed_did = None
+        race_condition_count = 0
+
+        for retry_attempt in range(total_max_retries):
+            try:
+                # Generate unique DID using local cache
+                # Switch to sequential mode after too many random failures
+                did = self.generate_unique_did(
+                    existing_dids=existing_dids,
+                    use_sequential=use_sequential,
+                    sequential_start=sequential_start
+                )
+
+                mode_str = "sequential" if use_sequential else "random"
+                logger.info(f"Attempting provisioning with DID {did} ({mode_str} mode, attempt {retry_attempt + 1}/{total_max_retries})")
+
+                result = self._provision_with_did(agent_id, agent_name, email, phone, did)
+
+                # If successful, return the result
+                if result.success:
+                    if race_condition_count > 0:
+                        logger.info(f"Provisioning succeeded after {race_condition_count} race condition(s)")
+                    return result
+
+                # Check if failure is due to duplicate DID (race condition)
+                if result.error and self._is_duplicate_did_error(result.error):
+                    race_condition_count += 1
+                    logger.warning(
+                        f"Race condition #{race_condition_count}: DID {did} was created by another process. "
+                        f"Adding to cache and retrying..."
+                    )
+                    existing_dids.add(did)
+                    last_failed_did = did
+
+                    # After several random failures, switch to sequential mode
+                    # Sequential mode is more deterministic and avoids repeatedly
+                    # trying the same popular random DIDs
+                    if race_condition_count >= max_random_retries and not use_sequential:
+                        use_sequential = True
+                        # Start sequential search from the last failed DID's position + 1
+                        if last_failed_did:
+                            try:
+                                failed_suffix = int(last_failed_did[-4:])
+                                sequential_start = (failed_suffix + 1) if failed_suffix < 9999 else 9000
+                            except ValueError:
+                                sequential_start = 9000
+                        logger.warning(
+                            f"Switching to sequential DID allocation after {race_condition_count} race conditions. "
+                            f"Starting from {self.DID_PREFIX}{sequential_start}"
+                        )
+                    continue
+
+                # If failed but not due to duplicate DID, don't retry
+                logger.error(f"Provisioning failed with non-retryable error: {result.error}")
+                return result
+
+            except DIDRangeExhaustedError:
+                # Range exhaustion is a terminal error - don't retry, just re-raise
+                # This provides clear messaging to the user
+                raise
 
             except MagnusSDKError as e:
                 error_msg = str(e)
-                # Check if this is a duplicate DID error
-                if "Duplicate entry" in error_msg and "for key 'did'" in error_msg:
-                    logger.warning(f"DID {did} caused duplicate error (attempt {retry_attempt + 1}/{max_retries}), retrying with new DID...")
-                    if retry_attempt == max_retries - 1:
-                        raise MagnusSDKError(f"Could not provision agent after {max_retries} attempts - all DIDs caused duplicates")
+
+                # Check if this is a duplicate DID error (race condition)
+                if self._is_duplicate_did_error(error_msg):
+                    race_condition_count += 1
+                    logger.warning(
+                        f"Race condition #{race_condition_count} (exception): DID {did} duplicate error. "
+                        f"Adding to cache and retrying..."
+                    )
+                    existing_dids.add(did)
+                    last_failed_did = did
+
+                    # Switch to sequential mode after several failures
+                    if race_condition_count >= max_random_retries and not use_sequential:
+                        use_sequential = True
+                        if last_failed_did:
+                            try:
+                                failed_suffix = int(last_failed_did[-4:])
+                                sequential_start = (failed_suffix + 1) if failed_suffix < 9999 else 9000
+                            except ValueError:
+                                sequential_start = 9000
+                        logger.warning(
+                            f"Switching to sequential DID allocation after {race_condition_count} race conditions (exception path). "
+                            f"Starting from {self.DID_PREFIX}{sequential_start}"
+                        )
+
+                    # Check if we've exhausted all retries
+                    if retry_attempt == total_max_retries - 1:
+                        # After many race conditions, check if range is actually exhausted
+                        final_status = self.get_did_range_status(existing_dids)
+                        if final_status.is_exhausted:
+                            raise DIDRangeExhaustedError(
+                                message=(
+                                    f"DID range exhausted after {total_max_retries} provisioning attempts. "
+                                    f"Race conditions encountered: {race_condition_count}."
+                                ),
+                                total_in_range=final_status.total_in_range,
+                                used_in_range=final_status.used_in_range,
+                                range_start=final_status.range_start,
+                                range_end=final_status.range_end
+                            )
+                        else:
+                            raise MagnusSDKError(
+                                f"Could not provision agent after {total_max_retries} attempts due to repeated race conditions. "
+                                f"Race conditions encountered: {race_condition_count}. "
+                                f"DID range still has {final_status.available_in_range} available DIDs - "
+                                f"this may indicate high concurrency. Please try again."
+                            )
                     continue  # Try again with new DID
                 else:
                     # Different error, don't retry
+                    logger.error(f"Non-retryable error during provisioning: {error_msg}")
                     raise
 
-        raise MagnusSDKError(f"Could not provision agent after {max_retries} attempts")
+        # Should not reach here, but just in case
+        final_status = self.get_did_range_status(existing_dids)
+        if final_status.is_exhausted:
+            raise DIDRangeExhaustedError(
+                message=f"Could not provision agent: DID range exhausted after {total_max_retries} attempts.",
+                total_in_range=final_status.total_in_range,
+                used_in_range=final_status.used_in_range,
+                range_start=final_status.range_start,
+                range_end=final_status.range_end
+            )
+        else:
+            raise MagnusSDKError(
+                f"Could not provision agent after {total_max_retries} attempts. "
+                f"Race conditions encountered: {race_condition_count}. "
+                f"DID range has {final_status.available_in_range} available DIDs."
+            )
 
     def _provision_with_did(
         self,

@@ -54,6 +54,12 @@ def home():
             "agents": "/api/agents/*",
             "telephony": "/api/telephony/*",
             "magnus": "/api/magnus/*"
+        },
+        "diagnostic_endpoints": {
+            "magnus_diagnostics": "/api/magnus/diagnostics",
+            "did_usage": "/api/magnus/check-did-usage",
+            "did_check": "/api/magnus/test-did-check/<did>",
+            "magnus_health": "/api/magnus/health"
         }
     }), 200
 
@@ -665,60 +671,70 @@ def check_did_usage():
     """
     Check how many DIDs in the 9xxx range are currently in use.
 
-    Returns statistics about DID usage in the 17678189xxx range.
+    Returns accurate statistics about DID usage in the 17678189xxx range
+    by fetching all DIDs from Magnus and filtering locally.
+
+    Query Parameters:
+        include_available_list: If 'true', includes list of first 50 available DIDs
+        include_used_list: If 'true', includes list of first 50 used DIDs
     """
     try:
         from magnus_sdk import get_magnus_sdk
 
         sdk = get_magnus_sdk()
 
-        # Check DIDs in the 9xxx range (9000-9999)
-        total_range = 1000  # 9000 to 9999
-        in_use = []
-        available = []
-        errors = []
+        logger.info("Fetching accurate DID usage statistics...")
 
-        logger.info("Checking DID usage in 9xxx range...")
+        # Fetch all DIDs from Magnus (single API call)
+        existing_dids = sdk.get_all_dids()
+        logger.info(f"Retrieved {len(existing_dids)} total DIDs from Magnus")
 
-        # Sample check - check every 10th DID to get a quick estimate
-        sample_size = 100
-        for i in range(sample_size):
-            suffix = 9000 + (i * 10)  # Sample: 9000, 9010, 9020, etc.
-            did = f"1767818{suffix}"
+        # Get detailed range status using accurate counting
+        range_status = sdk.get_did_range_status(existing_dids)
 
-            try:
-                existing_id = sdk.get_id("did", "did", did)
-                if existing_id:
-                    in_use.append(did)
-                else:
-                    available.append(did)
-            except Exception as e:
-                errors.append({"did": did, "error": str(e)})
+        # Get usage stats for additional details
+        usage_stats = sdk.get_did_usage_stats()
 
-        # Estimate total based on sample
-        sample_in_use_pct = len(in_use) / sample_size
-        estimated_in_use = int(total_range * sample_in_use_pct)
-        estimated_available = total_range - estimated_in_use
-
-        return jsonify({
+        # Build response
+        response = {
             "success": True,
-            "range": "17678189000-17678189999",
-            "total_possible": total_range,
-            "sample_size": sample_size,
-            "sample_in_use": len(in_use),
-            "sample_available": len(available),
-            "sample_errors": len(errors),
-            "estimated_in_use": estimated_in_use,
-            "estimated_available": estimated_available,
-            "usage_percentage": round(sample_in_use_pct * 100, 2),
-            "sample_in_use_dids": in_use[:10],  # Show first 10
-            "sample_available_dids": available[:10],  # Show first 10
-            "errors": errors[:5] if errors else []
-        }), 200
+            "range": f"{range_status.range_start}-{range_status.range_end}",
+            "total_in_range": range_status.total_in_range,
+            "used_in_range": range_status.used_in_range,
+            "available_in_range": range_status.available_in_range,
+            "utilization_percent": range_status.utilization_percent,
+            "all_dids_in_magnus": usage_stats["all_dids_count"],
+            "status": range_status.status_message,
+            "is_exhausted": range_status.is_exhausted,
+            "is_nearly_exhausted": range_status.is_nearly_exhausted,
+            "warning_threshold_percent": range_status.warning_threshold_percent,
+        }
+
+        # Optionally include list of available DIDs
+        include_available = request.args.get('include_available_list', '').lower() == 'true'
+        if include_available:
+            available_dids = sdk.get_available_dids_in_range(existing_dids)
+            response["available_dids_sample"] = available_dids[:50]  # First 50
+            response["available_dids_count"] = len(available_dids)
+
+        # Optionally include list of used DIDs in range
+        include_used = request.args.get('include_used_list', '').lower() == 'true'
+        if include_used:
+            range_prefix = f"{sdk.DID_PREFIX}9"  # 17678189xxx
+            used_in_range = sorted([did for did in existing_dids if did.startswith(range_prefix)])
+            response["used_dids_sample"] = used_in_range[:50]  # First 50
+            response["used_dids_count"] = len(used_in_range)
+
+        return jsonify(response), 200
 
     except Exception as e:
         logger.error(f"Error checking DID usage: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        import traceback
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
 
 
 @app.route('/api/magnus/test-did-check/<did>', methods=['GET'])
@@ -777,6 +793,146 @@ def generate_did():
     except Exception as e:
         logger.error(f"Error generating DID: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/diagnostics', methods=['GET'])
+def magnus_diagnostics():
+    """
+    Comprehensive diagnostic endpoint for Magnus Billing integration.
+
+    Returns detailed information about:
+    - Magnus API connectivity and health
+    - DID range utilization with accurate counts
+    - SIP configuration status
+    - Configuration settings
+
+    This endpoint is useful for troubleshooting provisioning issues.
+    """
+    import time
+
+    diagnostics = {
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        "service": "voice-service",
+        "magnus_integration": {},
+        "did_usage": {},
+        "configuration": {},
+        "errors": []
+    }
+
+    try:
+        from magnus_sdk import get_magnus_sdk, MagnusSDKError
+
+        sdk = get_magnus_sdk()
+
+        # Configuration info (sanitized - no secrets)
+        diagnostics["configuration"] = {
+            "magnus_url": sdk.public_url,
+            "sip_server": sdk.sip_server,
+            "did_prefix": sdk.DID_PREFIX,
+            "did_range": f"{sdk.DID_PREFIX}9000-{sdk.DID_PREFIX}9999",
+            "api_key_configured": bool(sdk.api_key),
+            "api_secret_configured": bool(sdk.api_secret),
+            "timeout_seconds": sdk.timeout
+        }
+
+        # Test Magnus API connectivity
+        connectivity_start = time.time()
+        try:
+            existing_dids = sdk.get_all_dids()
+            connectivity_time = round((time.time() - connectivity_start) * 1000, 2)
+
+            diagnostics["magnus_integration"] = {
+                "status": "connected",
+                "api_response_time_ms": connectivity_time,
+                "total_dids_in_magnus": len(existing_dids)
+            }
+        except MagnusSDKError as e:
+            connectivity_time = round((time.time() - connectivity_start) * 1000, 2)
+            diagnostics["magnus_integration"] = {
+                "status": "error",
+                "api_response_time_ms": connectivity_time,
+                "error": str(e)
+            }
+            diagnostics["errors"].append({
+                "component": "magnus_api",
+                "error": str(e)
+            })
+            existing_dids = set()
+
+        # DID usage analysis
+        if existing_dids or diagnostics["magnus_integration"]["status"] == "connected":
+            try:
+                range_status = sdk.get_did_range_status(existing_dids)
+
+                # Calculate health score (0-100)
+                # 100 = empty, 0 = full
+                health_score = max(0, min(100, 100 - range_status.utilization_percent))
+
+                diagnostics["did_usage"] = {
+                    "range_start": range_status.range_start,
+                    "range_end": range_status.range_end,
+                    "total_capacity": range_status.total_in_range,
+                    "currently_used": range_status.used_in_range,
+                    "currently_available": range_status.available_in_range,
+                    "utilization_percent": range_status.utilization_percent,
+                    "health_score": round(health_score, 1),
+                    "status": "critical" if range_status.is_exhausted else ("warning" if range_status.is_nearly_exhausted else "healthy"),
+                    "status_message": range_status.status_message,
+                    "is_exhausted": range_status.is_exhausted,
+                    "is_nearly_exhausted": range_status.is_nearly_exhausted,
+                    "warning_threshold_percent": range_status.warning_threshold_percent
+                }
+
+                # Add recommendations based on status
+                recommendations = []
+                if range_status.is_exhausted:
+                    recommendations.append("CRITICAL: DID range is exhausted. No new phone numbers can be provisioned.")
+                    recommendations.append("Contact administrator to release unused DIDs or expand the DID range.")
+                elif range_status.is_nearly_exhausted:
+                    recommendations.append(f"WARNING: Only {range_status.available_in_range} DIDs remaining.")
+                    recommendations.append("Consider expanding the DID range or cleaning up unused DIDs.")
+                elif range_status.utilization_percent > 75:
+                    recommendations.append(f"DID range is at {range_status.utilization_percent}% capacity.")
+                    recommendations.append("Monitor usage and plan for expansion if growth continues.")
+                else:
+                    recommendations.append("DID range is healthy with sufficient capacity.")
+
+                diagnostics["did_usage"]["recommendations"] = recommendations
+
+            except Exception as e:
+                diagnostics["errors"].append({
+                    "component": "did_analysis",
+                    "error": str(e)
+                })
+
+        # Overall status
+        if diagnostics["errors"]:
+            diagnostics["overall_status"] = "degraded"
+        elif diagnostics.get("did_usage", {}).get("is_exhausted"):
+            diagnostics["overall_status"] = "critical"
+        elif diagnostics.get("did_usage", {}).get("is_nearly_exhausted"):
+            diagnostics["overall_status"] = "warning"
+        else:
+            diagnostics["overall_status"] = "healthy"
+
+        return jsonify({
+            "success": True,
+            "diagnostics": diagnostics
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error running diagnostics: {e}")
+        import traceback
+        diagnostics["errors"].append({
+            "component": "diagnostics",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        })
+        diagnostics["overall_status"] = "error"
+        return jsonify({
+            "success": False,
+            "diagnostics": diagnostics
+        }), 500
 
 
 # ============================================
