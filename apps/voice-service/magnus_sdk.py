@@ -278,7 +278,7 @@ class MagnusSDK:
         - Signature is HMAC-SHA512(post_data, api_secret)
         - Headers: Key (api_key) and Sign (signature)
         """
-        url = f"{self.public_url}/mbilling/index.php/{module}/{action}"
+        url = f"{self.public_url}/index.php/{module}/{action}"
 
         # Build form data with required parameters (matching PHP SDK)
         form_data = {
