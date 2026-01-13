@@ -98,7 +98,7 @@ services:
   - name: voice-service
     github:
       repo: epicdm/epic-ai
-      branch: main
+      branch: staging
       deploy_on_push: true
     source_dir: apps/voice-service
     dockerfile_path: apps/voice-service/Dockerfile
@@ -130,13 +130,16 @@ services:
       - key: LIVEKIT_API_SECRET
         scope: RUN_TIME
         type: SECRET
-      - key: MAGNUS_BILLING_API_URL
+      - key: MAGNUS_API_KEY
         scope: RUN_TIME
         type: SECRET
-      - key: MAGNUS_BILLING_API_KEY
+      - key: MAGNUS_API_SECRET
         scope: RUN_TIME
         type: SECRET
-      - key: MAGNUS_BILLING_ACCOUNT_ID
+      - key: MAGNUS_PUBLIC_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: MAGNUS_SIP_SERVER
         scope: RUN_TIME
         type: SECRET
       - key: LOG_LEVEL
