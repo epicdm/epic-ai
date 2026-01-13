@@ -36,42 +36,24 @@ export async function createOrganization(input: CreateOrganizationInput) {
     counter++;
   }
 
-  // Create organization with user as owner
+  // TEMPORARY WORKAROUND: Create organization and membership separately
+  // Database schema is out of sync - nested create fails with foreign key error
+  console.log("[createOrganization] Creating organization:", { name, slug, userId });
+
+  // Step 1: Create organization first (without nested membership)
+  const organization = await prisma.organization.create({
+    data: {
+      name,
+      slug,
+      plan: "starter",
+      settings: {},
+    },
+  });
+
+  console.log("[createOrganization] Organization created:", organization.id);
+
+  // Step 2: Create membership separately
   try {
-    const organization = await prisma.organization.create({
-      data: {
-        name,
-        slug,
-        plan: "starter",
-        settings: {},
-        memberships: {
-          create: {
-            userId,
-            role: "owner",
-          },
-        },
-      },
-      include: {
-        memberships: true,
-      },
-    });
-
-    return organization;
-  } catch (error) {
-    console.error("[createOrganization] Failed to create with nested membership:", error);
-
-    // Fallback: Create organization first, then membership separately
-    // This handles the case where the database schema isn't properly synced
-    const organization = await prisma.organization.create({
-      data: {
-        name,
-        slug,
-        plan: "starter",
-        settings: {},
-      },
-    });
-
-    // Create membership separately
     await prisma.membership.create({
       data: {
         userId,
@@ -79,17 +61,55 @@ export async function createOrganization(input: CreateOrganizationInput) {
         role: "owner",
       },
     });
+    console.log("[createOrganization] Membership created for userId:", userId);
+  } catch (membershipError) {
+    console.error("[createOrganization] Failed to create membership with Prisma:", membershipError);
 
-    // Refetch with memberships
-    const orgWithMemberships = await prisma.organization.findUnique({
-      where: { id: organization.id },
-      include: {
-        memberships: true,
-      },
-    });
+    // LAST RESORT: Try raw SQL with different column name patterns
+    // The database might use userId/organizationId instead of user_id/organization_id
+    try {
+      console.log("[createOrganization] Attempting raw SQL fallback...");
 
-    return orgWithMemberships!;
+      // Try pattern 1: camelCase columns (userId, organizationId)
+      await prisma.$executeRaw`
+        INSERT INTO memberships (id, "userId", "organizationId", role, created_at, updated_at)
+        VALUES (gen_random_uuid(), ${userId}, ${organization.id}, 'owner', NOW(), NOW())
+      `;
+      console.log("[createOrganization] Membership created via raw SQL (camelCase)");
+    } catch (rawError1) {
+      console.error("[createOrganization] Raw SQL fallback 1 failed:", rawError1);
+
+      try {
+        // Try pattern 2: snake_case columns (user_id, organization_id)
+        await prisma.$executeRaw`
+          INSERT INTO memberships (id, user_id, organization_id, role, created_at, updated_at)
+          VALUES (gen_random_uuid(), ${userId}, ${organization.id}, 'owner', NOW(), NOW())
+        `;
+        console.log("[createOrganization] Membership created via raw SQL (snake_case)");
+      } catch (rawError2) {
+        console.error("[createOrganization] All membership creation attempts failed:", rawError2);
+        // Clean up the orphaned organization
+        await prisma.organization.delete({ where: { id: organization.id } });
+        throw new Error(`Failed to create membership after multiple attempts. Database schema is likely incompatible.`);
+      }
+    }
   }
+
+  // Step 3: Refetch with memberships
+  const orgWithMemberships = await prisma.organization.findUnique({
+    where: { id: organization.id },
+    include: {
+      memberships: true,
+    },
+  });
+
+  console.log("[createOrganization] Complete! Org with memberships:", {
+    id: orgWithMemberships?.id,
+    name: orgWithMemberships?.name,
+    membershipCount: orgWithMemberships?.memberships.length,
+  });
+
+  return orgWithMemberships!;
 }
 
 /**
