@@ -198,6 +198,71 @@ class MagnusSDK:
         if not self.api_key or not self.api_secret:
             logger.warning("Magnus API credentials not configured")
 
+    def get_or_create_livekit_trunk(self) -> str:
+        """
+        Get the LiveKit SIP trunk ID, creating it if it doesn't exist.
+
+        This is required for routing calls externally to LiveKit.
+        The trunk points to the LiveKit SIP domain.
+
+        Returns:
+            The trunk ID for the livekit_sip trunk
+
+        Raises:
+            MagnusSDKError: If trunk creation fails
+        """
+        # First try to find existing trunk
+        try:
+            response = self._make_request("read", "trunk", {
+                "filter": '[{"field":"trunkcode","value":"livekit_sip"}]'
+            })
+
+            if isinstance(response, dict) and "rows" in response:
+                for row in response["rows"]:
+                    if row.get("trunkcode") == "livekit_sip":
+                        trunk_id = str(row.get("id", ""))
+                        if trunk_id:
+                            logger.info(f"Found existing LiveKit trunk: ID={trunk_id}")
+                            return trunk_id
+        except MagnusSDKError:
+            pass  # Trunk doesn't exist, create it
+
+        # Create the LiveKit SIP trunk
+        logger.info(f"Creating LiveKit SIP trunk for {self.livekit_sip_domain}")
+        trunk_data = {
+            "id": "0",  # 0 = create new
+            "trunkcode": "livekit_sip",
+            "host": self.livekit_sip_domain,
+            "fromuser": "",  # No auth needed for LiveKit inbound
+            "fromdomain": self.livekit_sip_domain,
+            "secret": "",
+            "providertech": "SIP",
+            "status": "1",  # Active
+            "context": "default",
+            "qualify": "yes",
+            "type": "peer",
+            "insecure": "invite,port",
+            "nat": "force_rport,comedia",
+            "dtmfmode": "rfc2833",
+            "allow": "opus,g729,alaw,ulaw",
+            "disallow": "all",
+            "transport": "udp,tcp",
+            "directmedia": "no",
+            "port": "5060",
+        }
+
+        result = self._make_request("save", "trunk", trunk_data)
+
+        if result.get("success"):
+            rows = result.get("rows", [])
+            if rows and len(rows) > 0:
+                trunk_id = str(rows[0].get("id", ""))
+                if trunk_id:
+                    logger.info(f"Created LiveKit trunk: ID={trunk_id}")
+                    return trunk_id
+
+        raise MagnusSDKError(f"Failed to create LiveKit trunk: {result.get('msg', result)}")
+
     def _make_request(
         self,
         action: str,
@@ -1017,13 +1082,18 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract DID ID from creation response: {did_result}")
             logger.info(f"Created DID ID: {did_id}")
 
-            # Step 6: Create DID destination (route to LiveKit SIP)
+            # Step 6: Create DID destination (route to LiveKit SIP via trunk)
             # NOTE: voip_call=0 means route externally, not to local SIP user
-            # The destination field specifies the external SIP URI
+            # The id_trunk field routes through the LiveKit SIP trunk
             logger.info(f"Creating DID destination for DID {did} -> LiveKit {self.livekit_sip_domain}")
+
+            # Get or create the LiveKit trunk
+            trunk_id = self.get_or_create_livekit_trunk()
+            logger.info(f"Using LiveKit trunk ID: {trunk_id}")
+
             destination_result = self.create("diddestination", {
-                "id_user": user_id,
                 "id_did": did_id,
+                "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
@@ -1356,12 +1426,18 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract DID ID from response: {did_result}")
             logger.info(f"Created DID ID: {did_id}")
 
-            # Step 3: Create DID destination (route to LiveKit SIP)
+            # Step 3: Create DID destination (route to LiveKit SIP via trunk)
             # NOTE: voip_call=0 means route externally, not to local SIP user
+            # The id_trunk field routes through the LiveKit SIP trunk
             logger.info(f"Creating DID destination: DID {did} -> LiveKit {self.livekit_sip_domain}")
+
+            # Get or create the LiveKit trunk
+            trunk_id = self.get_or_create_livekit_trunk()
+            logger.info(f"Using LiveKit trunk ID: {trunk_id}")
+
             destination_result = self.create("diddestination", {
-                "id_user": magnus_user_id,
                 "id_did": did_id,
+                "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",

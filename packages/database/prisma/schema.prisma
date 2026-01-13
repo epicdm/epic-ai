@@ -1357,6 +1357,10 @@ model PhoneMapping {
   magnusDidId    String?  @map("magnus_did_id")
   magnusStatus   String?  @map("magnus_status")
 
+  // LiveKit Integration
+  livekitTrunkId       String?  @map("livekit_trunk_id")
+  livekitDispatchRuleId String? @map("livekit_dispatch_rule_id")
+
   // Routing
   routingType    String   @default("agent") @map("routing_type") // agent, ivr, forward
   forwardTo      String?  @map("forward_to")

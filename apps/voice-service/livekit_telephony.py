@@ -182,7 +182,8 @@ class LiveKitTelephonyManager:
         trunk_ids: Optional[List[str]] = None,
         phone_numbers: Optional[List[str]] = None,
         user_id: Optional[str] = None,
-        organization_id: Optional[str] = None
+        organization_id: Optional[str] = None,
+        agent_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create Dispatch Rule to route incoming calls to AI agents
@@ -193,6 +194,7 @@ class LiveKitTelephonyManager:
             phone_numbers: Optional list of phone numbers for this rule
             user_id: Optional user ID for tracking
             organization_id: Optional organization ID
+            agent_id: Optional VoiceAgent ID for per-agent config lookup
 
         Returns:
             dict: {'success': bool, 'rule_id': str, 'error': str}
@@ -226,7 +228,8 @@ class LiveKitTelephonyManager:
                 "source": "inbound_call",
                 "user_id": user_id or "unknown",
                 "org_id": organization_id or "unknown",
-                "phone_number": phone_number or "unknown"
+                "phone_number": phone_number or "unknown",
+                "agent_id": agent_id or "unknown"  # VoiceAgent ID for per-agent config
             })
 
             dispatch_info = SIPDispatchRuleInfo(
@@ -238,12 +241,14 @@ class LiveKitTelephonyManager:
                     "user_id": user_id or "unknown",
                     "org_id": organization_id or "unknown",
                     "agent": agent_name,
-                    "phone_number": phone_number or "unknown"
+                    "phone_number": phone_number or "unknown",
+                    "agent_id": agent_id or "unknown"  # VoiceAgent ID for per-agent config
                 }),
                 attributes={
                     "call_type": "inbound",
                     "platform": "epic-ai",
                     "user_id": user_id or "unknown",
+                    "agent_id": agent_id or "unknown",  # VoiceAgent ID
                 },
                 room_config=room_config,
             )

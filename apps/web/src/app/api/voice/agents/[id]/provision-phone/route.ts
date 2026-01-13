@@ -289,6 +289,99 @@ function isRetryableError(error: ProvisioningError): boolean {
 }
 
 /**
+ * Create LiveKit inbound trunk for a phone number.
+ * This allows LiveKit to receive calls for this number.
+ */
+async function createLiveKitInboundTrunk(
+  phoneNumber: string,
+  organizationId: string
+): Promise<{ success: boolean; trunkId?: string; error?: string }> {
+  try {
+    console.log(`[LiveKit] Creating inbound trunk for ${phoneNumber}`);
+
+    const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+    const response = await fetch(
+      `${VOICE_SERVICE_URL}/api/telephony/trunks/inbound`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone_numbers: [phoneNumber],
+          organization_id: organizationId,
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log(`[LiveKit] Created inbound trunk: ${result.trunk_id}`);
+      return { success: true, trunkId: result.trunk_id };
+    }
+
+    console.warn(`[LiveKit] Failed to create inbound trunk: ${result.error}`);
+    return { success: false, error: result.error || "Failed to create inbound trunk" };
+  } catch (error) {
+    console.error(`[LiveKit] Error creating inbound trunk:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Create LiveKit dispatch rule to route calls to the AI agent.
+ * This routes incoming calls from a phone number to the voice agent.
+ */
+async function createLiveKitDispatchRule(
+  phoneNumber: string,
+  trunkId: string | undefined,
+  agentId: string,
+  organizationId: string,
+  userId: string
+): Promise<{ success: boolean; ruleId?: string; error?: string }> {
+  try {
+    console.log(`[LiveKit] Creating dispatch rule for ${phoneNumber} -> epic-voice-agent`);
+
+    const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+    const response = await fetch(
+      `${VOICE_SERVICE_URL}/api/telephony/dispatch-rules`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_name: "epic-voice-agent", // Generic LiveKit agent that handles all calls
+          phone_numbers: [phoneNumber],
+          trunk_ids: trunkId ? [trunkId] : undefined,
+          organization_id: organizationId,
+          user_id: userId,
+          agent_id: agentId, // Pass agent ID so worker can fetch per-agent config
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log(`[LiveKit] Created dispatch rule: ${result.rule_id}`);
+      return { success: true, ruleId: result.rule_id };
+    }
+
+    console.warn(`[LiveKit] Failed to create dispatch rule: ${result.error}`);
+    return { success: false, error: result.error || "Failed to create dispatch rule" };
+  } catch (error) {
+    console.error(`[LiveKit] Error creating dispatch rule:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
  * Ensure organization has a Magnus user for billing.
  * Creates one if it doesn't exist.
  */
@@ -644,6 +737,57 @@ export async function POST(
       console.log(`[Agent ${agent.id}] Provisioned DID ${result.did_number}`);
     }
 
+    // Step 3: Create LiveKit inbound trunk and dispatch rule
+    // This is necessary for LiveKit to receive and route inbound calls to the AI agent
+    let livekitTrunkId: string | undefined;
+    let livekitRuleId: string | undefined;
+    let livekitWarnings: string[] = [];
+
+    if (result.did_number) {
+      console.log(`[Agent ${agent.id}] Setting up LiveKit telephony for ${result.did_number}`);
+
+      // Create LiveKit inbound trunk (allows LiveKit to receive calls for this number)
+      const trunkResult = await createLiveKitInboundTrunk(result.did_number, org.id);
+      if (trunkResult.success) {
+        livekitTrunkId = trunkResult.trunkId;
+      } else {
+        // Log warning but don't fail - Magnus provisioning succeeded
+        console.warn(`[Agent ${agent.id}] LiveKit inbound trunk creation failed: ${trunkResult.error}`);
+        livekitWarnings.push(`Inbound trunk: ${trunkResult.error}`);
+      }
+
+      // Create LiveKit dispatch rule (routes calls to the AI agent)
+      const ruleResult = await createLiveKitDispatchRule(
+        result.did_number,
+        livekitTrunkId,
+        agent.id,
+        org.id,
+        userId
+      );
+      if (ruleResult.success) {
+        livekitRuleId = ruleResult.ruleId;
+      } else {
+        // Log warning but don't fail - Magnus provisioning succeeded
+        console.warn(`[Agent ${agent.id}] LiveKit dispatch rule creation failed: ${ruleResult.error}`);
+        livekitWarnings.push(`Dispatch rule: ${ruleResult.error}`);
+      }
+
+      // Update PhoneMapping with LiveKit IDs if available
+      if (phoneMapping && (livekitTrunkId || livekitRuleId)) {
+        await prisma.phoneMapping.update({
+          where: { id: phoneMapping.id },
+          data: {
+            livekitTrunkId: livekitTrunkId || undefined,
+            livekitDispatchRuleId: livekitRuleId || undefined,
+          },
+        });
+      }
+
+      if (livekitTrunkId && livekitRuleId) {
+        console.log(`[Agent ${agent.id}] LiveKit telephony setup complete: trunk=${livekitTrunkId}, rule=${livekitRuleId}`);
+      }
+    }
+
     // Build success response with diagnostic info
     const response: Record<string, unknown> = {
       success: true,
@@ -658,6 +802,12 @@ export async function POST(
         name: sipConfig.name,
       },
       attemptsMade: provisioningResult.attemptsMade,
+      livekit: {
+        trunkId: livekitTrunkId || null,
+        dispatchRuleId: livekitRuleId || null,
+        fullyConfigured: !!(livekitTrunkId && livekitRuleId),
+        warnings: livekitWarnings.length > 0 ? livekitWarnings : undefined,
+      },
     };
 
     // Include diagnostic info if there were race conditions

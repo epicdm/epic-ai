@@ -295,7 +295,8 @@ def create_dispatch_rule():
             trunk_ids=data.get('trunk_ids'),
             phone_numbers=data.get('phone_numbers'),
             user_id=data.get('user_id'),
-            organization_id=data.get('organization_id')
+            organization_id=data.get('organization_id'),
+            agent_id=data.get('agent_id')  # Pass agent_id for per-agent config
         ))
         return jsonify(result), 201 if result['success'] else 500
     except Exception as e:

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Test Voice Agent for Epic AI
-Handles inbound calls to +17678183521
+Epic AI Voice Agent Worker
+Handles inbound/outbound calls with per-agent configuration
 
-This agent connects to LiveKit and handles SIP calls routed via the dispatch rule.
-It uses OpenAI for STT, LLM, and TTS.
+This agent connects to LiveKit and handles SIP calls routed via dispatch rules.
+Each call fetches the VoiceAgent configuration from the database to use
+custom instructions, voice settings, and LLM configuration.
 
 Run with:
     cd /opt/epic-ai/apps/voice-service
@@ -12,12 +13,10 @@ Run with:
 """
 
 import os
-import asyncio
+import json
 import logging
-
-# Environment variables must be set before running:
-# LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, OPENAI_API_KEY
-# Example: export LIVEKIT_URL=wss://your-livekit.cloud
+import psycopg2
+from typing import Optional, Dict, Any
 
 from livekit.agents import (
     AutoSubscribe,
@@ -39,7 +38,9 @@ logger = logging.getLogger("epic-voice-agent")
 
 # Agent configuration
 AGENT_NAME = "epic-voice-agent"
-SYSTEM_PROMPT = """You are a helpful AI voice assistant for Epic AI.
+
+# Default system prompt (used when agent config not found)
+DEFAULT_SYSTEM_PROMPT = """You are a helpful AI voice assistant for Epic AI.
 
 Your role:
 - Answer incoming calls professionally
@@ -56,6 +57,187 @@ Start by greeting the caller warmly and asking how you can help them today.
 """
 
 
+def get_db_connection():
+    """Get a database connection using DATABASE_URL"""
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        logger.warning("DATABASE_URL not set - using default config")
+        return None
+
+    try:
+        conn = psycopg2.connect(database_url)
+        return conn
+    except Exception as e:
+        logger.error(f"Failed to connect to database: {e}")
+        return None
+
+
+def fetch_agent_config(agent_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch VoiceAgent configuration from the database
+
+    Args:
+        agent_id: The VoiceAgent ID (cuid)
+
+    Returns:
+        Dict with agent config or None if not found
+    """
+    if not agent_id or agent_id == "unknown":
+        logger.warning("No agent_id provided, using default config")
+        return None
+
+    conn = get_db_connection()
+    if not conn:
+        return None
+
+    try:
+        cursor = conn.cursor()
+
+        # Fetch VoiceAgent configuration
+        # Note: Table name is voice_agents (Prisma maps VoiceAgent -> voice_agents)
+        cursor.execute("""
+            SELECT
+                id,
+                name,
+                system_prompt,
+                custom_instructions,
+                llm_provider,
+                llm_model,
+                temperature,
+                language,
+                stt_provider,
+                stt_model,
+                stt_language,
+                tts_provider,
+                tts_model,
+                tts_voice_id
+            FROM voice_agents
+            WHERE id = %s
+        """, (agent_id,))
+
+        row = cursor.fetchone()
+
+        if not row:
+            logger.warning(f"VoiceAgent {agent_id} not found in database")
+            return None
+
+        # Map columns to dict
+        config = {
+            "id": row[0],
+            "name": row[1],
+            "system_prompt": row[2],
+            "custom_instructions": row[3],
+            "llm_provider": row[4],
+            "llm_model": row[5],
+            "temperature": row[6],
+            "language": row[7],
+            "stt_provider": row[8],
+            "stt_model": row[9],
+            "stt_language": row[10],
+            "tts_provider": row[11],
+            "tts_model": row[12],
+            "tts_voice_id": row[13],
+        }
+
+        logger.info(f"Loaded config for agent '{config['name']}' ({agent_id})")
+        return config
+
+    except Exception as e:
+        logger.error(f"Failed to fetch agent config: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def parse_job_metadata(ctx: JobContext) -> Dict[str, str]:
+    """
+    Parse metadata from the job context to extract agent_id and other info
+
+    Metadata can come from:
+    - Job metadata (dispatch.metadata from dispatch rule)
+    - Room attributes (set by dispatch rule)
+    """
+    metadata = {}
+
+    # Try job metadata first (JSON string from dispatch rule)
+    try:
+        job = getattr(ctx, 'job', None)
+        if job and hasattr(job, 'metadata') and job.metadata:
+            parsed = json.loads(job.metadata)
+            if isinstance(parsed, dict):
+                metadata.update(parsed)
+                logger.info(f"Parsed job metadata: {metadata}")
+    except (json.JSONDecodeError, Exception) as e:
+        logger.debug(f"Could not parse job metadata: {e}")
+
+    # Also check room metadata
+    try:
+        if ctx.room and ctx.room.metadata:
+            parsed = json.loads(ctx.room.metadata)
+            if isinstance(parsed, dict):
+                metadata.update(parsed)
+    except (json.JSONDecodeError, Exception) as e:
+        logger.debug(f"Could not parse room metadata: {e}")
+
+    return metadata
+
+
+def build_system_prompt(config: Dict[str, Any]) -> str:
+    """
+    Build the system prompt from agent configuration
+
+    Combines system_prompt and custom_instructions
+    """
+    parts = []
+
+    if config.get("system_prompt"):
+        parts.append(config["system_prompt"])
+
+    if config.get("custom_instructions"):
+        parts.append(f"\nAdditional Instructions:\n{config['custom_instructions']}")
+
+    if parts:
+        return "\n".join(parts)
+
+    return DEFAULT_SYSTEM_PROMPT
+
+
+def create_tts(config: Optional[Dict[str, Any]]):
+    """Create TTS instance based on agent config"""
+    if not config:
+        return openai.TTS(voice="alloy")
+
+    provider = config.get("tts_provider", "openai").lower()
+    voice_id = config.get("tts_voice_id") or "alloy"
+
+    if provider == "openai":
+        return openai.TTS(voice=voice_id)
+    # Add other TTS providers here (elevenlabs, etc.)
+
+    # Default to OpenAI
+    return openai.TTS(voice=voice_id)
+
+
+def create_stt(config: Optional[Dict[str, Any]]):
+    """Create STT instance based on agent config"""
+    # For now, always use OpenAI STT (deepgram requires separate API key)
+    return openai.STT()
+
+
+def create_llm(config: Optional[Dict[str, Any]]):
+    """Create LLM instance based on agent config"""
+    if not config:
+        return openai.LLM(model="gpt-4o-mini")
+
+    model = config.get("llm_model", "gpt-4o-mini")
+    temperature = config.get("temperature", 0.7)
+
+    return openai.LLM(
+        model=model,
+        temperature=temperature
+    )
+
+
 def prewarm(proc: JobProcess):
     """Prewarm resources for faster agent startup"""
     logger.info("Prewarming VAD model...")
@@ -65,6 +247,17 @@ def prewarm(proc: JobProcess):
 async def entrypoint(ctx: JobContext):
     """Main entrypoint for handling voice calls"""
     logger.info(f"Agent connecting to room: {ctx.room.name}")
+
+    # Parse metadata to get agent_id
+    metadata = parse_job_metadata(ctx)
+    agent_id = metadata.get("agent_id", "unknown")
+    org_id = metadata.get("org_id", "unknown")
+    phone_number = metadata.get("phone_number", "unknown")
+
+    logger.info(f"Call details - Agent ID: {agent_id}, Org: {org_id}, Phone: {phone_number}")
+
+    # Fetch agent configuration from database
+    agent_config = fetch_agent_config(agent_id) if agent_id != "unknown" else None
 
     # Get prewarmed VAD
     vad = ctx.proc.userdata.get("vad")
@@ -77,7 +270,6 @@ async def entrypoint(ctx: JobContext):
 
     # Log room info
     logger.info(f"Connected to room: {ctx.room.name}")
-    logger.info(f"Room metadata: {ctx.room.metadata}")
 
     # Wait for participant
     participant = await ctx.wait_for_participant()
@@ -88,13 +280,22 @@ async def entrypoint(ctx: JobContext):
     if sip_attrs:
         logger.info(f"SIP attributes: {sip_attrs}")
 
-    # Create the voice agent using the new API
+    # Build system prompt from agent config or use default
+    system_prompt = build_system_prompt(agent_config) if agent_config else DEFAULT_SYSTEM_PROMPT
+
+    # Log which config we're using
+    if agent_config:
+        logger.info(f"Using custom config for agent '{agent_config['name']}'")
+    else:
+        logger.info("Using default agent configuration")
+
+    # Create the voice agent with per-agent configuration
     agent = Agent(
-        instructions=SYSTEM_PROMPT,
+        instructions=system_prompt,
         vad=vad,
-        stt=openai.STT(),
-        llm=openai.LLM(model="gpt-4o-mini"),
-        tts=openai.TTS(voice="alloy"),
+        stt=create_stt(agent_config),
+        llm=create_llm(agent_config),
+        tts=create_tts(agent_config),
     )
 
     # Start the agent session
@@ -112,11 +313,16 @@ async def entrypoint(ctx: JobContext):
 def main():
     """Start the agent worker"""
     logger.info(f"Starting {AGENT_NAME} worker...")
-    logger.info(f"LiveKit URL: {os.environ['LIVEKIT_URL']}")
+    logger.info(f"LiveKit URL: {os.environ.get('LIVEKIT_URL', 'NOT SET')}")
 
-    # Check for OpenAI key
+    # Check for required environment variables
     if not os.environ.get('OPENAI_API_KEY'):
         logger.warning("OPENAI_API_KEY not set! Agent will fail to process speech.")
+
+    if not os.environ.get('DATABASE_URL'):
+        logger.warning("DATABASE_URL not set! Agent will use default config for all calls.")
+    else:
+        logger.info("Database connection configured - per-agent config enabled")
 
     options = WorkerOptions(
         entrypoint_fnc=entrypoint,
