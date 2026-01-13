@@ -37,25 +37,59 @@ export async function createOrganization(input: CreateOrganizationInput) {
   }
 
   // Create organization with user as owner
-  const organization = await prisma.organization.create({
-    data: {
-      name,
-      slug,
-      plan: "starter",
-      settings: {},
-      memberships: {
-        create: {
-          userId,
-          role: "owner",
+  try {
+    const organization = await prisma.organization.create({
+      data: {
+        name,
+        slug,
+        plan: "starter",
+        settings: {},
+        memberships: {
+          create: {
+            userId,
+            role: "owner",
+          },
         },
       },
-    },
-    include: {
-      memberships: true,
-    },
-  });
+      include: {
+        memberships: true,
+      },
+    });
 
-  return organization;
+    return organization;
+  } catch (error) {
+    console.error("[createOrganization] Failed to create with nested membership:", error);
+
+    // Fallback: Create organization first, then membership separately
+    // This handles the case where the database schema isn't properly synced
+    const organization = await prisma.organization.create({
+      data: {
+        name,
+        slug,
+        plan: "starter",
+        settings: {},
+      },
+    });
+
+    // Create membership separately
+    await prisma.membership.create({
+      data: {
+        userId,
+        organizationId: organization.id,
+        role: "owner",
+      },
+    });
+
+    // Refetch with memberships
+    const orgWithMemberships = await prisma.organization.findUnique({
+      where: { id: organization.id },
+      include: {
+        memberships: true,
+      },
+    });
+
+    return orgWithMemberships!;
+  }
 }
 
 /**
