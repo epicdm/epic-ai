@@ -1122,15 +1122,12 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract SIP ID from creation response: {sip_result}")
             logger.info(f"Created SIP account ID: {sip_id}")
 
-            # Step 4: Create DID with user as owner
-            logger.info(f"Creating DID: {did} for user {user_id}")
+            # Step 4: Create DID (minimal fields per working PHP implementation)
+            logger.info(f"Creating DID: {did}")
             did_result = self.create("did", {
                 "did": did,
-                "id_user": user_id,
-                "reserved": "1",  # Reserve for this user
                 "country": "Dominica",
-                "activated": "1",
-                "sms_res": "",  # Required field - empty string for no SMS
+                "activated": 1,
             })
 
             if not did_result.get("success", False):
@@ -1480,15 +1477,12 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract SIP ID from response: {sip_result}")
             logger.info(f"Created SIP account ID: {sip_id}")
 
-            # Step 2: Create DID with user as owner
-            logger.info(f"Creating DID: {did} for user {magnus_user_id}")
+            # Step 2: Create DID (minimal fields per working PHP implementation)
+            logger.info(f"Creating DID: {did}")
             did_result = self.create("did", {
                 "did": did,
-                "id_user": magnus_user_id,
-                "reserved": "1",
                 "country": "Dominica",
-                "activated": "1",
-                "sms_res": "",  # Required field - empty string for no SMS
+                "activated": 1,
             })
 
             if not did_result.get("success", False):
