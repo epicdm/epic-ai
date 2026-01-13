@@ -1129,7 +1129,8 @@ class MagnusSDK:
                 "id_user": user_id,
                 "reserved": "1",  # Reserve for this user
                 "country": "Dominica",
-                "activated": "1"
+                "activated": "1",
+                "sms_res": "",  # Required field - empty string for no SMS
             })
 
             if not did_result.get("success", False):
@@ -1486,7 +1487,8 @@ class MagnusSDK:
                 "id_user": magnus_user_id,
                 "reserved": "1",
                 "country": "Dominica",
-                "activated": "1"
+                "activated": "1",
+                "sms_res": "",  # Required field - empty string for no SMS
             })
 
             if not did_result.get("success", False):
