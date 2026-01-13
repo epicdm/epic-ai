@@ -253,6 +253,9 @@ class MagnusSDK:
         Get the ID of a record by field value.
 
         Matches PHP: $magnusBilling->getId('module', 'field', 'value')
+
+        NOTE: Magnus API filter doesn't work correctly - it returns all records.
+        We must manually search through the returned rows.
         """
         data = {
             "filter": f'[{{"field":"{field}","value":"{value}"}}]'
@@ -264,9 +267,16 @@ class MagnusSDK:
             if isinstance(response, dict) and "rows" in response:
                 rows = response["rows"]
                 if rows and len(rows) > 0:
-                    record_id = str(rows[0].get("id", ""))
-                    # Return None if ID is empty string (record exists but has no ID)
-                    return record_id if record_id else None
+                    # IMPORTANT: Magnus filter doesn't work - it returns ALL records!
+                    # We must manually search for the matching record
+                    for row in rows:
+                        if str(row.get(field, "")) == str(value):
+                            record_id = str(row.get("id", ""))
+                            logger.debug(f"Found {module} with {field}={value}: ID={record_id}")
+                            # Return None if ID is empty string (record exists but has no ID)
+                            return record_id if record_id else None
+
+                    logger.debug(f"No {module} found with {field}={value} (searched {len(rows)} rows)")
 
             return None
         except MagnusSDKError as e:
