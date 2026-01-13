@@ -1118,6 +1118,86 @@ def test_user_create():
         }), 500
 
 
+@app.route('/api/magnus/test-sip-create', methods=['POST'])
+def test_sip_create():
+    """
+    Test endpoint that creates a SIP account under an existing user.
+    This tests the SIP creation step to identify id_provider issues.
+
+    Request body:
+    {
+        "user_id": "1271"  // Magnus user ID to create SIP under
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk, MagnusSDKError
+        import random
+        import time
+
+        data = request.get_json() or {}
+        sdk = get_magnus_sdk()
+
+        # Get required user_id
+        user_id = data.get('user_id')
+        if not user_id:
+            return jsonify({"error": "user_id required - use ID from test-user-create"}), 400
+
+        timestamp = int(time.time())
+        sip_username = f'sip_test_{timestamp}'
+
+        # Get provider ID
+        provider_id = sdk.get_default_provider_id()
+        logger.info(f"TEST SIP: provider_id={provider_id}, type={type(provider_id)}, repr={repr(provider_id)}")
+
+        # Create SIP account data (matching _provision_with_did)
+        sip_data = {
+            "id": "0",           # 0 = create new
+            "id_user": user_id,  # Foreign key to Magnus user table
+            "id_provider": provider_id,  # Use valid provider ID from Magnus
+            "user": sip_username,
+            "name": sip_username,
+            "accountcode": sip_username,
+            "secret": "TestPass123!",
+            "callerid": sip_username,
+            "host": "dynamic",
+            "transport": "udp",  # Required field - max 3 chars
+            "allow": "ulaw,alaw,g729,gsm",
+            "dtmfmode": "rfc2833",
+            "nat": "force_rport,comedia",
+            "qualify": "yes",
+            "context": "billing",
+            "insecure": "invite,port",
+            "status": "1"
+        }
+
+        logger.info(f"TEST SIP: Creating SIP with data: {sip_data}")
+
+        try:
+            result = sdk.create("sip", sip_data)
+            return jsonify({
+                "success": True,
+                "provider_id_used": provider_id,
+                "sip_data_sent": sip_data,
+                "magnus_response": result
+            }), 200
+        except MagnusSDKError as e:
+            return jsonify({
+                "success": False,
+                "provider_id_used": provider_id,
+                "sip_data_sent": sip_data,
+                "error": e.message,
+                "error_response": e.response
+            }), 400
+
+    except Exception as e:
+        logger.error(f"Error in test-sip-create: {e}")
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
 @app.route('/api/magnus/diagnostics', methods=['GET'])
 def magnus_diagnostics():
     """
