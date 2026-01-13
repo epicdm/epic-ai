@@ -383,6 +383,10 @@ class MagnusSDK:
             "mobile": phone,
             "id_offer": self.DEFAULT_ID_OFFER,
             "callingcard_pin": callingcard_pin,
+            # SIP-related fields for the auto-created SIP user
+            # Magnus auto-creates a SIP user when creating a user, and these fields are required
+            "id_provider": "0",  # Required: 0 means no provider
+            "transport": "udp",  # Required: max 3 chars
         }
 
         return self._make_request("save", "user", data)
