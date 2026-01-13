@@ -399,7 +399,8 @@ class MagnusSDK:
         firstname: str = "",
         lastname: str = "",
         phone: str = "",
-        description: str = "EpicAI_VoiceAgent"
+        description: str = "EpicAI_VoiceAgent",
+        id_provider: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create a new Magnus user. This automatically creates a SIP user.
@@ -407,12 +408,16 @@ class MagnusSDK:
         Matches PHP: $magnusBilling->createUser([...])
 
         Note: Magnus auto-creates a SIP account when creating a user.
-        However, we do NOT pass SIP-specific fields (id_provider, transport) here
-        because they are not User model fields and will cause validation errors.
-        The SIP account is created explicitly in _provision_with_did() after user creation.
+        The id_provider field is REQUIRED for the auto-created SIP account.
+        If not provided, we fetch the default provider ID from Magnus.
         """
         # Generate a unique callingcard PIN (8 digits)
         callingcard_pin = str(random.randint(10000000, 99999999))
+
+        # Get a valid provider ID for the auto-created SIP account
+        if id_provider is None:
+            id_provider = self.get_default_provider_id()
+            logger.info(f"Using default provider ID: {id_provider}")
 
         data = {
             "id": "0",  # id=0 signals creation in Magnus API
@@ -431,9 +436,9 @@ class MagnusSDK:
             "mobile": phone,
             "id_offer": self.DEFAULT_ID_OFFER,
             "callingcard_pin": callingcard_pin,
-            # NOTE: Do NOT include SIP-specific fields (id_provider, transport) here.
-            # They are not User model fields and will cause validation errors.
-            # SIP is created explicitly in _provision_with_did() with correct provider.
+            # SIP-specific fields for the auto-created SIP account
+            "id_provider": id_provider,
+            "transport": "udp",
         }
 
         return self._make_request("save", "user", data)
