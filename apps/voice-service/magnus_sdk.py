@@ -369,9 +369,46 @@ class MagnusSDK:
         Returns:
             ProvisioningResult with all the created resources
         """
-        # Generate unique DID if not provided
-        did = did_number or self.generate_unique_did()
+        # If specific DID requested, use it without retry logic
+        if did_number:
+            return self._provision_with_did(agent_id, agent_name, email, phone, did_number)
 
+        # Otherwise, retry with new DIDs if we hit duplicates (up to 10 attempts)
+        max_retries = 10
+        for retry_attempt in range(max_retries):
+            try:
+                # Generate unique DID
+                did = self.generate_unique_did()
+                logger.info(f"Attempting provisioning with DID {did} (attempt {retry_attempt + 1}/{max_retries})")
+
+                return self._provision_with_did(agent_id, agent_name, email, phone, did)
+
+            except MagnusSDKError as e:
+                error_msg = str(e)
+                # Check if this is a duplicate DID error
+                if "Duplicate entry" in error_msg and "for key 'did'" in error_msg:
+                    logger.warning(f"DID {did} caused duplicate error (attempt {retry_attempt + 1}/{max_retries}), retrying with new DID...")
+                    if retry_attempt == max_retries - 1:
+                        raise MagnusSDKError(f"Could not provision agent after {max_retries} attempts - all DIDs caused duplicates")
+                    continue  # Try again with new DID
+                else:
+                    # Different error, don't retry
+                    raise
+
+        raise MagnusSDKError(f"Could not provision agent after {max_retries} attempts")
+
+    def _provision_with_did(
+        self,
+        agent_id: str,
+        agent_name: str,
+        email: str,
+        phone: str,
+        did: str
+    ) -> ProvisioningResult:
+        """
+        Internal method to provision with a specific DID.
+        Separated from provision_voice_agent to allow retry logic.
+        """
         # Generate credentials
         password = self.generate_password()
 
@@ -382,7 +419,7 @@ class MagnusSDK:
         did_suffix = did[-4:]  # Last 4 digits for uniqueness
         username = f"{clean_name}_{did_suffix}"
 
-        logger.info(f"Provisioning voice agent: {agent_id} as {username}")
+        logger.info(f"Provisioning voice agent: {agent_id} as {username} with DID {did}")
 
         try:
             # Step 1: Create Magnus user (this auto-creates a SIP user)
