@@ -272,8 +272,11 @@ class MagnusSDK:
 
         # Create the LiveKit SIP trunk
         logger.info(f"Creating LiveKit SIP trunk for {self.livekit_sip_domain}")
+        provider_id = self.get_default_provider_id()
+        logger.info(f"Using provider_id {provider_id} for trunk creation")
         trunk_data = {
             "id": "0",  # 0 = create new
+            "id_provider": provider_id,  # Required field - trunk must belong to a provider
             "trunkcode": "livekit_sip",
             "user": "admin",  # Magnus requires user field for trunk creation
             "host": self.livekit_sip_domain,
