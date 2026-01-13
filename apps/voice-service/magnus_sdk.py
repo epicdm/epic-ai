@@ -1161,7 +1161,8 @@ class MagnusSDK:
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
-                "priority": "1"
+                "priority": "1",
+                "link_sms": "0",  # Required field - 0 = no SMS link
             })
 
             if not destination_result.get("success", False):
@@ -1513,7 +1514,8 @@ class MagnusSDK:
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
-                "priority": "1"
+                "priority": "1",
+                "link_sms": "0",  # Required field - 0 = no SMS link
             })
 
             if not destination_result.get("success", False):
