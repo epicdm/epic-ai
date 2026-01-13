@@ -264,10 +264,14 @@ class MagnusSDK:
             if isinstance(response, dict) and "rows" in response:
                 rows = response["rows"]
                 if rows and len(rows) > 0:
-                    return str(rows[0].get("id", ""))
+                    record_id = str(rows[0].get("id", ""))
+                    # Return None if ID is empty string (record exists but has no ID)
+                    return record_id if record_id else None
 
             return None
-        except MagnusSDKError:
+        except MagnusSDKError as e:
+            # Log the error but still return None - this means "not found"
+            logger.warning(f"Error checking {module} for {field}={value}: {e}")
             return None
 
     def get_record(self, module: str, field: str, value: str) -> Optional[Dict]:
@@ -311,11 +315,13 @@ class MagnusSDK:
 
             # Check if this DID already exists
             existing_did = self.get_id("did", "did", did)
+            logger.debug(f"Checking DID {did}: existing_did={existing_did}, type={type(existing_did)}")
+
             if not existing_did:
                 logger.info(f"Generated unique DID: {did} (attempt {attempt + 1})")
                 return did
 
-            logger.debug(f"DID {did} already exists, retrying...")
+            logger.debug(f"DID {did} already exists (ID: {existing_did}), retrying...")
 
         raise MagnusSDKError(f"Could not generate unique DID after {max_attempts} attempts")
 

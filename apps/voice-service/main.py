@@ -721,6 +721,28 @@ def check_did_usage():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/magnus/test-did-check/<did>', methods=['GET'])
+def test_did_check(did):
+    """Test if a specific DID exists in Magnus."""
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        sdk = get_magnus_sdk()
+        existing_id = sdk.get_id("did", "did", did)
+
+        return jsonify({
+            "success": True,
+            "did": did,
+            "exists": existing_id is not None,
+            "existing_id": existing_id,
+            "message": f"DID {did} {'exists' if existing_id else 'does not exist'} in Magnus"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error checking DID: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/magnus/generate-did', methods=['GET'])
 def generate_did():
     """Generate a random DID number in the configured range."""
