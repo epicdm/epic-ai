@@ -232,6 +232,7 @@ class MagnusSDK:
         trunk_data = {
             "id": "0",  # 0 = create new
             "trunkcode": "livekit_sip",
+            "user": "admin",  # Magnus requires user field for trunk creation
             "host": self.livekit_sip_domain,
             "fromuser": "",  # No auth needed for LiveKit inbound
             "fromdomain": self.livekit_sip_domain,
