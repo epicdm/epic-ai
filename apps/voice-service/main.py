@@ -1032,6 +1032,92 @@ def debug_create_user():
         }), 500
 
 
+@app.route('/api/magnus/test-user-create', methods=['POST'])
+def test_user_create():
+    """
+    Test endpoint that actually calls Magnus API to create a user.
+    Tests both WITH and WITHOUT id_provider to identify the issue.
+
+    WARNING: This creates actual records in Magnus. Use unique test usernames.
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk, MagnusSDKError
+        import random
+        import time
+
+        data = request.get_json() or {}
+        sdk = get_magnus_sdk()
+
+        # Generate unique test username
+        timestamp = int(time.time())
+        username = data.get('username', f'test_{timestamp}')
+        email = data.get('email', f'test_{timestamp}@test.com')
+        include_id_provider = data.get('include_id_provider', False)
+
+        provider_id = sdk.get_default_provider_id()
+        callingcard_pin = str(random.randint(10000000, 99999999))
+
+        # Base user data (without SIP fields)
+        user_data = {
+            "id": "0",
+            "username": username,
+            "password": "TestPass123!",
+            "active": "1",
+            "firstname": "Test",
+            "lastname": "User",
+            "email": email,
+            "typepaid": "0",
+            "prefix_local": sdk.DEFAULT_PREFIX_LOCAL,
+            "id_group": sdk.DEFAULT_ID_GROUP,
+            "id_plan": sdk.DEFAULT_ID_PLAN,
+            "description": "API Test User",
+            "phone": "",
+            "mobile": "",
+            "id_offer": sdk.DEFAULT_ID_OFFER,
+            "callingcard_pin": callingcard_pin,
+        }
+
+        # Optionally add id_provider for comparison testing
+        if include_id_provider:
+            user_data["id_provider"] = provider_id
+            user_data["transport"] = "udp"
+
+        logger.info(f"TEST: Creating user with data: {user_data}")
+        logger.info(f"TEST: include_id_provider={include_id_provider}, provider_id={provider_id}")
+
+        # Actually call Magnus API
+        try:
+            result = sdk._make_request("save", "user", user_data)
+            return jsonify({
+                "success": True,
+                "test_config": {
+                    "include_id_provider": include_id_provider,
+                    "provider_id": provider_id,
+                },
+                "user_data_sent": user_data,
+                "magnus_response": result
+            }), 200
+        except MagnusSDKError as e:
+            return jsonify({
+                "success": False,
+                "test_config": {
+                    "include_id_provider": include_id_provider,
+                    "provider_id": provider_id,
+                },
+                "user_data_sent": user_data,
+                "error": e.message,
+                "error_response": e.response
+            }), 400
+
+    except Exception as e:
+        logger.error(f"Error in test-user-create: {e}")
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
 @app.route('/api/magnus/diagnostics', methods=['GET'])
 def magnus_diagnostics():
     """
