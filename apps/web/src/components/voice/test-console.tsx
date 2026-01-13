@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Card, CardBody, Button, Select, SelectItem, Spinner, Chip, Tooltip } from "@heroui/react";
+import { Card, CardBody, Button, Select, SelectItem, Spinner, Chip, Tooltip, Tabs, Tab } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Mic, MicOff, Phone, PhoneOff, Volume2, Send, AlertCircle, DollarSign, Clock, Info } from "lucide-react";
+import { Mic, MicOff, Phone, PhoneOff, Volume2, Send, AlertCircle, DollarSign, Clock, Info, PhoneCall, Monitor } from "lucide-react";
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
+import { OutboundTestPanel } from "./outbound-test-panel";
 
 interface VoiceAgent {
   id: string;
@@ -388,10 +389,31 @@ export function TestConsole() {
     <div className="space-y-6">
       <PageHeader
         title="Test Console"
-        description="Test your voice agents directly in your browser using your microphone."
+        description="Test your voice agents in the browser or make outbound test calls."
       />
 
-      {/* Cost Information Banner */}
+      {/* Mode Tabs */}
+      <Tabs
+        aria-label="Test modes"
+        color="primary"
+        variant="bordered"
+        classNames={{
+          tabList: "gap-4",
+          cursor: "bg-primary",
+          tab: "px-6 py-3",
+        }}
+      >
+        <Tab
+          key="browser"
+          title={
+            <div className="flex items-center gap-2">
+              <Monitor className="w-4 h-4" />
+              <span>Browser Test</span>
+            </div>
+          }
+        >
+          <div className="space-y-6 pt-4">
+            {/* Cost Information Banner */}
       <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
         <CardBody className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -660,6 +682,23 @@ export function TestConsole() {
           </div>
         </CardBody>
       </Card>
+          </div>
+        </Tab>
+
+        <Tab
+          key="outbound"
+          title={
+            <div className="flex items-center gap-2">
+              <PhoneCall className="w-4 h-4" />
+              <span>Outbound Call</span>
+            </div>
+          }
+        >
+          <div className="pt-4">
+            <OutboundTestPanel />
+          </div>
+        </Tab>
+      </Tabs>
     </div>
   );
 }
