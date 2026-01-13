@@ -1030,7 +1030,8 @@ class MagnusSDK:
             # Step 3: Create SIP account explicitly (don't rely on auto-creation)
             logger.info(f"Creating SIP account for user {user_id}: {username}")
             sip_result = self.create("sip", {
-                "user": user_id,  # Magnus expects "user" not "id_user" for SIP module
+                "id_user": user_id,  # Magnus requires BOTH id_user and user fields
+                "user": user_id,     # Some modules use "user", others use "id_user"
                 "name": username,
                 "accountcode": username,
                 "secret": password,
@@ -1382,7 +1383,8 @@ class MagnusSDK:
             # Step 1: Create SIP account under the existing user
             logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username}")
             sip_result = self.create("sip", {
-                "user": magnus_user_id,  # Magnus expects "user" not "id_user" for SIP module
+                "id_user": magnus_user_id,  # Magnus requires BOTH id_user and user fields
+                "user": magnus_user_id,     # Some modules use "user", others use "id_user"
                 "name": sip_username,
                 "accountcode": sip_username,
                 "secret": password,
