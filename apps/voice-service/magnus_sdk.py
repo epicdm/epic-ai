@@ -198,6 +198,49 @@ class MagnusSDK:
         if not self.api_key or not self.api_secret:
             logger.warning("Magnus API credentials not configured")
 
+    def list_providers(self) -> List[Dict[str, Any]]:
+        """
+        List all providers in Magnus Billing.
+        This is useful for debugging id_provider validation issues.
+        """
+        try:
+            response = self._make_request("read", "provider", {})
+            if isinstance(response, dict) and "rows" in response:
+                return response["rows"]
+            return []
+        except MagnusSDKError as e:
+            logger.warning(f"Failed to list providers: {e}")
+            return []
+
+    def list_trunks(self) -> List[Dict[str, Any]]:
+        """
+        List all trunks in Magnus Billing.
+        """
+        try:
+            response = self._make_request("read", "trunk", {})
+            if isinstance(response, dict) and "rows" in response:
+                return response["rows"]
+            return []
+        except MagnusSDKError as e:
+            logger.warning(f"Failed to list trunks: {e}")
+            return []
+
+    def get_default_provider_id(self) -> str:
+        """
+        Get a valid provider ID to use for SIP creation.
+        Returns the first provider ID found, or "0" if no providers exist.
+
+        Magnus SIP requires id_provider field, and "0" may not be valid.
+        """
+        providers = self.list_providers()
+        if providers:
+            first_provider = providers[0]
+            provider_id = str(first_provider.get("id", "0"))
+            logger.info(f"Found provider ID: {provider_id} (name: {first_provider.get('provider_name', 'unknown')})")
+            return provider_id
+        logger.warning("No providers found in Magnus, using '0'")
+        return "0"
+
     def get_or_create_livekit_trunk(self) -> str:
         """
         Get the LiveKit SIP trunk ID, creating it if it doesn't exist.
@@ -362,9 +405,18 @@ class MagnusSDK:
         Create a new Magnus user. This automatically creates a SIP user.
 
         Matches PHP: $magnusBilling->createUser([...])
+
+        Note: Magnus auto-creates a SIP account when creating a user.
+        The SIP account requires id_provider field. We get a valid provider ID
+        dynamically since "0" may not be valid in all Magnus configurations.
         """
         # Generate a unique callingcard PIN (8 digits)
         callingcard_pin = str(random.randint(10000000, 99999999))
+
+        # Get a valid provider ID for the auto-created SIP
+        # Magnus rejects "0" as id_provider in some configurations
+        provider_id = self.get_default_provider_id()
+        logger.info(f"Using provider ID {provider_id} for SIP auto-creation")
 
         data = {
             "id": "0",  # id=0 signals creation in Magnus API
@@ -385,7 +437,7 @@ class MagnusSDK:
             "callingcard_pin": callingcard_pin,
             # SIP-related fields for the auto-created SIP user
             # Magnus auto-creates a SIP user when creating a user, and these fields are required
-            "id_provider": "0",  # Required: 0 means no provider
+            "id_provider": provider_id,  # Use valid provider ID from Magnus
             "transport": "udp",  # Required: max 3 chars
         }
 
@@ -1034,11 +1086,13 @@ class MagnusSDK:
             logger.info(f"Created user ID: {user_id}")
 
             # Step 3: Create SIP account explicitly (don't rely on auto-creation)
-            logger.info(f"Creating SIP account for user {user_id}: {username}")
+            # Get valid provider ID - "0" is rejected by some Magnus configurations
+            provider_id = self.get_default_provider_id()
+            logger.info(f"Creating SIP account for user {user_id}: {username} (provider_id: {provider_id})")
             sip_result = self.create("sip", {
                 "id": "0",           # 0 = create new
                 "id_user": user_id,  # Foreign key to Magnus user table
-                "id_provider": "0",  # Required field - 0 means no provider
+                "id_provider": provider_id,  # Use valid provider ID from Magnus
                 "user": username,    # SIP username (Asterisk expects this as the username string)
                 "name": username,
                 "accountcode": username,
@@ -1392,11 +1446,13 @@ class MagnusSDK:
 
         try:
             # Step 1: Create SIP account under the existing user
-            logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username}")
+            # Get valid provider ID - "0" is rejected by some Magnus configurations
+            provider_id = self.get_default_provider_id()
+            logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username} (provider_id: {provider_id})")
             sip_result = self.create("sip", {
                 "id": "0",                   # 0 = create new
                 "id_user": magnus_user_id,   # Foreign key to Magnus user table
-                "id_provider": "0",          # Required field - 0 means no provider
+                "id_provider": provider_id,  # Use valid provider ID from Magnus
                 "user": sip_username,        # SIP username (Asterisk expects this as the username string)
                 "name": sip_username,
                 "accountcode": sip_username,

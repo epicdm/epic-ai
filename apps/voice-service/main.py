@@ -1077,6 +1077,42 @@ def magnus_diagnostics():
                     "error": str(e)
                 })
 
+        # Provider information (important for SIP creation)
+        try:
+            providers = sdk.list_providers()
+            trunks = sdk.list_trunks()
+            default_provider_id = sdk.get_default_provider_id()
+
+            diagnostics["providers"] = {
+                "count": len(providers),
+                "providers": [
+                    {
+                        "id": p.get("id"),
+                        "name": p.get("provider_name", p.get("name", "unknown")),
+                        "status": p.get("status"),
+                    }
+                    for p in providers[:10]  # Limit to first 10
+                ],
+                "default_provider_id": default_provider_id,
+            }
+            diagnostics["trunks"] = {
+                "count": len(trunks),
+                "trunks": [
+                    {
+                        "id": t.get("id"),
+                        "trunkcode": t.get("trunkcode"),
+                        "host": t.get("host"),
+                        "status": t.get("status"),
+                    }
+                    for t in trunks[:10]  # Limit to first 10
+                ],
+            }
+        except Exception as e:
+            diagnostics["errors"].append({
+                "component": "provider_analysis",
+                "error": str(e)
+            })
+
         # Overall status
         if diagnostics["errors"]:
             diagnostics["overall_status"] = "degraded"
