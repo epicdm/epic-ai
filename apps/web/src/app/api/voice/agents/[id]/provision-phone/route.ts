@@ -289,14 +289,82 @@ function isRetryableError(error: ProvisioningError): boolean {
 }
 
 /**
- * Call the voice service to provision Magnus resources with timeout and retry support.
+ * Ensure organization has a Magnus user for billing.
+ * Creates one if it doesn't exist.
+ */
+async function ensureOrganizationMagnusUser(
+  orgId: string,
+  orgName: string,
+  email: string
+): Promise<{
+  success: boolean;
+  magnusUserId?: string;
+  error?: ProvisioningError;
+}> {
+  console.log(`[Org ${orgId}] Ensuring Magnus user exists...`);
+
+  const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+  const createUserResponse = await fetch(
+    `${VOICE_SERVICE_URL}/api/magnus/create-org-user`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_id: orgId,
+        org_name: orgName,
+        email: email,
+      }),
+      signal: controller.signal,
+    }
+  );
+
+  let createUserResult: { success: boolean; magnus_user_id?: string; magnus_username?: string; error?: string } | null = null;
+  try {
+    createUserResult = await createUserResponse.json();
+  } catch {
+    console.error(`[Org ${orgId}] Failed to parse create-org-user response`);
+  }
+
+  if (createUserResponse.ok && createUserResult?.success && createUserResult.magnus_user_id) {
+    console.log(`[Org ${orgId}] Created/got Magnus user: ${createUserResult.magnus_user_id} (${createUserResult.magnus_username})`);
+
+    // Save to organization for future use
+    await prisma.organization.update({
+      where: { id: orgId },
+      data: {
+        magnusUserId: createUserResult.magnus_user_id,
+        magnusUsername: createUserResult.magnus_username,
+      },
+    });
+
+    return {
+      success: true,
+      magnusUserId: createUserResult.magnus_user_id,
+    };
+  }
+
+  return {
+    success: false,
+    error: {
+      code: ProvisioningErrorCode.MAGNUS_API_ERROR,
+      message: "Failed to create billing account",
+      details: createUserResult?.error || "Failed to create organization Magnus user",
+      retryable: true,
+      suggestedAction: "Try creating the agent again. If the problem persists, contact support.",
+    },
+  };
+}
+
+/**
+ * Call the voice service to provision SIP and DID with timeout and retry support.
+ * Uses the org-level Magnus user (one user per organization, multiple SIP/DIDs per agent).
  * Returns a structured result with either success data or error information.
  */
 async function callVoiceServiceWithRetry(
+  magnusUserId: string,
   agentId: string,
   agentName: string,
-  email: string,
-  organizationId: string
+  email: string
 ): Promise<{
   success: boolean;
   result?: ProvisioningResult;
@@ -317,21 +385,22 @@ async function callVoiceServiceWithRetry(
     }
 
     try {
-      console.log(`[Agent ${agentId}] Provisioning attempt ${attempt + 1}/${MAX_RETRY_ATTEMPTS}`);
+      console.log(`[Agent ${agentId}] SIP/DID provisioning attempt ${attempt + 1}/${MAX_RETRY_ATTEMPTS}`);
 
       // Create abort controller for timeout
       const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
 
+      // Call provision-sip-did endpoint (not provision-agent which creates users)
       const provisionResponse = await fetch(
-        `${VOICE_SERVICE_URL}/api/magnus/provision-agent`,
+        `${VOICE_SERVICE_URL}/api/magnus/provision-sip-did`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            magnus_user_id: magnusUserId,
             agent_id: agentId,
             agent_name: agentName,
             email: email,
-            organization_id: organizationId,
           }),
           signal: controller.signal,
         }
@@ -351,7 +420,7 @@ async function callVoiceServiceWithRetry(
 
       if (provisionResponse.ok && provisionResult?.success && provisionResult.sip_username) {
         // SUCCESS
-        console.log(`[Agent ${agentId}] Provisioning successful on attempt ${attempt + 1}`);
+        console.log(`[Agent ${agentId}] SIP/DID provisioning successful on attempt ${attempt + 1}`);
         return {
           success: true,
           result: provisionResult,
@@ -360,14 +429,14 @@ async function callVoiceServiceWithRetry(
       }
 
       // FAILURE: Parse and structure the error
-      const errorMessage = provisionResult?.error || responseText || "Provisioning returned unsuccessful";
+      const errorMessage = provisionResult?.error || responseText || "SIP/DID provisioning failed";
       lastError = parseProvisioningError(
         errorMessage,
         provisionResult || undefined,
         provisionResponse.status
       );
 
-      console.warn(`[Agent ${agentId}] Provisioning attempt ${attempt + 1} failed:`, {
+      console.warn(`[Agent ${agentId}] SIP/DID provisioning attempt ${attempt + 1} failed:`, {
         code: lastError.code,
         message: lastError.message,
         httpStatus: provisionResponse.status,
@@ -387,7 +456,7 @@ async function callVoiceServiceWithRetry(
       // Network/fetch error - classify it
       lastError = classifyFetchError(fetchError);
 
-      console.warn(`[Agent ${agentId}] Provisioning attempt ${attempt + 1} network error:`, {
+      console.warn(`[Agent ${agentId}] SIP/DID provisioning attempt ${attempt + 1} network error:`, {
         code: lastError.code,
         message: lastError.message,
         originalError: fetchError instanceof Error ? fetchError.message : String(fetchError),
@@ -406,7 +475,7 @@ async function callVoiceServiceWithRetry(
   }
 
   // All retries exhausted
-  console.error(`[Agent ${agentId}] All ${MAX_RETRY_ATTEMPTS} provisioning attempts failed`);
+  console.error(`[Agent ${agentId}] All ${MAX_RETRY_ATTEMPTS} SIP/DID provisioning attempts failed`);
   return {
     success: false,
     error: lastError || {
@@ -475,14 +544,52 @@ export async function POST(
     }
 
     // Call voice service to provision Magnus resources with retry logic
+    // IMPORTANT: One Magnus user per org, multiple SIP/DIDs per agent
     console.log(`[Agent ${agent.id}] Starting Magnus provisioning with timeout=${VOICE_SERVICE_TIMEOUT_MS}ms, maxRetries=${MAX_RETRY_ATTEMPTS}`);
     console.log(`[Agent ${agent.id}] Voice service URL: ${VOICE_SERVICE_URL}`);
 
+    // Step 1: Ensure organization has a Magnus user for billing
+    // Re-fetch org to get current magnus_user_id (might have been set by concurrent request)
+    const currentOrg = await prisma.organization.findUnique({
+      where: { id: org.id },
+      select: { id: true, name: true, magnusUserId: true, magnusUsername: true },
+    });
+
+    let magnusUserId = currentOrg?.magnusUserId;
+
+    if (!magnusUserId) {
+      console.log(`[Agent ${agent.id}] Organization ${org.id} has no Magnus user. Creating one...`);
+      const ensureUserResult = await ensureOrganizationMagnusUser(
+        org.id,
+        org.name,
+        user?.email || `billing-${org.id}@epic.dm`
+      );
+
+      if (!ensureUserResult.success || !ensureUserResult.magnusUserId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: ensureUserResult.error!.message,
+            code: ensureUserResult.error!.code,
+            details: ensureUserResult.error!.details,
+            retryable: ensureUserResult.error!.retryable,
+            suggestedAction: ensureUserResult.error!.suggestedAction,
+          },
+          { status: 500 }
+        );
+      }
+
+      magnusUserId = ensureUserResult.magnusUserId;
+    } else {
+      console.log(`[Agent ${agent.id}] Using existing Magnus org user: ${magnusUserId}`);
+    }
+
+    // Step 2: Provision SIP and DID for this agent under the org's Magnus user
     const provisioningResult = await callVoiceServiceWithRetry(
+      magnusUserId,
       agent.id,
       agent.name,
-      user?.email || `agent-${agent.id}@epic.dm`,
-      org.id
+      user?.email || `agent-${agent.id}@epic.dm`
     );
 
     // Handle provisioning failure
@@ -505,6 +612,7 @@ export async function POST(
     const result = provisioningResult.result;
 
     // Create SIPConfig with Magnus credentials
+    // Note: magnus_user_id is the org's user, magnus_sip_id is this agent's SIP account
     const sipConfig = await prisma.sIPConfig.create({
       data: {
         name: `${agent.name} SIP`,
@@ -514,6 +622,7 @@ export async function POST(
         sipUsername: result.sip_username!,
         sipPassword: result.sip_password || "",
         magnusTrunkId: result.magnus_sip_id,
+        magnusAccountId: magnusUserId, // Store org's Magnus user ID
       },
     });
 

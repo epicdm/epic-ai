@@ -1077,6 +1077,392 @@ class MagnusSDK:
                 error=str(e)
             )
 
+    def create_organization_user(
+        self,
+        org_id: str,
+        org_name: str,
+        email: str,
+        phone: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Create a Magnus user for an organization (for billing purposes).
+        This should be called ONCE per organization, not per agent.
+
+        Args:
+            org_id: Organization ID (used in username for uniqueness)
+            org_name: Organization name
+            email: Contact email for the organization
+            phone: Optional phone number
+
+        Returns:
+            Dict with 'success', 'magnus_user_id', 'magnus_username', 'error'
+        """
+        # Generate a unique username for the organization
+        # Format: org_{clean_name}_{short_id} (max 20 chars)
+        clean_name = ''.join(c for c in org_name if c.isalnum())[:10].lower()
+        short_id = org_id[-6:] if len(org_id) >= 6 else org_id
+        username = f"org_{clean_name}_{short_id}"[:20]
+        password = self.generate_password()
+
+        logger.info(f"Creating Magnus organization user: {username} for org {org_id}")
+
+        try:
+            user_result = self.create_user(
+                username=username,
+                password=password,
+                email=email,
+                firstname=org_name[:50],
+                lastname="Organization",
+                phone=phone,
+                description=f"EpicAI_Org_{org_id}"
+            )
+
+            logger.info(f"Organization user creation response: {user_result}")
+            if not user_result.get("success", False):
+                return {
+                    "success": False,
+                    "magnus_user_id": "",
+                    "magnus_username": "",
+                    "error": f"Failed to create organization user: {user_result.get('msg', 'Unknown error')}"
+                }
+
+            # Extract the created user ID
+            rows = user_result.get("rows", [])
+            if rows and len(rows) > 0:
+                user_id = str(rows[0].get("id", ""))
+            else:
+                user_id = ""
+
+            if not user_id:
+                return {
+                    "success": False,
+                    "magnus_user_id": "",
+                    "magnus_username": "",
+                    "error": f"Could not extract user ID from response: {user_result}"
+                }
+
+            logger.info(f"Created organization Magnus user ID: {user_id}")
+            return {
+                "success": True,
+                "magnus_user_id": user_id,
+                "magnus_username": username,
+                "error": None
+            }
+
+        except Exception as e:
+            logger.error(f"Error creating organization user: {e}")
+            return {
+                "success": False,
+                "magnus_user_id": "",
+                "magnus_username": "",
+                "error": str(e)
+            }
+
+    def provision_sip_and_did(
+        self,
+        magnus_user_id: str,
+        agent_id: str,
+        agent_name: str,
+        email: str,
+        did_number: Optional[str] = None
+    ) -> ProvisioningResult:
+        """
+        Provision a SIP account and DID for a voice agent under an EXISTING Magnus user.
+        This is the correct flow: organization has ONE user, each agent gets SIP + DID.
+
+        Args:
+            magnus_user_id: The existing Magnus user ID (organization's billing account)
+            agent_id: The voice agent ID
+            agent_name: Name of the agent (used in SIP username)
+            email: Email for voicemail notifications
+            did_number: Optional specific DID to use
+
+        Returns:
+            ProvisioningResult with SIP and DID details (magnus_user_id will be the org's user)
+        """
+        # If specific DID requested, use it directly
+        if did_number:
+            return self._provision_sip_and_did_with_did(magnus_user_id, agent_id, agent_name, email, did_number)
+
+        # Fetch existing DIDs for uniqueness checking
+        existing_dids = self.get_all_dids()
+        logger.info(f"Loaded {len(existing_dids)} existing DIDs for SIP/DID provisioning")
+
+        # Pre-emptive check for range exhaustion
+        range_status = self.check_range_exhaustion(
+            existing_dids=existing_dids,
+            raise_on_exhausted=True,
+            warn_on_nearly_exhausted=True
+        )
+        logger.info(f"DID range status: {range_status.status_message}")
+
+        # Retry configuration
+        max_random_retries = 5
+        max_sequential_retries = 10
+        total_max_retries = max_random_retries + max_sequential_retries
+
+        use_sequential = False
+        sequential_start = None
+        last_failed_did = None
+        race_condition_count = 0
+
+        for retry_attempt in range(total_max_retries):
+            try:
+                did = self.generate_unique_did(
+                    existing_dids=existing_dids,
+                    use_sequential=use_sequential,
+                    sequential_start=sequential_start
+                )
+
+                mode_str = "sequential" if use_sequential else "random"
+                logger.info(f"Attempting SIP/DID provisioning with DID {did} ({mode_str} mode, attempt {retry_attempt + 1}/{total_max_retries})")
+
+                result = self._provision_sip_and_did_with_did(magnus_user_id, agent_id, agent_name, email, did)
+
+                if result.success:
+                    if race_condition_count > 0:
+                        logger.info(f"SIP/DID provisioning succeeded after {race_condition_count} race condition(s)")
+                    return result
+
+                # Check for duplicate DID error
+                if result.error and self._is_duplicate_did_error(result.error):
+                    race_condition_count += 1
+                    logger.warning(f"Race condition #{race_condition_count}: DID {did} conflict. Retrying...")
+                    existing_dids.add(did)
+                    last_failed_did = did
+
+                    if race_condition_count >= max_random_retries and not use_sequential:
+                        use_sequential = True
+                        if last_failed_did:
+                            try:
+                                failed_suffix = int(last_failed_did[-4:])
+                                sequential_start = (failed_suffix + 1) if failed_suffix < 9999 else 9000
+                            except ValueError:
+                                sequential_start = 9000
+                        logger.warning(f"Switching to sequential DID allocation starting from {self.DID_PREFIX}{sequential_start}")
+                    continue
+
+                logger.error(f"SIP/DID provisioning failed: {result.error}")
+                return result
+
+            except DIDRangeExhaustedError:
+                raise
+            except MagnusSDKError as e:
+                error_msg = str(e)
+                if self._is_duplicate_did_error(error_msg):
+                    race_condition_count += 1
+                    existing_dids.add(did)
+                    last_failed_did = did
+                    if race_condition_count >= max_random_retries and not use_sequential:
+                        use_sequential = True
+                        try:
+                            failed_suffix = int(last_failed_did[-4:])
+                            sequential_start = (failed_suffix + 1) if failed_suffix < 9999 else 9000
+                        except ValueError:
+                            sequential_start = 9000
+                    if retry_attempt == total_max_retries - 1:
+                        final_status = self.get_did_range_status(existing_dids)
+                        if final_status.is_exhausted:
+                            raise DIDRangeExhaustedError(
+                                message=f"DID range exhausted after {total_max_retries} attempts.",
+                                total_in_range=final_status.total_in_range,
+                                used_in_range=final_status.used_in_range,
+                                range_start=final_status.range_start,
+                                range_end=final_status.range_end
+                            )
+                    continue
+                else:
+                    raise
+
+        # Fallback error
+        final_status = self.get_did_range_status(existing_dids)
+        raise MagnusSDKError(
+            f"Could not provision SIP/DID after {total_max_retries} attempts. "
+            f"Race conditions: {race_condition_count}. Available DIDs: {final_status.available_in_range}"
+        )
+
+    def _provision_sip_and_did_with_did(
+        self,
+        magnus_user_id: str,
+        agent_id: str,
+        agent_name: str,
+        email: str,
+        did: str
+    ) -> ProvisioningResult:
+        """
+        Internal method to provision SIP and DID with a specific DID under an existing user.
+        """
+        password = self.generate_password()
+
+        # Create SIP username: {agent_name}_{did_suffix}
+        clean_name = ''.join(c for c in agent_name if c.isalnum())[:15].lower()
+        did_suffix = did[-4:]
+        sip_username = f"{clean_name}_{did_suffix}"
+
+        logger.info(f"Provisioning SIP/DID for agent {agent_id} under user {magnus_user_id}: {sip_username} with DID {did}")
+
+        try:
+            # Step 1: Create SIP account under the existing user
+            logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username}")
+            sip_result = self.create("sip", {
+                "id_user": magnus_user_id,
+                "name": sip_username,
+                "accountcode": sip_username,
+                "secret": password,
+                "callerid": sip_username,
+                "host": "dynamic",
+                "allow": "ulaw,alaw,g729,gsm",
+                "dtmfmode": "rfc2833",
+                "nat": "force_rport,comedia",
+                "qualify": "yes",
+                "context": "billing",
+                "insecure": "invite,port",
+                "status": "1"
+            })
+
+            logger.info(f"SIP creation response: {sip_result}")
+            if not sip_result.get("success", False):
+                raise MagnusSDKError(f"Failed to create SIP account: {sip_result.get('msg', 'Unknown error')}")
+
+            sip_rows = sip_result.get("rows", [])
+            sip_id = str(sip_rows[0].get("id", "")) if sip_rows else ""
+            if not sip_id:
+                raise MagnusSDKError(f"Could not extract SIP ID from response: {sip_result}")
+            logger.info(f"Created SIP account ID: {sip_id}")
+
+            # Step 2: Create DID with user as owner
+            logger.info(f"Creating DID: {did} for user {magnus_user_id}")
+            did_result = self.create("did", {
+                "did": did,
+                "id_user": magnus_user_id,
+                "reserved": "1",
+                "country": "Dominica",
+                "activated": "1"
+            })
+
+            if not did_result.get("success", False):
+                raise MagnusSDKError(f"Failed to create DID: {did_result.get('msg', 'Unknown error')}")
+
+            did_rows = did_result.get("rows", [])
+            did_id = str(did_rows[0].get("id", "")) if did_rows else ""
+            if not did_id:
+                raise MagnusSDKError(f"Could not extract DID ID from response: {did_result}")
+            logger.info(f"Created DID ID: {did_id}")
+
+            # Step 3: Create DID destination (link DID to SIP)
+            logger.info(f"Creating DID destination: DID {did} -> SIP {sip_id}")
+            destination_result = self.create("diddestination", {
+                "id_user": magnus_user_id,
+                "id_did": did_id,
+                "voip_call": "1",
+                "id_sip": sip_id,
+                "idUserusername": sip_username,
+                "destination": f"SIP/{sip_username}",
+                "priority": "1"
+            })
+
+            if not destination_result.get("success", False):
+                logger.warning(f"Failed to create DID destination: {destination_result.get('msg')}")
+
+            # Step 4: Update SIP settings
+            logger.info(f"Updating SIP settings for {sip_id}")
+            sip_update_result = self.update("sip", sip_id, {
+                "callerid": did,
+                "voicemail": "1",
+                "voicemail_email": email,
+                "voicemail_password": did[-4:],
+                "allow": self.DEFAULT_CODECS,
+            })
+
+            if not sip_update_result.get("success", False):
+                logger.warning(f"Failed to update SIP settings: {sip_update_result.get('msg')}")
+
+            return ProvisioningResult(
+                success=True,
+                magnus_user_id=magnus_user_id,  # This is the ORG's user ID
+                magnus_sip_id=sip_id,
+                magnus_did_id=did_id,
+                did_number=did,
+                sip_username=sip_username,
+                sip_password=password,
+                sip_server=self.sip_server
+            )
+
+        except MagnusSDKError as e:
+            logger.error(f"SIP/DID provisioning failed: {e.message}")
+            return ProvisioningResult(
+                success=False,
+                magnus_user_id=magnus_user_id,
+                magnus_sip_id="",
+                magnus_did_id="",
+                did_number=did,
+                sip_username=sip_username,
+                sip_password="",
+                sip_server=self.sip_server,
+                error=e.message
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error during SIP/DID provisioning: {e}")
+            return ProvisioningResult(
+                success=False,
+                magnus_user_id=magnus_user_id,
+                magnus_sip_id="",
+                magnus_did_id="",
+                did_number="",
+                sip_username="",
+                sip_password="",
+                sip_server=self.sip_server,
+                error=str(e)
+            )
+
+    def deprovision_sip_and_did(
+        self,
+        magnus_sip_id: Optional[str] = None,
+        magnus_did_id: Optional[str] = None
+    ) -> bool:
+        """
+        Remove SIP account and DID resources WITHOUT deleting the user.
+        Use this when deprovisioning a single agent under an org.
+
+        Args:
+            magnus_sip_id: The Magnus SIP ID to delete
+            magnus_did_id: The Magnus DID ID to delete
+
+        Returns:
+            True if successful
+        """
+        success = True
+
+        # Delete DID destination first
+        if magnus_did_id:
+            try:
+                dest_id = self.get_id("diddestination", "id_did", magnus_did_id)
+                if dest_id:
+                    self._make_request("destroy", "diddestination", {"id": dest_id})
+                    logger.info(f"Deleted DID destination: {dest_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete DID destination: {e}")
+                success = False
+
+            # Delete the DID
+            try:
+                self._make_request("destroy", "did", {"id": magnus_did_id})
+                logger.info(f"Deleted DID: {magnus_did_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete DID: {e}")
+                success = False
+
+        # Delete the SIP account (but NOT the user)
+        if magnus_sip_id:
+            try:
+                self._make_request("destroy", "sip", {"id": magnus_sip_id})
+                logger.info(f"Deleted SIP account: {magnus_sip_id}")
+            except Exception as e:
+                logger.warning(f"Failed to delete SIP account: {e}")
+                success = False
+
+        return success
+
     def deprovision_voice_agent(
         self,
         magnus_user_id: Optional[str] = None,

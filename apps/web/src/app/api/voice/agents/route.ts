@@ -395,109 +395,177 @@ export async function POST(request: NextRequest) {
       utilizationPercent?: number;
     } | null = null;
 
-    // Provision Magnus SIP user and DID if requested (default: true)
+    // Provision Magnus SIP and DID if requested (default: true)
+    // IMPORTANT: Each organization has ONE Magnus user for billing.
+    // Each voice agent gets its own SIP account and DID under that user.
     if (provisionPhone !== false) {
       try {
         console.log(`[Agent ${agent.id}] Starting Magnus provisioning...`);
         console.log(`[Agent ${agent.id}] Voice service URL: ${VOICE_SERVICE_URL}`);
 
-        // Create abort controller for timeout
-        const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+        // Re-fetch org to get current magnus_user_id (might have been set by concurrent request)
+        const currentOrg = await prisma.organization.findUnique({
+          where: { id: org.id },
+          select: { id: true, name: true, magnusUserId: true, magnusUsername: true },
+        });
 
-        const provisionResponse = await fetch(
-          `${VOICE_SERVICE_URL}/api/magnus/provision-agent`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agent_id: agent.id,
-              agent_name: name,
-              email: user?.email || `agent-${agent.id}@epic.dm`,
-              organization_id: org.id,
-            }),
-            signal: controller.signal,
+        let magnusUserId = currentOrg?.magnusUserId;
+
+        // Step 1: Ensure organization has a Magnus user for billing
+        if (!magnusUserId) {
+          console.log(`[Agent ${agent.id}] Organization ${org.id} has no Magnus user. Creating one...`);
+
+          const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+          const createUserResponse = await fetch(
+            `${VOICE_SERVICE_URL}/api/magnus/create-org-user`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                org_id: org.id,
+                org_name: org.name,
+                email: user?.email || `billing-${org.id}@epic.dm`,
+              }),
+              signal: controller.signal,
+            }
+          );
+
+          let createUserResult: { success: boolean; magnus_user_id?: string; magnus_username?: string; error?: string } | null = null;
+          try {
+            createUserResult = await createUserResponse.json();
+          } catch {
+            console.error(`[Agent ${agent.id}] Failed to parse create-org-user response`);
           }
-        );
 
-        // Parse the response
-        let provisionResult: ProvisioningResult | null = null;
-        let responseText = "";
+          if (createUserResponse.ok && createUserResult?.success && createUserResult.magnus_user_id) {
+            magnusUserId = createUserResult.magnus_user_id;
+            console.log(`[Agent ${agent.id}] Created Magnus org user: ${magnusUserId} (${createUserResult.magnus_username})`);
 
-        try {
-          responseText = await provisionResponse.text();
-          provisionResult = JSON.parse(responseText);
-        } catch {
-          // Response is not JSON
-          console.warn(`[Agent ${agent.id}] Non-JSON response from voice service: ${responseText.substring(0, 200)}`);
+            // Save to organization for future agents
+            await prisma.organization.update({
+              where: { id: org.id },
+              data: {
+                magnusUserId: createUserResult.magnus_user_id,
+                magnusUsername: createUserResult.magnus_username,
+              },
+            });
+          } else {
+            const errorMessage = createUserResult?.error || "Failed to create organization Magnus user";
+            console.error(`[Agent ${agent.id}] Failed to create org user: ${errorMessage}`);
+
+            provisioningError = {
+              code: ProvisioningErrorCode.MAGNUS_API_ERROR,
+              message: "Failed to create billing account",
+              details: errorMessage,
+              retryable: true,
+              suggestedAction: "Try creating the agent again. If the problem persists, contact support.",
+            };
+          }
+        } else {
+          console.log(`[Agent ${agent.id}] Using existing Magnus org user: ${magnusUserId}`);
         }
 
-        if (provisionResponse.ok && provisionResult?.success && provisionResult.sip_username) {
-          // SUCCESS: Provisioning completed
-          console.log(`[Agent ${agent.id}] Magnus provisioning successful`);
+        // Step 2: If we have a Magnus user, provision SIP and DID for this agent
+        if (magnusUserId && !provisioningError) {
+          const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
 
-          // Track provisioning details for logging
-          if (provisionResult.race_conditions_encountered) {
-            provisioningDetails = {
-              raceConditionsEncountered: provisionResult.race_conditions_encountered,
-              utilizationPercent: provisionResult.utilization_percent,
-            };
-            console.log(`[Agent ${agent.id}] Provisioning succeeded after ${provisionResult.race_conditions_encountered} race condition(s)`);
+          const provisionResponse = await fetch(
+            `${VOICE_SERVICE_URL}/api/magnus/provision-sip-did`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                magnus_user_id: magnusUserId,
+                agent_id: agent.id,
+                agent_name: name,
+                email: user?.email || `agent-${agent.id}@epic.dm`,
+              }),
+              signal: controller.signal,
+            }
+          );
+
+          // Parse the response
+          let provisionResult: ProvisioningResult | null = null;
+          let responseText = "";
+
+          try {
+            responseText = await provisionResponse.text();
+            provisionResult = JSON.parse(responseText);
+          } catch {
+            // Response is not JSON
+            console.warn(`[Agent ${agent.id}] Non-JSON response from voice service: ${responseText.substring(0, 200)}`);
           }
 
-          // Create SIPConfig with Magnus credentials
-          sipConfig = await prisma.sIPConfig.create({
-            data: {
-              name: `${name} SIP`,
-              organizationId: org.id,
-              provider: "magnus",
-              sipUrl: provisionResult.sip_url || `sip:${provisionResult.sip_username}@${provisionResult.sip_server}`,
-              sipUsername: provisionResult.sip_username,
-              sipPassword: provisionResult.sip_password || "",
-              magnusTrunkId: provisionResult.magnus_sip_id,
-            },
-          });
+          if (provisionResponse.ok && provisionResult?.success && provisionResult.sip_username) {
+            // SUCCESS: SIP/DID provisioning completed
+            console.log(`[Agent ${agent.id}] SIP/DID provisioning successful`);
 
-          // Create PhoneMapping linking agent to DID
-          if (provisionResult.did_number) {
-            phoneMapping = await prisma.phoneMapping.create({
+            // Track provisioning details for logging
+            if (provisionResult.race_conditions_encountered) {
+              provisioningDetails = {
+                raceConditionsEncountered: provisionResult.race_conditions_encountered,
+                utilizationPercent: provisionResult.utilization_percent,
+              };
+              console.log(`[Agent ${agent.id}] Provisioning succeeded after ${provisionResult.race_conditions_encountered} race condition(s)`);
+            }
+
+            // Create SIPConfig with Magnus credentials
+            // Note: magnus_user_id is the org's user, magnus_sip_id is this agent's SIP account
+            sipConfig = await prisma.sIPConfig.create({
               data: {
-                phoneNumber: provisionResult.did_number,
+                name: `${name} SIP`,
                 organizationId: org.id,
-                agentId: agent.id,
-                sipConfigId: sipConfig.id,
-                magnusDidId: provisionResult.magnus_did_id,
-                magnusStatus: "active",
-                isActive: true,
+                provider: "magnus",
+                sipUrl: provisionResult.sip_url || `sip:${provisionResult.sip_username}@${provisionResult.sip_server}`,
+                sipUsername: provisionResult.sip_username,
+                sipPassword: provisionResult.sip_password || "",
+                magnusTrunkId: provisionResult.magnus_sip_id,
+                magnusAccountId: magnusUserId, // Store org's Magnus user ID
               },
             });
 
-            console.log(`[Agent ${agent.id}] Provisioned DID ${provisionResult.did_number}`);
-          }
-        } else {
-          // FAILURE: Parse and structure the error
-          const errorMessage = provisionResult?.error || responseText || "Provisioning returned unsuccessful";
+            // Create PhoneMapping linking agent to DID
+            if (provisionResult.did_number) {
+              phoneMapping = await prisma.phoneMapping.create({
+                data: {
+                  phoneNumber: provisionResult.did_number,
+                  organizationId: org.id,
+                  agentId: agent.id,
+                  sipConfigId: sipConfig.id,
+                  magnusDidId: provisionResult.magnus_did_id,
+                  magnusStatus: "active",
+                  isActive: true,
+                },
+              });
 
-          provisioningError = parseProvisioningError(
-            errorMessage,
-            provisionResult || undefined,
-            provisionResponse.status
-          );
+              console.log(`[Agent ${agent.id}] Provisioned DID ${provisionResult.did_number} under org user ${magnusUserId}`);
+            }
+          } else {
+            // FAILURE: Parse and structure the error
+            const errorMessage = provisionResult?.error || responseText || "SIP/DID provisioning failed";
 
-          // Log structured error details
-          console.warn(`[Agent ${agent.id}] Provisioning failed:`, {
-            code: provisioningError.code,
-            message: provisioningError.message,
-            details: provisioningError.details,
-            httpStatus: provisionResponse.status,
-            retryable: provisioningError.retryable,
-          });
+            provisioningError = parseProvisioningError(
+              errorMessage,
+              provisionResult || undefined,
+              provisionResponse.status
+            );
 
-          // Track additional details if available
-          if (provisionResult) {
-            provisioningDetails = {
-              raceConditionsEncountered: provisionResult.race_conditions_encountered,
-              utilizationPercent: provisionResult.utilization_percent,
-            };
+            // Log structured error details
+            console.warn(`[Agent ${agent.id}] SIP/DID provisioning failed:`, {
+              code: provisioningError.code,
+              message: provisioningError.message,
+              details: provisioningError.details,
+              httpStatus: provisionResponse.status,
+              retryable: provisioningError.retryable,
+            });
+
+            // Track additional details if available
+            if (provisionResult) {
+              provisioningDetails = {
+                raceConditionsEncountered: provisionResult.race_conditions_encountered,
+                utilizationPercent: provisionResult.utilization_percent,
+              };
+            }
           }
         }
       } catch (error) {

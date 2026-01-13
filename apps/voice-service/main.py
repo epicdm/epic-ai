@@ -666,6 +666,169 @@ def deprovision_agent():
         return jsonify({"error": str(e)}), 500
 
 
+# ============================================
+# Organization-Level Magnus User Management
+# ============================================
+
+@app.route('/api/magnus/create-org-user', methods=['POST'])
+def create_organization_user():
+    """
+    Create a Magnus user for an organization (for billing purposes).
+    This should be called ONCE per organization, not per agent.
+
+    Request body:
+    {
+        "org_id": "org-123",
+        "org_name": "ACME Corp",
+        "email": "billing@acme.com",
+        "phone": "1234567890" (optional)
+    }
+
+    Returns:
+    {
+        "success": true,
+        "magnus_user_id": "123",
+        "magnus_username": "org_acme_123456"
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        data = request.get_json() or {}
+
+        required = ['org_id', 'org_name', 'email']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"{field} required"}), 400
+
+        sdk = get_magnus_sdk()
+        result = sdk.create_organization_user(
+            org_id=data['org_id'],
+            org_name=data['org_name'],
+            email=data['email'],
+            phone=data.get('phone', '')
+        )
+
+        if result['success']:
+            return jsonify({
+                "success": True,
+                "magnus_user_id": result['magnus_user_id'],
+                "magnus_username": result['magnus_username']
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Failed to create organization user')
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error creating organization user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/provision-sip-did', methods=['POST'])
+def provision_sip_and_did():
+    """
+    Provision a SIP account and DID for a voice agent under an EXISTING Magnus user.
+    This is the correct flow: organization has ONE user, each agent gets SIP + DID.
+
+    Request body:
+    {
+        "magnus_user_id": "123",        // The org's Magnus user ID (REQUIRED)
+        "agent_id": "agent-456",
+        "agent_name": "Sales Bot",
+        "email": "notifications@acme.com",
+        "did_number": "17678189000"     // Optional, auto-generated if not provided
+    }
+
+    Returns:
+    {
+        "success": true,
+        "magnus_user_id": "123",        // Same as input (org's user)
+        "magnus_sip_id": "456",         // NEW SIP account for this agent
+        "magnus_did_id": "789",         // NEW DID for this agent
+        "did_number": "17678189000",
+        "sip_username": "salesbot_9000",
+        "sip_password": "generated123",
+        "sip_server": "voice00.epic.dm",
+        "sip_url": "sip:salesbot_9000@voice00.epic.dm"
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        data = request.get_json() or {}
+
+        required = ['magnus_user_id', 'agent_id', 'agent_name', 'email']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"{field} required"}), 400
+
+        sdk = get_magnus_sdk()
+        result = sdk.provision_sip_and_did(
+            magnus_user_id=data['magnus_user_id'],
+            agent_id=data['agent_id'],
+            agent_name=data['agent_name'],
+            email=data['email'],
+            did_number=data.get('did_number')
+        )
+
+        if result.success:
+            return jsonify({
+                "success": True,
+                "magnus_user_id": result.magnus_user_id,
+                "magnus_sip_id": result.magnus_sip_id,
+                "magnus_did_id": result.magnus_did_id,
+                "did_number": result.did_number,
+                "sip_username": result.sip_username,
+                "sip_password": result.sip_password,
+                "sip_server": result.sip_server,
+                "sip_url": f"sip:{result.sip_username}@{result.sip_server}"
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.error or "SIP/DID provisioning failed"
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error provisioning SIP/DID: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/deprovision-sip-did', methods=['POST'])
+def deprovision_sip_and_did():
+    """
+    Remove SIP account and DID for a voice agent WITHOUT deleting the org user.
+    Use this when removing a single agent under an organization.
+
+    Request body:
+    {
+        "magnus_sip_id": "456",
+        "magnus_did_id": "789"
+    }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        data = request.get_json() or {}
+
+        sdk = get_magnus_sdk()
+        success = sdk.deprovision_sip_and_did(
+            magnus_sip_id=data.get('magnus_sip_id'),
+            magnus_did_id=data.get('magnus_did_id')
+        )
+
+        return jsonify({
+            "success": success,
+            "message": "SIP/DID deprovisioned" if success else "Deprovisioning may have partially failed"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error deprovisioning SIP/DID: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/magnus/check-did-usage', methods=['GET'])
 def check_did_usage():
     """

@@ -194,6 +194,10 @@ model Organization {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
+  // Magnus Billing Integration (one user per organization for billing)
+  magnusUserId     String?  @map("magnus_user_id")
+  magnusUsername   String?  @map("magnus_username")
+
   // Postiz integration removed - using native OAuth
 
   // Relations
