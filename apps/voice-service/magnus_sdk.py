@@ -13,7 +13,7 @@ import hashlib
 import time
 import requests
 import urllib3
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, List
 import warnings
 from dataclasses import dataclass
 from urllib.parse import urlencode
