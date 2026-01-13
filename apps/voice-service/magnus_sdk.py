@@ -296,6 +296,7 @@ class MagnusSDK:
             "transport": "udp",  # Max 3 chars
             "directmedia": "no",
             "port": "5060",
+            "link_sms": "",  # Required field - empty string for no SMS linking
         }
 
         result = self._make_request("save", "trunk", trunk_data)
