@@ -53,13 +53,21 @@ def home():
             "livekit": "/api/livekit/*",
             "agents": "/api/agents/*",
             "telephony": "/api/telephony/*",
-            "magnus": "/api/magnus/*"
+            "magnus": "/api/magnus/*",
+            "test": "/api/test/*"
         },
         "diagnostic_endpoints": {
             "magnus_diagnostics": "/api/magnus/diagnostics",
             "did_usage": "/api/magnus/check-did-usage",
             "did_check": "/api/magnus/test-did-check/<did>",
             "magnus_health": "/api/magnus/health"
+        },
+        "test_endpoints": {
+            "setup_status": "GET /api/test/setup-status - Check test prerequisites",
+            "outbound_call": "POST /api/test/outbound-call - Make test outbound call (requires: to_number)",
+            "list_calls": "GET /api/test/calls - List active test calls",
+            "get_call": "GET /api/test/calls/<call_id> - Get call status",
+            "end_call": "DELETE /api/test/calls/<call_id> - End a test call"
         }
     }), 200
 
@@ -1095,6 +1103,303 @@ def magnus_diagnostics():
         return jsonify({
             "success": False,
             "diagnostics": diagnostics
+        }), 500
+
+
+# ============================================
+# Outbound Test Endpoints
+# ============================================
+
+# In-memory test call registry
+_test_calls: dict = {}
+
+@app.route('/api/test/setup-status', methods=['GET'])
+def test_setup_status():
+    """
+    Check if test prerequisites are ready.
+    Returns status of outbound trunks, DIDs, and agents.
+    """
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        status = {
+            "ready": False,
+            "outbound_trunks": [],
+            "available_dids": [],
+            "agents": [],
+            "issues": []
+        }
+
+        # Check outbound trunks
+        trunks_result = asyncio.run(telephony_manager.list_outbound_trunks())
+        if trunks_result.get("success"):
+            status["outbound_trunks"] = trunks_result.get("trunks", [])
+        else:
+            status["issues"].append(f"Failed to get outbound trunks: {trunks_result.get('error')}")
+
+        # Check available DIDs from Magnus
+        try:
+            from magnus_sdk import MagnusSDK
+            magnus = MagnusSDK()
+            dids = magnus.get_all_dids()
+            status["available_dids"] = [
+                {"did": d.did, "id": d.id, "country": d.country}
+                for d in dids[:10]  # Limit to 10 for readability
+            ]
+        except Exception as e:
+            status["issues"].append(f"Failed to get DIDs from Magnus: {str(e)}")
+
+        # Check agents
+        try:
+            agents = agent_creator.list_agents()
+            status["agents"] = agents[:10]  # Limit to 10
+        except Exception as e:
+            status["issues"].append(f"Failed to list agents: {str(e)}")
+
+        # Determine if ready
+        if status["outbound_trunks"] and status["available_dids"]:
+            status["ready"] = True
+        else:
+            if not status["outbound_trunks"]:
+                status["issues"].append("No outbound trunks configured - create one first")
+            if not status["available_dids"]:
+                status["issues"].append("No DIDs available - provision DIDs first")
+
+        return jsonify({
+            "success": True,
+            "status": status
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error checking test setup: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/test/outbound-call', methods=['POST'])
+def test_outbound_call():
+    """
+    Simplified outbound test call endpoint.
+    Auto-selects trunk and DID if not provided.
+
+    Required:
+        - to_number: Destination phone number (E.164 format, e.g. +17671234567)
+
+    Optional:
+        - from_number: Caller ID (auto-selected from available DIDs if not provided)
+        - trunk_id: LiveKit outbound trunk ID (auto-selected if not provided)
+        - agent_name: Agent to handle the call (default: test-agent)
+        - agent_config_id: Agent configuration ID
+        - organization_id: Organization ID for tracking
+    """
+    import asyncio
+    from livekit_telephony import telephony_manager
+    from datetime import datetime
+
+    try:
+        data = request.get_json() or {}
+
+        # Validate to_number
+        to_number = data.get('to_number')
+        if not to_number:
+            return jsonify({
+                "success": False,
+                "error": "to_number is required (E.164 format, e.g. +17671234567)"
+            }), 400
+
+        # Normalize to_number to E.164
+        if not to_number.startswith('+'):
+            to_number = '+' + to_number
+
+        # Auto-select trunk if not provided
+        trunk_id = data.get('trunk_id')
+        if not trunk_id:
+            trunks_result = asyncio.run(telephony_manager.list_outbound_trunks())
+            if trunks_result.get("success") and trunks_result.get("trunks"):
+                trunk_id = trunks_result["trunks"][0]["trunk_id"]
+                logger.info(f"Auto-selected outbound trunk: {trunk_id}")
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "No outbound trunks available. Create one first via /api/telephony/trunks/outbound"
+                }), 400
+
+        # Auto-select DID/from_number if not provided
+        from_number = data.get('from_number')
+        if not from_number:
+            try:
+                from magnus_sdk import MagnusSDK
+                magnus = MagnusSDK()
+                dids = magnus.get_all_dids()
+                if dids:
+                    from_number = '+' + dids[0].did if not dids[0].did.startswith('+') else dids[0].did
+                    logger.info(f"Auto-selected DID for caller ID: {from_number}")
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": "No DIDs available for caller ID. Provision DIDs first."
+                    }), 400
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": f"Failed to get DIDs: {str(e)}"
+                }), 500
+
+        # Normalize from_number to E.164
+        if not from_number.startswith('+'):
+            from_number = '+' + from_number
+
+        # Get agent name (default to test-agent)
+        agent_name = data.get('agent_name', 'test-agent')
+
+        # Make the outbound call
+        result = asyncio.run(telephony_manager.create_outbound_call(
+            from_number=from_number,
+            to_number=to_number,
+            trunk_id=trunk_id,
+            agent_name=agent_name,
+            agent_config_id=data.get('agent_config_id'),
+            organization_id=data.get('organization_id')
+        ))
+
+        if result.get("success"):
+            # Track the call
+            call_id = result.get("call_id")
+            _test_calls[call_id] = {
+                "call_id": call_id,
+                "room_name": result.get("room_name"),
+                "participant_id": result.get("participant_id"),
+                "from_number": from_number,
+                "to_number": to_number,
+                "trunk_id": trunk_id,
+                "agent_name": agent_name,
+                "status": "initiated",
+                "started_at": datetime.utcnow().isoformat(),
+                "ended_at": None
+            }
+
+            return jsonify({
+                "success": True,
+                "call_id": call_id,
+                "room_name": result.get("room_name"),
+                "from_number": from_number,
+                "to_number": to_number,
+                "agent_name": agent_name,
+                "message": f"Outbound call initiated to {to_number}"
+            }), 201
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get("error", "Unknown error creating outbound call")
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error making test outbound call: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/test/calls', methods=['GET'])
+def list_test_calls():
+    """List all tracked test calls"""
+    try:
+        calls = list(_test_calls.values())
+        return jsonify({
+            "success": True,
+            "calls": calls,
+            "total": len(calls)
+        }), 200
+    except Exception as e:
+        logger.error(f"Error listing test calls: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/test/calls/<call_id>', methods=['GET'])
+def get_test_call(call_id):
+    """Get status of a specific test call"""
+    try:
+        if call_id not in _test_calls:
+            return jsonify({
+                "success": False,
+                "error": f"Call {call_id} not found"
+            }), 404
+
+        call = _test_calls[call_id]
+
+        # Try to get room info from LiveKit
+        try:
+            from livekit_manager import livekit_manager_instance
+            if hasattr(livekit_manager_instance, 'get_room_info'):
+                room_info = livekit_manager_instance.get_room_info(call["room_name"])
+                if room_info:
+                    call["room_info"] = room_info
+        except Exception:
+            pass  # Room info is optional
+
+        return jsonify({
+            "success": True,
+            "call": call
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting test call {call_id}: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/test/calls/<call_id>', methods=['DELETE'])
+def end_test_call(call_id):
+    """End/cleanup a test call"""
+    import asyncio
+    from datetime import datetime
+
+    try:
+        if call_id not in _test_calls:
+            return jsonify({
+                "success": False,
+                "error": f"Call {call_id} not found"
+            }), 404
+
+        call = _test_calls[call_id]
+        room_name = call.get("room_name")
+
+        # Try to delete the room to end the call
+        if room_name:
+            try:
+                from livekit import api
+                lkapi = api.LiveKitAPI()
+                asyncio.run(lkapi.room.delete_room(api.DeleteRoomRequest(room=room_name)))
+                asyncio.run(lkapi.aclose())
+            except Exception as e:
+                logger.warning(f"Could not delete room {room_name}: {e}")
+
+        # Update call status
+        call["status"] = "ended"
+        call["ended_at"] = datetime.utcnow().isoformat()
+
+        return jsonify({
+            "success": True,
+            "message": f"Call {call_id} ended",
+            "call": call
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error ending test call {call_id}: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
         }), 500
 
 

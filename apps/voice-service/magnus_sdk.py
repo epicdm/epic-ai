@@ -165,12 +165,16 @@ class MagnusSDK:
     DEFAULT_PREFIX_LOCAL = "*/1767/7,767/1767/10"
     DID_PREFIX = "1767818"  # 17678180000 range
 
+    # LiveKit SIP domain for call routing
+    DEFAULT_LIVEKIT_SIP_DOMAIN = "3m4yki5jezn.sip.livekit.cloud"
+
     def __init__(
         self,
         api_key: Optional[str] = None,
         api_secret: Optional[str] = None,
         public_url: Optional[str] = None,
         sip_server: Optional[str] = None,
+        livekit_sip_domain: Optional[str] = None,
         timeout: int = 30
     ):
         """
@@ -181,12 +185,14 @@ class MagnusSDK:
             api_secret: Magnus API secret
             public_url: Magnus public URL (e.g., https://voice00.epic.dm)
             sip_server: SIP server hostname (e.g., voice00.epic.dm)
+            livekit_sip_domain: LiveKit SIP domain for call routing (e.g., 3m4yki5jezn.sip.livekit.cloud)
             timeout: Request timeout in seconds
         """
         self.api_key = api_key or os.environ.get("MAGNUS_API_KEY", "")
         self.api_secret = api_secret or os.environ.get("MAGNUS_API_SECRET", "")
         self.public_url = (public_url or os.environ.get("MAGNUS_PUBLIC_URL", "https://voice00.epic.dm")).rstrip("/")
         self.sip_server = sip_server or os.environ.get("MAGNUS_SIP_SERVER", "voice00.epic.dm")
+        self.livekit_sip_domain = livekit_sip_domain or os.environ.get("LIVEKIT_SIP_DOMAIN", self.DEFAULT_LIVEKIT_SIP_DOMAIN)
         self.timeout = timeout
 
         if not self.api_key or not self.api_secret:
@@ -1019,7 +1025,7 @@ class MagnusSDK:
                 "voip_call": "1",
                 "id_sip": sip_id,
                 "idUserusername": username,
-                "destination": f"SIP/{username}",
+                "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1"
             })
 
@@ -1357,7 +1363,7 @@ class MagnusSDK:
                 "voip_call": "1",
                 "id_sip": sip_id,
                 "idUserusername": sip_username,
-                "destination": f"SIP/{sip_username}",
+                "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1"
             })
 
