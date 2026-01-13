@@ -407,16 +407,12 @@ class MagnusSDK:
         Matches PHP: $magnusBilling->createUser([...])
 
         Note: Magnus auto-creates a SIP account when creating a user.
-        The SIP account requires id_provider field. We get a valid provider ID
-        dynamically since "0" may not be valid in all Magnus configurations.
+        However, we do NOT pass SIP-specific fields (id_provider, transport) here
+        because they are not User model fields and will cause validation errors.
+        The SIP account is created explicitly in _provision_with_did() after user creation.
         """
         # Generate a unique callingcard PIN (8 digits)
         callingcard_pin = str(random.randint(10000000, 99999999))
-
-        # Get a valid provider ID for the auto-created SIP
-        # Magnus rejects "0" as id_provider in some configurations
-        provider_id = self.get_default_provider_id()
-        logger.info(f"Using provider ID {provider_id} for SIP auto-creation")
 
         data = {
             "id": "0",  # id=0 signals creation in Magnus API
@@ -435,10 +431,9 @@ class MagnusSDK:
             "mobile": phone,
             "id_offer": self.DEFAULT_ID_OFFER,
             "callingcard_pin": callingcard_pin,
-            # SIP-related fields for the auto-created SIP user
-            # Magnus auto-creates a SIP user when creating a user, and these fields are required
-            "id_provider": provider_id,  # Use valid provider ID from Magnus
-            "transport": "udp",  # Required: max 3 chars
+            # NOTE: Do NOT include SIP-specific fields (id_provider, transport) here.
+            # They are not User model fields and will cause validation errors.
+            # SIP is created explicitly in _provision_with_did() with correct provider.
         }
 
         return self._make_request("save", "user", data)
