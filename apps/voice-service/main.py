@@ -967,6 +967,71 @@ def generate_did():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/debug-create-user', methods=['POST'])
+def debug_create_user():
+    """
+    Debug endpoint to show what data would be sent to Magnus create_user.
+    Does NOT actually call Magnus - just shows the prepared data.
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+        import random
+
+        data = request.get_json() or {}
+        sdk = get_magnus_sdk()
+
+        # Simulate what create_user would prepare
+        username = data.get('username', 'test_user')
+        email = data.get('email', 'test@example.com')
+
+        # Get the provider ID like create_user does
+        provider_id = sdk.get_default_provider_id()
+        logger.info(f"Debug: provider_id = {provider_id}, type = {type(provider_id)}")
+
+        callingcard_pin = str(random.randint(10000000, 99999999))
+
+        prepared_data = {
+            "id": "0",
+            "username": username,
+            "password": "test_password",
+            "active": "1",
+            "firstname": username,
+            "lastname": "Agent",
+            "email": email,
+            "typepaid": "0",
+            "prefix_local": sdk.DEFAULT_PREFIX_LOCAL,
+            "id_group": sdk.DEFAULT_ID_GROUP,
+            "id_plan": sdk.DEFAULT_ID_PLAN,
+            "description": "Debug test",
+            "phone": "",
+            "mobile": "",
+            "id_offer": sdk.DEFAULT_ID_OFFER,
+            "callingcard_pin": callingcard_pin,
+            "id_provider": provider_id,
+            "transport": "udp",
+        }
+
+        return jsonify({
+            "success": True,
+            "debug_info": {
+                "provider_id_value": provider_id,
+                "provider_id_type": str(type(provider_id)),
+                "provider_id_is_empty": provider_id == "" or provider_id is None,
+                "provider_id_repr": repr(provider_id),
+            },
+            "prepared_data": prepared_data,
+            "note": "This data was NOT sent to Magnus - debug only"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in debug-create-user: {e}")
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
 @app.route('/api/magnus/diagnostics', methods=['GET'])
 def magnus_diagnostics():
     """
