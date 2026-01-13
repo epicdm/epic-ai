@@ -307,7 +307,8 @@ class MagnusSDK:
         }
 
         try:
-            logger.debug(f"Magnus API request: {method} {url}")
+            logger.info(f"Magnus API request: {method} {url}")
+            logger.info(f"Magnus API POST data: {form_data}")
 
             response = requests.request(
                 method=method,
