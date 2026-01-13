@@ -1142,11 +1142,11 @@ def test_setup_status():
         try:
             from magnus_sdk import MagnusSDK
             magnus = MagnusSDK()
-            dids = magnus.get_all_dids()
-            status["available_dids"] = [
-                {"did": d.did, "id": d.id, "country": d.country}
-                for d in dids[:10]  # Limit to 10 for readability
-            ]
+            dids = magnus.get_all_dids()  # Returns a set of DID strings
+            # Convert set to list and limit to 10 for display
+            did_list = list(dids)[:10]
+            status["available_dids"] = [{"did": d} for d in did_list]
+            status["total_dids"] = len(dids)
         except Exception as e:
             status["issues"].append(f"Failed to get DIDs from Magnus: {str(e)}")
 
