@@ -12,14 +12,18 @@ The column `user_id` does not exist in the current database.
 
 ---
 
-## Solution Applied (Temporary Workaround)
+## Solution Applied (Aggressive Workaround)
 
-I've added a **fallback mechanism** in `apps/web/src/lib/services/organization.ts` that:
-1. Tries to create the organization with nested membership (normal flow)
-2. If that fails, creates the organization first, then the membership separately
-3. This works around the database schema issue
+I've added an **aggressive fallback mechanism** in `apps/web/src/lib/services/organization.ts` that:
+1. **ALWAYS** creates organization and membership separately (no nested create)
+2. Tries to create membership with Prisma (mapped columns)
+3. If that fails, tries raw SQL with camelCase columns (`userId`, `organizationId`)
+4. If that fails, tries raw SQL with snake_case columns (`user_id`, `organization_id`)
+5. Cleans up orphaned organization if all attempts fail
 
 **This is a temporary fix** - you still need to sync your database properly.
+
+**Latest Update**: Deployed commit `d0cd27f` with raw SQL fallbacks (lines 39-96)
 
 ---
 

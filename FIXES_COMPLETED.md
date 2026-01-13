@@ -187,6 +187,15 @@ if (!org) {
 
 ---
 
-## Status: ✅ COMPLETE
+## Status: 🔄 IN PROGRESS
 
-Both issues have been fixed with comprehensive debugging added. The fixes are backward-compatible and don't break any existing functionality.
+### ✅ COMPLETED:
+- **Voice Agents Fix**: Deployed with fallback logic (commit 79d61c3)
+- **Facebook Quick Setup Debugging**: Enhanced logging added (commit 79d61c3)
+- **Database Schema Workaround**: Aggressive raw SQL fallback deployed (commit d0cd27f)
+
+### ⏳ AWAITING TESTING:
+- User needs to test Facebook Quick Setup to verify which column pattern works
+- User needs to verify voice agents now appear in dashboard
+
+See `TESTING_REQUIRED.md` for detailed testing instructions.
