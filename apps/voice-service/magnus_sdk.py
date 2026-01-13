@@ -1094,6 +1094,7 @@ class MagnusSDK:
 
             destination_result = self.create("diddestination", {
                 "id_did": did_id,
+                "id_user": user_id,  # Foreign key to Magnus user table (required)
                 "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
@@ -1439,6 +1440,7 @@ class MagnusSDK:
 
             destination_result = self.create("diddestination", {
                 "id_did": did_id,
+                "id_user": magnus_user_id,  # Foreign key to Magnus user table (required)
                 "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
                 "voip_call": "0",  # Route externally, not to local VoIP
                 "id_sip": "",      # No local SIP account
