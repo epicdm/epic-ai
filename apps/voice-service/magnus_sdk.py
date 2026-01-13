@@ -290,14 +290,34 @@ class MagnusSDK:
         except MagnusSDKError:
             return None
 
-    def generate_did(self) -> str:
+    def generate_unique_did(self) -> str:
         """
-        Generate a random DID number in the configured range.
+        Generate a unique DID number in the configured range.
 
-        Based on PHP: $did = 17678180000 + rand(9000, 9999);
+        Based on PHP:
+        do {
+            $randomNumber = rand(9000, 9999);
+            $did = 17678180000 + $randomNumber;
+            $id_did = $magnusBilling->getId('did', 'did', $did);
+        } while ($id_did);
+
+        Range: 1-767-818-9xxx (9000-9999)
         """
-        suffix = random.randint(0, 9999)
-        return f"{self.DID_PREFIX}{suffix:04d}"
+        max_attempts = 100
+        for attempt in range(max_attempts):
+            # Generate DID in 9xxx range (9000-9999)
+            suffix = random.randint(9000, 9999)
+            did = f"{self.DID_PREFIX}{suffix}"
+
+            # Check if this DID already exists
+            existing_did = self.get_id("did", "did", did)
+            if not existing_did:
+                logger.info(f"Generated unique DID: {did} (attempt {attempt + 1})")
+                return did
+
+            logger.debug(f"DID {did} already exists, retrying...")
+
+        raise MagnusSDKError(f"Could not generate unique DID after {max_attempts} attempts")
 
     def generate_password(self, length: int = 12) -> str:
         """Generate a random password."""
@@ -333,8 +353,8 @@ class MagnusSDK:
         Returns:
             ProvisioningResult with all the created resources
         """
-        # Generate DID if not provided
-        did = did_number or self.generate_did()
+        # Generate unique DID if not provided
+        did = did_number or self.generate_unique_did()
 
         # Generate credentials
         password = self.generate_password()
