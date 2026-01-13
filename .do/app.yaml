@@ -1,5 +1,8 @@
 # DigitalOcean App Platform Configuration
-# This deploys the background worker service for long-running tasks
+# This deploys the voice service and background worker services
+#
+# VOICE SERVICE URL: https://epic-ai-platform-zcjiu.ondigitalocean.app/voice
+# Set VOICE_SERVICE_URL in Vercel environment to the URL above
 
 name: epic-ai-platform
 region: nyc
