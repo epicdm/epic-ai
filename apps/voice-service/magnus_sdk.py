@@ -247,7 +247,7 @@ class MagnusSDK:
             "dtmfmode": "rfc2833",
             "allow": "opus,g729,alaw,ulaw",
             "disallow": "all",
-            "transport": "udp,tcp",
+            "transport": "udp",  # Max 3 chars
             "directmedia": "no",
             "port": "5060",
         }
@@ -1032,13 +1032,16 @@ class MagnusSDK:
             # Step 3: Create SIP account explicitly (don't rely on auto-creation)
             logger.info(f"Creating SIP account for user {user_id}: {username}")
             sip_result = self.create("sip", {
+                "id": "0",           # 0 = create new
                 "id_user": user_id,  # Foreign key to Magnus user table
+                "id_provider": "0",  # Required field - 0 means no provider
                 "user": username,    # SIP username (Asterisk expects this as the username string)
                 "name": username,
                 "accountcode": username,
                 "secret": password,
                 "callerid": username,
                 "host": "dynamic",
+                "transport": "udp",  # Required field - max 3 chars
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",
                 "nat": "force_rport,comedia",
@@ -1387,13 +1390,16 @@ class MagnusSDK:
             # Step 1: Create SIP account under the existing user
             logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username}")
             sip_result = self.create("sip", {
-                "id_user": magnus_user_id,  # Foreign key to Magnus user table
-                "user": sip_username,       # SIP username (Asterisk expects this as the username string)
+                "id": "0",                   # 0 = create new
+                "id_user": magnus_user_id,   # Foreign key to Magnus user table
+                "id_provider": "0",          # Required field - 0 means no provider
+                "user": sip_username,        # SIP username (Asterisk expects this as the username string)
                 "name": sip_username,
                 "accountcode": sip_username,
                 "secret": password,
                 "callerid": sip_username,
                 "host": "dynamic",
+                "transport": "udp",          # Required field - max 3 chars
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",
                 "nat": "force_rport,comedia",
