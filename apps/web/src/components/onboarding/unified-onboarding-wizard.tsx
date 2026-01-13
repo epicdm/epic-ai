@@ -370,7 +370,11 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
   // Listen for OAuth popup completion and auto-populate form
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
+      console.log("[Quick FB Connect] Received postMessage:", event.data);
+
       if (event.data?.type === 'SOCIAL_CONNECT_SUCCESS' && event.data?.platform === 'meta') {
+        console.log("[Quick FB Connect] Success! Business data:", event.data.businessData);
+
         // Mark both Facebook and Instagram as connected (Meta connects both)
         setLocalConnectedAccounts(prev => [...new Set([...prev, 'facebook', 'instagram'])]);
         setFacebookConnecting(false);
@@ -379,6 +383,11 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
         // Auto-populate form with Facebook business data
         const businessData = event.data.businessData;
         if (businessData) {
+          console.log("[Quick FB Connect] Auto-filling form with:", {
+            name: businessData.name,
+            website: businessData.website
+          });
+
           if (businessData.name) {
             form.setValue('organizationName', businessData.name);
             form.setValue('brandName', businessData.name);
@@ -393,19 +402,25 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
 
         // If we have pending org/brand IDs, mark setup as complete
         if (pendingOrgId && pendingBrandId) {
+          console.log("[Quick FB Connect] Marking setup complete with org:", pendingOrgId, "brand:", pendingBrandId);
           setData("organizationId", pendingOrgId);
           setData("brandId", pendingBrandId);
           onSetupComplete(pendingOrgId, pendingBrandId);
         }
       } else if (event.data?.type === 'SOCIAL_CONNECT_ERROR' && event.data?.platform === 'meta') {
+        console.error("[Quick FB Connect] Error from popup:", event.data.error);
         setError(event.data.error || 'Failed to connect social account');
         setFacebookConnecting(false);
         setLoading(false);
       }
     };
 
+    console.log("[Quick FB Connect] Message listener registered");
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      console.log("[Quick FB Connect] Message listener removed");
+      window.removeEventListener('message', handleMessage);
+    };
   }, [setError, setLoading, form, pendingOrgId, pendingBrandId, setData, onSetupComplete]);
 
   // Quick connect with Facebook - creates org/brand then opens OAuth
@@ -414,15 +429,26 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
     setLoading(true);
 
     try {
+      console.log("[Quick FB Connect] Step 1: Creating organization...");
+
       // Create org with temporary name
       const orgResponse = await fetch("/api/onboarding/organization", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "My Organization" }),
       });
-      if (!orgResponse.ok) throw new Error("Failed to create organization");
+
+      if (!orgResponse.ok) {
+        const errorData = await orgResponse.json();
+        console.error("[Quick FB Connect] Org creation failed:", errorData);
+        throw new Error("Failed to create organization");
+      }
+
       const org = await orgResponse.json();
+      console.log("[Quick FB Connect] Org created:", org.id);
       setPendingOrgId(org.id);
+
+      console.log("[Quick FB Connect] Step 2: Creating brand...");
 
       // Create brand with temporary name
       const brandResponse = await fetch("/api/onboarding/brand", {
@@ -434,21 +460,42 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
           templateId: selectedTemplate?.id || "custom",
         }),
       });
-      if (!brandResponse.ok) throw new Error("Failed to create brand");
+
+      if (!brandResponse.ok) {
+        const errorData = await brandResponse.json();
+        console.error("[Quick FB Connect] Brand creation failed:", errorData);
+        throw new Error("Failed to create brand");
+      }
+
       const brand = await brandResponse.json();
+      console.log("[Quick FB Connect] Brand created:", brand.id);
       setPendingBrandId(brand.id);
+
+      console.log("[Quick FB Connect] Step 3: Opening Facebook OAuth popup...");
 
       // Open Facebook OAuth in popup
       const width = 600;
       const height = 700;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;
-      window.open(
-        `/api/social/connect/meta?brandId=${brand.id}&platform=facebook&returnUrl=/onboarding`,
+
+      const oauthUrl = `/api/social/connect/meta?brandId=${brand.id}&platform=facebook&returnUrl=/onboarding`;
+      console.log("[Quick FB Connect] OAuth URL:", oauthUrl);
+
+      const popup = window.open(
+        oauthUrl,
         'facebook-oauth',
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
       );
+
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        console.error("[Quick FB Connect] Popup was blocked by browser");
+        throw new Error("Popup was blocked. Please allow popups for this site.");
+      }
+
+      console.log("[Quick FB Connect] Popup opened successfully");
     } catch (err) {
+      console.error("[Quick FB Connect] Error:", err);
       setError(err instanceof Error ? err.message : "Failed to connect");
       setFacebookConnecting(false);
       setLoading(false);

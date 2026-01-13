@@ -272,6 +272,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    console.log("[GET /api/voice/agents] User ID:", userId);
+
     // Check if user is in demo mode
     const progress = await prisma.userOnboardingProgress.findUnique({
       where: { userId },
@@ -287,7 +289,72 @@ export async function GET() {
     }
 
     const org = await getCurrentOrganization();
+    console.log("[GET /api/voice/agents] Organization:", org ? `${org.name} (${org.id})` : "null");
+
     if (!org) {
+      // No organization found - let's check all agents for this user
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+      });
+
+      console.log("[GET /api/voice/agents] User memberships:", user?.memberships.length || 0);
+
+      if (user?.memberships && user.memberships.length > 0) {
+        // User has memberships but getCurrentOrganization() returned null
+        // This is the bug! Let's get all org IDs and query agents
+        const orgIds = user.memberships.map(m => m.organizationId);
+        console.log("[GET /api/voice/agents] Organization IDs:", orgIds);
+
+        const agents = await prisma.voiceAgent.findMany({
+          where: {
+            organizationId: { in: orgIds },
+          },
+          include: {
+            phoneMappings: {
+              select: { id: true, phoneNumber: true },
+            },
+            _count: {
+              select: { callLogs: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        console.log("[GET /api/voice/agents] Found agents (fallback):", agents.length);
+
+        // Transform and return
+        const agentsWithBrand = await Promise.all(
+          agents.map(async (agent) => {
+            const brand = agent.brandId
+              ? await prisma.brand.findUnique({
+                  where: { id: agent.brandId },
+                  select: { id: true, name: true },
+                })
+              : null;
+
+            return {
+              ...agent,
+              brand: brand || { id: "", name: "No Brand" },
+              phoneNumbers: agent.phoneMappings.map((pm) => ({
+                id: pm.id,
+                number: pm.phoneNumber,
+              })),
+              isDeployed: agent.status === "deployed",
+              _count: { calls: agent._count.callLogs },
+            };
+          })
+        );
+
+        return NextResponse.json({ agents: agentsWithBrand });
+      }
+
       return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
@@ -306,6 +373,8 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" },
     });
+
+    console.log("[GET /api/voice/agents] Found agents:", agents.length);
 
     // Transform to match frontend expectations
     const agentsWithBrand = await Promise.all(

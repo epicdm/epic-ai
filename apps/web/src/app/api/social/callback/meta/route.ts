@@ -463,15 +463,28 @@ export async function GET(request: NextRequest) {
               <p>You can close this window now.</p>
             </div>
             <script>
+              console.log("[Meta OAuth Callback] Preparing to send postMessage...");
+              console.log("[Meta OAuth Callback] Business data:", ${JSON.stringify(businessData)});
+
               // Notify parent window and close with business data
               if (window.opener) {
-                window.opener.postMessage({
+                console.log("[Meta OAuth Callback] Sending postMessage to parent window");
+                const message = {
                   type: 'SOCIAL_CONNECT_SUCCESS',
                   platform: 'meta',
                   businessData: ${JSON.stringify(businessData)}
-                }, '*');
+                };
+                console.log("[Meta OAuth Callback] Message payload:", message);
+                window.opener.postMessage(message, '*');
+                console.log("[Meta OAuth Callback] postMessage sent!");
+              } else {
+                console.error("[Meta OAuth Callback] No window.opener found!");
               }
-              setTimeout(() => window.close(), 1500);
+
+              setTimeout(() => {
+                console.log("[Meta OAuth Callback] Closing popup...");
+                window.close();
+              }, 1500);
             </script>
           </body>
         </html>
