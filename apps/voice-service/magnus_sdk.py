@@ -1017,14 +1017,15 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract DID ID from creation response: {did_result}")
             logger.info(f"Created DID ID: {did_id}")
 
-            # Step 6: Create DID destination (link DID to SIP user)
-            logger.info(f"Creating DID destination for DID {did} -> SIP {sip_id}")
+            # Step 6: Create DID destination (route to LiveKit SIP)
+            # NOTE: voip_call=0 means route externally, not to local SIP user
+            # The destination field specifies the external SIP URI
+            logger.info(f"Creating DID destination for DID {did} -> LiveKit {self.livekit_sip_domain}")
             destination_result = self.create("diddestination", {
                 "id_user": user_id,
                 "id_did": did_id,
-                "voip_call": "1",
-                "id_sip": sip_id,
-                "idUserusername": username,
+                "voip_call": "0",  # Route externally, not to local VoIP
+                "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1"
             })
@@ -1355,14 +1356,14 @@ class MagnusSDK:
                 raise MagnusSDKError(f"Could not extract DID ID from response: {did_result}")
             logger.info(f"Created DID ID: {did_id}")
 
-            # Step 3: Create DID destination (link DID to SIP)
-            logger.info(f"Creating DID destination: DID {did} -> SIP {sip_id}")
+            # Step 3: Create DID destination (route to LiveKit SIP)
+            # NOTE: voip_call=0 means route externally, not to local SIP user
+            logger.info(f"Creating DID destination: DID {did} -> LiveKit {self.livekit_sip_domain}")
             destination_result = self.create("diddestination", {
                 "id_user": magnus_user_id,
                 "id_did": did_id,
-                "voip_call": "1",
-                "id_sip": sip_id,
-                "idUserusername": sip_username,
+                "voip_call": "0",  # Route externally, not to local VoIP
+                "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1"
             })
