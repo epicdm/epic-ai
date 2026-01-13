@@ -660,6 +660,67 @@ def deprovision_agent():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/check-did-usage', methods=['GET'])
+def check_did_usage():
+    """
+    Check how many DIDs in the 9xxx range are currently in use.
+
+    Returns statistics about DID usage in the 17678189xxx range.
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        sdk = get_magnus_sdk()
+
+        # Check DIDs in the 9xxx range (9000-9999)
+        total_range = 1000  # 9000 to 9999
+        in_use = []
+        available = []
+        errors = []
+
+        logger.info("Checking DID usage in 9xxx range...")
+
+        # Sample check - check every 10th DID to get a quick estimate
+        sample_size = 100
+        for i in range(sample_size):
+            suffix = 9000 + (i * 10)  # Sample: 9000, 9010, 9020, etc.
+            did = f"1767818{suffix}"
+
+            try:
+                existing_id = sdk.get_id("did", "did", did)
+                if existing_id:
+                    in_use.append(did)
+                else:
+                    available.append(did)
+            except Exception as e:
+                errors.append({"did": did, "error": str(e)})
+
+        # Estimate total based on sample
+        sample_in_use_pct = len(in_use) / sample_size
+        estimated_in_use = int(total_range * sample_in_use_pct)
+        estimated_available = total_range - estimated_in_use
+
+        return jsonify({
+            "success": True,
+            "range": "17678189000-17678189999",
+            "total_possible": total_range,
+            "sample_size": sample_size,
+            "sample_in_use": len(in_use),
+            "sample_available": len(available),
+            "sample_errors": len(errors),
+            "estimated_in_use": estimated_in_use,
+            "estimated_available": estimated_available,
+            "usage_percentage": round(sample_in_use_pct * 100, 2),
+            "sample_in_use_dids": in_use[:10],  # Show first 10
+            "sample_available_dids": available[:10],  # Show first 10
+            "errors": errors[:5] if errors else []
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error checking DID usage: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/magnus/generate-did', methods=['GET'])
 def generate_did():
     """Generate a random DID number in the configured range."""
