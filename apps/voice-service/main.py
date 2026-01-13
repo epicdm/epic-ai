@@ -723,24 +723,39 @@ def check_did_usage():
 
 @app.route('/api/magnus/test-did-check/<did>', methods=['GET'])
 def test_did_check(did):
-    """Test if a specific DID exists in Magnus."""
+    """Test if a specific DID exists in Magnus - shows full API response for debugging."""
     try:
         from magnus_sdk import get_magnus_sdk
 
         sdk = get_magnus_sdk()
+
+        # Get the ID using normal method
         existing_id = sdk.get_id("did", "did", did)
+
+        # Also get the full record to see what Magnus actually returns
+        data = {
+            "filter": f'[{{"field":"did","value":"{did}"}}]'
+        }
+        full_response = sdk._make_request("read", "did", data)
 
         return jsonify({
             "success": True,
             "did": did,
             "exists": existing_id is not None,
             "existing_id": existing_id,
+            "full_magnus_response": full_response,
+            "filter_used": data["filter"],
             "message": f"DID {did} {'exists' if existing_id else 'does not exist'} in Magnus"
         }), 200
 
     except Exception as e:
         logger.error(f"Error checking DID: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+        import traceback
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
 
 
 @app.route('/api/magnus/generate-did', methods=['GET'])
