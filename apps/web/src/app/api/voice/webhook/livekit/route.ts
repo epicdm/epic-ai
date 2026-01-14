@@ -108,6 +108,20 @@ async function handleParticipantJoined(event: WebhookEvent) {
 
   console.log(`[Webhook] participant_joined: ${identity} in room ${roomName}`);
 
+  // Debug: Log all available data to understand LiveKit's payload
+  console.log(`[Webhook] DEBUG - Participant:`, JSON.stringify({
+    identity: participant.identity,
+    name: participant.name,
+    sid: participant.sid,
+    metadata: participant.metadata,
+    attributes: participant.attributes,
+  }));
+  console.log(`[Webhook] DEBUG - Room:`, JSON.stringify({
+    name: room.name,
+    sid: room.sid,
+    metadata: room.metadata,
+  }));
+
   // Check if this is a SIP participant (phone call)
   const phoneNumber = parsePhoneFromSipIdentity(identity);
   if (!phoneNumber) {
