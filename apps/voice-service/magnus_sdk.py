@@ -436,6 +436,7 @@ class MagnusSDK:
             "mobile": phone,
             "id_offer": self.DEFAULT_ID_OFFER,
             "callingcard_pin": callingcard_pin,
+            "language": "en",  # Required field - default to English
             # NOTE: id_provider and transport are SIP-specific fields
             # They should NOT be passed to the User module - SIP accounts
             # are created separately via the 'sip' module in _provision_with_did()
