@@ -10,6 +10,11 @@ import { getUserOrganization } from "@/lib/sync-user";
 import { AccessToken, SipClient } from "livekit-server-sdk";
 import { z } from "zod";
 
+// Voice service URL with fallback
+const VOICE_SERVICE_URL =
+  process.env.VOICE_SERVICE_URL ||
+  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+
 /**
  * Find the outbound trunk ID for a given phone number
  * Queries the voice service API to find the matching outbound trunk
@@ -17,15 +22,9 @@ import { z } from "zod";
 async function findOutboundTrunkByPhone(
   phoneNumber: string
 ): Promise<string | null> {
-  const voiceServiceUrl = process.env.VOICE_SERVICE_URL;
-  if (!voiceServiceUrl) {
-    console.warn("[Voice] VOICE_SERVICE_URL not configured");
-    return null;
-  }
-
   try {
     const response = await fetch(
-      `${voiceServiceUrl}/api/telephony/trunks/outbound`
+      `${VOICE_SERVICE_URL}/api/telephony/trunks/outbound`
     );
     if (!response.ok) {
       console.error(`[Voice] Failed to fetch outbound trunks: ${response.status}`);
