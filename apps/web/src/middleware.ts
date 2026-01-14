@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
+  "/api/voice/webhook(.*)",  // LiveKit webhooks for call tracking
   "/api/health",
   "/api/public(.*)",
   "/api/cron(.*)",

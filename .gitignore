@@ -51,3 +51,6 @@ reference-voice/
 .worktrees/
 .automaker/
 .claude_settings.json
+
+# Vercel env files with secrets
+.env.vercel*
