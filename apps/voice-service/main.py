@@ -1706,7 +1706,7 @@ def test_outbound_call():
     Optional:
         - from_number: Caller ID (auto-selected from available DIDs if not provided)
         - trunk_id: LiveKit outbound trunk ID (auto-selected if not provided)
-        - agent_name: Agent to handle the call (default: test-agent)
+        - agent_name: Agent to handle the call (default: epic-voice-agent)
         - agent_config_id: Agent configuration ID
         - organization_id: Organization ID for tracking
     """
@@ -1767,8 +1767,8 @@ def test_outbound_call():
         if not from_number.startswith('+'):
             from_number = '+' + from_number
 
-        # Get agent name (default to test-agent)
-        agent_name = data.get('agent_name', 'test-agent')
+        # Get agent name (default to epic-voice-agent - our deployed agent)
+        agent_name = data.get('agent_name', 'epic-voice-agent')
 
         # Make the outbound call
         result = asyncio.run(telephony_manager.create_outbound_call(
