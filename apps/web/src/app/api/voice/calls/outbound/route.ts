@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     const livekitUrl = process.env.LIVEKIT_URL;
-    const sipTrunkId = process.env.LIVEKIT_SIP_TRUNK_ID;
 
     if (!apiKey || !apiSecret || !livekitUrl) {
       return NextResponse.json(
@@ -109,9 +108,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Get SIP trunk ID from phone mapping (organization's outbound trunk)
+    const sipTrunkId = phoneMapping?.livekitTrunkId;
+
     // If no SIP trunk configured, return early with mock mode
     if (!sipTrunkId) {
-      console.log(`[Voice] Mock mode: Would call ${formattedNumber} from agent ${agent.name}`);
+      console.log(`[Voice] Mock mode: No SIP trunk configured for organization. Would call ${formattedNumber} from agent ${agent.name}`);
 
       // Update call to in-progress for mock mode
       await prisma.callLog.update({
