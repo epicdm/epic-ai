@@ -20,6 +20,8 @@ const updateConfigSchema = z.object({
 /**
  * GET /api/admin/config/[key]
  * Get a specific configuration by key
+ * Query params:
+ *   - reveal=true: Return the actual value for encrypted configs (for verification)
  */
 export async function GET(
   request: NextRequest,
@@ -32,6 +34,8 @@ export async function GET(
     }
 
     const { key } = await params;
+    const { searchParams } = new URL(request.url);
+    const reveal = searchParams.get("reveal") === "true";
 
     const config = await prisma.systemConfig.findUnique({
       where: { key },
@@ -44,12 +48,27 @@ export async function GET(
       );
     }
 
-    // Mask encrypted values
+    // If reveal=true, return actual value; otherwise mask encrypted values
+    const shouldMask = config.isEncrypted && config.value && !reveal;
+
+    // Log reveal action for audit purposes
+    if (reveal && config.isEncrypted) {
+      await prisma.adminAuditLog.create({
+        data: {
+          userId,
+          action: "reveal",
+          resource: "system_config",
+          resourceId: config.id,
+          newValue: { key, revealed: true },
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       config: {
         ...config,
-        value: config.isEncrypted && config.value ? "••••••••" : config.value,
+        value: shouldMask ? "••••••••" : config.value,
         hasValue: !!config.value,
       },
     });

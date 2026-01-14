@@ -58,11 +58,12 @@ interface PlatformStats {
  * Fetch LiveKit statistics
  */
 async function getLiveKitStats(): Promise<LiveKitStats> {
-  const livekitUrl = process.env.LIVEKIT_URL;
-  const apiKey = process.env.LIVEKIT_API_KEY;
-  const apiSecret = process.env.LIVEKIT_API_SECRET;
+  // Trim whitespace/newlines from env vars
+  const rawUrl = process.env.LIVEKIT_URL?.trim();
+  const apiKey = process.env.LIVEKIT_API_KEY?.trim();
+  const apiSecret = process.env.LIVEKIT_API_SECRET?.trim();
 
-  if (!livekitUrl || !apiKey || !apiSecret) {
+  if (!rawUrl || !apiKey || !apiSecret) {
     return {
       connected: false,
       activeRooms: 0,
@@ -71,6 +72,10 @@ async function getLiveKitStats(): Promise<LiveKitStats> {
       error: "LiveKit not configured",
     };
   }
+
+  // RoomServiceClient needs HTTP URL, not WebSocket
+  // Convert wss:// to https:// and ws:// to http://
+  const livekitUrl = rawUrl.replace(/^wss:\/\//, "https://").replace(/^ws:\/\//, "http://");
 
   try {
     const roomService = new RoomServiceClient(livekitUrl, apiKey, apiSecret);

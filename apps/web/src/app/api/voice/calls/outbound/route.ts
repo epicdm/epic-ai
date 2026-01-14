@@ -16,6 +16,13 @@ const VOICE_SERVICE_URL =
   "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
 
 /**
+ * Normalize phone number to digits only for comparison
+ */
+function normalizePhoneDigits(phone: string): string {
+  return phone.replace(/[^0-9]/g, "");
+}
+
+/**
  * Find the outbound trunk ID for a given phone number
  * Queries the voice service API to find the matching outbound trunk
  */
@@ -36,18 +43,18 @@ async function findOutboundTrunkByPhone(
       return null;
     }
 
-    // Normalize the phone number for comparison
-    const normalizedPhone = phoneNumber.replace(/[^0-9+]/g, "");
+    // Normalize to digits only for comparison (handles +1 vs 1 vs no prefix)
+    const normalizedPhone = normalizePhoneDigits(phoneNumber);
 
-    // Find trunk that has this phone number
+    // Find trunk that has this phone number (compare digits only)
     for (const trunk of data.trunks) {
-      if (trunk.numbers?.some((n: string) => n === normalizedPhone)) {
-        console.log(`[Voice] Found outbound trunk ${trunk.trunk_id} for ${normalizedPhone}`);
+      if (trunk.numbers?.some((n: string) => normalizePhoneDigits(n) === normalizedPhone)) {
+        console.log(`[Voice] Found outbound trunk ${trunk.trunk_id} for ${phoneNumber}`);
         return trunk.trunk_id;
       }
     }
 
-    console.warn(`[Voice] No outbound trunk found for ${normalizedPhone}`);
+    console.warn(`[Voice] No outbound trunk found for ${phoneNumber} (normalized: ${normalizedPhone})`);
     return null;
   } catch (error) {
     console.error("[Voice] Error fetching outbound trunks:", error);

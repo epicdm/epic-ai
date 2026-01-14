@@ -89,6 +89,8 @@ export function AdminPanel() {
   const [saving, setSaving] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
+  const [revealedValues, setRevealedValues] = useState<Record<string, string>>({});
+  const [revealingKey, setRevealingKey] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState("overview");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -193,6 +195,40 @@ export function AdminPanel() {
       setError("Failed to save configuration");
     } finally {
       setSaving(null);
+    }
+  }
+
+  async function toggleRevealValue(key: string) {
+    // If already showing, just hide it
+    if (showValues[key]) {
+      setShowValues((prev) => ({ ...prev, [key]: false }));
+      return;
+    }
+
+    // If we already fetched the revealed value, just show it
+    if (revealedValues[key]) {
+      setShowValues((prev) => ({ ...prev, [key]: true }));
+      return;
+    }
+
+    // Fetch the actual value from API
+    setRevealingKey(key);
+    try {
+      const res = await fetch(`/api/admin/config/${key}?reveal=true`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.config?.value) {
+          setRevealedValues((prev) => ({ ...prev, [key]: data.config.value }));
+          setShowValues((prev) => ({ ...prev, [key]: true }));
+        }
+      } else {
+        setError("Failed to reveal value");
+      }
+    } catch (err) {
+      console.error("[Admin] Error revealing value:", err);
+      setError("Failed to reveal value");
+    } finally {
+      setRevealingKey(null);
     }
   }
 
@@ -537,9 +573,11 @@ export function AdminPanel() {
                               value={
                                 editValues[config.key] !== undefined
                                   ? editValues[config.key]
-                                  : config.hasValue
-                                    ? config.value
-                                    : ""
+                                  : showValues[config.key] && revealedValues[config.key]
+                                    ? revealedValues[config.key]
+                                    : config.hasValue
+                                      ? config.value
+                                      : ""
                               }
                               placeholder={config.hasValue ? "••••••••" : "Not set"}
                               onChange={(e) =>
@@ -555,12 +593,8 @@ export function AdminPanel() {
                                 isIconOnly
                                 size="sm"
                                 variant="flat"
-                                onPress={() =>
-                                  setShowValues((prev) => ({
-                                    ...prev,
-                                    [config.key]: !prev[config.key],
-                                  }))
-                                }
+                                isLoading={revealingKey === config.key}
+                                onPress={() => toggleRevealValue(config.key)}
                               >
                                 {showValues[config.key] ? (
                                   <EyeOff className="w-4 h-4" />

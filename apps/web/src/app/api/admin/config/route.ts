@@ -38,7 +38,7 @@ const DEFAULT_CONFIGS = [
     key: "magnus_api_url",
     category: "magnus",
     description: "MagnusBilling API URL",
-    value: process.env.MAGNUS_API_URL || "",
+    value: process.env.MAGNUS_BASE_URL || process.env.MAGNUS_API_URL || "",
     isEncrypted: false,
   },
   {
@@ -52,7 +52,7 @@ const DEFAULT_CONFIGS = [
     key: "magnus_api_secret",
     category: "magnus",
     description: "MagnusBilling API secret",
-    value: process.env.MAGNUS_API_SECRET || "",
+    value: process.env.MAGNUS_SECRET_KEY || process.env.MAGNUS_API_SECRET || "",
     isEncrypted: true,
   },
   // SIP Settings
