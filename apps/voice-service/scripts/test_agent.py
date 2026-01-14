@@ -18,14 +18,8 @@ import logging
 import psycopg2
 from typing import Optional, Dict, Any
 
-from livekit.agents import (
-    AutoSubscribe,
-    JobContext,
-    JobProcess,
-    WorkerOptions,
-    cli,
-)
-from livekit.agents.voice import Agent
+from livekit import agents
+from livekit.agents import AgentSession, Agent
 from livekit.plugins import openai, silero
 
 # Configure logging
@@ -149,7 +143,7 @@ def fetch_agent_config(agent_id: str) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
-def parse_job_metadata(ctx: JobContext) -> Dict[str, str]:
+def parse_job_metadata(ctx: agents.JobContext) -> Dict[str, str]:
     """
     Parse metadata from the job context to extract agent_id and other info
 
@@ -238,13 +232,13 @@ def create_llm(config: Optional[Dict[str, Any]]):
     )
 
 
-def prewarm(proc: JobProcess):
+def prewarm(proc: agents.JobProcess):
     """Prewarm resources for faster agent startup"""
     logger.info("Prewarming VAD model...")
     proc.userdata["vad"] = silero.VAD.load()
 
 
-async def entrypoint(ctx: JobContext):
+async def entrypoint(ctx: agents.JobContext):
     """Main entrypoint for handling voice calls"""
     logger.info(f"Agent connecting to room: {ctx.room.name}")
 
@@ -266,7 +260,7 @@ async def entrypoint(ctx: JobContext):
         vad = silero.VAD.load()
 
     # Connect to the room
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    await ctx.connect(auto_subscribe=agents.AutoSubscribe.AUDIO_ONLY)
 
     # Log room info
     logger.info(f"Connected to room: {ctx.room.name}")
@@ -289,23 +283,29 @@ async def entrypoint(ctx: JobContext):
     else:
         logger.info("Using default agent configuration")
 
-    # Create the voice agent with per-agent configuration
-    agent = Agent(
-        instructions=system_prompt,
-        vad=vad,
+    # Create the AgentSession with configured plugins
+    logger.info("Creating agent session...")
+    session = AgentSession(
         stt=create_stt(agent_config),
         llm=create_llm(agent_config),
         tts=create_tts(agent_config),
+        vad=vad,
     )
 
-    # Start the agent session
+    # Start the agent session with the room and instructions
     logger.info("Starting agent session...")
-    session = await agent.start(ctx.room, participant)
+    await session.start(
+        room=ctx.room,
+        agent=Agent(instructions=system_prompt),
+    )
 
     # Generate initial greeting
-    await session.generate_reply()
+    logger.info("Generating initial greeting...")
+    await session.generate_reply(
+        instructions="Greet the caller warmly and ask how you can help them today."
+    )
 
-    # Keep the session running
+    # Keep the session running until the call ends
     logger.info("Agent is now handling the call...")
     await session.wait()
 
@@ -324,13 +324,14 @@ def main():
     else:
         logger.info("Database connection configured - per-agent config enabled")
 
-    options = WorkerOptions(
+    # Use WorkerOptions with the new API
+    options = agents.WorkerOptions(
         entrypoint_fnc=entrypoint,
         prewarm_fnc=prewarm,
         agent_name=AGENT_NAME,
     )
 
-    cli.run_app(options)
+    agents.cli.run_app(options)
 
 
 if __name__ == "__main__":
