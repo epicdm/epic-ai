@@ -342,21 +342,12 @@ class LiveKitTelephonyManager:
         lkapi = api.LiveKitAPI()
 
         try:
-            # Build the update object
-            update = SIPInboundTrunkUpdate()
-
-            if allowed_addresses is not None:
-                # allowed_addresses uses ListUpdate wrapper for partial updates
-                # Use the 'set' field to replace the entire list
-                addr_update = models.ListUpdate()
-                addr_update.set.extend(allowed_addresses)
-                update.allowed_addresses.CopyFrom(addr_update)
-
-            if name is not None:
-                update.name = name
-
-            # Pass trunk_id and update as separate positional arguments
-            result = await lkapi.sip.update_sip_inbound_trunk(trunk_id, update)
+            # Use the update_inbound_trunk_fields method which handles ListUpdate internally
+            result = await lkapi.sip.update_inbound_trunk_fields(
+                trunk_id,
+                allowed_addresses=allowed_addresses,
+                name=name
+            )
 
             return {
                 'success': True,
