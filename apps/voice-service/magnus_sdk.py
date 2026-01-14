@@ -298,6 +298,7 @@ class MagnusSDK:
             "port": "5060",
             "link_sms": "",  # Required field - empty string for no SMS linking
             "sms_res": "",   # Required field - empty string for no SMS resource
+            "language": "en",  # Required field - default to English
         }
 
         result = self._make_request("save", "trunk", trunk_data)
