@@ -1522,7 +1522,7 @@ def magnus_setup():
         if livekit_trunk:
             result["trunk"] = {"id": str(livekit_trunk.get("id")), "code": "livekit_sip", "existing": True}
         else:
-            # Create LiveKit trunk
+            # Create LiveKit trunk with all required fields matching existing trunks
             livekit_sip_domain = os.environ.get("LIVEKIT_SIP_DOMAIN", "3m4yki5jezn.sip.livekit.cloud")
             trunk_data = {
                 "id": "0",
@@ -1531,20 +1531,37 @@ def magnus_setup():
                 "host": livekit_sip_domain,
                 "fromuser": "",
                 "fromdomain": livekit_sip_domain,
+                "user": "",  # Required field
                 "secret": "",
-                "providertech": "SIP",
+                "providertech": "sip",
+                "providerip": "livekit_sip",  # Required - usually matches trunkcode
                 "status": "1",
-                "context": "default",
+                "context": "billing",
                 "qualify": "yes",
                 "type": "peer",
-                "insecure": "invite,port",
+                "insecure": "port,invite",
                 "nat": "force_rport,comedia",
-                "dtmfmode": "rfc2833",
-                "allow": "opus,g729,alaw,ulaw",
+                "dtmfmode": "RFC2833",
+                "allow": "opus,alaw,ulaw",
                 "disallow": "all",
-                "transport": "udp,tcp",
                 "directmedia": "no",
-                "port": "5060"
+                "port": "5060",
+                "transport": "",
+                "encryption": "",
+                "register": "0",
+                "register_string": "",
+                "sendrpid": "no",
+                "language": "",
+                "sip_config": "",
+                "trunkprefix": "",
+                "removeprefix": "",
+                "addparameter": "",
+                "allow_error": "0",
+                "short_time_call": "0",
+                "cnl": "0",
+                "cid_add": "",
+                "cid_remove": "",
+                "block_cid": ""
             }
             create_result = sdk._make_request("save", "trunk", trunk_data)
             result["steps"].append({"step": "create_trunk", "result": create_result})
