@@ -310,7 +310,6 @@ async def entrypoint(ctx: agents.JobContext):
         # Performance optimizations
         preemptive_generation=True,      # Start generating before user finishes speaking
         resume_false_interruption=True,  # Handle mid-speech interruptions better
-        transcription_enabled=True,      # Enable real-time transcription
     )
 
     # Setup metrics collection for performance monitoring
