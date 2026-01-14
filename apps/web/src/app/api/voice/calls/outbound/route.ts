@@ -10,6 +10,52 @@ import { getUserOrganization } from "@/lib/sync-user";
 import { AccessToken, SipClient } from "livekit-server-sdk";
 import { z } from "zod";
 
+/**
+ * Find the outbound trunk ID for a given phone number
+ * Queries the voice service API to find the matching outbound trunk
+ */
+async function findOutboundTrunkByPhone(
+  phoneNumber: string
+): Promise<string | null> {
+  const voiceServiceUrl = process.env.VOICE_SERVICE_URL;
+  if (!voiceServiceUrl) {
+    console.warn("[Voice] VOICE_SERVICE_URL not configured");
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${voiceServiceUrl}/api/telephony/trunks/outbound`
+    );
+    if (!response.ok) {
+      console.error(`[Voice] Failed to fetch outbound trunks: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data.success || !data.trunks) {
+      return null;
+    }
+
+    // Normalize the phone number for comparison
+    const normalizedPhone = phoneNumber.replace(/[^0-9+]/g, "");
+
+    // Find trunk that has this phone number
+    for (const trunk of data.trunks) {
+      if (trunk.numbers?.some((n: string) => n === normalizedPhone)) {
+        console.log(`[Voice] Found outbound trunk ${trunk.trunk_id} for ${normalizedPhone}`);
+        return trunk.trunk_id;
+      }
+    }
+
+    console.warn(`[Voice] No outbound trunk found for ${normalizedPhone}`);
+    return null;
+  } catch (error) {
+    console.error("[Voice] Error fetching outbound trunks:", error);
+    return null;
+  }
+}
+
 const outboundCallSchema = z.object({
   // Required: phone number to call
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
@@ -108,12 +154,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get SIP trunk ID from phone mapping (organization's outbound trunk)
-    const sipTrunkId = phoneMapping?.livekitTrunkId;
+    // Look up the outbound trunk for the organization's phone number
+    // Note: Outbound trunks are different from inbound trunks - we need to find the right one
+    let sipTrunkId: string | null = null;
+    const callerNumber = phoneMapping?.phoneNumber;
+
+    if (callerNumber) {
+      sipTrunkId = await findOutboundTrunkByPhone(callerNumber);
+    }
 
     // If no SIP trunk configured, return early with mock mode
     if (!sipTrunkId) {
-      console.log(`[Voice] Mock mode: No SIP trunk configured for organization. Would call ${formattedNumber} from agent ${agent.name}`);
+      console.log(`[Voice] Mock mode: No outbound SIP trunk found for ${callerNumber || 'unknown'}. Would call ${formattedNumber} from agent ${agent.name}`);
 
       // Update call to in-progress for mock mode
       await prisma.callLog.update({
