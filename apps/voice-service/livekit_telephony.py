@@ -18,7 +18,9 @@ from livekit.protocol.sip import (
     ListSIPDispatchRuleRequest,
     DeleteSIPTrunkRequest,
     DeleteSIPDispatchRuleRequest,
+    UpdateSIPInboundTrunkRequest,
     SIPInboundTrunkInfo,
+    SIPInboundTrunkUpdate,
     SIPOutboundTrunkInfo,
     SIPDispatchRuleInfo,
     SIPDispatchRule,
@@ -57,7 +59,8 @@ class LiveKitTelephonyManager:
         self,
         phone_numbers: List[str],
         user_id: Optional[str] = None,
-        organization_id: Optional[str] = None
+        organization_id: Optional[str] = None,
+        allowed_addresses: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Create SIP Inbound Trunk for receiving calls to phone numbers
@@ -66,6 +69,7 @@ class LiveKitTelephonyManager:
             phone_numbers: List of phone numbers (e.g., ['+15105550100'])
             user_id: Optional user ID for multi-tenant tracking
             organization_id: Optional organization ID
+            allowed_addresses: List of IP addresses/CIDRs allowed to send SIP traffic
 
         Returns:
             dict: {'success': bool, 'trunk_id': str, 'error': str}
@@ -79,10 +83,16 @@ class LiveKitTelephonyManager:
         try:
             trunk_name = f"Org {organization_id[:8]} Inbound" if organization_id else "Inbound Trunk"
 
+            # Get Magnus SIP server IP for allowed_addresses
+            # Default to Magnus server IP if not explicitly provided
+            if allowed_addresses is None:
+                magnus_sip_ip = os.getenv("MAGNUS_SIP_IP", "157.245.83.64")
+                allowed_addresses = [magnus_sip_ip]
+
             trunk = SIPInboundTrunkInfo(
                 name=trunk_name,
                 numbers=phone_numbers,
-                allowed_addresses=[],
+                allowed_addresses=allowed_addresses,
                 allowed_numbers=[],
                 krisp_enabled=True,
                 headers={
@@ -303,6 +313,60 @@ class LiveKitTelephonyManager:
             return {
                 'success': False,
                 'trunks': [],
+                'error': str(e)
+            }
+        finally:
+            await lkapi.aclose()
+
+    async def update_inbound_trunk(
+        self,
+        trunk_id: str,
+        allowed_addresses: Optional[List[str]] = None,
+        name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Update an existing SIP inbound trunk's allowed_addresses
+
+        Args:
+            trunk_id: The trunk ID to update
+            allowed_addresses: List of IP addresses/CIDRs allowed to send SIP traffic
+            name: Optional new name for the trunk
+
+        Returns:
+            dict: {'success': bool, 'trunk_id': str, 'error': str}
+        """
+        error = self._check_credentials()
+        if error:
+            return {**error, 'trunk_id': None}
+
+        lkapi = api.LiveKitAPI()
+
+        try:
+            # Build the update object with only the fields we want to change
+            update = SIPInboundTrunkUpdate(
+                sip_trunk_id=trunk_id,
+            )
+
+            if allowed_addresses is not None:
+                update.allowed_addresses = allowed_addresses
+
+            if name is not None:
+                update.name = name
+
+            request = UpdateSIPInboundTrunkRequest(update=update)
+            result = await lkapi.sip.update_sip_inbound_trunk(request)
+
+            return {
+                'success': True,
+                'trunk_id': result.sip_trunk_id,
+                'allowed_addresses': list(result.allowed_addresses) if result.allowed_addresses else [],
+                'error': None
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'trunk_id': None,
                 'error': str(e)
             }
         finally:

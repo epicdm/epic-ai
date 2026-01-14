@@ -207,6 +207,74 @@ def create_inbound_trunk():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/telephony/trunks/inbound/<trunk_id>', methods=['PATCH'])
+def update_inbound_trunk(trunk_id):
+    """Update an inbound SIP trunk's allowed_addresses"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        data = request.get_json() or {}
+        allowed_addresses = data.get('allowed_addresses')
+        name = data.get('name')
+
+        result = asyncio.run(telephony_manager.update_inbound_trunk(
+            trunk_id=trunk_id,
+            allowed_addresses=allowed_addresses,
+            name=name
+        ))
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error updating inbound trunk: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/telephony/trunks/inbound/fix-allowed-addresses', methods=['POST'])
+def fix_all_inbound_trunks():
+    """Fix all inbound trunks by adding Magnus SIP server IP to allowed_addresses"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        # Get Magnus SIP IP from environment or use default
+        magnus_sip_ip = os.getenv("MAGNUS_SIP_IP", "157.245.83.64")
+
+        # List all inbound trunks
+        list_result = asyncio.run(telephony_manager.list_inbound_trunks())
+        if not list_result['success']:
+            return jsonify({"error": "Failed to list trunks", "details": list_result}), 500
+
+        trunks = list_result.get('trunks', [])
+        results = []
+
+        for trunk in trunks:
+            trunk_id = trunk['trunk_id']
+            # Update each trunk with the Magnus SIP IP
+            update_result = asyncio.run(telephony_manager.update_inbound_trunk(
+                trunk_id=trunk_id,
+                allowed_addresses=[magnus_sip_ip]
+            ))
+            results.append({
+                'trunk_id': trunk_id,
+                'name': trunk.get('name'),
+                'success': update_result['success'],
+                'error': update_result.get('error'),
+                'allowed_addresses': update_result.get('allowed_addresses', [])
+            })
+
+        success_count = sum(1 for r in results if r['success'])
+        return jsonify({
+            "success": True,
+            "message": f"Updated {success_count}/{len(trunks)} trunks with allowed_addresses=[{magnus_sip_ip}]",
+            "magnus_sip_ip": magnus_sip_ip,
+            "results": results
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error fixing inbound trunks: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/telephony/trunks/outbound', methods=['GET'])
 def list_outbound_trunks():
     """List all outbound SIP trunks"""
