@@ -18,7 +18,6 @@ from livekit.protocol.sip import (
     ListSIPDispatchRuleRequest,
     DeleteSIPTrunkRequest,
     DeleteSIPDispatchRuleRequest,
-    UpdateSIPInboundTrunkRequest,
     SIPInboundTrunkInfo,
     SIPInboundTrunkUpdate,
     SIPOutboundTrunkInfo,
@@ -356,12 +355,8 @@ class LiveKitTelephonyManager:
             if name is not None:
                 update.name = name
 
-            # The trunk_id goes in the request, not the update object
-            request = UpdateSIPInboundTrunkRequest(
-                sip_trunk_id=trunk_id,
-                update=update
-            )
-            result = await lkapi.sip.update_sip_inbound_trunk(request)
+            # Pass trunk_id and update as separate positional arguments
+            result = await lkapi.sip.update_sip_inbound_trunk(trunk_id, update)
 
             return {
                 'success': True,
