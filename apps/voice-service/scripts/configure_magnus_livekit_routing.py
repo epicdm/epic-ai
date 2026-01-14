@@ -209,7 +209,7 @@ def create_did_destination(did_id: str, trunk_id: str):
             "id": dest_id,
             "id_did": did_id,
             "id_trunk": trunk_id,
-            "voip_call": "0",  # Not routing to local SIP
+            "voip_call": "9",  # External SIP host routing (LiveKit)
             "id_sip": "",
             "destination": f"SIP/{DID_CLEAN}@{LIVEKIT_SIP_DOMAIN}",
             "priority": "1",
@@ -221,7 +221,7 @@ def create_did_destination(did_id: str, trunk_id: str):
             "id": "0",
             "id_did": did_id,
             "id_trunk": trunk_id,
-            "voip_call": "0",
+            "voip_call": "9",  # External SIP host routing (LiveKit)
             "id_sip": "",
             "destination": f"SIP/{DID_CLEAN}@{LIVEKIT_SIP_DOMAIN}",
             "priority": "1",

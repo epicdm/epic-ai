@@ -1147,7 +1147,7 @@ class MagnusSDK:
             logger.info(f"Created DID ID: {did_id}")
 
             # Step 6: Create DID destination (route to LiveKit SIP via trunk)
-            # NOTE: voip_call=0 means route externally, not to local SIP user
+            # NOTE: voip_call=9 means external SIP host routing (required for LiveKit)
             # The id_trunk field routes through the LiveKit SIP trunk
             logger.info(f"Creating DID destination for DID {did} -> LiveKit {self.livekit_sip_domain}")
 
@@ -1160,7 +1160,7 @@ class MagnusSDK:
                 "id_user": user_id,  # Foreign key to Magnus user table (required)
                 "user": username,    # Username string (Magnus expects both fields)
                 "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
-                "voip_call": "0",  # Route externally, not to local VoIP
+                "voip_call": "9",  # External SIP host routing (LiveKit)
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1",
@@ -1498,7 +1498,7 @@ class MagnusSDK:
             logger.info(f"Created DID ID: {did_id}")
 
             # Step 3: Create DID destination (route to LiveKit SIP via trunk)
-            # NOTE: voip_call=0 means route externally, not to local SIP user
+            # NOTE: voip_call=9 means external SIP host routing (required for LiveKit)
             # The id_trunk field routes through the LiveKit SIP trunk
             logger.info(f"Creating DID destination: DID {did} -> LiveKit {self.livekit_sip_domain}")
 
@@ -1511,7 +1511,7 @@ class MagnusSDK:
                 "id_user": magnus_user_id,  # Foreign key to Magnus user table (required)
                 "user": sip_username,        # Username string (Magnus expects both fields)
                 "id_trunk": trunk_id,  # Route through LiveKit SIP trunk
-                "voip_call": "0",  # Route externally, not to local VoIP
+                "voip_call": "9",  # External SIP host routing (LiveKit)
                 "id_sip": "",      # No local SIP account
                 "destination": f"SIP/{did}@{self.livekit_sip_domain}",
                 "priority": "1",
