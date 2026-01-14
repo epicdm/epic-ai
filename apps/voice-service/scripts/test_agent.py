@@ -15,12 +15,14 @@ Run with:
 import os
 import json
 import logging
+import time
 import psycopg2
 from typing import Optional, Dict, Any
 
 from livekit import agents
-from livekit.agents import AgentSession, Agent
-from livekit.plugins import openai, silero
+from livekit.agents import AgentSession, Agent, metrics
+from livekit.agents.voice import MetricsCollectedEvent
+from livekit.plugins import openai, silero, deepgram
 
 # Configure logging
 logging.basicConfig(
@@ -213,8 +215,23 @@ def create_tts(config: Optional[Dict[str, Any]]):
 
 
 def create_stt(config: Optional[Dict[str, Any]]):
-    """Create STT instance based on agent config"""
-    # For now, always use OpenAI STT (deepgram requires separate API key)
+    """Create STT instance based on agent config
+
+    Uses Deepgram by default for lower latency (~150-300ms vs ~500-800ms for OpenAI)
+    Falls back to OpenAI if Deepgram API key is not available
+    """
+    # Check if Deepgram API key is available
+    if os.environ.get('DEEPGRAM_API_KEY'):
+        provider = (config.get("stt_provider", "deepgram") if config else "deepgram").lower()
+
+        if provider == "deepgram":
+            model = config.get("stt_model", "nova-2") if config else "nova-2"
+            language = config.get("stt_language", "multi") if config else "multi"
+            logger.info(f"Using Deepgram STT (model={model}, language={language})")
+            return deepgram.STT(model=model, language=language)
+
+    # Fallback to OpenAI STT
+    logger.info("Using OpenAI STT (Deepgram API key not available)")
     return openai.STT()
 
 
@@ -283,14 +300,45 @@ async def entrypoint(ctx: agents.JobContext):
     else:
         logger.info("Using default agent configuration")
 
-    # Create the AgentSession with configured plugins
-    logger.info("Creating agent session...")
+    # Create the AgentSession with configured plugins and performance optimizations
+    logger.info("Creating agent session with performance optimizations...")
     session = AgentSession(
         stt=create_stt(agent_config),
         llm=create_llm(agent_config),
         tts=create_tts(agent_config),
         vad=vad,
+        # Performance optimizations
+        preemptive_generation=True,      # Start generating before user finishes speaking
+        resume_false_interruption=True,  # Handle mid-speech interruptions better
+        transcription_enabled=True,      # Enable real-time transcription
     )
+
+    # Setup metrics collection for performance monitoring
+    usage_collector = metrics.UsageCollector()
+    call_start_time = time.time()
+
+    @session.on("metrics_collected")
+    def _on_metrics_collected(ev: MetricsCollectedEvent):
+        """Log metrics for each turn to help debug latency issues"""
+        metrics.log_metrics(ev.metrics)
+        usage_collector.collect(ev.metrics)
+
+        # Log detailed latency breakdown
+        m = ev.metrics
+        if hasattr(m, 'stt_duration') and hasattr(m, 'llm_ttft') and hasattr(m, 'tts_ttfb'):
+            logger.info(
+                f"[LATENCY] STT: {getattr(m, 'stt_duration', 0)*1000:.0f}ms | "
+                f"LLM TTFT: {getattr(m, 'llm_ttft', 0)*1000:.0f}ms | "
+                f"TTS TTFB: {getattr(m, 'tts_ttfb', 0)*1000:.0f}ms"
+            )
+
+    async def log_usage():
+        """Log usage summary when call ends"""
+        call_duration = time.time() - call_start_time
+        summary = usage_collector.get_summary()
+        logger.info(f"[CALL ENDED] Duration: {call_duration:.1f}s | Usage: {summary}")
+
+    ctx.add_shutdown_callback(log_usage)
 
     # Start the agent session with the room and instructions
     logger.info("Starting agent session...")
