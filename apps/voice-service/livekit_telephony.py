@@ -342,15 +342,17 @@ class LiveKitTelephonyManager:
         lkapi = api.LiveKitAPI()
 
         try:
-            # Build the update object with only the fields we want to change
-            update = SIPInboundTrunkUpdate()
+            # Build the update object
+            # For protobuf messages, we can pass repeated fields in the constructor
+            update_kwargs = {}
 
             if allowed_addresses is not None:
-                # Protobuf repeated fields use extend() instead of assignment
-                update.allowed_addresses.extend(allowed_addresses)
+                update_kwargs['allowed_addresses'] = allowed_addresses
 
             if name is not None:
-                update.name = name
+                update_kwargs['name'] = name
+
+            update = SIPInboundTrunkUpdate(**update_kwargs)
 
             # The trunk_id goes in the request, not the update object
             request = UpdateSIPInboundTrunkRequest(
