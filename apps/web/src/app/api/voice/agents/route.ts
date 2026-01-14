@@ -420,9 +420,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getCurrentOrganization();
+    // Get organization with fallback
+    let org = await getCurrentOrganization();
     if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      // Fallback: get first membership's organization
+      const userWithMemberships = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { memberships: { include: { organization: true }, take: 1 } }
+      });
+      if (userWithMemberships?.memberships?.[0]?.organization) {
+        org = userWithMemberships.memberships[0].organization;
+        console.log("[agents POST] Using fallback org:", org.id, org.name);
+      } else {
+        return NextResponse.json({ error: "No organization" }, { status: 404 });
+      }
     }
 
     // Get user info for provisioning

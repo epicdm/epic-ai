@@ -53,16 +53,29 @@ export async function GET(request: NextRequest) {
 
     const org = await getCurrentOrganization();
     console.log("[phone-numbers API] getCurrentOrganization returned:", org?.id, org?.name);
-    if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
-    }
 
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get("isActive");
     const agentId = searchParams.get("agentId");
 
+    // Build query - handle case where getCurrentOrganization() returns null
+    let orgIds: string[] = [];
+    let queryOrgName = "";
+
+    if (org) {
+      orgIds = [org.id];
+      queryOrgName = org.name;
+    } else if (user?.memberships && user.memberships.length > 0) {
+      // Fallback: query across all user's organizations
+      console.log("[phone-numbers API] Using fallback - querying all user orgs");
+      orgIds = user.memberships.map(m => m.organizationId);
+      queryOrgName = user.memberships.map(m => m.organization.name).join(", ");
+    } else {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
+    }
+
     const where: Record<string, unknown> = {
-      organizationId: org.id,
+      organizationId: orgIds.length === 1 ? orgIds[0] : { in: orgIds },
     };
 
     if (isActive !== null) {
@@ -85,9 +98,12 @@ export async function GET(request: NextRequest) {
     });
     console.log("[phone-numbers API] found:", phoneNumbers.length, "numbers");
 
-    // Check if Magnus is configured
+    // Check if Magnus is configured (for any of the user's orgs)
     const sipConfig = await prisma.sIPConfig.findFirst({
-      where: { organizationId: org.id, provider: "magnus" },
+      where: {
+        organizationId: orgIds.length === 1 ? orgIds[0] : { in: orgIds },
+        provider: "magnus"
+      },
     });
 
     return NextResponse.json({
@@ -95,9 +111,9 @@ export async function GET(request: NextRequest) {
       magnusConfigured: !!sipConfig,
       // Debug info (temporary)
       _debug: {
-        orgId: org.id,
-        orgName: org.name,
-        queryOrg: where.organizationId,
+        orgIds,
+        orgName: queryOrgName,
+        usedFallback: !org,
       },
     });
   } catch (error) {
@@ -119,9 +135,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getCurrentOrganization();
+    // Get organization with fallback
+    let org = await getCurrentOrganization();
     if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      // Fallback: get first membership's organization
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { memberships: { include: { organization: true }, take: 1 } }
+      });
+      if (user?.memberships?.[0]?.organization) {
+        org = user.memberships[0].organization;
+        console.log("[phone-numbers POST] Using fallback org:", org.id, org.name);
+      } else {
+        return NextResponse.json({ error: "No organization" }, { status: 404 });
+      }
     }
 
     const body = await request.json();
@@ -215,9 +242,20 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const org = await getCurrentOrganization();
+    // Get organization with fallback
+    let org = await getCurrentOrganization();
     if (!org) {
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      // Fallback: get first membership's organization
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { memberships: { include: { organization: true }, take: 1 } }
+      });
+      if (user?.memberships?.[0]?.organization) {
+        org = user.memberships[0].organization;
+        console.log("[phone-numbers PATCH] Using fallback org:", org.id, org.name);
+      } else {
+        return NextResponse.json({ error: "No organization" }, { status: 404 });
+      }
     }
 
     const body = await request.json();
