@@ -2222,3 +2222,43 @@ model VoiceUsageRecord {
   @@index([periodStart])
   @@map("voice_usage_records")
 }
+
+// ============================================
+// SYSTEM: Platform-wide Admin Configuration
+// ============================================
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique  // Config key identifier
+  value       String   @db.Text // Config value (may be JSON or encrypted)
+  category    String   // Category: livekit, magnus, sip, api_keys, general
+  description String?  @db.Text // Human-readable description
+  isEncrypted Boolean  @default(false) @map("is_encrypted") // Whether value is encrypted
+  isActive    Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("system_configs")
+}
+
+// Admin audit log for tracking changes
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  action      String   // create, update, delete
+  resource    String   // system_config, etc.
+  resourceId  String?  @map("resource_id")
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([resource])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}
