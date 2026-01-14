@@ -386,6 +386,35 @@ def delete_dispatch_rule(rule_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/telephony/dispatch-rules/migrate', methods=['POST'])
+def migrate_dispatch_rules():
+    """
+    Migrate dispatch rules to use the correct agent_name.
+
+    This fixes rules that were created with the voice agent's display name
+    instead of the LiveKit worker's registered agent name (epic-voice-agent).
+    """
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        data = request.get_json() or {}
+        target_agent_name = data.get('target_agent_name', 'epic-voice-agent')
+
+        logger.info(f"Starting dispatch rule migration to agent_name: {target_agent_name}")
+        result = asyncio.run(telephony_manager.migrate_dispatch_rules(target_agent_name))
+
+        if result['success']:
+            logger.info(f"Migration complete: {result['migrated']} migrated, {result['skipped']} skipped")
+            if result['errors']:
+                logger.warning(f"Migration errors: {result['errors']}")
+
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error migrating dispatch rules: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/telephony/call', methods=['POST'])
 def make_outbound_call():
     """Initiate an outbound call"""

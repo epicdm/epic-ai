@@ -414,14 +414,23 @@ class LiveKitTelephonyManager:
             request = ListSIPDispatchRuleRequest()
             result = await lkapi.sip.list_sip_dispatch_rule(request)
 
-            rules = [
-                {
+            rules = []
+            for rule in result.items:
+                rule_data = {
                     'rule_id': rule.sip_dispatch_rule_id,
                     'name': rule.name,
                     'trunk_ids': list(rule.trunk_ids)
                 }
-                for rule in result.items
-            ]
+                # Extract agent_name from room_config if available
+                if rule.room_config and rule.room_config.agents:
+                    agents = []
+                    for agent in rule.room_config.agents:
+                        agents.append({
+                            'agent_name': agent.agent_name,
+                            'metadata': agent.metadata
+                        })
+                    rule_data['agents'] = agents
+                rules.append(rule_data)
 
             return {
                 'success': True,
@@ -473,6 +482,147 @@ class LiveKitTelephonyManager:
 
         except Exception as e:
             return {'success': False, 'error': str(e)}
+        finally:
+            await lkapi.aclose()
+
+    async def migrate_dispatch_rules(self, target_agent_name: str = "epic-voice-agent") -> Dict[str, Any]:
+        """
+        Migrate dispatch rules to use the correct agent_name.
+
+        This fixes dispatch rules that were created with the voice agent's display name
+        instead of the LiveKit worker's registered agent name.
+
+        Args:
+            target_agent_name: The correct agent name to use (default: "epic-voice-agent")
+
+        Returns:
+            dict: {'success': bool, 'migrated': int, 'skipped': int, 'errors': list}
+        """
+        error = self._check_credentials()
+        if error:
+            return {**error, 'migrated': 0, 'skipped': 0, 'errors': []}
+
+        lkapi = api.LiveKitAPI()
+        migrated = 0
+        skipped = 0
+        errors = []
+
+        try:
+            # List all dispatch rules
+            request = ListSIPDispatchRuleRequest()
+            result = await lkapi.sip.list_sip_dispatch_rule(request)
+
+            for rule in result.items:
+                rule_id = rule.sip_dispatch_rule_id
+                current_agent_name = None
+
+                # Extract current agent_name from room_config
+                if rule.room_config and rule.room_config.agents:
+                    for agent in rule.room_config.agents:
+                        current_agent_name = agent.agent_name
+                        break
+
+                # Check if migration is needed
+                if current_agent_name == target_agent_name:
+                    skipped += 1
+                    continue
+
+                # Extract metadata from the old rule
+                old_metadata = {}
+                if rule.metadata:
+                    try:
+                        old_metadata = json.loads(rule.metadata)
+                    except json.JSONDecodeError:
+                        pass
+
+                phone_number = old_metadata.get('phone_number', 'unknown')
+                user_id = old_metadata.get('user_id', 'unknown')
+                org_id = old_metadata.get('org_id', 'unknown')
+                agent_id = old_metadata.get('agent_id', 'unknown')
+                trunk_ids = list(rule.trunk_ids) if rule.trunk_ids else []
+
+                # Try to extract phone from rule name if not in metadata
+                if phone_number == 'unknown' and rule.name:
+                    # Parse "Agent: xxx -> +1234567890" or similar
+                    import re
+                    phone_match = re.search(r'\+\d{10,}', rule.name)
+                    if phone_match:
+                        phone_number = phone_match.group()
+
+                try:
+                    # Delete the old rule
+                    delete_request = DeleteSIPDispatchRuleRequest(sip_dispatch_rule_id=rule_id)
+                    await lkapi.sip.delete_sip_dispatch_rule(delete_request)
+
+                    # Build room prefix from phone number
+                    phone_digits = phone_number.replace('+', '').replace('-', '').replace(' ', '') if phone_number != 'unknown' else 'unknown'
+                    room_prefix = f"sip-{phone_digits}__"
+
+                    # Create new dispatch rule with correct agent_name
+                    new_rule = SIPDispatchRule(
+                        dispatch_rule_individual=SIPDispatchRuleIndividual(
+                            room_prefix=room_prefix,
+                        )
+                    )
+
+                    room_config = RoomConfiguration()
+                    dispatch = room_config.agents.add()
+                    dispatch.agent_name = target_agent_name
+                    dispatch.metadata = json.dumps({
+                        "source": "inbound_call",
+                        "user_id": user_id,
+                        "org_id": org_id,
+                        "phone_number": phone_number,
+                        "agent_id": agent_id,
+                        "migrated_from": rule_id
+                    })
+
+                    dispatch_info = SIPDispatchRuleInfo(
+                        rule=new_rule,
+                        name=f"Route {phone_number} -> {target_agent_name}",
+                        trunk_ids=trunk_ids,
+                        hide_phone_number=False,
+                        metadata=json.dumps({
+                            "user_id": user_id,
+                            "org_id": org_id,
+                            "agent": target_agent_name,
+                            "phone_number": phone_number,
+                            "agent_id": agent_id,
+                            "migrated_from": rule_id
+                        }),
+                        attributes={
+                            "call_type": "inbound",
+                            "platform": "epic-ai",
+                            "user_id": user_id,
+                            "agent_id": agent_id,
+                        },
+                        room_config=room_config,
+                    )
+
+                    create_request = CreateSIPDispatchRuleRequest(dispatch_rule=dispatch_info)
+                    await lkapi.sip.create_sip_dispatch_rule(create_request)
+
+                    migrated += 1
+
+                except Exception as e:
+                    errors.append(f"Failed to migrate rule {rule_id}: {str(e)}")
+
+            return {
+                'success': True,
+                'migrated': migrated,
+                'skipped': skipped,
+                'errors': errors,
+                'error': None
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'migrated': migrated,
+                'skipped': skipped,
+                'errors': errors,
+                'error': str(e)
+            }
         finally:
             await lkapi.aclose()
 
