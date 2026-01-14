@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 
-// Voice service URL for Magnus Billing integration
-const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL || "http://localhost:5000";
+// Voice service URL - auto-detects production (Vercel) vs development
+const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL ||
+  (process.env.VERCEL ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice" : "http://localhost:5000");
 
 /**
  * GET /api/voice/phone-numbers/[id] - Get a specific phone number

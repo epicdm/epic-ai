@@ -8,8 +8,9 @@ import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 
-// Voice service URL for Magnus billing data
-const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL || "http://localhost:5000";
+// Voice service URL - auto-detects production (Vercel) vs development
+const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL ||
+  (process.env.VERCEL ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice" : "http://localhost:5000");
 
 /**
  * GET /api/cost - Get cost summary
