@@ -217,21 +217,20 @@ def create_tts(config: Optional[Dict[str, Any]]):
 def create_stt(config: Optional[Dict[str, Any]]):
     """Create STT instance based on agent config
 
-    Uses Deepgram by default for lower latency (~150-300ms vs ~500-800ms for OpenAI)
-    Falls back to OpenAI if Deepgram API key is not available
+    Uses OpenAI Whisper by default for reliability.
+    Deepgram can be enabled via config when a valid API key is available.
     """
-    # Check if Deepgram API key is available
-    if os.environ.get('DEEPGRAM_API_KEY'):
-        provider = (config.get("stt_provider", "deepgram") if config else "deepgram").lower()
+    provider = (config.get("stt_provider", "openai") if config else "openai").lower()
 
-        if provider == "deepgram":
-            model = config.get("stt_model", "nova-2") if config else "nova-2"
-            language = config.get("stt_language", "multi") if config else "multi"
-            logger.info(f"Using Deepgram STT (model={model}, language={language})")
-            return deepgram.STT(model=model, language=language)
+    # Only use Deepgram if explicitly configured AND API key is available
+    if provider == "deepgram" and os.environ.get('DEEPGRAM_API_KEY'):
+        model = config.get("stt_model", "nova-2") if config else "nova-2"
+        language = config.get("stt_language", "multi") if config else "multi"
+        logger.info(f"Using Deepgram STT (model={model}, language={language})")
+        return deepgram.STT(model=model, language=language)
 
-    # Fallback to OpenAI STT
-    logger.info("Using OpenAI STT (Deepgram API key not available)")
+    # Default to OpenAI STT (reliable, no additional API key needed)
+    logger.info("Using OpenAI STT")
     return openai.STT()
 
 
@@ -352,9 +351,9 @@ async def entrypoint(ctx: agents.JobContext):
         instructions="Greet the caller warmly and ask how you can help them today."
     )
 
-    # Keep the session running until the call ends
-    logger.info("Agent is now handling the call...")
-    await session.wait()
+    # The session runs autonomously after start() - it will close automatically
+    # when the participant disconnects (handled by LiveKit SDK internals)
+    logger.info("Agent is now handling the call - session running autonomously")
 
 
 def main():
