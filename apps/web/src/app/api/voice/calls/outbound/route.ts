@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma, CallDirection, CallStatus } from "@epic-ai/database";
+import { prisma, CallDirection, CallStatus, CallOutcome, Prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { AccessToken, SipClient } from "livekit-server-sdk";
 import { z } from "zod";
@@ -155,8 +155,8 @@ export async function POST(request: NextRequest) {
         phoneNumber: formattedNumber,
         callerNumber: phoneMapping?.phoneNumber || undefined,
         livekitRoomName: roomName,
-        status: CallStatus.QUEUED,
-        metadata: metadata || {},
+        status: CallStatus.ACTIVE,
+        metadata: (metadata || undefined) as Prisma.InputJsonValue | undefined,
       },
     });
 
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
         where: { id: callLog.id },
         data: {
           sipCallId: sipParticipant.sipCallId || undefined,
-          livekitRoomSid: sipParticipant.participantSid || undefined,
+          livekitRoomSid: sipParticipant.participantId || undefined,
           status: CallStatus.RINGING,
           startedAt: new Date(),
         },
@@ -263,12 +263,13 @@ export async function POST(request: NextRequest) {
       await prisma.callLog.update({
         where: { id: callLog.id },
         data: {
-          status: CallStatus.FAILED,
+          status: CallStatus.ENDED,
+          outcome: CallOutcome.FAILED,
           endedAt: new Date(),
           metadata: {
             ...(metadata || {}),
             error: sipError instanceof Error ? sipError.message : "SIP call failed",
-          },
+          } as Prisma.InputJsonValue,
         },
       });
 
