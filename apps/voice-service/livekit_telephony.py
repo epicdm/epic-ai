@@ -343,17 +343,20 @@ class LiveKitTelephonyManager:
 
         try:
             # Build the update object with only the fields we want to change
-            update = SIPInboundTrunkUpdate(
-                sip_trunk_id=trunk_id,
-            )
+            update = SIPInboundTrunkUpdate()
 
             if allowed_addresses is not None:
-                update.allowed_addresses = allowed_addresses
+                # Protobuf repeated fields use extend() instead of assignment
+                update.allowed_addresses.extend(allowed_addresses)
 
             if name is not None:
                 update.name = name
 
-            request = UpdateSIPInboundTrunkRequest(update=update)
+            # The trunk_id goes in the request, not the update object
+            request = UpdateSIPInboundTrunkRequest(
+                sip_trunk_id=trunk_id,
+                update=update
+            )
             result = await lkapi.sip.update_sip_inbound_trunk(request)
 
             return {
