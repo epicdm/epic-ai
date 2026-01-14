@@ -92,6 +92,78 @@ async function findCallContext(phoneNumber: string) {
 }
 
 /**
+ * Extract called number from various sources
+ * Tries multiple methods to find the phone number that was called
+ */
+async function extractCalledNumber(
+  participant: NonNullable<WebhookEvent["participant"]>,
+  room: NonNullable<WebhookEvent["room"]>,
+  roomMetadata: Record<string, unknown>,
+  participantMetadata: Record<string, unknown>
+): Promise<{ calledNumber: string | null; agentId: string | null; organizationId: string | null }> {
+  // Method 1: Check participant attributes (set by dispatch rule)
+  const sipPhoneNumber = participant.attributes?.["sip.phoneNumber"] as string;
+  const sipTrunkPhoneNumber = participant.attributes?.["sip.trunkPhoneNumber"] as string;
+  const agentIdFromAttributes = participant.attributes?.["agent_id"] as string;
+
+  // Method 2: Check room/participant metadata
+  const calledNumberFromMeta =
+    (roomMetadata.calledNumber as string) ||
+    (roomMetadata.phone_number as string) ||
+    (participantMetadata.calledNumber as string) ||
+    (participantMetadata.phone_number as string);
+
+  const agentIdFromMeta =
+    (roomMetadata.agent_id as string) ||
+    (participantMetadata.agent_id as string);
+
+  const orgIdFromMeta =
+    (roomMetadata.org_id as string) ||
+    (participantMetadata.org_id as string);
+
+  // Method 3: Parse from room name (format: sip-{calledNumber}___{callerNumber}_{id})
+  let calledNumberFromRoomName: string | null = null;
+  const roomName = room.name;
+  if (roomName.startsWith("sip-")) {
+    const match = roomName.match(/^sip-(\d+)___/);
+    if (match && match[1] && match[1] !== "unknown") {
+      calledNumberFromRoomName = `+${match[1]}`;
+    }
+  }
+
+  // Method 4: If we have agent_id, look up the phone mapping
+  const agentId = agentIdFromAttributes || agentIdFromMeta;
+  if (agentId && agentId !== "unknown") {
+    const phoneMapping = await prisma.phoneMapping.findFirst({
+      where: {
+        agentId: agentId,
+        isActive: true,
+      },
+    });
+    if (phoneMapping) {
+      return {
+        calledNumber: phoneMapping.phoneNumber,
+        agentId: agentId,
+        organizationId: phoneMapping.organizationId,
+      };
+    }
+  }
+
+  // Return best available called number
+  const calledNumber =
+    sipTrunkPhoneNumber ||
+    sipPhoneNumber ||
+    calledNumberFromMeta ||
+    calledNumberFromRoomName;
+
+  return {
+    calledNumber,
+    agentId: agentId || null,
+    organizationId: orgIdFromMeta || null,
+  };
+}
+
+/**
  * Handle participant_joined event (potential inbound call)
  */
 async function handleParticipantJoined(event: WebhookEvent) {
@@ -108,19 +180,10 @@ async function handleParticipantJoined(event: WebhookEvent) {
 
   console.log(`[Webhook] participant_joined: ${identity} in room ${roomName}`);
 
-  // Debug: Log all available data to understand LiveKit's payload
-  console.log(`[Webhook] DEBUG - Participant:`, JSON.stringify({
-    identity: participant.identity,
-    name: participant.name,
-    sid: participant.sid,
-    metadata: participant.metadata,
-    attributes: participant.attributes,
-  }));
-  console.log(`[Webhook] DEBUG - Room:`, JSON.stringify({
-    name: room.name,
-    sid: room.sid,
-    metadata: room.metadata,
-  }));
+  // Log attributes for debugging (will remove after confirming fix)
+  if (participant.attributes && Object.keys(participant.attributes).length > 0) {
+    console.log(`[Webhook] Participant attributes:`, JSON.stringify(participant.attributes));
+  }
 
   // Check if this is a SIP participant (phone call)
   const phoneNumber = parsePhoneFromSipIdentity(identity);
@@ -160,33 +223,69 @@ async function handleParticipantJoined(event: WebhookEvent) {
   }
 
   // This is a new inbound call - find the context
-  // For inbound calls, we need to find which phone number was called
-  // The room metadata might contain this info, or we need to look it up
-
   const roomMetadata = extractMetadata(room.metadata);
   const participantMetadata = extractMetadata(participant.metadata);
 
-  // Try to find called number from metadata or attributes
-  const calledNumber =
-    (roomMetadata.calledNumber as string) ||
-    (participantMetadata.calledNumber as string) ||
-    (participant.attributes?.["sip.calledNumber"] as string) ||
-    (participant.attributes?.["sip.trunkPhoneNumber"] as string);
+  // Extract the called number using multiple methods
+  const { calledNumber, agentId, organizationId: orgIdFromMeta } = await extractCalledNumber(
+    participant,
+    room,
+    roomMetadata,
+    participantMetadata
+  );
 
   // The caller number is the SIP participant's phone
   const callerNumber = phoneNumber;
 
-  console.log(`[Webhook] Inbound call from ${callerNumber} to ${calledNumber || "unknown"}`);
+  console.log(`[Webhook] Inbound call from ${callerNumber} to ${calledNumber || "unknown"} (agent: ${agentId || "unknown"})`);
 
   // Find the organization and agent for this inbound call
   let callContext = null;
+
+  // Try finding by called number first
   if (calledNumber) {
     callContext = await findCallContext(calledNumber);
   }
 
+  // If not found by called number, try by agent ID
+  if (!callContext && agentId && agentId !== "unknown") {
+    const agent = await prisma.voiceAgent.findUnique({
+      where: { id: agentId },
+      include: {
+        phoneMappings: {
+          where: { isActive: true },
+          take: 1,
+        },
+      },
+    });
+    if (agent) {
+      callContext = {
+        organizationId: agent.organizationId,
+        agentId: agent.id,
+        phoneMappingId: agent.phoneMappings[0]?.id ?? null,
+        agent: agent,
+      };
+    }
+  }
+
+  // Last resort: try by organization ID from metadata
+  if (!callContext && orgIdFromMeta && orgIdFromMeta !== "unknown") {
+    const org = await prisma.organization.findUnique({
+      where: { id: orgIdFromMeta },
+    });
+    if (org) {
+      callContext = {
+        organizationId: org.id,
+        agentId: agentId !== "unknown" ? agentId : null,
+        phoneMappingId: null,
+        agent: null,
+      };
+    }
+  }
+
   if (!callContext) {
-    console.warn(`[Webhook] No phone mapping found for inbound call to ${calledNumber}. Cannot log call without organization.`);
-    return; // Can't create call log without organization
+    console.warn(`[Webhook] No context found for inbound call. calledNumber=${calledNumber}, agentId=${agentId}. Cannot log call without organization.`);
+    return;
   }
 
   // Create the inbound call log
@@ -194,7 +293,7 @@ async function handleParticipantJoined(event: WebhookEvent) {
     data: {
       organizationId: callContext.organizationId,
       agentId: callContext.agentId ?? undefined,
-      phoneMappingId: callContext.phoneMappingId,
+      phoneMappingId: callContext.phoneMappingId ?? undefined,
       direction: CallDirection.INBOUND,
       phoneNumber: callerNumber, // Caller's phone number
       callerNumber: callerNumber,
@@ -203,14 +302,15 @@ async function handleParticipantJoined(event: WebhookEvent) {
       status: CallStatus.IN_PROGRESS,
       startedAt: new Date(),
       metadata: {
-        calledNumber,
+        calledNumber: calledNumber || "unknown",
         participantSid: participant.sid,
+        agentId: agentId || undefined,
         ...roomMetadata,
       } as Prisma.InputJsonValue,
     },
   });
 
-  console.log(`[Webhook] Created inbound call log ${callLog.id} for ${callerNumber}`);
+  console.log(`[Webhook] Created inbound call log ${callLog.id} for ${callerNumber} -> ${calledNumber || "unknown"}`);
 }
 
 /**
@@ -387,8 +487,89 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/voice/webhook/livekit
  * Health check and documentation
+ *
+ * Query params:
+ * - cleanup=true: Mark stuck calls (older than 2 hours) as ended
+ * - cleanup_minutes=N: Override the age threshold (default 120 minutes)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const cleanup = searchParams.get("cleanup") === "true";
+  const cleanupMinutes = parseInt(searchParams.get("cleanup_minutes") || "120", 10);
+
+  // Handle cleanup request
+  if (cleanup) {
+    try {
+      const cutoffTime = new Date(Date.now() - cleanupMinutes * 60 * 1000);
+
+      // Find stuck calls that are older than the cutoff
+      const stuckCalls = await prisma.callLog.findMany({
+        where: {
+          status: {
+            in: [CallStatus.IN_PROGRESS, CallStatus.RINGING, CallStatus.ACTIVE],
+          },
+          createdAt: {
+            lt: cutoffTime,
+          },
+        },
+      });
+
+      console.log(`[Webhook] Cleanup: Found ${stuckCalls.length} stuck calls older than ${cleanupMinutes} minutes`);
+
+      // Mark each stuck call as ended
+      const cleanedCalls = [];
+      for (const call of stuckCalls) {
+        const startTime = call.startedAt || call.createdAt;
+        const endTime = new Date();
+        const durationSeconds = Math.round(
+          (endTime.getTime() - startTime.getTime()) / 1000
+        );
+
+        await prisma.callLog.update({
+          where: { id: call.id },
+          data: {
+            status: CallStatus.ENDED,
+            outcome: CallOutcome.UNKNOWN, // Unknown since we don't know what happened
+            endedAt: endTime,
+            duration: durationSeconds,
+            metadata: {
+              ...(call.metadata as Record<string, unknown> || {}),
+              cleanedUp: true,
+              cleanedUpAt: new Date().toISOString(),
+              cleanupReason: "Stuck call cleanup - webhook events may have been missed",
+            } as Prisma.InputJsonValue,
+          },
+        });
+
+        cleanedCalls.push({
+          id: call.id,
+          direction: call.direction,
+          phoneNumber: call.phoneNumber,
+          duration: durationSeconds,
+        });
+
+        console.log(`[Webhook] Cleanup: Marked call ${call.id} as ended (was stuck for ${durationSeconds}s)`);
+      }
+
+      return NextResponse.json({
+        status: "ok",
+        cleanup: {
+          performed: true,
+          cutoffMinutes: cleanupMinutes,
+          cutoffTime: cutoffTime.toISOString(),
+          stuckCallsFound: stuckCalls.length,
+          callsCleaned: cleanedCalls,
+        },
+      });
+    } catch (error) {
+      console.error("[Webhook] Cleanup error:", error);
+      return NextResponse.json(
+        { error: "Cleanup failed", details: String(error) },
+        { status: 500 }
+      );
+    }
+  }
+
   return NextResponse.json({
     status: "ok",
     service: "LiveKit Webhook Handler",
@@ -399,5 +580,10 @@ export async function GET() {
       "room_finished - Cleanup any remaining active calls",
     ],
     configured: !!(LIVEKIT_API_KEY && LIVEKIT_API_SECRET),
+    cleanup: {
+      available: true,
+      usage: "GET /api/voice/webhook/livekit?cleanup=true&cleanup_minutes=120",
+      description: "Mark stuck calls older than N minutes as ended",
+    },
   });
 }

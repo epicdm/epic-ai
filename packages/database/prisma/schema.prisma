@@ -1462,6 +1462,7 @@ enum CallOutcome {
   FAILED
   VOICEMAIL
   TRANSFERRED
+  UNKNOWN // For cleanup of stuck calls where outcome is unknown
 }
 
 // ============================================
