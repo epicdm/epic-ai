@@ -1561,7 +1561,12 @@ def magnus_setup():
                 "cnl": "0",
                 "cid_add": "",
                 "cid_remove": "",
-                "block_cid": ""
+                "block_cid": "",
+                "link_sms": "",
+                "sms_res": "",
+                "failover_trunk": "",
+                "maxuse": "-1",
+                "if_max_use": ""
             }
             create_result = sdk._make_request("save", "trunk", trunk_data)
             result["steps"].append({"step": "create_trunk", "result": create_result})
