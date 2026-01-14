@@ -332,6 +332,56 @@ async function createLiveKitInboundTrunk(
   }
 }
 
+
+/**
+ * Create an outbound SIP trunk in LiveKit for making outbound calls
+ * Outbound trunks require SIP credentials to authenticate with the carrier
+ */
+async function createLiveKitOutboundTrunk(
+  phoneNumber: string,
+  sipUsername: string,
+  sipPassword: string,
+  sipDomain: string,
+  organizationId: string
+): Promise<{ success: boolean; trunkId?: string; error?: string }> {
+  try {
+    console.log(`[LiveKit] Creating outbound trunk for ${phoneNumber}`);
+
+    const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+    const response = await fetch(
+      `${VOICE_SERVICE_URL}/api/telephony/trunks/outbound`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: sipUsername,
+          password: sipPassword,
+          sip_domain: sipDomain,
+          phone_numbers: [phoneNumber],
+          organization_id: organizationId,
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log(`[LiveKit] Created outbound trunk: ${result.trunk_id}`);
+      return { success: true, trunkId: result.trunk_id };
+    }
+
+    console.warn(`[LiveKit] Failed to create outbound trunk: ${result.error}`);
+    return { success: false, error: result.error || "Failed to create outbound trunk" };
+  } catch (error) {
+    console.error(`[LiveKit] Error creating outbound trunk:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 /**
  * Create LiveKit dispatch rule to route calls to the AI agent.
  * This routes incoming calls from a phone number to the voice agent.
@@ -738,9 +788,10 @@ export async function POST(
       console.log(`[Agent ${agent.id}] Provisioned DID ${result.did_number}`);
     }
 
-    // Step 3: Create LiveKit inbound trunk and dispatch rule
-    // This is necessary for LiveKit to receive and route inbound calls to the AI agent
+    // Step 3: Create LiveKit inbound/outbound trunks and dispatch rule
+    // This is necessary for LiveKit to handle both inbound and outbound calls
     let livekitTrunkId: string | undefined;
+    let livekitOutboundTrunkId: string | undefined;
     let livekitRuleId: string | undefined;
     let livekitWarnings: string[] = [];
 
@@ -755,6 +806,28 @@ export async function POST(
         // Log warning but don't fail - Magnus provisioning succeeded
         console.warn(`[Agent ${agent.id}] LiveKit inbound trunk creation failed: ${trunkResult.error}`);
         livekitWarnings.push(`Inbound trunk: ${trunkResult.error}`);
+      }
+
+      // Create LiveKit outbound trunk (allows LiveKit to make outbound calls from this number)
+      // Requires SIP credentials from Magnus
+      if (result.sip_username && result.sip_password) {
+        const sipDomain = result.sip_server || "voice00.epic.dm";
+        const outboundResult = await createLiveKitOutboundTrunk(
+          result.did_number,
+          result.sip_username,
+          result.sip_password,
+          sipDomain,
+          org.id
+        );
+        if (outboundResult.success) {
+          livekitOutboundTrunkId = outboundResult.trunkId;
+        } else {
+          console.warn(`[Agent ${agent.id}] LiveKit outbound trunk creation failed: ${outboundResult.error}`);
+          livekitWarnings.push(`Outbound trunk: ${outboundResult.error}`);
+        }
+      } else {
+        console.warn(`[Agent ${agent.id}] Skipping outbound trunk - missing SIP credentials`);
+        livekitWarnings.push("Outbound trunk: Missing SIP credentials");
       }
 
       // Create LiveKit dispatch rule (routes calls to the AI agent)
@@ -774,18 +847,19 @@ export async function POST(
       }
 
       // Update PhoneMapping with LiveKit IDs if available
-      if (phoneMapping && (livekitTrunkId || livekitRuleId)) {
+      if (phoneMapping && (livekitTrunkId || livekitOutboundTrunkId || livekitRuleId)) {
         await prisma.phoneMapping.update({
           where: { id: phoneMapping.id },
           data: {
             livekitTrunkId: livekitTrunkId || undefined,
+            livekitOutboundTrunkId: livekitOutboundTrunkId || undefined,
             livekitDispatchRuleId: livekitRuleId || undefined,
           },
         });
       }
 
-      if (livekitTrunkId && livekitRuleId) {
-        console.log(`[Agent ${agent.id}] LiveKit telephony setup complete: trunk=${livekitTrunkId}, rule=${livekitRuleId}`);
+      if (livekitTrunkId && livekitOutboundTrunkId && livekitRuleId) {
+        console.log(`[Agent ${agent.id}] LiveKit telephony setup complete: inbound=${livekitTrunkId}, outbound=${livekitOutboundTrunkId}, rule=${livekitRuleId}`);
       }
     }
 
@@ -804,9 +878,10 @@ export async function POST(
       },
       attemptsMade: provisioningResult.attemptsMade,
       livekit: {
-        trunkId: livekitTrunkId || null,
+        inboundTrunkId: livekitTrunkId || null,
+        outboundTrunkId: livekitOutboundTrunkId || null,
         dispatchRuleId: livekitRuleId || null,
-        fullyConfigured: !!(livekitTrunkId && livekitRuleId),
+        fullyConfigured: !!(livekitTrunkId && livekitOutboundTrunkId && livekitRuleId),
         warnings: livekitWarnings.length > 0 ? livekitWarnings : undefined,
       },
     };
