@@ -28,6 +28,7 @@ from livekit.protocol.sip import (
     CreateSIPParticipantRequest,
 )
 from livekit.protocol.room import RoomConfiguration, CreateRoomRequest
+from livekit.protocol import models  # For ListUpdate
 from livekit.protocol.agent_dispatch import CreateAgentDispatchRequest
 
 
@@ -343,16 +344,17 @@ class LiveKitTelephonyManager:
 
         try:
             # Build the update object
-            # For protobuf messages, we can pass repeated fields in the constructor
-            update_kwargs = {}
+            update = SIPInboundTrunkUpdate()
 
             if allowed_addresses is not None:
-                update_kwargs['allowed_addresses'] = allowed_addresses
+                # allowed_addresses uses ListUpdate wrapper for partial updates
+                # Use the 'set' field to replace the entire list
+                addr_update = models.ListUpdate()
+                addr_update.set.extend(allowed_addresses)
+                update.allowed_addresses.CopyFrom(addr_update)
 
             if name is not None:
-                update_kwargs['name'] = name
-
-            update = SIPInboundTrunkUpdate(**update_kwargs)
+                update.name = name
 
             # The trunk_id goes in the request, not the update object
             request = UpdateSIPInboundTrunkRequest(
