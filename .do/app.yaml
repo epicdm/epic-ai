@@ -82,7 +82,7 @@ workers:
       corepack enable
       corepack prepare pnpm@9.0.0 --activate
       pnpm install --frozen-lockfile
-      cd packages/database && pnpm build && cd ../..
+      cd packages/database && pnpm build && pnpm push && cd ../..
       cd apps/workers && pnpm build
     run_command: node apps/workers/dist/index.js
     instance_count: 1
@@ -149,7 +149,7 @@ workers:
       corepack enable
       corepack prepare pnpm@9.0.0 --activate
       pnpm install --frozen-lockfile
-      cd packages/database && pnpm build && cd ../..
+      cd packages/database && pnpm build && pnpm push && cd ../..
       cd apps/workers && pnpm build
     run_command: node apps/workers/dist/scheduler.js
     instance_count: 1
