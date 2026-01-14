@@ -1443,6 +1443,134 @@ def magnus_diagnostics():
 
 
 # ============================================
+# Magnus Setup Endpoints
+# ============================================
+
+@app.route('/api/magnus/setup', methods=['POST'])
+def magnus_setup():
+    """
+    Initial Magnus setup - creates provider and LiveKit trunk.
+
+    This must be run ONCE before DIDs can be provisioned.
+    Idempotent: safe to call multiple times.
+
+    Returns:
+        {
+            "success": true/false,
+            "provider": { "id": "1", "name": "EpicAI_Internal" },
+            "trunk": { "id": "1", "code": "livekit_sip" },
+            "message": "Setup complete"
+        }
+    """
+    try:
+        from magnus_sdk import get_magnus_sdk
+
+        sdk = get_magnus_sdk()
+        result = {
+            "success": False,
+            "provider": None,
+            "trunk": None,
+            "steps": []
+        }
+
+        # Step 1: Check existing providers
+        providers = sdk.list_providers()
+        result["steps"].append({
+            "step": "list_providers",
+            "count": len(providers),
+            "providers": [{"id": p.get("id"), "name": p.get("provider_name")} for p in providers]
+        })
+
+        if providers:
+            provider_id = str(providers[0].get("id"))
+            result["provider"] = {"id": provider_id, "name": providers[0].get("provider_name"), "existing": True}
+        else:
+            # Create default provider
+            provider_data = {
+                "id": "0",
+                "provider_name": "EpicAI_Internal",
+                "description": "Default provider for internal SIP routing",
+                "credit": "1000",
+                "credit_control": "0",
+                "status": "1"
+            }
+            create_result = sdk._make_request("save", "provider", provider_data)
+            result["steps"].append({"step": "create_provider", "result": create_result})
+
+            if create_result.get("success"):
+                rows = create_result.get("rows", [])
+                provider_id = str(rows[0].get("id")) if rows else None
+                result["provider"] = {"id": provider_id, "name": "EpicAI_Internal", "existing": False}
+            else:
+                result["error"] = f"Failed to create provider: {create_result}"
+                return jsonify(result), 500
+
+        # Step 2: Check existing trunks
+        trunks = sdk.list_trunks()
+        result["steps"].append({
+            "step": "list_trunks",
+            "count": len(trunks),
+            "trunks": [{"id": t.get("id"), "code": t.get("trunkcode"), "host": t.get("host")} for t in trunks]
+        })
+
+        livekit_trunk = None
+        for t in trunks:
+            if t.get("trunkcode") == "livekit_sip":
+                livekit_trunk = t
+                break
+
+        if livekit_trunk:
+            result["trunk"] = {"id": str(livekit_trunk.get("id")), "code": "livekit_sip", "existing": True}
+        else:
+            # Create LiveKit trunk
+            livekit_sip_domain = os.environ.get("LIVEKIT_SIP_DOMAIN", "3m4yki5jezn.sip.livekit.cloud")
+            trunk_data = {
+                "id": "0",
+                "id_provider": provider_id,
+                "trunkcode": "livekit_sip",
+                "host": livekit_sip_domain,
+                "fromuser": "",
+                "fromdomain": livekit_sip_domain,
+                "secret": "",
+                "providertech": "SIP",
+                "status": "1",
+                "context": "default",
+                "qualify": "yes",
+                "type": "peer",
+                "insecure": "invite,port",
+                "nat": "force_rport,comedia",
+                "dtmfmode": "rfc2833",
+                "allow": "opus,g729,alaw,ulaw",
+                "disallow": "all",
+                "transport": "udp,tcp",
+                "directmedia": "no",
+                "port": "5060"
+            }
+            create_result = sdk._make_request("save", "trunk", trunk_data)
+            result["steps"].append({"step": "create_trunk", "result": create_result})
+
+            if create_result.get("success"):
+                rows = create_result.get("rows", [])
+                trunk_id = str(rows[0].get("id")) if rows else None
+                result["trunk"] = {"id": trunk_id, "code": "livekit_sip", "existing": False}
+            else:
+                result["error"] = f"Failed to create trunk: {create_result}"
+                return jsonify(result), 500
+
+        result["success"] = True
+        result["message"] = "Magnus setup complete"
+        return jsonify(result), 200
+
+    except Exception as e:
+        logger.error(f"Error in Magnus setup: {e}")
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+# ============================================
 # Outbound Test Endpoints
 # ============================================
 
