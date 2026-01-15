@@ -289,6 +289,7 @@ class MagnusSDK:
             "qualify": "yes",
             "type": "peer",
             "insecure": "invite,port",
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
             "nat": "force_rport,comedia",
             "dtmfmode": "rfc2833",
             "allow": "opus,g729,alaw,ulaw",
@@ -1100,7 +1101,7 @@ class MagnusSDK:
                 "accountcode": username,
                 "secret": password,
                 "callerid": username,
-                "host": "dynamic",
+                "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
                 "transport": "udp",  # Required field - max 3 chars
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",
@@ -1108,6 +1109,7 @@ class MagnusSDK:
                 "qualify": "yes",
                 "context": "billing",
                 "insecure": "invite,port",
+                "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
                 "status": "1"
             })
 
@@ -1467,6 +1469,7 @@ class MagnusSDK:
                 "qualify": "yes",
                 "context": "billing",
                 "insecure": "invite,port",
+                "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
                 "status": "1"
             })
 
