@@ -296,7 +296,8 @@ function isRetryableError(error: ProvisioningError): boolean {
  */
 async function createLiveKitInboundTrunk(
   phoneNumber: string,
-  organizationId: string
+  organizationId: string,
+  retryAfterCleanup = true
 ): Promise<{ success: boolean; trunkId?: string; error?: string }> {
   try {
     console.log(`[LiveKit] Creating inbound trunk for ${phoneNumber}`);
@@ -322,6 +323,20 @@ async function createLiveKitInboundTrunk(
       return { success: true, trunkId: result.trunk_id };
     }
 
+    // Check for conflict error and retry after cleanup
+    const errorMsg = result.error || "";
+    if (retryAfterCleanup && errorMsg.includes("Conflicting")) {
+      const conflictingId = extractConflictingResourceId(errorMsg);
+      if (conflictingId && conflictingId.startsWith("ST_")) {
+        console.log(`[LiveKit] Detected orphaned trunk ${conflictingId}, cleaning up and retrying...`);
+        const deleted = await deleteLiveKitTrunk(conflictingId);
+        if (deleted) {
+          // Retry once after cleanup (retryAfterCleanup=false to prevent infinite loop)
+          return createLiveKitInboundTrunk(phoneNumber, organizationId, false);
+        }
+      }
+    }
+
     console.warn(`[LiveKit] Failed to create inbound trunk: ${result.error}`);
     return { success: false, error: result.error || "Failed to create inbound trunk" };
   } catch (error) {
@@ -333,6 +348,81 @@ async function createLiveKitInboundTrunk(
   }
 }
 
+
+/**
+ * Extract conflicting resource ID from LiveKit error message.
+ * Error format: "Conflicting inbound SIP Trunks: \"<new>\" and \"ST_xxx\""
+ * or "Conflicting SIP Dispatch Rules: same Trunk+Number+PIN combination for \"SDR_xxx\" and \"<new>\""
+ */
+function extractConflictingResourceId(error: string): string | null {
+  // Pattern for trunk conflicts: "ST_xxx"
+  const trunkMatch = error.match(/"(ST_[A-Za-z0-9]+)"/);
+  if (trunkMatch && trunkMatch[1]) {
+    return trunkMatch[1];
+  }
+
+  // Pattern for dispatch rule conflicts: "SDR_xxx"
+  const ruleMatch = error.match(/"(SDR_[A-Za-z0-9]+)"/);
+  if (ruleMatch && ruleMatch[1]) {
+    return ruleMatch[1];
+  }
+
+  return null;
+}
+
+/**
+ * Delete an orphaned LiveKit trunk by ID
+ */
+async function deleteLiveKitTrunk(trunkId: string): Promise<boolean> {
+  try {
+    console.log(`[LiveKit] Deleting orphaned trunk: ${trunkId}`);
+    const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+    const response = await fetch(
+      `${VOICE_SERVICE_URL}/api/telephony/trunks/${trunkId}`,
+      {
+        method: "DELETE",
+        signal: controller.signal,
+      }
+    );
+    const result = await response.json();
+    if (result.success) {
+      console.log(`[LiveKit] Successfully deleted orphaned trunk: ${trunkId}`);
+      return true;
+    }
+    console.warn(`[LiveKit] Failed to delete trunk ${trunkId}: ${result.error}`);
+    return false;
+  } catch (error) {
+    console.error(`[LiveKit] Error deleting trunk ${trunkId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Delete an orphaned LiveKit dispatch rule by ID
+ */
+async function deleteLiveKitDispatchRule(ruleId: string): Promise<boolean> {
+  try {
+    console.log(`[LiveKit] Deleting orphaned dispatch rule: ${ruleId}`);
+    const controller = createTimeoutController(VOICE_SERVICE_TIMEOUT_MS);
+    const response = await fetch(
+      `${VOICE_SERVICE_URL}/api/telephony/dispatch-rules/${ruleId}`,
+      {
+        method: "DELETE",
+        signal: controller.signal,
+      }
+    );
+    const result = await response.json();
+    if (result.success) {
+      console.log(`[LiveKit] Successfully deleted orphaned dispatch rule: ${ruleId}`);
+      return true;
+    }
+    console.warn(`[LiveKit] Failed to delete dispatch rule ${ruleId}: ${result.error}`);
+    return false;
+  } catch (error) {
+    console.error(`[LiveKit] Error deleting dispatch rule ${ruleId}:`, error);
+    return false;
+  }
+}
 
 /**
  * Create an outbound SIP trunk in LiveKit for making outbound calls
@@ -392,7 +482,8 @@ async function createLiveKitDispatchRule(
   trunkId: string | undefined,
   agentId: string,
   organizationId: string,
-  userId: string
+  userId: string,
+  retryAfterCleanup = true
 ): Promise<{ success: boolean; ruleId?: string; error?: string }> {
   try {
     console.log(`[LiveKit] Creating dispatch rule for ${phoneNumber} -> epic-voice-agent`);
@@ -420,6 +511,20 @@ async function createLiveKitDispatchRule(
     if (response.ok && result.success) {
       console.log(`[LiveKit] Created dispatch rule: ${result.rule_id}`);
       return { success: true, ruleId: result.rule_id };
+    }
+
+    // Check for conflict error and retry after cleanup
+    const errorMsg = result.error || "";
+    if (retryAfterCleanup && errorMsg.includes("Conflicting")) {
+      const conflictingId = extractConflictingResourceId(errorMsg);
+      if (conflictingId && conflictingId.startsWith("SDR_")) {
+        console.log(`[LiveKit] Detected orphaned dispatch rule ${conflictingId}, cleaning up and retrying...`);
+        const deleted = await deleteLiveKitDispatchRule(conflictingId);
+        if (deleted) {
+          // Retry once after cleanup (retryAfterCleanup=false to prevent infinite loop)
+          return createLiveKitDispatchRule(phoneNumber, trunkId, agentId, organizationId, userId, false);
+        }
+      }
     }
 
     console.warn(`[LiveKit] Failed to create dispatch rule: ${result.error}`);
