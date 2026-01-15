@@ -203,8 +203,6 @@ class LiveKitTelephonyManager:
         Returns:
             dict: {'success': bool, 'trunk_id': str, 'error': str}
         """
-        from livekit.protocol.sip import UpdateSIPOutboundTrunkRequest, SIPOutboundTrunkUpdate
-
         error = self._check_credentials()
         if error:
             return {**error, 'trunk_id': trunk_id}
@@ -212,17 +210,11 @@ class LiveKitTelephonyManager:
         lkapi = api.LiveKitAPI()
 
         try:
-            # SIPOutboundTrunkUpdate contains only fields to update
-            update = SIPOutboundTrunkUpdate(
-                transport=transport,
+            # Use update_sip_outbound_trunk_fields to update only the transport field
+            result = await lkapi.sip.update_sip_outbound_trunk_fields(
+                trunk_id,
+                transport=transport
             )
-
-            # sip_trunk_id goes in the request, not the update object
-            request = UpdateSIPOutboundTrunkRequest(
-                sip_trunk_id=trunk_id,
-                update=update
-            )
-            result = await lkapi.sip.update_sip_outbound_trunk(request)
 
             return {
                 'success': True,
