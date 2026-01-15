@@ -799,17 +799,27 @@ export async function POST(
     if (result.did_number) {
       console.log(`[Agent ${agent.id}] Setting up LiveKit telephony for ${result.did_number}`);
 
-      // Create all LiveKit resources in PARALLEL to avoid Vercel function timeout
-      // Each call has its own 30s timeout, but running them sequentially could exceed
-      // the function's maxDuration. Running in parallel reduces total time significantly.
+      // IMPORTANT: Dispatch rules MUST have a trunk_id to avoid creating catch-all rules
+      // that block subsequent provisions. Therefore we create inbound trunk FIRST,
+      // then dispatch rule with the trunk_id. Outbound trunk runs in parallel with dispatch rule.
       const sipDomain = result.sip_server || "voice00.epic.dm";
       const hasOutboundCredentials = result.sip_username && result.sip_password;
 
-      const [trunkResult, outboundResult, ruleResult] = await Promise.all([
-        // 1. Create inbound trunk (allows LiveKit to receive calls for this number)
-        createLiveKitInboundTrunk(result.did_number, org.id),
+      // Step 1: Create inbound trunk FIRST (dispatch rule depends on this)
+      const trunkResult = await createLiveKitInboundTrunk(result.did_number, org.id);
 
-        // 2. Create outbound trunk (allows LiveKit to make outbound calls)
+      if (trunkResult.success) {
+        livekitTrunkId = trunkResult.trunkId;
+      } else {
+        console.warn(`[Agent ${agent.id}] LiveKit inbound trunk creation failed: ${trunkResult.error}`);
+        livekitWarnings.push(`Inbound trunk: ${trunkResult.error}`);
+      }
+
+      // Step 2: Create outbound trunk and dispatch rule in PARALLEL
+      // - Outbound trunk doesn't depend on inbound trunk
+      // - Dispatch rule MUST have trunk_id to avoid catch-all conflicts
+      const [outboundResult, ruleResult] = await Promise.all([
+        // Create outbound trunk (allows LiveKit to make outbound calls)
         hasOutboundCredentials
           ? createLiveKitOutboundTrunk(
               result.did_number,
@@ -818,26 +828,17 @@ export async function POST(
               sipDomain,
               org.id
             )
-          : Promise.resolve({ success: false, error: "Missing SIP credentials" }),
+          : Promise.resolve({ success: false as const, error: "Missing SIP credentials", trunkId: undefined }),
 
-        // 3. Create dispatch rule (routes calls to the AI agent)
-        // Note: trunkId is optional, dispatch rule can work without it
+        // Create dispatch rule WITH trunk_id (prevents catch-all conflicts)
         createLiveKitDispatchRule(
           result.did_number,
-          undefined, // We don't have trunkId yet since calls are parallel
+          livekitTrunkId, // Now we have the trunk_id from step 1
           agent.id,
           org.id,
           userId
         ),
       ]);
-
-      // Process inbound trunk result
-      if (trunkResult.success) {
-        livekitTrunkId = trunkResult.trunkId;
-      } else {
-        console.warn(`[Agent ${agent.id}] LiveKit inbound trunk creation failed: ${trunkResult.error}`);
-        livekitWarnings.push(`Inbound trunk: ${trunkResult.error}`);
-      }
 
       // Process outbound trunk result
       if (outboundResult.success) {
