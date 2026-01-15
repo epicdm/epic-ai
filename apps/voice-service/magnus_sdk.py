@@ -1174,6 +1174,7 @@ class MagnusSDK:
                 logger.warning(f"Failed to create DID destination: {destination_result.get('msg')}")
 
             # Step 7: Update SIP user settings
+            # IMPORTANT: Magnus ignores some fields during CREATE, so we must set them via UPDATE
             logger.info(f"Updating SIP settings for {sip_id}")
             sip_update_result = self.update("sip", sip_id, {
                 "callerid": did,
@@ -1181,6 +1182,18 @@ class MagnusSDK:
                 "voicemail_email": email,
                 "voicemail_password": did[-4:],  # Last 4 digits
                 "allow": self.DEFAULT_CODECS,
+                # Critical fields that Magnus ignores during CREATE:
+                "host": self.livekit_sip_domain,
+                "defaultuser": username,
+                "authuser": username,
+                "fromuser": username,
+                "transport": "udp",
+                "nat": "force_rport,comedia",
+                "qualify": "yes",
+                "context": "billing",
+                "insecure": "invite,port",
+                "sip_config": "insecure=invite,port",
+                "dtmfmode": "rfc2833",
             })
 
             if not sip_update_result.get("success", False):
@@ -1538,6 +1551,7 @@ class MagnusSDK:
                 logger.warning(f"Failed to create DID destination: {destination_result.get('msg')}")
 
             # Step 4: Update SIP settings
+            # IMPORTANT: Magnus ignores some fields during CREATE, so we must set them via UPDATE
             logger.info(f"Updating SIP settings for {sip_id}")
             sip_update_result = self.update("sip", sip_id, {
                 "callerid": did,
@@ -1545,6 +1559,19 @@ class MagnusSDK:
                 "voicemail_email": email,
                 "voicemail_password": did[-4:],
                 "allow": self.DEFAULT_CODECS,
+                # Critical fields that Magnus ignores during CREATE:
+                "host": self.livekit_sip_domain,
+                "fromdomain": self.livekit_sip_domain,
+                "defaultuser": sip_user_with_plus,
+                "authuser": sip_user_with_plus,
+                "fromuser": sip_user_with_plus,
+                "transport": "tcp",
+                "nat": "force_rport,comedia",
+                "qualify": "yes",
+                "context": "billing",
+                "insecure": "port,invite",
+                "sip_config": "insecure=port,invite",
+                "dtmfmode": "rfc2833",
             })
 
             if not sip_update_result.get("success", False):
