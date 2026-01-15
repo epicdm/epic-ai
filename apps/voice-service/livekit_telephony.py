@@ -25,6 +25,7 @@ from livekit.protocol.sip import (
     SIPDispatchRule,
     SIPDispatchRuleIndividual,
     CreateSIPParticipantRequest,
+    SIPTransport,
 )
 from livekit.protocol.room import RoomConfiguration, CreateRoomRequest
 from livekit.protocol import models  # For ListUpdate
@@ -165,6 +166,7 @@ class LiveKitTelephonyManager:
                 auth_username=username,
                 auth_password=password,
                 numbers=phone_numbers,
+                transport=SIPTransport.SIP_TRANSPORT_UDP,  # Magnus requires UDP
             )
 
             request = CreateSIPOutboundTrunkRequest(trunk=trunk)
@@ -181,6 +183,50 @@ class LiveKitTelephonyManager:
             return {
                 'success': False,
                 'trunk_id': None,
+                'error': str(e)
+            }
+        finally:
+            await lkapi.aclose()
+
+    async def update_outbound_trunk_transport(
+        self,
+        trunk_id: str,
+        transport: int = SIPTransport.SIP_TRANSPORT_UDP
+    ) -> Dict[str, Any]:
+        """
+        Update an outbound trunk's transport protocol.
+
+        Args:
+            trunk_id: The trunk ID to update
+            transport: SIPTransport enum value (default: UDP)
+
+        Returns:
+            dict: {'success': bool, 'trunk_id': str, 'error': str}
+        """
+        error = self._check_credentials()
+        if error:
+            return {**error, 'trunk_id': trunk_id}
+
+        lkapi = api.LiveKitAPI()
+
+        try:
+            # Use update_sip_outbound_trunk_fields to update only the transport field
+            result = await lkapi.sip.update_sip_outbound_trunk_fields(
+                trunk_id,
+                transport=transport
+            )
+
+            return {
+                'success': True,
+                'trunk_id': result.sip_trunk_id,
+                'transport': result.transport,
+                'error': None
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'trunk_id': trunk_id,
                 'error': str(e)
             }
         finally:

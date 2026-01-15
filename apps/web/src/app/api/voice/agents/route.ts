@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@epic-ai/database";
 import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { generateDemoVoiceAgent } from "@/lib/demo/sample-data";
+import { provisionLiveKitResources } from "@/lib/services/voice/livekit-provisioning";
 
 // Voice service URL for Magnus Billing integration
 // In production (Vercel), default to DigitalOcean App Platform voice service
@@ -622,6 +623,39 @@ export async function POST(request: NextRequest) {
               });
 
               console.log(`[Agent ${agent.id}] Provisioned DID ${provisionResult.did_number} under org user ${magnusUserId}`);
+
+              // Step 3: Provision LiveKit resources (inbound/outbound trunks + dispatch rule)
+              console.log(`[Agent ${agent.id}] Starting LiveKit provisioning...`);
+              const livekitResult = await provisionLiveKitResources({
+                phoneNumber: provisionResult.did_number,
+                organizationId: org.id,
+                agentId: agent.id,
+                userId,
+                sipUsername: provisionResult.sip_username,
+                sipPassword: provisionResult.sip_password,
+                sipDomain: provisionResult.sip_server,
+              });
+
+              // Update PhoneMapping with LiveKit IDs
+              if (livekitResult.inboundTrunkId || livekitResult.outboundTrunkId || livekitResult.dispatchRuleId) {
+                await prisma.phoneMapping.update({
+                  where: { id: phoneMapping.id },
+                  data: {
+                    livekitTrunkId: livekitResult.inboundTrunkId || undefined,
+                    livekitOutboundTrunkId: livekitResult.outboundTrunkId || undefined,
+                    livekitDispatchRuleId: livekitResult.dispatchRuleId || undefined,
+                  },
+                });
+                console.log(`[Agent ${agent.id}] LiveKit provisioning complete: inbound=${livekitResult.inboundTrunkId}, outbound=${livekitResult.outboundTrunkId}, rule=${livekitResult.dispatchRuleId}`);
+              }
+
+              // Add warnings to provisioningDetails if there were LiveKit issues
+              if (livekitResult.warnings.length > 0) {
+                provisioningDetails = {
+                  ...provisioningDetails,
+                  livekitWarnings: livekitResult.warnings,
+                };
+              }
             }
           } else {
             // FAILURE: Parse and structure the error

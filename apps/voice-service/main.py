@@ -3,6 +3,7 @@ Epic AI Voice Service
 Full-featured voice backend with LiveKit, Magnus Billing, and campaign management
 """
 import os
+import json
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -332,6 +333,81 @@ def delete_trunk(trunk_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/telephony/trunks/outbound/<trunk_id>/transport', methods=['PATCH'])
+def update_outbound_trunk_transport(trunk_id):
+    """Update an outbound trunk's transport protocol to UDP"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        result = asyncio.run(telephony_manager.update_outbound_trunk_transport(trunk_id))
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error updating outbound trunk transport: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/telephony/trunks/outbound/migrate-transport', methods=['POST'])
+def migrate_outbound_trunks_transport():
+    """Update all outbound trunks to use UDP transport (for Magnus compatibility)"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        # First list all outbound trunks
+        list_result = asyncio.run(telephony_manager.list_outbound_trunks())
+        if not list_result['success']:
+            return jsonify({"error": "Failed to list outbound trunks"}), 500
+
+        trunks = list_result.get('trunks', [])
+        results = {
+            'total': len(trunks),
+            'updated': 0,
+            'failed': 0,
+            'details': []
+        }
+
+        # Update each trunk
+        for trunk in trunks:
+            trunk_id = trunk.get('trunk_id')
+            if not trunk_id:
+                continue
+
+            # Skip if already UDP (transport == 1)
+            if trunk.get('transport') == 1:
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'skipped',
+                    'reason': 'Already UDP'
+                })
+                continue
+
+            update_result = asyncio.run(telephony_manager.update_outbound_trunk_transport(trunk_id))
+            if update_result['success']:
+                results['updated'] += 1
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'updated',
+                    'transport': update_result.get('transport')
+                })
+            else:
+                results['failed'] += 1
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'failed',
+                    'error': update_result.get('error')
+                })
+
+        return jsonify({
+            'success': True,
+            **results
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error migrating outbound trunk transport: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/telephony/dispatch-rules', methods=['GET'])
 def list_dispatch_rules():
     """List all dispatch rules"""
@@ -412,6 +488,47 @@ def migrate_dispatch_rules():
         return jsonify(result), 200 if result['success'] else 500
     except Exception as e:
         logger.error(f"Error migrating dispatch rules: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/telephony/dispatch-rules/backfill-agent-id', methods=['POST'])
+def backfill_dispatch_rules_agent_id():
+    """
+    Backfill dispatch rules with correct agent_id from database mappings.
+
+    Request body should contain:
+    {
+        "trunk_mappings": {
+            "trunk_id": {"agent_id": "...", "org_id": "...", "phone_number": "..."}
+        },
+        "target_agent_name": "epic-voice-agent"  // optional
+    }
+    """
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        data = request.get_json() or {}
+        trunk_mappings = data.get('trunk_mappings', {})
+        target_agent_name = data.get('target_agent_name', 'epic-voice-agent')
+
+        if not trunk_mappings:
+            return jsonify({"error": "trunk_mappings required"}), 400
+
+        logger.info(f"Starting dispatch rule agent_id backfill with {len(trunk_mappings)} mappings")
+        result = asyncio.run(telephony_manager.backfill_dispatch_rules_agent_id(
+            trunk_mappings=trunk_mappings,
+            target_agent_name=target_agent_name
+        ))
+
+        if result['success']:
+            logger.info(f"Backfill complete: {result['updated']} updated, {result['skipped']} skipped")
+            if result['errors']:
+                logger.warning(f"Backfill errors: {result['errors']}")
+
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error backfilling dispatch rules agent_id: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -669,6 +786,379 @@ def magnus_get_rate(destination):
         }), 200
     except Exception as e:
         logger.error(f"Error getting rate: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/sip-accounts', methods=['GET'])
+def magnus_list_sip_accounts():
+    """
+    List SIP accounts from Magnus.
+
+    Query params:
+    - username: Filter by SIP username (optional, partial match)
+    - limit: Max results (default 50)
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        username_filter = request.args.get('username', '')
+        limit = int(request.args.get('limit', 50))
+
+        # Query the sip module with read action
+        filter_data = {}
+        if username_filter:
+            # Use LIKE query for partial matching on the 'name' field (SIP username)
+            filter_data['filter'] = json.dumps([
+                {"type": "string", "field": "name", "value": username_filter, "comparison": "ct"}
+            ])
+
+        filter_data['start'] = '0'
+        filter_data['limit'] = str(limit)
+
+        result = sdk._make_request("read", "sip", data=filter_data)
+
+        # Extract rows from response
+        rows = result.get('rows', [])
+
+        return jsonify({
+            "success": True,
+            "count": len(rows),
+            "accounts": rows
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error listing SIP accounts: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/sip-accounts/<sip_id>', methods=['GET'])
+def magnus_get_sip_account(sip_id):
+    """Get a specific SIP account by ID."""
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        # Query for specific SIP account
+        filter_data = {
+            'filter': json.dumps([
+                {"type": "numeric", "field": "id", "value": sip_id, "comparison": "eq"}
+            ]),
+            'start': '0',
+            'limit': '1'
+        }
+
+        result = sdk._make_request("read", "sip", data=filter_data)
+        rows = result.get('rows', [])
+
+        if not rows:
+            return jsonify({"error": "SIP account not found"}), 404
+
+        return jsonify({
+            "success": True,
+            "account": rows[0]
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/create-sip-account', methods=['POST'])
+def magnus_create_sip_account():
+    """
+    Create a Magnus SIP account with specific credentials.
+    Used for backfilling missing SIP accounts for phones that already
+    have LiveKit outbound trunks configured.
+
+    Request body:
+    {
+        "magnus_user_id": "123",      // The org's Magnus user ID (REQUIRED)
+        "sip_username": "salesbot_9532",
+        "sip_password": "password123",
+        "phone_number": "17678189532", // For caller ID
+        "agent_name": "Sales Bot",     // For display name
+        "email": "agent@epic.dm"       // For voicemail
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "456"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+
+        required = ['magnus_user_id', 'sip_username', 'sip_password', 'phone_number']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"{field} required"}), 400
+
+        magnus_user_id = data['magnus_user_id']
+        sip_username = data['sip_username']
+        sip_password = data['sip_password']
+        phone_number = data['phone_number']
+        agent_name = data.get('agent_name', sip_username)
+        email = data.get('email', f'{sip_username}@epic.dm')
+
+        logger.info(f"Creating SIP account for backfill: {sip_username} under user {magnus_user_id}")
+
+        # Get valid provider ID
+        provider_id = sdk.get_default_provider_id()
+
+        # Create SIP account with the specified credentials
+        sip_result = sdk.create("sip", {
+            "id": "0",                   # 0 = create new
+            "id_user": magnus_user_id,   # Foreign key to Magnus user table
+            "id_provider": provider_id,  # Use valid provider ID from Magnus
+            "user": sip_username,        # SIP username
+            "name": sip_username,
+            "accountcode": sip_username,
+            "secret": sip_password,
+            "callerid": phone_number,
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
+            "transport": "udp",          # Required field - max 3 chars
+            "allow": "ulaw,alaw,g729,gsm",
+            "dtmfmode": "rfc2833",
+            "nat": "force_rport,comedia",
+            "qualify": "yes",
+            "context": "billing",
+            "insecure": "invite,port",   # Allow authentication without strict registration
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+            "status": "1"
+        })
+
+        logger.info(f"SIP creation response: {sip_result}")
+
+        if not sip_result.get("success", False):
+            error_msg = sip_result.get('msg', 'Unknown error')
+            logger.error(f"Failed to create SIP account: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to create SIP account: {error_msg}"
+            }), 500
+
+        sip_rows = sip_result.get("rows", [])
+        sip_id = str(sip_rows[0].get("id", "")) if sip_rows else ""
+
+        if not sip_id:
+            logger.error(f"Could not extract SIP ID from response: {sip_result}")
+            return jsonify({
+                "success": False,
+                "error": "Could not extract SIP ID from response"
+            }), 500
+
+        logger.info(f"Created SIP account ID: {sip_id}")
+
+        # Update SIP settings with voicemail
+        sip_update_result = sdk.update("sip", sip_id, {
+            "voicemail": "1",
+            "voicemail_email": email,
+            "voicemail_password": phone_number[-4:] if len(phone_number) >= 4 else "1234",
+        })
+
+        if not sip_update_result.get("success", False):
+            logger.warning(f"Failed to update SIP settings: {sip_update_result.get('msg')}")
+
+        return jsonify({
+            "success": True,
+            "sip_id": sip_id,
+            "sip_username": sip_username
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Error creating SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/update-sip-account/<sip_id>', methods=['PUT', 'PATCH'])
+def magnus_update_sip_account(sip_id):
+    """
+    Update a Magnus SIP account settings.
+    Used to fix the insecure field on existing SIP accounts.
+
+    Request body:
+    {
+        "insecure": "invite,port",   // Optional
+        "host": "dynamic",           // Optional
+        "nat": "force_rport,comedia" // Optional
+        // Any other SIP field to update
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "1429"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+
+        if not data:
+            return jsonify({"error": "No fields provided to update"}), 400
+
+        logger.info(f"Updating SIP account {sip_id}: {data}")
+
+        # Update the SIP account
+        result = sdk.update("sip", sip_id, data)
+
+        logger.info(f"SIP update response: {result}")
+
+        if not result.get("success", False):
+            error_msg = result.get('msg', 'Unknown error')
+            logger.error(f"Failed to update SIP account: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to update SIP account: {error_msg}"
+            }), 500
+
+        return jsonify({
+            "success": True,
+            "sip_id": sip_id,
+            "updated_fields": list(data.keys())
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error updating SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/recreate-sip-account/<sip_id>', methods=['POST'])
+def magnus_recreate_sip_account(sip_id):
+    """
+    Recreate a Magnus SIP account with correct settings.
+    This deletes the existing account and creates a new one with the same credentials
+    but with the correct insecure setting for LiveKit authentication.
+
+    Used to fix existing SIP accounts that have insecure="no" instead of "invite,port".
+
+    Request body (optional):
+    {
+        "force": true  // Set to true to force recreation even if insecure is already correct
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "1430",
+        "old_sip_id": "1429",
+        "message": "SIP account recreated with correct settings"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+        force = data.get("force", False)
+
+        # Get current SIP account details
+        # Note: Magnus filter doesn't work properly for ID lookup, so we need to get all accounts
+        # and search manually. Limit to a reasonable number to avoid timeout.
+        accounts_response = sdk._make_request("read", "sip", {"limit": 1000})
+
+        if not accounts_response.get("rows"):
+            return jsonify({"error": "No SIP accounts found in Magnus"}), 404
+
+        # Find the exact account by ID
+        sip_account = None
+        for row in accounts_response.get("rows", []):
+            if str(row.get("id")) == str(sip_id):
+                sip_account = row
+                break
+
+        if not sip_account:
+            return jsonify({"error": f"SIP account {sip_id} not found"}), 404
+
+        current_insecure = sip_account.get("insecure", "")
+        if current_insecure == "invite,port" and not force:
+            return jsonify({
+                "success": True,
+                "message": "SIP account already has correct insecure setting",
+                "sip_id": sip_id,
+                "insecure": current_insecure
+            }), 200
+
+        # Extract the important fields we need to preserve
+        username = sip_account.get("name", "")
+        secret = sip_account.get("secret", "")
+        callerid = sip_account.get("callerid", "")
+        id_user = sip_account.get("id_user", "")
+        context = sip_account.get("context", "billing")
+        allow = sip_account.get("allow", "opus,g729,gsm,alaw,ulaw")
+        nat = sip_account.get("nat", "force_rport,comedia")
+        voicemail = sip_account.get("voicemail", "0")
+        voicemail_email = sip_account.get("voicemail_email", "")
+        voicemail_password = sip_account.get("voicemail_password", "")
+
+        logger.info(f"Recreating SIP account {sip_id} ({username}) with insecure=invite,port")
+        logger.info(f"Current insecure value: {current_insecure}")
+
+        # Delete the existing SIP account
+        delete_result = sdk._make_request("destroy", "sip", {"id": sip_id})
+        logger.info(f"Delete result: {delete_result}")
+
+        # Create a new SIP account with correct settings
+        create_data = {
+            "id": "0",  # id=0 signals creation
+            "id_user": id_user,
+            "name": username,
+            "accountcode": sip_account.get("accountcode", ""),
+            "secret": secret,
+            "callerid": callerid,
+            "cid_number": callerid,
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
+            "insecure": "invite,port",  # The correct setting
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+            "nat": nat,
+            "dtmfmode": "rfc2833",
+            "allow": allow,
+            "disallow": "all",
+            "context": context,
+            "qualify": "yes",
+            "type": "friend",
+            "status": "1",
+            "directmedia": "no",
+            "allowtransfer": "no",
+            "voicemail": voicemail,
+            "voicemail_email": voicemail_email,
+            "voicemail_password": voicemail_password or (callerid[-4:] if callerid else "1234")
+        }
+
+        create_result = sdk._make_request("save", "sip", create_data)
+        logger.info(f"Create result: {create_result}")
+
+        if not create_result.get("success", False):
+            return jsonify({
+                "success": False,
+                "error": f"Failed to create new SIP account: {create_result.get('msg', 'Unknown error')}",
+                "deleted_sip_id": sip_id
+            }), 500
+
+        # Get the new SIP ID
+        new_sip_id = None
+        if "rows" in create_result and len(create_result["rows"]) > 0:
+            new_sip_id = str(create_result["rows"][0].get("id", ""))
+        elif "id" in create_result:
+            new_sip_id = str(create_result["id"])
+
+        return jsonify({
+            "success": True,
+            "sip_id": new_sip_id,
+            "old_sip_id": sip_id,
+            "username": username,
+            "message": "SIP account recreated with correct settings (insecure=invite,port)"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error recreating SIP account: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -1256,7 +1746,7 @@ def test_sip_create():
             "accountcode": sip_username,
             "secret": "TestPass123!",
             "callerid": sip_username,
-            "host": "dynamic",
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
             "transport": "udp",  # Required field - max 3 chars
             "allow": "ulaw,alaw,g729,gsm",
             "dtmfmode": "rfc2833",
@@ -1264,6 +1754,7 @@ def test_sip_create():
             "qualify": "yes",
             "context": "billing",
             "insecure": "invite,port",
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
             "status": "1"
         }
 
