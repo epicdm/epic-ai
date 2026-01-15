@@ -988,6 +988,137 @@ def magnus_update_sip_account(sip_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/recreate-sip-account/<sip_id>', methods=['POST'])
+def magnus_recreate_sip_account(sip_id):
+    """
+    Recreate a Magnus SIP account with correct settings.
+    This deletes the existing account and creates a new one with the same credentials
+    but with the correct insecure setting for LiveKit authentication.
+
+    Used to fix existing SIP accounts that have insecure="no" instead of "invite,port".
+
+    Request body (optional):
+    {
+        "force": true  // Set to true to force recreation even if insecure is already correct
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "1430",
+        "old_sip_id": "1429",
+        "message": "SIP account recreated with correct settings"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+        force = data.get("force", False)
+
+        # Get current SIP account details
+        accounts_response = sdk._make_request("read", "sip", {
+            "filter": f'[{{"field":"id","value":"{sip_id}"}}]'
+        })
+
+        if not accounts_response.get("rows"):
+            return jsonify({"error": f"SIP account {sip_id} not found"}), 404
+
+        # Find the exact account
+        sip_account = None
+        for row in accounts_response.get("rows", []):
+            if str(row.get("id")) == str(sip_id):
+                sip_account = row
+                break
+
+        if not sip_account:
+            return jsonify({"error": f"SIP account {sip_id} not found"}), 404
+
+        current_insecure = sip_account.get("insecure", "")
+        if current_insecure == "invite,port" and not force:
+            return jsonify({
+                "success": True,
+                "message": "SIP account already has correct insecure setting",
+                "sip_id": sip_id,
+                "insecure": current_insecure
+            }), 200
+
+        # Extract the important fields we need to preserve
+        username = sip_account.get("name", "")
+        secret = sip_account.get("secret", "")
+        callerid = sip_account.get("callerid", "")
+        id_user = sip_account.get("id_user", "")
+        context = sip_account.get("context", "billing")
+        allow = sip_account.get("allow", "opus,g729,gsm,alaw,ulaw")
+        nat = sip_account.get("nat", "force_rport,comedia")
+        voicemail = sip_account.get("voicemail", "0")
+        voicemail_email = sip_account.get("voicemail_email", "")
+        voicemail_password = sip_account.get("voicemail_password", "")
+
+        logger.info(f"Recreating SIP account {sip_id} ({username}) with insecure=invite,port")
+        logger.info(f"Current insecure value: {current_insecure}")
+
+        # Delete the existing SIP account
+        delete_result = sdk._make_request("destroy", "sip", {"id": sip_id})
+        logger.info(f"Delete result: {delete_result}")
+
+        # Create a new SIP account with correct settings
+        create_data = {
+            "id": "0",  # id=0 signals creation
+            "id_user": id_user,
+            "name": username,
+            "accountcode": sip_account.get("accountcode", ""),
+            "secret": secret,
+            "callerid": callerid,
+            "cid_number": callerid,
+            "host": "dynamic",
+            "insecure": "invite,port",  # The correct setting
+            "nat": nat,
+            "dtmfmode": "rfc2833",
+            "allow": allow,
+            "disallow": "all",
+            "context": context,
+            "qualify": "yes",
+            "type": "friend",
+            "status": "1",
+            "directmedia": "no",
+            "allowtransfer": "no",
+            "voicemail": voicemail,
+            "voicemail_email": voicemail_email,
+            "voicemail_password": voicemail_password or (callerid[-4:] if callerid else "1234")
+        }
+
+        create_result = sdk._make_request("save", "sip", create_data)
+        logger.info(f"Create result: {create_result}")
+
+        if not create_result.get("success", False):
+            return jsonify({
+                "success": False,
+                "error": f"Failed to create new SIP account: {create_result.get('msg', 'Unknown error')}",
+                "deleted_sip_id": sip_id
+            }), 500
+
+        # Get the new SIP ID
+        new_sip_id = None
+        if "rows" in create_result and len(create_result["rows"]) > 0:
+            new_sip_id = str(create_result["rows"][0].get("id", ""))
+        elif "id" in create_result:
+            new_sip_id = str(create_result["id"])
+
+        return jsonify({
+            "success": True,
+            "sip_id": new_sip_id,
+            "old_sip_id": sip_id,
+            "username": username,
+            "message": "SIP account recreated with correct settings (insecure=invite,port)"
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error recreating SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ============================================
 # Voice Agent Provisioning (Magnus SDK)
 # ============================================
