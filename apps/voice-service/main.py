@@ -332,6 +332,81 @@ def delete_trunk(trunk_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/telephony/trunks/outbound/<trunk_id>/transport', methods=['PATCH'])
+def update_outbound_trunk_transport(trunk_id):
+    """Update an outbound trunk's transport protocol to UDP"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        result = asyncio.run(telephony_manager.update_outbound_trunk_transport(trunk_id))
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error updating outbound trunk transport: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/telephony/trunks/outbound/migrate-transport', methods=['POST'])
+def migrate_outbound_trunks_transport():
+    """Update all outbound trunks to use UDP transport (for Magnus compatibility)"""
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        # First list all outbound trunks
+        list_result = asyncio.run(telephony_manager.list_outbound_trunks())
+        if not list_result['success']:
+            return jsonify({"error": "Failed to list outbound trunks"}), 500
+
+        trunks = list_result.get('trunks', [])
+        results = {
+            'total': len(trunks),
+            'updated': 0,
+            'failed': 0,
+            'details': []
+        }
+
+        # Update each trunk
+        for trunk in trunks:
+            trunk_id = trunk.get('trunk_id')
+            if not trunk_id:
+                continue
+
+            # Skip if already UDP (transport == 1)
+            if trunk.get('transport') == 1:
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'skipped',
+                    'reason': 'Already UDP'
+                })
+                continue
+
+            update_result = asyncio.run(telephony_manager.update_outbound_trunk_transport(trunk_id))
+            if update_result['success']:
+                results['updated'] += 1
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'updated',
+                    'transport': update_result.get('transport')
+                })
+            else:
+                results['failed'] += 1
+                results['details'].append({
+                    'trunk_id': trunk_id,
+                    'status': 'failed',
+                    'error': update_result.get('error')
+                })
+
+        return jsonify({
+            'success': True,
+            **results
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error migrating outbound trunk transport: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/telephony/dispatch-rules', methods=['GET'])
 def list_dispatch_rules():
     """List all dispatch rules"""
