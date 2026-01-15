@@ -1088,6 +1088,22 @@ class MagnusSDK:
             # Get valid provider ID - "0" is rejected by some Magnus configurations
             provider_id = self.get_default_provider_id()
             logger.info(f"Creating SIP account for user {user_id}: {username} (provider_id: {provider_id})")
+            # Build full sip_config - Magnus reads settings from this field
+            sip_config = "\n".join([
+                "insecure=port,invite",
+                "type=friend",
+                f"fromdomain={self.livekit_sip_domain}",
+                f"defaultuser={username}",
+                f"authuser={username}",
+                f"secret={password}",
+                f"fromuser={username}",
+                "context=billing",
+                f"callerid=<{username}>",
+                "transport=tcp",
+                "port=5060",
+                "permit=0.0.0.0/0.0.0.0",
+            ])
+
             sip_result = self.create("sip", {
                 "id": "0",           # 0 = create new
                 "id_user": user_id,  # Foreign key to Magnus user table
@@ -1099,14 +1115,14 @@ class MagnusSDK:
                 "secret": password,
                 "callerid": username,
                 "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
-                "transport": "udp",  # Required field - max 3 chars
+                "transport": "tcp",  # TCP transport
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",
                 "nat": "force_rport,comedia",
                 "qualify": "yes",
                 "context": "billing",
-                "insecure": "invite,port",
-                "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+                "insecure": "port,invite",
+                "sip_config": sip_config,  # Full config - Magnus reads from this field
                 "status": "1"
             })
 
@@ -1172,6 +1188,23 @@ class MagnusSDK:
             # Step 7: Update SIP user settings
             # IMPORTANT: Magnus ignores some fields during CREATE, so we must set them via UPDATE
             logger.info(f"Updating SIP settings for {sip_id}")
+
+            # Build full sip_config for update - Magnus reads settings from this field
+            sip_config_update = "\n".join([
+                "insecure=port,invite",
+                "type=friend",
+                f"fromdomain={self.livekit_sip_domain}",
+                f"defaultuser={username}",
+                f"authuser={username}",
+                f"secret={password}",
+                f"fromuser={username}",
+                "context=billing",
+                f"callerid=<{did.lstrip('+')}>",
+                "transport=tcp",
+                "port=5060",
+                "permit=0.0.0.0/0.0.0.0",
+            ])
+
             sip_update_result = self.update("sip", sip_id, {
                 "callerid": did,
                 "voicemail": "1",
@@ -1183,12 +1216,12 @@ class MagnusSDK:
                 "defaultuser": username,
                 "authuser": username,
                 "fromuser": username,
-                "transport": "udp",
+                "transport": "tcp",
                 "nat": "force_rport,comedia",
                 "qualify": "yes",
                 "context": "billing",
-                "insecure": "invite,port",
-                "sip_config": "insecure=invite,port",
+                "insecure": "port,invite",
+                "sip_config": sip_config_update,  # Full config - Magnus reads from this field
                 "dtmfmode": "rfc2833",
             })
 
@@ -1464,22 +1497,39 @@ class MagnusSDK:
             sip_user_with_plus = f"+{sip_username}" if not sip_username.startswith("+") else sip_username
             sip_user_without_plus = sip_username.lstrip("+")
 
+            # Build full sip_config - Magnus reads ALL settings from this field
+            # Use username WITHOUT plus prefix (matches LiveKit From header format)
+            sip_config_create = "\n".join([
+                "insecure=port,invite",
+                "type=friend",
+                f"fromdomain={self.livekit_sip_domain}",
+                f"defaultuser={sip_user_without_plus}",
+                f"authuser={sip_user_without_plus}",
+                f"secret={password}",
+                f"fromuser={sip_user_without_plus}",
+                "context=billing",
+                f"callerid=<{sip_user_without_plus}>",
+                "transport=tcp",
+                "port=5060",
+                "permit=0.0.0.0/0.0.0.0",
+            ])
+
             sip_result = self.create("sip", {
                 "id": "0",                   # 0 = create new
                 "id_user": magnus_user_id,   # Foreign key to Magnus user table
                 "id_provider": provider_id,  # Use valid provider ID from Magnus
-                "user": sip_user_with_plus,  # SIP username with + prefix
-                "name": sip_user_with_plus,
-                "accountcode": sip_user_with_plus,
+                "user": sip_user_without_plus,  # SIP username WITHOUT + prefix (matches LiveKit)
+                "name": sip_user_without_plus,
+                "accountcode": sip_user_without_plus,
                 "regexten": sip_username[:20],  # Explicit regexten (max 20 chars) - prevents auto-gen overflow
                 "secret": password,
                 "type": "friend",            # SIP peer type
                 "callerid": f"<{sip_user_without_plus}>",  # Caller ID in angle brackets
                 "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
                 "fromdomain": self.livekit_sip_domain,  # From domain for outbound
-                "defaultuser": sip_user_with_plus,  # Default auth username
-                "authuser": sip_user_with_plus,     # Auth username for challenges
-                "fromuser": sip_user_with_plus,     # From user for outbound calls
+                "defaultuser": sip_user_without_plus,  # Default auth username (no +)
+                "authuser": sip_user_without_plus,     # Auth username for challenges (no +)
+                "fromuser": sip_user_without_plus,     # From user for outbound calls (no +)
                 "transport": "tcp",          # TCP transport
                 "port": "5060",              # SIP port
                 "permit": "0.0.0.0/0.0.0.0", # Allow all IPs
@@ -1489,7 +1539,7 @@ class MagnusSDK:
                 "qualify": "yes",
                 "context": "billing",
                 "insecure": "port,invite",   # Allow without strict auth
-                "sip_config": "insecure=port,invite",  # Override - Magnus ignores main insecure field
+                "sip_config": sip_config_create,  # Full config - Magnus reads from this field
                 "status": "1"
             })
 
@@ -1546,9 +1596,27 @@ class MagnusSDK:
 
             # Step 4: Update SIP settings
             # IMPORTANT: Magnus ignores some fields during CREATE, so we must set them via UPDATE
+            # Build full sip_config for update - Magnus reads ALL settings from this field
+            sip_config_update = "\n".join([
+                "insecure=port,invite",
+                "type=friend",
+                f"fromdomain={self.livekit_sip_domain}",
+                f"defaultuser={sip_user_without_plus}",
+                f"authuser={sip_user_without_plus}",
+                f"secret={password}",
+                f"fromuser={sip_user_without_plus}",
+                "context=billing",
+                f"callerid=<{sip_user_without_plus}>",
+                "transport=tcp",
+                "port=5060",
+                "permit=0.0.0.0/0.0.0.0",
+            ])
+
             logger.info(f"Updating SIP settings for {sip_id}")
             sip_update_result = self.update("sip", sip_id, {
-                "callerid": did,
+                "user": sip_user_without_plus,  # Update user field to match sip_config
+                "name": sip_user_without_plus,  # Update name field to match
+                "callerid": f"<{sip_user_without_plus}>",
                 "voicemail": "1",
                 "voicemail_email": email,
                 "voicemail_password": did[-4:],
@@ -1556,15 +1624,15 @@ class MagnusSDK:
                 # Critical fields that Magnus ignores during CREATE:
                 "host": self.livekit_sip_domain,
                 "fromdomain": self.livekit_sip_domain,
-                "defaultuser": sip_user_with_plus,
-                "authuser": sip_user_with_plus,
-                "fromuser": sip_user_with_plus,
+                "defaultuser": sip_user_without_plus,  # No + prefix - matches LiveKit
+                "authuser": sip_user_without_plus,     # No + prefix - matches LiveKit
+                "fromuser": sip_user_without_plus,     # No + prefix - matches LiveKit
                 "transport": "tcp",
                 "nat": "force_rport,comedia",
                 "qualify": "yes",
                 "context": "billing",
                 "insecure": "port,invite",
-                "sip_config": "insecure=port,invite",
+                "sip_config": sip_config_update,  # Full config - Magnus reads from this field
                 "dtmfmode": "rfc2833",
             })
 
