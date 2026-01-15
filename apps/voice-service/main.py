@@ -767,9 +767,9 @@ def magnus_list_sip_accounts():
         # Query the sip module with read action
         filter_data = {}
         if username_filter:
-            # Use LIKE query for partial matching
+            # Use LIKE query for partial matching on the 'name' field (SIP username)
             filter_data['filter'] = json.dumps([
-                {"type": "string", "field": "user", "value": username_filter, "comparison": "ct"}
+                {"type": "string", "field": "name", "value": username_filter, "comparison": "ct"}
             ])
 
         filter_data['start'] = '0'
