@@ -16,10 +16,11 @@ import os
 import json
 import logging
 import time
+import asyncio
 import psycopg2
 from typing import Optional, Dict, Any
 
-from livekit import agents
+from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, metrics
 from livekit.agents.voice import MetricsCollectedEvent
 from livekit.plugins import openai, silero, deepgram
@@ -254,6 +255,79 @@ def prewarm(proc: agents.JobProcess):
     proc.userdata["vad"] = silero.VAD.load()
 
 
+async def wait_for_call_active(
+    participant: rtc.RemoteParticipant,
+    timeout: float = 60.0
+) -> bool:
+    """
+    Wait for an outbound call to be answered (sip.callStatus = "active")
+
+    For outbound calls, the SIP participant joins immediately in "dialing" state.
+    We need to wait for the call to be answered before the AI starts speaking.
+
+    Args:
+        participant: The SIP participant to monitor
+        timeout: Maximum seconds to wait for answer (default 60s)
+
+    Returns:
+        True if call was answered, False if timeout or hangup
+    """
+    call_status = participant.attributes.get("sip.callStatus", "")
+
+    # If already active, return immediately
+    if call_status == "active":
+        logger.info("Call already active")
+        return True
+
+    logger.info(f"Waiting for call to be answered (current status: {call_status})...")
+
+    # Create event to signal when call is answered
+    call_answered = asyncio.Event()
+    call_failed = asyncio.Event()
+
+    def on_attributes_changed(changed_attrs: dict):
+        """Handle participant attribute changes"""
+        new_status = participant.attributes.get("sip.callStatus", "")
+        logger.info(f"Call status changed: {new_status}")
+
+        if new_status == "active":
+            call_answered.set()
+        elif new_status in ("hangup", "error"):
+            call_failed.set()
+
+    # Subscribe to attribute changes
+    participant.on("attributes_changed", on_attributes_changed)
+
+    try:
+        # Wait for either call answered, failed, or timeout
+        done, pending = await asyncio.wait(
+            [
+                asyncio.create_task(call_answered.wait()),
+                asyncio.create_task(call_failed.wait()),
+            ],
+            timeout=timeout,
+            return_when=asyncio.FIRST_COMPLETED
+        )
+
+        # Cancel pending tasks
+        for task in pending:
+            task.cancel()
+
+        if call_answered.is_set():
+            logger.info("Call answered - ready to speak")
+            return True
+        elif call_failed.is_set():
+            logger.warning("Call failed or hung up before answer")
+            return False
+        else:
+            logger.warning(f"Timeout waiting for call answer ({timeout}s)")
+            return False
+
+    finally:
+        # Unsubscribe from events
+        participant.off("attributes_changed", on_attributes_changed)
+
+
 async def entrypoint(ctx: agents.JobContext):
     """Main entrypoint for handling voice calls"""
     logger.info(f"Agent connecting to room: {ctx.room.name}")
@@ -289,6 +363,16 @@ async def entrypoint(ctx: agents.JobContext):
     sip_attrs = {k: v for k, v in participant.attributes.items() if 'sip' in k.lower()}
     if sip_attrs:
         logger.info(f"SIP attributes: {sip_attrs}")
+
+    # Detect outbound calls (room name starts with "outbound-")
+    is_outbound = ctx.room.name.startswith("outbound-")
+    if is_outbound:
+        logger.info("Outbound call detected - waiting for call to be answered...")
+        call_answered = await wait_for_call_active(participant, timeout=60.0)
+        if not call_answered:
+            logger.warning("Call was not answered - ending session")
+            return
+        logger.info("Outbound call answered - proceeding with agent session")
 
     # Build system prompt from agent config or use default
     system_prompt = build_system_prompt(agent_config) if agent_config else DEFAULT_SYSTEM_PROMPT
