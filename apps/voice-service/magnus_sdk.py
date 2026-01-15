@@ -1099,6 +1099,7 @@ class MagnusSDK:
                 "user": username,    # SIP username (Asterisk expects this as the username string)
                 "name": username,
                 "accountcode": username,
+                "regexten": username[:20],  # Explicit regexten (max 20 chars) - prevents auto-gen overflow
                 "secret": password,
                 "callerid": username,
                 "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
@@ -1463,6 +1464,7 @@ class MagnusSDK:
                 "user": sip_user_with_plus,  # SIP username with + prefix
                 "name": sip_user_with_plus,
                 "accountcode": sip_user_with_plus,
+                "regexten": sip_username[:20],  # Explicit regexten (max 20 chars) - prevents auto-gen overflow
                 "secret": password,
                 "type": "friend",            # SIP peer type
                 "callerid": f"<{sip_user_without_plus}>",  # Caller ID in angle brackets
