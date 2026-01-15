@@ -8,6 +8,9 @@
     "app/api/**/*.ts": {
       "maxDuration": 30
     },
+    "app/api/voice/agents/*/provision-phone/*.ts": {
+      "maxDuration": 60
+    },
     "app/api/content/generate/**/*.ts": {
       "maxDuration": 60
     },

@@ -20,8 +20,9 @@ import { getUserOrganization } from "@/lib/sync-user";
 const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL ||
   (process.env.VERCEL ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice" : "http://localhost:5000");
 
-// Timeout for voice service requests (30 seconds)
-const VOICE_SERVICE_TIMEOUT_MS = 30000;
+// Timeout for voice service requests (15 seconds)
+// Using 15s to allow multiple parallel requests within the 60s function timeout
+const VOICE_SERVICE_TIMEOUT_MS = 15000;
 
 // Maximum number of retry attempts for transient errors
 const MAX_RETRY_ATTEMPTS = 3;
@@ -798,50 +799,61 @@ export async function POST(
     if (result.did_number) {
       console.log(`[Agent ${agent.id}] Setting up LiveKit telephony for ${result.did_number}`);
 
-      // Create LiveKit inbound trunk (allows LiveKit to receive calls for this number)
-      const trunkResult = await createLiveKitInboundTrunk(result.did_number, org.id);
+      // Create all LiveKit resources in PARALLEL to avoid Vercel function timeout
+      // Each call has its own 30s timeout, but running them sequentially could exceed
+      // the function's maxDuration. Running in parallel reduces total time significantly.
+      const sipDomain = result.sip_server || "voice00.epic.dm";
+      const hasOutboundCredentials = result.sip_username && result.sip_password;
+
+      const [trunkResult, outboundResult, ruleResult] = await Promise.all([
+        // 1. Create inbound trunk (allows LiveKit to receive calls for this number)
+        createLiveKitInboundTrunk(result.did_number, org.id),
+
+        // 2. Create outbound trunk (allows LiveKit to make outbound calls)
+        hasOutboundCredentials
+          ? createLiveKitOutboundTrunk(
+              result.did_number,
+              result.sip_username!,
+              result.sip_password!,
+              sipDomain,
+              org.id
+            )
+          : Promise.resolve({ success: false, error: "Missing SIP credentials" }),
+
+        // 3. Create dispatch rule (routes calls to the AI agent)
+        // Note: trunkId is optional, dispatch rule can work without it
+        createLiveKitDispatchRule(
+          result.did_number,
+          undefined, // We don't have trunkId yet since calls are parallel
+          agent.id,
+          org.id,
+          userId
+        ),
+      ]);
+
+      // Process inbound trunk result
       if (trunkResult.success) {
         livekitTrunkId = trunkResult.trunkId;
       } else {
-        // Log warning but don't fail - Magnus provisioning succeeded
         console.warn(`[Agent ${agent.id}] LiveKit inbound trunk creation failed: ${trunkResult.error}`);
         livekitWarnings.push(`Inbound trunk: ${trunkResult.error}`);
       }
 
-      // Create LiveKit outbound trunk (allows LiveKit to make outbound calls from this number)
-      // Requires SIP credentials from Magnus
-      if (result.sip_username && result.sip_password) {
-        const sipDomain = result.sip_server || "voice00.epic.dm";
-        const outboundResult = await createLiveKitOutboundTrunk(
-          result.did_number,
-          result.sip_username,
-          result.sip_password,
-          sipDomain,
-          org.id
-        );
-        if (outboundResult.success) {
-          livekitOutboundTrunkId = outboundResult.trunkId;
-        } else {
-          console.warn(`[Agent ${agent.id}] LiveKit outbound trunk creation failed: ${outboundResult.error}`);
-          livekitWarnings.push(`Outbound trunk: ${outboundResult.error}`);
-        }
+      // Process outbound trunk result
+      if (outboundResult.success) {
+        livekitOutboundTrunkId = outboundResult.trunkId;
       } else {
-        console.warn(`[Agent ${agent.id}] Skipping outbound trunk - missing SIP credentials`);
-        livekitWarnings.push("Outbound trunk: Missing SIP credentials");
+        const errorMsg = hasOutboundCredentials
+          ? outboundResult.error
+          : "Missing SIP credentials";
+        console.warn(`[Agent ${agent.id}] LiveKit outbound trunk creation failed: ${errorMsg}`);
+        livekitWarnings.push(`Outbound trunk: ${errorMsg}`);
       }
 
-      // Create LiveKit dispatch rule (routes calls to the AI agent)
-      const ruleResult = await createLiveKitDispatchRule(
-        result.did_number,
-        livekitTrunkId,
-        agent.id,
-        org.id,
-        userId
-      );
+      // Process dispatch rule result
       if (ruleResult.success) {
         livekitRuleId = ruleResult.ruleId;
       } else {
-        // Log warning but don't fail - Magnus provisioning succeeded
         console.warn(`[Agent ${agent.id}] LiveKit dispatch rule creation failed: ${ruleResult.error}`);
         livekitWarnings.push(`Dispatch rule: ${ruleResult.error}`);
       }
