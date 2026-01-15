@@ -911,24 +911,35 @@ def magnus_create_sip_account():
         provider_id = sdk.get_default_provider_id()
 
         # Create SIP account with the specified credentials
+        # Format username with + prefix for SIP fields
+        sip_user_with_plus = f"+{sip_username}" if not sip_username.startswith("+") else sip_username
+        phone_without_plus = phone_number.lstrip("+")
+
         sip_result = sdk.create("sip", {
             "id": "0",                   # 0 = create new
             "id_user": magnus_user_id,   # Foreign key to Magnus user table
             "id_provider": provider_id,  # Use valid provider ID from Magnus
-            "user": sip_username,        # SIP username
-            "name": sip_username,
-            "accountcode": sip_username,
+            "user": sip_user_with_plus,
+            "name": sip_user_with_plus,
+            "accountcode": sip_user_with_plus,
             "secret": sip_password,
-            "callerid": phone_number,
+            "type": "friend",
+            "callerid": f"<{phone_without_plus}>",
             "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
-            "transport": "udp",          # Required field - max 3 chars
+            "fromdomain": sdk.livekit_sip_domain,
+            "defaultuser": sip_user_with_plus,
+            "authuser": sip_user_with_plus,
+            "fromuser": sip_user_with_plus,
+            "transport": "tcp",
+            "port": "5060",
+            "permit": "0.0.0.0/0.0.0.0",
             "allow": "ulaw,alaw,g729,gsm",
             "dtmfmode": "rfc2833",
             "nat": "force_rport,comedia",
             "qualify": "yes",
             "context": "billing",
-            "insecure": "invite,port",   # Allow authentication without strict registration
-            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+            "insecure": "port,invite",
+            "sip_config": "insecure=port,invite",  # Override - Magnus ignores main insecure field
             "status": "1"
         })
 
@@ -1106,30 +1117,42 @@ def magnus_recreate_sip_account(sip_id):
         logger.info(f"Delete result: {delete_result}")
 
         # Create a new SIP account with correct settings
+        # Format username with + prefix for SIP fields
+        sip_user_with_plus = f"+{username}" if not username.startswith("+") else username
+        callerid_without_plus = callerid.lstrip("+").strip("<>") if callerid else username.lstrip("+")
+
         create_data = {
             "id": "0",  # id=0 signals creation
             "id_user": id_user,
-            "name": username,
-            "accountcode": sip_account.get("accountcode", ""),
+            "user": sip_user_with_plus,
+            "name": sip_user_with_plus,
+            "accountcode": sip_account.get("accountcode", "") or sip_user_with_plus,
             "secret": secret,
-            "callerid": callerid,
-            "cid_number": callerid,
+            "type": "friend",
+            "callerid": f"<{callerid_without_plus}>",
+            "cid_number": callerid_without_plus,
             "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
-            "insecure": "invite,port",  # The correct setting
-            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+            "fromdomain": sdk.livekit_sip_domain,
+            "defaultuser": sip_user_with_plus,
+            "authuser": sip_user_with_plus,
+            "fromuser": sip_user_with_plus,
+            "transport": "tcp",
+            "port": "5060",
+            "permit": "0.0.0.0/0.0.0.0",
+            "insecure": "port,invite",
+            "sip_config": "insecure=port,invite",  # Override - Magnus ignores main insecure field
             "nat": nat,
             "dtmfmode": "rfc2833",
             "allow": allow,
             "disallow": "all",
             "context": context,
             "qualify": "yes",
-            "type": "friend",
             "status": "1",
             "directmedia": "no",
             "allowtransfer": "no",
             "voicemail": voicemail,
             "voicemail_email": voicemail_email,
-            "voicemail_password": voicemail_password or (callerid[-4:] if callerid else "1234")
+            "voicemail_password": voicemail_password or (callerid_without_plus[-4:] if callerid_without_plus else "1234")
         }
 
         create_result = sdk._make_request("save", "sip", create_data)
@@ -1737,24 +1760,35 @@ def test_sip_create():
         logger.info(f"TEST SIP: provider_id={provider_id}, type={type(provider_id)}, repr={repr(provider_id)}")
 
         # Create SIP account data (matching _provision_with_did)
+        # Format username with + prefix for SIP fields
+        sip_user_with_plus = f"+{sip_username}" if not sip_username.startswith("+") else sip_username
+        sip_user_without_plus = sip_username.lstrip("+")
+
         sip_data = {
             "id": "0",           # 0 = create new
             "id_user": user_id,  # Foreign key to Magnus user table
             "id_provider": provider_id,  # Use valid provider ID from Magnus
-            "user": sip_username,
-            "name": sip_username,
-            "accountcode": sip_username,
+            "user": sip_user_with_plus,
+            "name": sip_user_with_plus,
+            "accountcode": sip_user_with_plus,
             "secret": "TestPass123!",
-            "callerid": sip_username,
+            "type": "friend",
+            "callerid": f"<{sip_user_without_plus}>",
             "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
-            "transport": "udp",  # Required field - max 3 chars
+            "fromdomain": sdk.livekit_sip_domain,
+            "defaultuser": sip_user_with_plus,
+            "authuser": sip_user_with_plus,
+            "fromuser": sip_user_with_plus,
+            "transport": "tcp",
+            "port": "5060",
+            "permit": "0.0.0.0/0.0.0.0",
             "allow": "ulaw,alaw,g729,gsm",
             "dtmfmode": "rfc2833",
             "nat": "force_rport,comedia",
             "qualify": "yes",
             "context": "billing",
-            "insecure": "invite,port",
-            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+            "insecure": "port,invite",
+            "sip_config": "insecure=port,invite",  # Override - Magnus ignores main insecure field
             "status": "1"
         }
 

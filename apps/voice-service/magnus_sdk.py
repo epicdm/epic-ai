@@ -1452,24 +1452,35 @@ class MagnusSDK:
             # Get valid provider ID - "0" is rejected by some Magnus configurations
             provider_id = self.get_default_provider_id()
             logger.info(f"Creating SIP account for user {magnus_user_id}: {sip_username} (provider_id: {provider_id})")
+            # Format username with + prefix for SIP fields
+            sip_user_with_plus = f"+{sip_username}" if not sip_username.startswith("+") else sip_username
+            sip_user_without_plus = sip_username.lstrip("+")
+
             sip_result = self.create("sip", {
                 "id": "0",                   # 0 = create new
                 "id_user": magnus_user_id,   # Foreign key to Magnus user table
                 "id_provider": provider_id,  # Use valid provider ID from Magnus
-                "user": sip_username,        # SIP username (Asterisk expects this as the username string)
-                "name": sip_username,
-                "accountcode": sip_username,
+                "user": sip_user_with_plus,  # SIP username with + prefix
+                "name": sip_user_with_plus,
+                "accountcode": sip_user_with_plus,
                 "secret": password,
-                "callerid": sip_username,
+                "type": "friend",            # SIP peer type
+                "callerid": f"<{sip_user_without_plus}>",  # Caller ID in angle brackets
                 "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
-                "transport": "udp",          # Required field - max 3 chars
+                "fromdomain": self.livekit_sip_domain,  # From domain for outbound
+                "defaultuser": sip_user_with_plus,  # Default auth username
+                "authuser": sip_user_with_plus,     # Auth username for challenges
+                "fromuser": sip_user_with_plus,     # From user for outbound calls
+                "transport": "tcp",          # TCP transport
+                "port": "5060",              # SIP port
+                "permit": "0.0.0.0/0.0.0.0", # Allow all IPs
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",
                 "nat": "force_rport,comedia",
                 "qualify": "yes",
                 "context": "billing",
-                "insecure": "invite,port",
-                "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
+                "insecure": "port,invite",   # Allow without strict auth
+                "sip_config": "insecure=port,invite",  # Override - Magnus ignores main insecure field
                 "status": "1"
             })
 
