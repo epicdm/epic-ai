@@ -1461,7 +1461,7 @@ class MagnusSDK:
                 "accountcode": sip_username,
                 "secret": password,
                 "callerid": sip_username,
-                "host": "dynamic",
+                "host": self.livekit_sip_domain,  # LiveKit SIP domain for call routing
                 "transport": "udp",          # Required field - max 3 chars
                 "allow": "ulaw,alaw,g729,gsm",
                 "dtmfmode": "rfc2833",

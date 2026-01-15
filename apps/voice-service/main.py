@@ -491,6 +491,47 @@ def migrate_dispatch_rules():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/telephony/dispatch-rules/backfill-agent-id', methods=['POST'])
+def backfill_dispatch_rules_agent_id():
+    """
+    Backfill dispatch rules with correct agent_id from database mappings.
+
+    Request body should contain:
+    {
+        "trunk_mappings": {
+            "trunk_id": {"agent_id": "...", "org_id": "...", "phone_number": "..."}
+        },
+        "target_agent_name": "epic-voice-agent"  // optional
+    }
+    """
+    import asyncio
+    from livekit_telephony import telephony_manager
+
+    try:
+        data = request.get_json() or {}
+        trunk_mappings = data.get('trunk_mappings', {})
+        target_agent_name = data.get('target_agent_name', 'epic-voice-agent')
+
+        if not trunk_mappings:
+            return jsonify({"error": "trunk_mappings required"}), 400
+
+        logger.info(f"Starting dispatch rule agent_id backfill with {len(trunk_mappings)} mappings")
+        result = asyncio.run(telephony_manager.backfill_dispatch_rules_agent_id(
+            trunk_mappings=trunk_mappings,
+            target_agent_name=target_agent_name
+        ))
+
+        if result['success']:
+            logger.info(f"Backfill complete: {result['updated']} updated, {result['skipped']} skipped")
+            if result['errors']:
+                logger.warning(f"Backfill errors: {result['errors']}")
+
+        return jsonify(result), 200 if result['success'] else 500
+    except Exception as e:
+        logger.error(f"Error backfilling dispatch rules agent_id: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/api/telephony/call', methods=['POST'])
 def make_outbound_call():
     """Initiate an outbound call"""
@@ -879,7 +920,7 @@ def magnus_create_sip_account():
             "accountcode": sip_username,
             "secret": sip_password,
             "callerid": phone_number,
-            "host": "dynamic",
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
             "transport": "udp",          # Required field - max 3 chars
             "allow": "ulaw,alaw,g729,gsm",
             "dtmfmode": "rfc2833",
@@ -887,6 +928,7 @@ def magnus_create_sip_account():
             "qualify": "yes",
             "context": "billing",
             "insecure": "invite,port",   # Allow authentication without strict registration
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
             "status": "1"
         })
 
@@ -1072,8 +1114,9 @@ def magnus_recreate_sip_account(sip_id):
             "secret": secret,
             "callerid": callerid,
             "cid_number": callerid,
-            "host": "dynamic",
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
             "insecure": "invite,port",  # The correct setting
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
             "nat": nat,
             "dtmfmode": "rfc2833",
             "allow": allow,
@@ -1703,7 +1746,7 @@ def test_sip_create():
             "accountcode": sip_username,
             "secret": "TestPass123!",
             "callerid": sip_username,
-            "host": "dynamic",
+            "host": sdk.livekit_sip_domain,  # LiveKit SIP domain for call routing
             "transport": "udp",  # Required field - max 3 chars
             "allow": "ulaw,alaw,g729,gsm",
             "dtmfmode": "rfc2833",
@@ -1711,6 +1754,7 @@ def test_sip_create():
             "qualify": "yes",
             "context": "billing",
             "insecure": "invite,port",
+            "sip_config": "insecure=invite,port",  # Override - Magnus ignores main insecure field
             "status": "1"
         }
 
