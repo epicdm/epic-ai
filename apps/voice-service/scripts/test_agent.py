@@ -257,7 +257,8 @@ def prewarm(proc: agents.JobProcess):
 
 async def wait_for_call_active(
     participant: rtc.RemoteParticipant,
-    timeout: float = 60.0
+    timeout: float = 60.0,
+    poll_interval: float = 0.3
 ) -> bool:
     """
     Wait for an outbound call to be answered (sip.callStatus = "active")
@@ -265,67 +266,42 @@ async def wait_for_call_active(
     For outbound calls, the SIP participant joins immediately in "dialing" state.
     We need to wait for the call to be answered before the AI starts speaking.
 
+    Uses polling since the LiveKit Python SDK event system works differently
+    than the Node.js SDK.
+
     Args:
         participant: The SIP participant to monitor
         timeout: Maximum seconds to wait for answer (default 60s)
+        poll_interval: Seconds between status checks (default 0.3s)
 
     Returns:
         True if call was answered, False if timeout or hangup
     """
-    call_status = participant.attributes.get("sip.callStatus", "")
+    start_time = time.time()
+    last_status = ""
 
-    # If already active, return immediately
-    if call_status == "active":
-        logger.info("Call already active")
-        return True
+    while time.time() - start_time < timeout:
+        call_status = participant.attributes.get("sip.callStatus", "")
 
-    logger.info(f"Waiting for call to be answered (current status: {call_status})...")
+        # Log status changes
+        if call_status != last_status:
+            logger.info(f"Call status: {call_status}")
+            last_status = call_status
 
-    # Create event to signal when call is answered
-    call_answered = asyncio.Event()
-    call_failed = asyncio.Event()
-
-    def on_attributes_changed(changed_attrs: dict):
-        """Handle participant attribute changes"""
-        new_status = participant.attributes.get("sip.callStatus", "")
-        logger.info(f"Call status changed: {new_status}")
-
-        if new_status == "active":
-            call_answered.set()
-        elif new_status in ("hangup", "error"):
-            call_failed.set()
-
-    # Subscribe to attribute changes
-    participant.on("attributes_changed", on_attributes_changed)
-
-    try:
-        # Wait for either call answered, failed, or timeout
-        done, pending = await asyncio.wait(
-            [
-                asyncio.create_task(call_answered.wait()),
-                asyncio.create_task(call_failed.wait()),
-            ],
-            timeout=timeout,
-            return_when=asyncio.FIRST_COMPLETED
-        )
-
-        # Cancel pending tasks
-        for task in pending:
-            task.cancel()
-
-        if call_answered.is_set():
+        # Check if call is answered
+        if call_status == "active":
             logger.info("Call answered - ready to speak")
             return True
-        elif call_failed.is_set():
-            logger.warning("Call failed or hung up before answer")
-            return False
-        else:
-            logger.warning(f"Timeout waiting for call answer ({timeout}s)")
+
+        # Check if call failed
+        if call_status in ("hangup", "error", "disconnected"):
+            logger.warning(f"Call failed with status: {call_status}")
             return False
 
-    finally:
-        # Unsubscribe from events
-        participant.off("attributes_changed", on_attributes_changed)
+        await asyncio.sleep(poll_interval)
+
+    logger.warning(f"Timeout waiting for call answer ({timeout}s)")
+    return False
 
 
 async def entrypoint(ctx: agents.JobContext):
