@@ -1051,12 +1051,8 @@ class MagnusSDK:
         # Generate credentials
         password = self.generate_password()
 
-        # Create username from agent name and DID suffix
-        # Magnus limits usernames to 20 characters
-        # Format: {name_prefix}_{last 4 digits of DID} = max 15 + 1 + 4 = 20
-        clean_name = ''.join(c for c in agent_name if c.isalnum())[:15].lower()
-        did_suffix = did[-4:]  # Last 4 digits for uniqueness
-        username = f"{clean_name}_{did_suffix}"
+        # SIP username is the DID number (numeric only)
+        username = did.lstrip("+")  # Remove any + prefix, keep just digits
 
         logger.info(f"Provisioning voice agent: {agent_id} as {username} with DID {did}")
 
@@ -1454,10 +1450,8 @@ class MagnusSDK:
         """
         password = self.generate_password()
 
-        # Create SIP username: {agent_name}_{did_suffix}
-        clean_name = ''.join(c for c in agent_name if c.isalnum())[:15].lower()
-        did_suffix = did[-4:]
-        sip_username = f"{clean_name}_{did_suffix}"
+        # SIP username is the DID number (numeric only)
+        sip_username = did.lstrip("+")  # Remove any + prefix, keep just digits
 
         logger.info(f"Provisioning SIP/DID for agent {agent_id} under user {magnus_user_id}: {sip_username} with DID {did}")
 
