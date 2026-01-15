@@ -823,6 +823,116 @@ def magnus_get_sip_account(sip_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/create-sip-account', methods=['POST'])
+def magnus_create_sip_account():
+    """
+    Create a Magnus SIP account with specific credentials.
+    Used for backfilling missing SIP accounts for phones that already
+    have LiveKit outbound trunks configured.
+
+    Request body:
+    {
+        "magnus_user_id": "123",      // The org's Magnus user ID (REQUIRED)
+        "sip_username": "salesbot_9532",
+        "sip_password": "password123",
+        "phone_number": "17678189532", // For caller ID
+        "agent_name": "Sales Bot",     // For display name
+        "email": "agent@epic.dm"       // For voicemail
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "456"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+
+        required = ['magnus_user_id', 'sip_username', 'sip_password', 'phone_number']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"{field} required"}), 400
+
+        magnus_user_id = data['magnus_user_id']
+        sip_username = data['sip_username']
+        sip_password = data['sip_password']
+        phone_number = data['phone_number']
+        agent_name = data.get('agent_name', sip_username)
+        email = data.get('email', f'{sip_username}@epic.dm')
+
+        logger.info(f"Creating SIP account for backfill: {sip_username} under user {magnus_user_id}")
+
+        # Get valid provider ID
+        provider_id = sdk.get_default_provider_id()
+
+        # Create SIP account with the specified credentials
+        sip_result = sdk.create("sip", {
+            "id": "0",                   # 0 = create new
+            "id_user": magnus_user_id,   # Foreign key to Magnus user table
+            "id_provider": provider_id,  # Use valid provider ID from Magnus
+            "user": sip_username,        # SIP username
+            "name": sip_username,
+            "accountcode": sip_username,
+            "secret": sip_password,
+            "callerid": phone_number,
+            "host": "dynamic",
+            "transport": "udp",          # Required field - max 3 chars
+            "allow": "ulaw,alaw,g729,gsm",
+            "dtmfmode": "rfc2833",
+            "nat": "force_rport,comedia",
+            "qualify": "yes",
+            "context": "billing",
+            "insecure": "invite,port",   # Allow authentication without strict registration
+            "status": "1"
+        })
+
+        logger.info(f"SIP creation response: {sip_result}")
+
+        if not sip_result.get("success", False):
+            error_msg = sip_result.get('msg', 'Unknown error')
+            logger.error(f"Failed to create SIP account: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to create SIP account: {error_msg}"
+            }), 500
+
+        sip_rows = sip_result.get("rows", [])
+        sip_id = str(sip_rows[0].get("id", "")) if sip_rows else ""
+
+        if not sip_id:
+            logger.error(f"Could not extract SIP ID from response: {sip_result}")
+            return jsonify({
+                "success": False,
+                "error": "Could not extract SIP ID from response"
+            }), 500
+
+        logger.info(f"Created SIP account ID: {sip_id}")
+
+        # Update SIP settings with voicemail
+        sip_update_result = sdk.update("sip", sip_id, {
+            "voicemail": "1",
+            "voicemail_email": email,
+            "voicemail_password": phone_number[-4:] if len(phone_number) >= 4 else "1234",
+        })
+
+        if not sip_update_result.get("success", False):
+            logger.warning(f"Failed to update SIP settings: {sip_update_result.get('msg')}")
+
+        return jsonify({
+            "success": True,
+            "sip_id": sip_id,
+            "sip_username": sip_username
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Error creating SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ============================================
 # Voice Agent Provisioning (Magnus SDK)
 # ============================================
