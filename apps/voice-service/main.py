@@ -774,7 +774,7 @@ def magnus_list_sip_accounts():
         filter_data['start'] = '0'
         filter_data['limit'] = str(limit)
 
-        result = sdk._api_request("sip", "read", data=filter_data)
+        result = sdk._make_request("read", "sip", data=filter_data)
 
         # Extract rows from response
         rows = result.get('rows', [])
@@ -806,7 +806,7 @@ def magnus_get_sip_account(sip_id):
             'limit': '1'
         }
 
-        result = sdk._api_request("sip", "read", data=filter_data)
+        result = sdk._make_request("read", "sip", data=filter_data)
         rows = result.get('rows', [])
 
         if not rows:
