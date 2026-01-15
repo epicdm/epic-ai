@@ -933,6 +933,61 @@ def magnus_create_sip_account():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/update-sip-account/<sip_id>', methods=['PUT', 'PATCH'])
+def magnus_update_sip_account(sip_id):
+    """
+    Update a Magnus SIP account settings.
+    Used to fix the insecure field on existing SIP accounts.
+
+    Request body:
+    {
+        "insecure": "invite,port",   // Optional
+        "host": "dynamic",           // Optional
+        "nat": "force_rport,comedia" // Optional
+        // Any other SIP field to update
+    }
+
+    Returns:
+    {
+        "success": true,
+        "sip_id": "1429"
+    }
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        data = request.get_json() or {}
+
+        if not data:
+            return jsonify({"error": "No fields provided to update"}), 400
+
+        logger.info(f"Updating SIP account {sip_id}: {data}")
+
+        # Update the SIP account
+        result = sdk.update("sip", sip_id, data)
+
+        logger.info(f"SIP update response: {result}")
+
+        if not result.get("success", False):
+            error_msg = result.get('msg', 'Unknown error')
+            logger.error(f"Failed to update SIP account: {error_msg}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to update SIP account: {error_msg}"
+            }), 500
+
+        return jsonify({
+            "success": True,
+            "sip_id": sip_id,
+            "updated_fields": list(data.keys())
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error updating SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ============================================
 # Voice Agent Provisioning (Magnus SDK)
 # ============================================
