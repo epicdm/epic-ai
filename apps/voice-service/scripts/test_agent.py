@@ -16,7 +16,6 @@ import os
 import json
 import logging
 import time
-import asyncio
 import psycopg2
 from typing import Optional, Dict, Any
 
@@ -255,55 +254,6 @@ def prewarm(proc: agents.JobProcess):
     proc.userdata["vad"] = silero.VAD.load()
 
 
-async def wait_for_call_active(
-    participant: rtc.RemoteParticipant,
-    timeout: float = 60.0,
-    poll_interval: float = 0.3
-) -> bool:
-    """
-    Wait for an outbound call to be answered (sip.callStatus = "active")
-
-    For outbound calls, the SIP participant joins immediately in "dialing" state.
-    We need to wait for the call to be answered before the AI starts speaking.
-
-    Uses polling since the LiveKit Python SDK event system works differently
-    than the Node.js SDK.
-
-    Args:
-        participant: The SIP participant to monitor
-        timeout: Maximum seconds to wait for answer (default 60s)
-        poll_interval: Seconds between status checks (default 0.3s)
-
-    Returns:
-        True if call was answered, False if timeout or hangup
-    """
-    start_time = time.time()
-    last_status = ""
-
-    while time.time() - start_time < timeout:
-        call_status = participant.attributes.get("sip.callStatus", "")
-
-        # Log status changes
-        if call_status != last_status:
-            logger.info(f"Call status: {call_status}")
-            last_status = call_status
-
-        # Check if call is answered
-        if call_status == "active":
-            logger.info("Call answered - ready to speak")
-            return True
-
-        # Check if call failed
-        if call_status in ("hangup", "error", "disconnected"):
-            logger.warning(f"Call failed with status: {call_status}")
-            return False
-
-        await asyncio.sleep(poll_interval)
-
-    logger.warning(f"Timeout waiting for call answer ({timeout}s)")
-    return False
-
-
 async def entrypoint(ctx: agents.JobContext):
     """Main entrypoint for handling voice calls"""
     logger.info(f"Agent connecting to room: {ctx.room.name}")
@@ -341,14 +291,12 @@ async def entrypoint(ctx: agents.JobContext):
         logger.info(f"SIP attributes: {sip_attrs}")
 
     # Detect outbound calls (room name starts with "outbound-")
+    # Note: For outbound calls, wait_until_answered=True is set on the SIP participant
+    # creation, so the participant only joins when the call is already answered.
     is_outbound = ctx.room.name.startswith("outbound-")
     if is_outbound:
-        logger.info("Outbound call detected - waiting for call to be answered...")
-        call_answered = await wait_for_call_active(participant, timeout=60.0)
-        if not call_answered:
-            logger.warning("Call was not answered - ending session")
-            return
-        logger.info("Outbound call answered - proceeding with agent session")
+        call_status = participant.attributes.get("sip.callStatus", "")
+        logger.info(f"Outbound call detected - participant joined with status: {call_status}")
 
     # Build system prompt from agent config or use default
     system_prompt = build_system_prompt(agent_config) if agent_config else DEFAULT_SYSTEM_PROMPT
