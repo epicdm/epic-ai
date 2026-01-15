@@ -212,12 +212,16 @@ class LiveKitTelephonyManager:
         lkapi = api.LiveKitAPI()
 
         try:
+            # SIPOutboundTrunkUpdate contains only fields to update
             update = SIPOutboundTrunkUpdate(
-                sip_trunk_id=trunk_id,
                 transport=transport,
             )
 
-            request = UpdateSIPOutboundTrunkRequest(update=update)
+            # sip_trunk_id goes in the request, not the update object
+            request = UpdateSIPOutboundTrunkRequest(
+                sip_trunk_id=trunk_id,
+                update=update
+            )
             result = await lkapi.sip.update_sip_outbound_trunk(request)
 
             return {
