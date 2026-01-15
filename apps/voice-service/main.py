@@ -1018,14 +1018,14 @@ def magnus_recreate_sip_account(sip_id):
         force = data.get("force", False)
 
         # Get current SIP account details
-        accounts_response = sdk._make_request("read", "sip", {
-            "filter": f'[{{"field":"id","value":"{sip_id}"}}]'
-        })
+        # Note: Magnus filter doesn't work properly for ID lookup, so we need to get all accounts
+        # and search manually. Limit to a reasonable number to avoid timeout.
+        accounts_response = sdk._make_request("read", "sip", {"limit": 1000})
 
         if not accounts_response.get("rows"):
-            return jsonify({"error": f"SIP account {sip_id} not found"}), 404
+            return jsonify({"error": "No SIP accounts found in Magnus"}), 404
 
-        # Find the exact account
+        # Find the exact account by ID
         sip_account = None
         for row in accounts_response.get("rows", []):
             if str(row.get("id")) == str(sip_id):
