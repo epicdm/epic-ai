@@ -747,6 +747,81 @@ def magnus_get_rate(destination):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/magnus/sip-accounts', methods=['GET'])
+def magnus_list_sip_accounts():
+    """
+    List SIP accounts from Magnus.
+
+    Query params:
+    - username: Filter by SIP username (optional, partial match)
+    - limit: Max results (default 50)
+    """
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        username_filter = request.args.get('username', '')
+        limit = int(request.args.get('limit', 50))
+
+        # Query the sip module with read action
+        filter_data = {}
+        if username_filter:
+            # Use LIKE query for partial matching
+            filter_data['filter'] = json.dumps([
+                {"type": "string", "field": "user", "value": username_filter, "comparison": "ct"}
+            ])
+
+        filter_data['start'] = '0'
+        filter_data['limit'] = str(limit)
+
+        result = sdk._api_request("sip", "read", data=filter_data)
+
+        # Extract rows from response
+        rows = result.get('rows', [])
+
+        return jsonify({
+            "success": True,
+            "count": len(rows),
+            "accounts": rows
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error listing SIP accounts: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/magnus/sip-accounts/<sip_id>', methods=['GET'])
+def magnus_get_sip_account(sip_id):
+    """Get a specific SIP account by ID."""
+    try:
+        from magnus_sdk import MagnusSDK
+        sdk = MagnusSDK()
+
+        # Query for specific SIP account
+        filter_data = {
+            'filter': json.dumps([
+                {"type": "numeric", "field": "id", "value": sip_id, "comparison": "eq"}
+            ]),
+            'start': '0',
+            'limit': '1'
+        }
+
+        result = sdk._api_request("sip", "read", data=filter_data)
+        rows = result.get('rows', [])
+
+        if not rows:
+            return jsonify({"error": "SIP account not found"}), 404
+
+        return jsonify({
+            "success": True,
+            "account": rows[0]
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error getting SIP account: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ============================================
 # Voice Agent Provisioning (Magnus SDK)
 # ============================================
