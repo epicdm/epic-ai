@@ -376,6 +376,11 @@ async function handleParticipantLeft(event: WebhookEvent) {
 
 /**
  * Handle room_finished event (all participants left)
+ *
+ * This handles various scenarios:
+ * - Call was answered and completed (IN_PROGRESS -> COMPLETED)
+ * - Call was rejected/no answer (RINGING -> NO_ANSWER)
+ * - Call failed early (ACTIVE -> FAILED)
  */
 async function handleRoomFinished(event: WebhookEvent) {
   const room = event.room;
@@ -401,17 +406,42 @@ async function handleRoomFinished(event: WebhookEvent) {
       (endTime.getTime() - startTime.getTime()) / 1000
     );
 
+    // Determine the appropriate outcome based on the call's current status
+    // - RINGING: Call was never answered (rejected, busy, no answer)
+    // - ACTIVE: Call was initiated but failed before connecting
+    // - IN_PROGRESS: Call was actually connected and completed normally
+    let outcome: CallOutcome;
+    let outcomeReason: string;
+
+    if (call.status === CallStatus.RINGING) {
+      // Call never connected - was rejected or not answered
+      outcome = CallOutcome.NO_ANSWER;
+      outcomeReason = "Call was not answered or was rejected";
+    } else if (call.status === CallStatus.ACTIVE) {
+      // Call was initiated but never progressed to in_progress
+      outcome = CallOutcome.FAILED;
+      outcomeReason = "Call failed before connecting";
+    } else {
+      // Call was in progress - completed normally
+      outcome = CallOutcome.COMPLETED;
+      outcomeReason = "Call completed";
+    }
+
     await prisma.callLog.update({
       where: { id: call.id },
       data: {
         status: CallStatus.ENDED,
-        outcome: CallOutcome.COMPLETED,
+        outcome: outcome,
         endedAt: endTime,
         duration: durationSeconds,
+        metadata: {
+          ...(call.metadata as Record<string, unknown> || {}),
+          endReason: outcomeReason,
+        } as Prisma.InputJsonValue,
       },
     });
 
-    console.log(`[Webhook] Marked call ${call.id} as ended (room finished)`);
+    console.log(`[Webhook] Marked call ${call.id} as ended (${outcome}, was ${call.status})`);
   }
 }
 
