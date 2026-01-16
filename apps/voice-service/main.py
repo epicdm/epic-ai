@@ -2273,9 +2273,11 @@ def test_outbound_call():
             try:
                 from magnus_sdk import MagnusSDK
                 magnus = MagnusSDK()
-                dids = magnus.get_all_dids()
+                dids = magnus.get_all_dids()  # Returns a set of DID strings
                 if dids:
-                    from_number = '+' + dids[0].did if not dids[0].did.startswith('+') else dids[0].did
+                    # Convert set to list and get first DID (it's already a string)
+                    first_did = list(dids)[0]
+                    from_number = '+' + first_did if not first_did.startswith('+') else first_did
                     logger.info(f"Auto-selected DID for caller ID: {from_number}")
                 else:
                     return jsonify({
