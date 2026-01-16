@@ -2,14 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button, Chip, Spinner, Tooltip } from "@heroui/react";
+import {
+  Card,
+  CardBody,
+  Button,
+  Chip,
+  Spinner,
+  Tooltip,
+  Checkbox,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  RadioGroup,
+  Radio,
+  useDisclosure,
+} from "@heroui/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DemoIndicator } from "@/components/demo";
 import { useDemo } from "@/lib/demo";
 import { PricingTooltip, PRICING } from "@/components/ui/cost-estimator";
-import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3 } from "lucide-react";
+import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3, Trash2, AlertTriangle, X } from "lucide-react";
 import { PhoneIcon, SparklesIcon, CurrencyDollarIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 
 interface VoiceAgent {
@@ -33,12 +49,86 @@ interface VoiceStats {
 }
 
 export function VoiceDashboard() {
+  const router = useRouter();
   const { isDemo, data: demoData } = useDemo();
   const [agents, setAgents] = useState<VoiceAgent[]>([]);
   const [stats, setStats] = useState<VoiceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Bulk delete state
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [deletePhoneOption, setDeletePhoneOption] = useState<"pool" | "release">("pool");
+  const { isOpen: isBulkDeleteOpen, onOpen: onBulkDeleteOpen, onClose: onBulkDeleteClose } = useDisclosure();
+
+  const selectedAgents = agents.filter(a => selectedAgentIds.has(a.id));
+  const totalPhoneNumbers = selectedAgents.reduce((acc, a) => acc + a.phoneNumbers.length, 0);
+
+  const toggleAgentSelection = (agentId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedAgentIds(prev => {
+      const next = new Set(prev);
+      if (next.has(agentId)) {
+        next.delete(agentId);
+      } else {
+        next.add(agentId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedAgentIds.size === agents.length) {
+      setSelectedAgentIds(new Set());
+    } else {
+      setSelectedAgentIds(new Set(agents.map(a => a.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedAgentIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedAgentIds.size === 0) return;
+
+    setBulkDeleting(true);
+    setError(null);
+
+    try {
+      const deletePhoneNumbers = deletePhoneOption === "release";
+      const deletePromises = Array.from(selectedAgentIds).map(agentId =>
+        fetch(`/api/voice/agents/${agentId}?deletePhoneNumbers=${deletePhoneNumbers}`, {
+          method: "DELETE",
+        })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const failures = results.filter(r => !r.ok);
+
+      if (failures.length > 0) {
+        setError(`Failed to delete ${failures.length} agent(s)`);
+      }
+
+      // Refresh the agent list
+      const agentsRes = await fetch("/api/voice/agents");
+      if (agentsRes.ok) {
+        const agentsData = await agentsRes.json();
+        setAgents(Array.isArray(agentsData.agents) ? agentsData.agents : []);
+      }
+
+      setSelectedAgentIds(new Set());
+      onBulkDeleteClose();
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete agents");
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   // Hydration-safe mounting
   useEffect(() => {
@@ -284,46 +374,117 @@ export function VoiceDashboard() {
         />
       ) : (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Your Agents
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Your Agents
+            </h2>
+            {agents.length > 1 && (
+              <Button
+                size="sm"
+                variant="flat"
+                onPress={toggleSelectAll}
+              >
+                {selectedAgentIds.size === agents.length ? "Deselect All" : "Select All"}
+              </Button>
+            )}
+          </div>
+
+          {/* Bulk Action Bar */}
+          {selectedAgentIds.size > 0 && (
+            <Card className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
+              <CardBody className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-primary-800 dark:text-primary-300">
+                      {selectedAgentIds.size} agent{selectedAgentIds.size > 1 ? "s" : ""} selected
+                    </span>
+                    {totalPhoneNumbers > 0 && (
+                      <Chip size="sm" variant="flat" color="warning">
+                        {totalPhoneNumbers} phone number{totalPhoneNumbers > 1 ? "s" : ""}
+                      </Chip>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      onPress={clearSelection}
+                      startContent={<X className="w-4 h-4" />}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      size="sm"
+                      color="danger"
+                      onPress={onBulkDeleteOpen}
+                      startContent={<Trash2 className="w-4 h-4" />}
+                      isDisabled={isDemo}
+                    >
+                      Delete Selected
+                    </Button>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {agents.map((agent) => (
-              <Link key={agent.id} href={`/dashboard/voice/agents/${agent.id}`}>
-                <Card isPressable className="h-full hover:shadow-md transition-shadow">
-                  <CardBody className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <Bot className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex gap-2">
-                        {agent.isDeployed && (
-                          <Chip size="sm" color="success" variant="flat">
-                            Live
+              <div key={agent.id} className="relative">
+                {/* Selection Checkbox */}
+                <div
+                  className="absolute top-4 left-4 z-10"
+                  onClick={(e) => toggleAgentSelection(agent.id, e)}
+                >
+                  <Checkbox
+                    isSelected={selectedAgentIds.has(agent.id)}
+                    onValueChange={() => {}}
+                    classNames={{
+                      wrapper: "bg-white/90 dark:bg-gray-800/90 rounded shadow-sm",
+                    }}
+                  />
+                </div>
+                <Link href={`/dashboard/voice/agents/${agent.id}`}>
+                  <Card
+                    isPressable
+                    className={`h-full hover:shadow-md transition-shadow ${
+                      selectedAgentIds.has(agent.id) ? "ring-2 ring-primary-500" : ""
+                    }`}
+                  >
+                    <CardBody className="p-6 pl-12">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                          <Bot className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex gap-2">
+                          {agent.isDeployed && (
+                            <Chip size="sm" color="success" variant="flat">
+                              Live
+                            </Chip>
+                          )}
+                          <Chip
+                            size="sm"
+                            color={agent.isActive ? "primary" : "default"}
+                            variant="flat"
+                          >
+                            {agent.isActive ? "Active" : "Inactive"}
                           </Chip>
-                        )}
-                        <Chip
-                          size="sm"
-                          color={agent.isActive ? "primary" : "default"}
-                          variant="flat"
-                        >
-                          {agent.isActive ? "Active" : "Inactive"}
-                        </Chip>
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                      {agent.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">
-                      {agent.description || "No description"}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{agent._count.calls} calls</span>
-                      <span>{agent.phoneNumbers.length} numbers</span>
-                    </div>
-                  </CardBody>
-                </Card>
-              </Link>
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        {agent.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+                        {agent.description || "No description"}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>{agent._count.calls} calls</span>
+                        <span>{agent.phoneNumbers.length} numbers</span>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Link>
+              </div>
             ))}
           </div>
         </div>
@@ -373,6 +534,104 @@ export function VoiceDashboard() {
           </Card>
         </Link>
       </div>
+
+      {/* Bulk Delete Modal */}
+      <Modal isOpen={isBulkDeleteOpen} onClose={onBulkDeleteClose} size="lg">
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Delete {selectedAgentIds.size} Agent{selectedAgentIds.size > 1 ? "s" : ""}</h3>
+              <p className="text-sm text-gray-500 font-normal">This action cannot be undone</p>
+            </div>
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              Are you sure you want to delete the following agent{selectedAgentIds.size > 1 ? "s" : ""}?
+            </p>
+
+            <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
+              {selectedAgents.map((agent) => (
+                <div
+                  key={agent.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <Bot className="w-5 h-5 text-gray-400" />
+                    <span className="font-medium">{agent.name}</span>
+                  </div>
+                  {agent.phoneNumbers.length > 0 && (
+                    <Chip size="sm" variant="flat">
+                      {agent.phoneNumbers.length} number{agent.phoneNumbers.length > 1 ? "s" : ""}
+                    </Chip>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {totalPhoneNumbers > 0 ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">
+                    These agents have <strong>{totalPhoneNumbers}</strong> phone number{totalPhoneNumbers > 1 ? "s" : ""} assigned.
+                    What should happen to them?
+                  </p>
+                </div>
+
+                <RadioGroup
+                  value={deletePhoneOption}
+                  onValueChange={(value) => setDeletePhoneOption(value as "pool" | "release")}
+                  className="gap-3"
+                >
+                  <Radio value="pool" description="Numbers remain available for other agents">
+                    Return to pool
+                  </Radio>
+                  <Radio
+                    value="release"
+                    description="Delete from LiveKit and release from Magnus (permanent)"
+                    classNames={{ label: "text-red-600 dark:text-red-400" }}
+                  >
+                    Delete &amp; release numbers
+                  </Radio>
+                </RadioGroup>
+
+                {deletePhoneOption === "release" && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      <strong>Warning:</strong> This will permanently release all {totalPhoneNumbers} phone number{totalPhoneNumbers > 1 ? "s" : ""}.
+                      You may not be able to get them back.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <Phone className="w-4 h-4" />
+                  <p className="text-sm">No phone numbers assigned to selected agents.</p>
+                </div>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="bordered" onPress={onBulkDeleteClose}>
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              isLoading={bulkDeleting}
+              onPress={handleBulkDelete}
+              startContent={!bulkDeleting && <Trash2 className="w-4 h-4" />}
+            >
+              {totalPhoneNumbers > 0 && deletePhoneOption === "release"
+                ? `Delete ${selectedAgentIds.size} Agent${selectedAgentIds.size > 1 ? "s" : ""} & Numbers`
+                : `Delete ${selectedAgentIds.size} Agent${selectedAgentIds.size > 1 ? "s" : ""}`}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

@@ -670,7 +670,7 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               Are you sure you want to delete <strong>{initialData?.name}</strong>?
             </p>
 
-            {phoneNumbers.length > 0 && (
+            {phoneNumbers.length > 0 ? (
               <div className="space-y-4">
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                   <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
@@ -714,6 +714,13 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                     </p>
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <Phone className="w-4 h-4" />
+                  <p className="text-sm">No phone numbers assigned to this agent.</p>
+                </div>
               </div>
             )}
           </ModalBody>
