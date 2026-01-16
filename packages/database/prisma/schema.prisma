@@ -226,6 +226,13 @@ model Organization {
   // Knowledge Base Relations
   knowledgeBases      KnowledgeBase[]
 
+  // Conversation Flow Relations
+  conversationFlows   ConversationFlow[]
+
+  // Multi-Agent Routing Relations
+  agentGroups         AgentGroup[]
+  agentRoutingRules   AgentRoutingRule[]
+
   @@map("organizations")
 }
 
@@ -1247,6 +1254,7 @@ model VoiceAgent {
   campaigns      VoiceCampaign[]
   tools          AgentTool[]
   knowledgeBases AgentKnowledgeBase[]
+  conversationFlow ConversationFlow?
 
   @@index([organizationId])
   @@index([brandId])
@@ -1337,6 +1345,114 @@ enum ToolType {
   WEBHOOK    // Call external API
   BUILTIN    // Built-in actions (transfer, end call, etc.)
   FUNCTION   // Custom code execution (future)
+}
+
+// ============================================
+// MULTI-AGENT ROUTING
+// ============================================
+
+model AgentGroup {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+
+  // Basic Info
+  name           String
+  description    String?  @db.Text
+
+  // Routing Strategy
+  routingStrategy RoutingStrategy @default(ROUND_ROBIN) @map("routing_strategy")
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        AgentGroupMember[]
+  routingRules   AgentRoutingRule[]
+
+  @@index([organizationId])
+  @@map("agent_groups")
+}
+
+model AgentGroupMember {
+  id             String   @id @default(cuid())
+  groupId        String   @map("group_id")
+  agentId        String   @map("agent_id")
+
+  // Member Config
+  priority       Int      @default(0)  // Higher priority = preferred
+  weight         Int      @default(100) // For weighted routing (0-100)
+  maxConcurrent  Int      @default(5) @map("max_concurrent") // Max simultaneous calls
+
+  // Skills (for skills-based routing)
+  skills         Json     @default("[]") // ["sales", "support", "spanish"]
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  group          AgentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, agentId])
+  @@index([groupId])
+  @@index([agentId])
+  @@map("agent_group_members")
+}
+
+model AgentRoutingRule {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  groupId        String?  @map("group_id")
+  targetAgentId  String?  @map("target_agent_id")
+
+  // Rule Info
+  name           String
+  description    String?  @db.Text
+  priority       Int      @default(0) // Higher = evaluated first
+
+  // Conditions (JSON array of conditions)
+  conditions     Json     @default("[]") // [{type: "time_of_day", operator: "between", value: ["09:00", "17:00"]}]
+
+  // Fallback Configuration
+  fallbackAgentId  String? @map("fallback_agent_id")
+  fallbackGroupId  String? @map("fallback_group_id")
+  fallbackAction   String  @default("voicemail") @map("fallback_action") // voicemail, message, queue
+
+  // Transfer Settings
+  announcementMessage String? @db.Text @map("announcement_message")
+  holdMusic          String? @map("hold_music") // URL to hold music
+  maxWaitSeconds     Int     @default(300) @map("max_wait_seconds")
+
+  // Schedule (optional time-based activation)
+  scheduleEnabled Boolean @default(false) @map("schedule_enabled")
+  schedule        Json    @default("{}") // {days: ["mon","tue"], startTime: "09:00", endTime: "17:00", timezone: "America/New_York"}
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  group          AgentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([groupId])
+  @@index([priority])
+  @@map("agent_routing_rules")
+}
+
+enum RoutingStrategy {
+  ROUND_ROBIN     // Distribute evenly across agents
+  LEAST_BUSY      // Route to agent with fewest active calls
+  PRIORITY        // Route to highest priority available agent
+  WEIGHTED        // Random weighted distribution
+  SKILLS_BASED    // Match required skills
+  RANDOM          // Random selection
 }
 
 // ============================================
@@ -1473,6 +1589,150 @@ enum KnowledgeDocType {
   MARKDOWN   // Markdown file
   DOCX       // Word document
   CSV        // CSV data
+}
+
+// ============================================
+// CONVERSATION FLOWS (Visual Flow Builder)
+// ============================================
+
+model ConversationFlow {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  agentId        String?  @unique @map("agent_id") // One flow per agent
+
+  // Basic Info
+  name           String
+  description    String?  @db.Text
+
+  // Version Control
+  version        Int      @default(1)
+  isPublished    Boolean  @default(false) @map("is_published")
+  publishedAt    DateTime? @map("published_at")
+
+  // Flow Configuration
+  startNodeId    String?  @map("start_node_id") // Entry point node
+  settings       Json     @default("{}") // Global flow settings
+
+  // Canvas State (for visual editor)
+  viewport       Json     @default("{\"x\":0,\"y\":0,\"zoom\":1}") // {x, y, zoom}
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  nodes          FlowNode[]
+  edges          FlowEdge[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@map("conversation_flows")
+}
+
+model FlowNode {
+  id             String   @id @default(cuid())
+  flowId         String   @map("flow_id")
+
+  // Node Identification
+  nodeId         String   @map("node_id") // Unique within flow (for React Flow)
+  type           FlowNodeType @default(MESSAGE)
+
+  // Node Content
+  label          String
+  content        String?  @db.Text // Message content, prompt, etc.
+
+  // Position (for visual editor)
+  positionX      Float    @default(0) @map("position_x")
+  positionY      Float    @default(0) @map("position_y")
+
+  // Configuration based on type
+  config         Json     @default("{}")
+  // For MESSAGE: {text, ssml, audioUrl}
+  // For CONDITION: {variable, operator, value}
+  // For INPUT: {variable, validation, timeout}
+  // For TRANSFER: {destination, warmTransfer, message}
+  // For TOOL_CALL: {toolId, parameters}
+  // For WAIT: {duration, interruptible}
+  // For END: {outcome, summary}
+
+  // Metadata
+  metadata       Json     @default("{}")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  flow           ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  outgoingEdges  FlowEdge[] @relation("SourceNode")
+  incomingEdges  FlowEdge[] @relation("TargetNode")
+
+  @@unique([flowId, nodeId])
+  @@index([flowId])
+  @@map("flow_nodes")
+}
+
+model FlowEdge {
+  id             String   @id @default(cuid())
+  flowId         String   @map("flow_id")
+
+  // Edge Identification
+  edgeId         String   @map("edge_id") // Unique within flow (for React Flow)
+  sourceNodeId   String   @map("source_node_id") // FK to FlowNode.nodeId
+  targetNodeId   String   @map("target_node_id") // FK to FlowNode.nodeId
+  sourceHandle   String?  @map("source_handle") // Output handle ID
+  targetHandle   String?  @map("target_handle") // Input handle ID
+
+  // Edge Type
+  type           FlowEdgeType @default(DEFAULT)
+
+  // Condition (for conditional edges)
+  condition      Json?    // {variable, operator, value} or {intent} or {sentiment}
+  priority       Int      @default(0) // For multiple conditions, higher = evaluated first
+
+  // Label
+  label          String?
+
+  // Styling
+  animated       Boolean  @default(false)
+  style          Json?    // {stroke, strokeWidth, etc.}
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  flow           ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceNode     FlowNode @relation("SourceNode", fields: [flowId, sourceNodeId], references: [flowId, nodeId], onDelete: Cascade)
+  targetNode     FlowNode @relation("TargetNode", fields: [flowId, targetNodeId], references: [flowId, nodeId], onDelete: Cascade)
+
+  @@unique([flowId, edgeId])
+  @@index([flowId])
+  @@index([flowId, sourceNodeId])
+  @@index([flowId, targetNodeId])
+  @@map("flow_edges")
+}
+
+enum FlowNodeType {
+  START          // Entry point
+  MESSAGE        // Speak a message
+  INPUT          // Wait for user input, store in variable
+  CONDITION      // Branch based on condition
+  INTENT         // Branch based on detected intent
+  TOOL_CALL      // Execute a tool/function
+  TRANSFER       // Transfer to human/another agent
+  WAIT           // Pause for duration
+  SET_VARIABLE   // Set a conversation variable
+  END            // End the conversation
+}
+
+enum FlowEdgeType {
+  DEFAULT        // Normal transition
+  CONDITIONAL    // Based on variable/condition
+  INTENT_MATCH   // Based on intent detection
+  FALLBACK       // When no other edge matches
+  ERROR          // On error/exception
 }
 
 // ============================================

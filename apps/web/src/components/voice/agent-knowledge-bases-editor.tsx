@@ -296,7 +296,7 @@ export function AgentKnowledgeBasesEditor({
               ) : (
                 <Button
                   as="a"
-                  href="/voice/knowledge-bases"
+                  href="/dashboard/voice/knowledge-bases"
                   color="primary"
                   variant="flat"
                   startContent={<Plus className="w-4 h-4" />}

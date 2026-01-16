@@ -30,6 +30,7 @@ import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
 import { AgentToolsEditor } from "@/components/voice/agent-tools-editor";
+import { AgentKnowledgeBasesEditor } from "@/components/voice/agent-knowledge-bases-editor";
 
 interface Brand {
   id: string;
@@ -673,6 +674,18 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             </CardHeader>
             <CardBody>
               <AgentToolsEditor agentId={initialData.id} />
+            </CardBody>
+          </Card>
+        )}
+
+        {/* RAG Knowledge Bases - Only shown for existing agents */}
+        {initialData && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Knowledge Bases (RAG)</h2>
+            </CardHeader>
+            <CardBody>
+              <AgentKnowledgeBasesEditor agentId={initialData.id} />
             </CardBody>
           </Card>
         )}

@@ -491,7 +491,7 @@ export function VoiceDashboard() {
       )}
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Link href="/dashboard/voice/calls">
           <Card isPressable className="hover:shadow-md transition-shadow">
             <CardBody className="p-6 text-center">
@@ -515,6 +515,62 @@ export function VoiceDashboard() {
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 Manage your phone numbers
+              </p>
+            </CardBody>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/voice/knowledge-bases">
+          <Card isPressable className="hover:shadow-md transition-shadow">
+            <CardBody className="p-6 text-center">
+              <span className="text-3xl block mb-3">📚</span>
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Knowledge Bases
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                RAG documents for agents
+              </p>
+            </CardBody>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/voice/flows">
+          <Card isPressable className="hover:shadow-md transition-shadow">
+            <CardBody className="p-6 text-center">
+              <span className="text-3xl block mb-3">🔀</span>
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Conversation Flows
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Visual flow designer
+              </p>
+            </CardBody>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/voice/groups">
+          <Card isPressable className="hover:shadow-md transition-shadow">
+            <CardBody className="p-6 text-center">
+              <span className="text-3xl block mb-3">👥</span>
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Agent Groups
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Organize agents for routing
+              </p>
+            </CardBody>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/voice/routing">
+          <Card isPressable className="hover:shadow-md transition-shadow">
+            <CardBody className="p-6 text-center">
+              <span className="text-3xl block mb-3">🔄</span>
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Routing Rules
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Configure call routing
               </p>
             </CardBody>
           </Card>
