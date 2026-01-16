@@ -171,21 +171,25 @@ export default function RoutingRulesPage() {
 
     setSaving(true);
     try {
+      const payload = {
+        name: formData.name,
+        description: formData.description || null,
+        groupId: formData.targetType === "group" ? formData.groupId : null,
+        targetAgentId: formData.targetType === "agent" ? formData.targetAgentId : null,
+        priority: formData.priority,
+        conditions: formData.conditions,
+        fallbackAction: formData.fallbackAction,
+        fallbackAgentId: formData.fallbackAgentId || null,
+        maxWaitSeconds: formData.maxWaitSeconds,
+        isActive: formData.isActive,
+      };
+      console.log("[DEBUG] Create Rule - formData:", JSON.stringify(formData));
+      console.log("[DEBUG] Create Rule - payload:", JSON.stringify(payload));
+
       const response = await fetch("/api/voice/routing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description || null,
-          groupId: formData.targetType === "group" ? formData.groupId : null,
-          targetAgentId: formData.targetType === "agent" ? formData.targetAgentId : null,
-          priority: formData.priority,
-          conditions: formData.conditions,
-          fallbackAction: formData.fallbackAction,
-          fallbackAgentId: formData.fallbackAgentId || null,
-          maxWaitSeconds: formData.maxWaitSeconds,
-          isActive: formData.isActive,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
