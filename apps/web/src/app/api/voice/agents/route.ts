@@ -444,7 +444,7 @@ export async function POST(request: NextRequest) {
     });
 
     const body = await request.json();
-    const { name, brandId, systemPrompt, voiceId, isActive, settings, provisionPhone } = body;
+    const { name, brandId, systemPrompt, voiceId, isActive, settings, provisionPhone, ttsProvider, ttsModel, ttsVoiceId } = body;
 
     // Validate brand belongs to org
     const brand = await prisma.brand.findFirst({
@@ -468,6 +468,10 @@ export async function POST(request: NextRequest) {
         voiceId,
         isActive: isActive ?? true,
         settings: settings || {},
+        // TTS provider settings (ElevenLabs, OpenAI, Cartesia, Deepgram)
+        ttsProvider: ttsProvider || "openai",
+        ttsModel: ttsModel || null,
+        ttsVoiceId: ttsVoiceId || voiceId || null,
       },
     });
 

@@ -36,7 +36,9 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
+  Radio,
 } from "lucide-react";
+import { LiveKitPanel } from "./livekit/livekit-panel";
 
 interface SystemConfig {
   id: string;
@@ -621,6 +623,12 @@ export function AdminPanel() {
                 </CardBody>
               </Card>
             ))}
+          </div>
+        </Tab>
+
+        <Tab key="livekit" title={<div className="flex items-center gap-2"><Radio className="w-4 h-4" />LiveKit</div>}>
+          <div className="mt-4">
+            <LiveKitPanel />
           </div>
         </Tab>
       </Tabs>

@@ -729,6 +729,8 @@ class LiveKitTelephonyManager:
                 await lkapi.agent_dispatch.create_dispatch(dispatch_request)
 
             # Create SIP participant
+            # wait_until_answered=True makes this call wait until the remote party answers
+            # This ensures the participant only joins the room when the call is active
             sip_request = CreateSIPParticipantRequest(
                 sip_trunk_id=trunk_id,
                 sip_call_to=to_number,
@@ -736,7 +738,8 @@ class LiveKitTelephonyManager:
                 room_name=room_name,
                 participant_identity=f"caller-{call_id}",
                 participant_name=f"Outbound Call to {to_number}",
-                play_ringtone=True
+                play_ringtone=True,
+                wait_until_answered=True
             )
 
             sip_participant = await lkapi.sip.create_sip_participant(sip_request)

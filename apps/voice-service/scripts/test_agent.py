@@ -19,7 +19,7 @@ import time
 import psycopg2
 from typing import Optional, Dict, Any
 
-from livekit import agents
+from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, metrics
 from livekit.agents.voice import MetricsCollectedEvent
 from livekit.plugins import openai, silero, deepgram
@@ -289,6 +289,14 @@ async def entrypoint(ctx: agents.JobContext):
     sip_attrs = {k: v for k, v in participant.attributes.items() if 'sip' in k.lower()}
     if sip_attrs:
         logger.info(f"SIP attributes: {sip_attrs}")
+
+    # Detect outbound calls (room name starts with "outbound-")
+    # Note: For outbound calls, wait_until_answered=True is set on the SIP participant
+    # creation, so the participant only joins when the call is already answered.
+    is_outbound = ctx.room.name.startswith("outbound-")
+    if is_outbound:
+        call_status = participant.attributes.get("sip.callStatus", "")
+        logger.info(f"Outbound call detected - participant joined with status: {call_status}")
 
     # Build system prompt from agent config or use default
     system_prompt = build_system_prompt(agent_config) if agent_config else DEFAULT_SYSTEM_PROMPT
