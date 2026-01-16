@@ -15,9 +15,17 @@ import {
   Slider,
   Chip,
   Tooltip,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  RadioGroup,
+  Radio,
+  useDisclosure,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
@@ -95,6 +103,8 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneNumbers, setPhoneNumbers] = useState(initialData?.phoneNumbers || []);
+  const [deletePhoneOption, setDeletePhoneOption] = useState<"pool" | "release">("pool");
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -176,29 +186,44 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!initialData) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${initialData.name}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
 
     setDeleting(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/voice/agents/${initialData.id}`, {
+      const deletePhoneNumbers = deletePhoneOption === "release";
+      const url = `/api/voice/agents/${initialData.id}?deletePhoneNumbers=${deletePhoneNumbers}`;
+
+      const response = await fetch(url, {
         method: "DELETE",
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || "Failed to delete agent");
       }
 
-      trackEvent("voice_agent_deleted", { agent_id: initialData.id });
+      trackEvent("voice_agent_deleted", {
+        agent_id: initialData.id,
+        phone_numbers_released: deletePhoneNumbers,
+        numbers_count: phoneNumbers.length,
+      });
+
+      // Log results
+      if (data.phoneNumbersReleased?.length > 0) {
+        console.log(`Released phone numbers: ${data.phoneNumbersReleased.join(", ")}`);
+      }
+      if (data.phoneNumbersPooled?.length > 0) {
+        console.log(`Returned to pool: ${data.phoneNumbersPooled.join(", ")}`);
+      }
+      if (data.cleanupErrors?.length > 0) {
+        console.warn("Cleanup errors:", data.cleanupErrors);
+      }
+
+      onDeleteModalClose();
       router.push("/dashboard/voice");
       router.refresh();
     } catch (err) {
@@ -600,9 +625,8 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <Button
               color="danger"
               variant="flat"
-              isLoading={deleting}
-              onPress={handleDelete}
-              startContent={!deleting && <Trash2 className="w-4 h-4" />}
+              onPress={onDeleteModalOpen}
+              startContent={<Trash2 className="w-4 h-4" />}
             >
               Delete Agent
             </Button>
@@ -628,6 +652,88 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
           </div>
         </div>
       </form>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose} size="lg">
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Delete Agent</h3>
+              <p className="text-sm text-gray-500 font-normal">This action cannot be undone</p>
+            </div>
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              Are you sure you want to delete <strong>{initialData?.name}</strong>?
+            </p>
+
+            {phoneNumbers.length > 0 && (
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                    This agent has <strong>{phoneNumbers.length}</strong> phone number{phoneNumbers.length > 1 ? "s" : ""} assigned:
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    {phoneNumbers.map((phone) => (
+                      <div key={phone.id} className="flex items-center gap-2 text-sm">
+                        <Phone className="w-4 h-4 text-amber-600" />
+                        <span className="font-mono">{phone.number}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">
+                    What should happen to the phone number{phoneNumbers.length > 1 ? "s" : ""}?
+                  </p>
+                </div>
+
+                <RadioGroup
+                  value={deletePhoneOption}
+                  onValueChange={(value) => setDeletePhoneOption(value as "pool" | "release")}
+                  className="gap-3"
+                >
+                  <Radio value="pool" description="Numbers remain available for other agents">
+                    Return to pool
+                  </Radio>
+                  <Radio
+                    value="release"
+                    description="Delete from LiveKit and release from Magnus (permanent)"
+                    classNames={{ label: "text-red-600 dark:text-red-400" }}
+                  >
+                    Delete &amp; release numbers
+                  </Radio>
+                </RadioGroup>
+
+                {deletePhoneOption === "release" && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      <strong>Warning:</strong> This will permanently release the phone number{phoneNumbers.length > 1 ? "s" : ""} from your account.
+                      You may not be able to get the same number{phoneNumbers.length > 1 ? "s" : ""} back.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="bordered" onPress={onDeleteModalClose}>
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              isLoading={deleting}
+              onPress={handleDeleteConfirm}
+              startContent={!deleting && <Trash2 className="w-4 h-4" />}
+            >
+              {phoneNumbers.length > 0 && deletePhoneOption === "release"
+                ? "Delete Agent & Numbers"
+                : "Delete Agent"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
