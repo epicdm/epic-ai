@@ -223,6 +223,9 @@ model Organization {
   pricingConfigs      PricingConfig[]
   voiceUsageRecords   VoiceUsageRecord[]
 
+  // Knowledge Base Relations
+  knowledgeBases      KnowledgeBase[]
+
   @@map("organizations")
 }
 
@@ -1242,6 +1245,8 @@ model VoiceAgent {
   phoneMappings  PhoneMapping[]
   callLogs       CallLog[]
   campaigns      VoiceCampaign[]
+  tools          AgentTool[]
+  knowledgeBases AgentKnowledgeBase[]
 
   @@index([organizationId])
   @@index([brandId])
@@ -1252,6 +1257,222 @@ enum AgentType {
   INBOUND
   OUTBOUND
   HYBRID
+}
+
+// ============================================
+// AGENT TOOLS (Function Calling)
+// ============================================
+
+model AgentTool {
+  id             String   @id @default(cuid())
+  agentId        String   @map("agent_id")
+  organizationId String   @map("organization_id")
+
+  // Tool Definition
+  name           String   // e.g., "lookup_customer", "schedule_appointment"
+  description    String   @db.Text // Shown to AI to understand when to use
+  type           ToolType @default(WEBHOOK)
+
+  // Webhook Configuration (for WEBHOOK type)
+  webhookUrl     String?  @map("webhook_url")
+  webhookMethod  String   @default("POST") @map("webhook_method") // GET, POST, PUT
+  webhookHeaders Json     @default("{}") @map("webhook_headers") // {"Authorization": "Bearer xxx"}
+
+  // Authentication
+  authType       String?  @map("auth_type") // none, api_key, bearer, basic
+  authConfig     Json     @default("{}") @map("auth_config") // encrypted credentials
+
+  // Parameters Schema (JSON Schema format for OpenAI function calling)
+  parameters     Json     @default("{}") // {"type": "object", "properties": {...}}
+  requiredParams Json     @default("[]") @map("required_params") // ["customer_id"]
+
+  // Response Handling
+  responseMapping Json    @default("{}") @map("response_mapping") // Map API response to AI context
+  timeoutMs      Int      @default(10000) @map("timeout_ms")
+  retryCount     Int      @default(1) @map("retry_count")
+
+  // Built-in Tool Configuration (for BUILTIN type)
+  builtinType    String?  @map("builtin_type") // transfer_call, end_call, send_sms, etc.
+  builtinConfig  Json     @default("{}") @map("builtin_config")
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  agent          VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  usages         AgentToolUsage[]
+
+  @@index([agentId])
+  @@index([organizationId])
+  @@map("agent_tools")
+}
+
+model AgentToolUsage {
+  id           String   @id @default(cuid())
+  toolId       String   @map("tool_id")
+  callLogId    String?  @map("call_log_id")
+
+  // Execution Details
+  executedAt   DateTime @default(now()) @map("executed_at")
+  durationMs   Int?     @map("duration_ms")
+  status       String   @default("pending") // pending, success, failed, timeout
+
+  // Request/Response
+  inputParams  Json     @default("{}") @map("input_params")
+  response     Json?
+  errorMessage String?  @db.Text @map("error_message")
+
+  // Relations
+  tool         AgentTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  callLog      CallLog?  @relation(fields: [callLogId], references: [id], onDelete: SetNull)
+
+  @@index([toolId])
+  @@index([callLogId])
+  @@map("agent_tool_usages")
+}
+
+enum ToolType {
+  WEBHOOK    // Call external API
+  BUILTIN    // Built-in actions (transfer, end call, etc.)
+  FUNCTION   // Custom code execution (future)
+}
+
+// ============================================
+// KNOWLEDGE BASE (RAG for Voice Agents)
+// ============================================
+
+model KnowledgeBase {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+
+  // Basic Info
+  name           String
+  description    String?  @db.Text
+
+  // Configuration
+  embeddingModel String   @default("text-embedding-3-small") @map("embedding_model")
+  chunkSize      Int      @default(1000) @map("chunk_size")
+  chunkOverlap   Int      @default(200) @map("chunk_overlap")
+
+  // Stats
+  documentCount  Int      @default(0) @map("document_count")
+  chunkCount     Int      @default(0) @map("chunk_count")
+  totalTokens    Int      @default(0) @map("total_tokens")
+
+  // Status
+  isActive       Boolean  @default(true) @map("is_active")
+  lastSyncedAt   DateTime? @map("last_synced_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents      KnowledgeDocument[]
+  chunks         KnowledgeChunk[]
+  agentKnowledgeBases AgentKnowledgeBase[]
+
+  @@index([organizationId])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id               String   @id @default(cuid())
+  knowledgeBaseId  String   @map("knowledge_base_id")
+
+  // Document Info
+  name             String
+  type             KnowledgeDocType @default(TEXT)
+  sourceUrl        String?  @map("source_url")
+  filePath         String?  @map("file_path")
+  mimeType         String?  @map("mime_type")
+
+  // Content
+  content          String?  @db.Text // Raw extracted text
+  metadata         Json     @default("{}") // {author, created, etc.}
+
+  // Processing
+  status           DocumentStatus @default(PENDING)
+  errorMessage     String?  @db.Text @map("error_message")
+  processedAt      DateTime? @map("processed_at")
+
+  // Stats
+  chunkCount       Int      @default(0) @map("chunk_count")
+  tokenCount       Int      @default(0) @map("token_count")
+  characterCount   Int      @default(0) @map("character_count")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks           KnowledgeChunk[]
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("knowledge_documents")
+}
+
+model KnowledgeChunk {
+  id               String   @id @default(cuid())
+  knowledgeBaseId  String   @map("knowledge_base_id")
+  documentId       String   @map("document_id")
+
+  // Chunk Content
+  content          String   @db.Text
+  chunkIndex       Int      @map("chunk_index")
+
+  // Embedding
+  embedding        Bytes?   // Stored as binary for efficiency
+  embeddingModel   String?  @map("embedding_model")
+
+  // Metadata
+  metadata         Json     @default("{}") // {section, page, etc.}
+  tokenCount       Int      @default(0) @map("token_count")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  document         KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([documentId])
+  @@map("knowledge_chunks")
+}
+
+// Link table for many-to-many relationship between agents and knowledge bases
+model AgentKnowledgeBase {
+  id               String   @id @default(cuid())
+  agentId          String   @map("agent_id")
+  knowledgeBaseId  String   @map("knowledge_base_id")
+
+  // Configuration
+  priority         Int      @default(0) // Higher = searched first
+  maxChunks        Int      @default(5) @map("max_chunks") // Max chunks to retrieve per query
+  minScore         Float    @default(0.7) @map("min_score") // Minimum similarity score
+
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agent            VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, knowledgeBaseId])
+  @@index([agentId])
+  @@index([knowledgeBaseId])
+  @@map("agent_knowledge_bases")
+}
+
+enum KnowledgeDocType {
+  TEXT       // Plain text
+  PDF        // PDF document
+  URL        // Web page
+  MARKDOWN   // Markdown file
+  DOCX       // Word document
+  CSV        // CSV data
 }
 
 // ============================================
@@ -1437,6 +1658,7 @@ model CallLog {
   transcript     CallTranscript?
   events         CallEvent[]
   costBreakdown  CallCostBreakdown?
+  toolUsages     AgentToolUsage[]
 
   @@index([organizationId])
   @@index([agentId])

@@ -29,6 +29,7 @@ import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus, AlertTriangle }
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
+import { AgentToolsEditor } from "@/components/voice/agent-tools-editor";
 
 interface Brand {
   id: string;
@@ -96,6 +97,76 @@ const OPENAI_VOICES = [
   { key: "shimmer", label: "Shimmer" },
 ];
 
+// ElevenLabs premium voices - ultra-low 75ms latency
+const ELEVENLABS_VOICES = [
+  { key: "21m00Tcm4TlvDq8ikWAM", label: "Rachel (American Female)", description: "Warm, professional" },
+  { key: "29vD33N1CtxCmqQRPOHJ", label: "Drew (American Male)", description: "Confident, articulate" },
+  { key: "2EiwWnXFnvU5JabPnv8n", label: "Clyde (American Male)", description: "Deep, authoritative" },
+  { key: "5Q0t7uMcjvnagumLfvZi", label: "Paul (American Male)", description: "Calm, reassuring" },
+  { key: "AZnzlk1XvdvUeBnXmlld", label: "Domi (American Female)", description: "Energetic, friendly" },
+  { key: "CYw3kZ02Hs0563khs1Fj", label: "Dave (British Male)", description: "Conversational, warm" },
+  { key: "D38z5RcWu1voky8WS1ja", label: "Fin (Irish Male)", description: "Approachable, clear" },
+  { key: "EXAVITQu4vr4xnSDxMaL", label: "Sarah (American Female)", description: "Soft, expressive" },
+  { key: "ErXwobaYiN019PkySvjV", label: "Antoni (American Male)", description: "Crisp, well-paced" },
+  { key: "GBv7mTt0atIp3Br8iCZE", label: "Thomas (American Male)", description: "Calm, meditative" },
+  { key: "IKne3meq5aSn9XLyUdCD", label: "Charlie (Australian Male)", description: "Casual, natural" },
+  { key: "JBFqnCBsd6RMkjVDRZzb", label: "George (British Male)", description: "Warm, storytelling" },
+  { key: "MF3mGyEYCl7XYWbV9V6O", label: "Emily (American Female)", description: "Young, cheerful" },
+  { key: "N2lVS1w4EtoT3dr4eOWO", label: "Callum (Transatlantic Male)", description: "Intense, authoritative" },
+  { key: "TX3LPaxmHKxFdv7VOQHJ", label: "Liam (American Male)", description: "Articulate, neutral" },
+  { key: "XB0fDUnXU5powFXDhCwa", label: "Charlotte (Swedish Female)", description: "Seductive, calm" },
+  { key: "Xb7hH8MSUJpSbSDYk0k2", label: "Alice (British Female)", description: "Confident, middle-aged" },
+  { key: "XrExE9yKIg1WjnnlVkGX", label: "Matilda (American Female)", description: "Warm, friendly" },
+  { key: "ZQe5CZNOzWyzPSCn5a3c", label: "James (Australian Male)", description: "Calm, authoritative" },
+  { key: "bVMeCyTHy58xNoL34h3p", label: "Jeremy (American Male)", description: "Excited, narrative" },
+  { key: "cgSgspJ2msm6clMCkdW9", label: "Jessica (American Female)", description: "Expressive, upbeat" },
+  { key: "cjVigY5qzO86Huf0OWal", label: "Eric (American Male)", description: "Friendly, approachable" },
+  { key: "iP95p4xoKVk53GoZ742B", label: "Chris (American Male)", description: "Casual, conversational" },
+  { key: "jBpfuIE2acCO8z3wKNLl", label: "Gigi (American Female)", description: "Childlike, animated" },
+  { key: "jsCqWAovK2LkecY7zXl4", label: "Freya (American Female)", description: "Expressive, overly-American" },
+  { key: "nPczCjzI2devNBz1zQrb", label: "Brian (American Male)", description: "Deep, narrator" },
+  { key: "onwK4e9ZLuTAKqWW03F9", label: "Daniel (British Male)", description: "Deep, authoritative" },
+  { key: "pFZP5JQG7iQjIQuC4Bku", label: "Lily (British Female)", description: "Warm, narrator" },
+  { key: "pMsXgVXv3BLzUgSXRplE", label: "Serena (American Female)", description: "Pleasant, soft" },
+  { key: "pNInz6obpgDQGcFmaJgB", label: "Adam (American Male)", description: "Deep, narrator" },
+  { key: "piTKgcLEGmPE4e6mEKli", label: "Nicole (American Female)", description: "Whisper, ASMR" },
+  { key: "t0jbNlBVZ17f02VDIeMI", label: "Jessie (American Male)", description: "Raspy, conversational" },
+  { key: "yoZ06aMxZJJ28mfd3POQ", label: "Sam (American Male)", description: "Raspy, young" },
+  { key: "z9fAnlkpzviPz146aGWa", label: "Glinda (American Female)", description: "Witch, narrative" },
+  { key: "zrHiDhphv9ZnVXBqCLjz", label: "Mimi (Swedish Female)", description: "Childlike, animated" },
+];
+
+// Cartesia voices
+const CARTESIA_VOICES = [
+  { key: "a0e99841-438c-4a64-b679-ae501e7d6091", label: "Barbershop Man" },
+  { key: "156fb8d2-335b-4950-9cb3-a2d33f2c5454", label: "Confident British Man" },
+  { key: "248be419-c632-4f23-adf1-5324ed7dbf1d", label: "Helpful Woman" },
+  { key: "69267136-1bdc-412f-ad78-0caad210fb40", label: "Friendly Sidekick" },
+  { key: "79a125e8-cd45-4c13-8a67-188112f4dd22", label: "British Lady" },
+  { key: "87748186-23bb-4c5e-a1ff-e6b0b899adf8", label: "Sweet Lady" },
+  { key: "95856005-0332-41b0-935f-352e296aa0df", label: "Classy British Man" },
+  { key: "a167e0f3-df7e-4d52-a9c3-f949145f1366", label: "Newsman" },
+  { key: "c45bc5ec-dc68-4feb-8829-6e6b2748095d", label: "Midwestern Woman" },
+  { key: "d46abd1d-2e55-43f6-9acb-e6b6d098c4d2", label: "British Narrator Lady" },
+  { key: "e3827ec5-697a-4b7c-9704-1a8eb0f9b99b", label: "Sportscaster Man" },
+];
+
+// Deepgram voices
+const DEEPGRAM_VOICES = [
+  { key: "aura-asteria-en", label: "Asteria (Female)" },
+  { key: "aura-luna-en", label: "Luna (Female)" },
+  { key: "aura-stella-en", label: "Stella (Female)" },
+  { key: "aura-athena-en", label: "Athena (Female)" },
+  { key: "aura-hera-en", label: "Hera (Female)" },
+  { key: "aura-orion-en", label: "Orion (Male)" },
+  { key: "aura-arcas-en", label: "Arcas (Male)" },
+  { key: "aura-perseus-en", label: "Perseus (Male)" },
+  { key: "aura-angus-en", label: "Angus (Male, Irish)" },
+  { key: "aura-orpheus-en", label: "Orpheus (Male)" },
+  { key: "aura-helios-en", label: "Helios (Male, British)" },
+  { key: "aura-zeus-en", label: "Zeus (Male)" },
+];
+
 export function AgentForm({ brands, initialData }: AgentFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -139,6 +210,8 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          // Map voiceId to ttsVoiceId for the new TTS provider system
+          ttsVoiceId: formData.voiceId,
           voiceSettings: {
             voiceId: formData.voiceId,
             temperature: formData.temperature,
@@ -496,7 +569,18 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <Select
               label="Text-to-Speech Provider"
               selectedKeys={[formData.ttsProvider]}
-              onChange={(e) => setFormData({ ...formData, ttsProvider: e.target.value })}
+              onChange={(e) => {
+                const provider = e.target.value;
+                let defaultVoice = "";
+                switch (provider) {
+                  case "openai": defaultVoice = "nova"; break;
+                  case "elevenlabs": defaultVoice = "21m00Tcm4TlvDq8ikWAM"; break; // Rachel
+                  case "cartesia": defaultVoice = "248be419-c632-4f23-adf1-5324ed7dbf1d"; break; // Helpful Woman
+                  case "deepgram": defaultVoice = "aura-asteria-en"; break; // Asteria
+                  default: defaultVoice = "";
+                }
+                setFormData({ ...formData, ttsProvider: provider, voiceId: defaultVoice });
+              }}
             >
               {TTS_PROVIDERS.map((provider) => (
                 <SelectItem key={provider.key}>{provider.label}</SelectItem>
@@ -515,13 +599,52 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               </Select>
             )}
 
-            {formData.ttsProvider !== "openai" && (
-              <Input
-                label="Voice ID"
-                placeholder="Provider-specific voice ID"
-                value={formData.voiceId}
+            {formData.ttsProvider === "elevenlabs" && (
+              <>
+                <Select
+                  label="Voice"
+                  selectedKeys={formData.voiceId ? [formData.voiceId] : []}
+                  onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
+                  description="ElevenLabs offers 75ms ultra-low latency voices"
+                >
+                  {ELEVENLABS_VOICES.map((voice) => (
+                    <SelectItem key={voice.key} textValue={voice.label}>
+                      <div className="flex flex-col">
+                        <span>{voice.label}</span>
+                        <span className="text-xs text-default-400">{voice.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </Select>
+                <div className="flex items-center gap-2 text-sm text-success">
+                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  Ultra-low 75ms latency for natural conversations
+                </div>
+              </>
+            )}
+
+            {formData.ttsProvider === "cartesia" && (
+              <Select
+                label="Voice"
+                selectedKeys={formData.voiceId ? [formData.voiceId] : []}
                 onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-              />
+              >
+                {CARTESIA_VOICES.map((voice) => (
+                  <SelectItem key={voice.key}>{voice.label}</SelectItem>
+                ))}
+              </Select>
+            )}
+
+            {formData.ttsProvider === "deepgram" && (
+              <Select
+                label="Voice"
+                selectedKeys={formData.voiceId ? [formData.voiceId] : []}
+                onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
+              >
+                {DEEPGRAM_VOICES.map((voice) => (
+                  <SelectItem key={voice.key}>{voice.label}</SelectItem>
+                ))}
+              </Select>
             )}
           </CardBody>
         </Card>
@@ -541,6 +664,18 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             />
           </CardBody>
         </Card>
+
+        {/* Function Calling Tools - Only shown for existing agents */}
+        {initialData && (
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">Function Calling Tools</h2>
+            </CardHeader>
+            <CardBody>
+              <AgentToolsEditor agentId={initialData.id} />
+            </CardBody>
+          </Card>
+        )}
 
         {/* Cost Information */}
         <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">

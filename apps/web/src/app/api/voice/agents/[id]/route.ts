@@ -181,7 +181,7 @@ export async function PATCH(
     const body = await request.json();
 
     // Only allow updating fields that exist on the model
-    const { name, systemPrompt, voiceId, isActive, settings } = body;
+    const { name, systemPrompt, voiceId, isActive, settings, ttsProvider, ttsModel, ttsVoiceId } = body;
     const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) updateData.name = name;
@@ -189,6 +189,10 @@ export async function PATCH(
     if (voiceId !== undefined) updateData.voiceId = voiceId;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (settings !== undefined) updateData.settings = settings;
+    // TTS provider settings (ElevenLabs, OpenAI, Cartesia, Deepgram)
+    if (ttsProvider !== undefined) updateData.ttsProvider = ttsProvider;
+    if (ttsModel !== undefined) updateData.ttsModel = ttsModel;
+    if (ttsVoiceId !== undefined) updateData.ttsVoiceId = ttsVoiceId;
 
     const agent = await prisma.voiceAgent.update({
       where: { id },
