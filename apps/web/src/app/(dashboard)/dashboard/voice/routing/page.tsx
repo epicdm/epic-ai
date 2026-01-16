@@ -470,15 +470,19 @@ export default function RoutingRulesPage() {
                     <Select
                       label="Select Group"
                       placeholder="Choose a group"
-                      selectedKeys={formData.groupId ? [formData.groupId] : []}
+                      selectionMode="single"
+                      disallowEmptySelection
+                      selectedKeys={formData.groupId ? new Set([formData.groupId]) : new Set()}
                       onSelectionChange={(keys) => {
                         console.log("[DEBUG] Group Select onSelectionChange - keys:", keys, "type:", typeof keys, "size:", keys instanceof Set ? keys.size : 'not a Set');
                         const selected = Array.from(keys)[0] as string;
                         console.log("[DEBUG] Group Select - selected value:", selected);
-                        setFormData(prev => {
-                          console.log("[DEBUG] Group Select - prev groupId:", prev.groupId, "new groupId:", selected || "");
-                          return { ...prev, groupId: selected || "" };
-                        });
+                        if (selected) {
+                          setFormData(prev => {
+                            console.log("[DEBUG] Group Select - prev groupId:", prev.groupId, "new groupId:", selected);
+                            return { ...prev, groupId: selected };
+                          });
+                        }
                       }}
                       className="mt-4"
                     >
@@ -493,10 +497,14 @@ export default function RoutingRulesPage() {
                     <Select
                       label="Select Agent"
                       placeholder="Choose an agent"
-                      selectedKeys={formData.targetAgentId ? [formData.targetAgentId] : []}
+                      selectionMode="single"
+                      disallowEmptySelection
+                      selectedKeys={formData.targetAgentId ? new Set([formData.targetAgentId]) : new Set()}
                       onSelectionChange={(keys) => {
                         const selected = Array.from(keys)[0] as string;
-                        setFormData(prev => ({ ...prev, targetAgentId: selected || "" }));
+                        if (selected) {
+                          setFormData(prev => ({ ...prev, targetAgentId: selected }));
+                        }
                       }}
                       className="mt-4"
                     >
@@ -529,7 +537,9 @@ export default function RoutingRulesPage() {
                       <div key={index} className="flex items-center gap-2">
                         <Select
                           size="sm"
-                          selectedKeys={[condition.field]}
+                          selectionMode="single"
+                          disallowEmptySelection
+                          selectedKeys={new Set([condition.field])}
                           onSelectionChange={(keys) => {
                             const selected = Array.from(keys)[0] as string;
                             if (selected) updateCondition(index, "field", selected);
@@ -544,7 +554,9 @@ export default function RoutingRulesPage() {
                         </Select>
                         <Select
                           size="sm"
-                          selectedKeys={[condition.operator]}
+                          selectionMode="single"
+                          disallowEmptySelection
+                          selectedKeys={new Set([condition.operator])}
                           onSelectionChange={(keys) => {
                             const selected = Array.from(keys)[0] as string;
                             if (selected) updateCondition(index, "operator", selected);
@@ -585,7 +597,9 @@ export default function RoutingRulesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Select
                     label="Fallback Action"
-                    selectedKeys={[formData.fallbackAction]}
+                    selectionMode="single"
+                    disallowEmptySelection
+                    selectedKeys={new Set([formData.fallbackAction])}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] as string;
                       if (selected) setFormData(prev => ({ ...prev, fallbackAction: selected }));
@@ -617,7 +631,8 @@ export default function RoutingRulesPage() {
                   <Select
                     label="Fallback Agent"
                     placeholder="Select fallback agent"
-                    selectedKeys={formData.fallbackAgentId ? [formData.fallbackAgentId] : []}
+                    selectionMode="single"
+                    selectedKeys={formData.fallbackAgentId ? new Set([formData.fallbackAgentId]) : new Set()}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] as string;
                       setFormData(prev => ({ ...prev, fallbackAgentId: selected || "" }));
