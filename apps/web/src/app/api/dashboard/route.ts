@@ -88,6 +88,9 @@ export async function GET(request: NextRequest) {
       learnings,
       recentActivity,
       failedJobsCount,
+      voiceAgents,
+      phoneMappings,
+      callStats,
     ] = await Promise.all([
       // Brand Brain status
       brand
@@ -211,6 +214,37 @@ export async function GET(request: NextRequest) {
             },
           }).catch((e) => { console.error("Error fetching failed jobs:", e); return 0; })
         : 0,
+
+      // Voice Agents count
+      prisma.voiceAgent.findMany({
+        where: { organizationId: org.id },
+        select: {
+          id: true,
+          name: true,
+          isActive: true,
+          agentType: true,
+        },
+      }).catch((e) => { console.error("Error fetching voice agents:", e); return []; }),
+
+      // Phone Mappings count
+      prisma.phoneMapping.count({
+        where: { organizationId: org.id },
+      }).catch((e) => { console.error("Error fetching phone mappings:", e); return 0; }),
+
+      // Call Stats (last N days)
+      prisma.callLog.aggregate({
+        where: {
+          organizationId: org.id,
+          startedAt: { gte: startDate },
+        },
+        _count: true,
+        _sum: {
+          duration: true,
+        },
+      }).catch((e) => {
+        console.error("Error fetching call stats:", e);
+        return { _count: 0, _sum: { duration: null } };
+      }),
     ]);
 
     // Process content stats
@@ -340,6 +374,16 @@ export async function GET(request: NextRequest) {
       // T048: Background jobs status for notification badge
       jobs: {
         failed: failedJobsCount,
+      },
+
+      // Voice AI metrics
+      voice: {
+        agents: (voiceAgents as { id: string; name: string; isActive: boolean; agentType: string }[]).length,
+        activeAgents: (voiceAgents as { id: string; name: string; isActive: boolean; agentType: string }[]).filter(a => a.isActive).length,
+        phoneNumbers: phoneMappings as number,
+        totalCalls: callStats._count || 0,
+        totalMinutes: Math.round((callStats._sum?.duration || 0) / 60),
+        agentsList: (voiceAgents as { id: string; name: string; isActive: boolean; agentType: string }[]).slice(0, 5),
       },
 
       // Period info
@@ -580,6 +624,14 @@ function getEmptyDashboardData(period: number, startDate: Date) {
     activity: [],
     jobs: {
       failed: 0,
+    },
+    voice: {
+      agents: 0,
+      activeAgents: 0,
+      phoneNumbers: 0,
+      totalCalls: 0,
+      totalMinutes: 0,
+      agentsList: [],
     },
     period: {
       days: period,

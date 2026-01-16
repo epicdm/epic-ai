@@ -49,6 +49,8 @@ import {
   Activity,
   Rocket,
   PartyPopper,
+  Phone,
+  Clock,
 } from "lucide-react";
 import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
@@ -137,6 +139,19 @@ interface DashboardData {
     platform?: string;
     status?: string;
   }[];
+  voice: {
+    agents: number;
+    activeAgents: number;
+    phoneNumbers: number;
+    totalCalls: number;
+    totalMinutes: number;
+    agentsList: {
+      id: string;
+      name: string;
+      isActive: boolean;
+      agentType: string;
+    }[];
+  };
 }
 
 const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -542,7 +557,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
       })()}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card isPressable onPress={() => router.push("/dashboard/content")}>
           <CardBody className="flex flex-row items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -594,10 +609,24 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
             </div>
           </CardBody>
         </Card>
+
+        <Card isPressable onPress={() => router.push("/dashboard/voice")}>
+          <CardBody className="flex flex-row items-center gap-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Phone className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-medium">Voice AI</p>
+              <p className="text-xs text-default-500">
+                {data.voice.agents} agent{data.voice.agents !== 1 ? "s" : ""}
+              </p>
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Organic Performance */}
         <Card>
           <CardHeader className="flex justify-between items-center">
@@ -713,6 +742,44 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
               <span className="text-sm">Conversion Rate</span>
               <Chip color="warning" variant="flat">
                 {data.roi.conversionRate.toFixed(1)}%
+              </Chip>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Voice AI */}
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Phone className="w-5 h-5 text-purple-600" />
+              <span className="font-semibold">Voice AI</span>
+            </div>
+            <Button
+              size="sm"
+              variant="light"
+              endContent={<ArrowRight className="w-4 h-4" />}
+              onPress={() => router.push("/dashboard/voice")}
+            >
+              Details
+            </Button>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-default-50 rounded-lg">
+                <Phone className="w-5 h-5 text-default-400 mx-auto mb-1" />
+                <p className="text-xl font-bold">{data.voice.totalCalls}</p>
+                <p className="text-xs text-default-500">Total Calls</p>
+              </div>
+              <div className="text-center p-3 bg-default-50 rounded-lg">
+                <Clock className="w-5 h-5 text-default-400 mx-auto mb-1" />
+                <p className="text-xl font-bold">{data.voice.totalMinutes}</p>
+                <p className="text-xs text-default-500">Minutes</p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <span className="text-sm">Active Agents</span>
+              <Chip color="secondary" variant="flat">
+                {data.voice.activeAgents} of {data.voice.agents}
               </Chip>
             </div>
           </CardBody>

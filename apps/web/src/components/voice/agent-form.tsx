@@ -25,7 +25,7 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus, AlertTriangle, Wand2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { trackEvent } from "@/lib/analytics";
@@ -176,6 +176,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [phoneNumbers, setPhoneNumbers] = useState(initialData?.phoneNumbers || []);
   const [deletePhoneOption, setDeletePhoneOption] = useState<"pool" | "release">("pool");
+  const [useBrandVoice, setUseBrandVoice] = useState(false);
+  const [loadingBrandVoice, setLoadingBrandVoice] = useState(false);
+  const [brandVoiceApplied, setBrandVoiceApplied] = useState(false);
   const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
 
   const [formData, setFormData] = useState({
@@ -346,6 +349,53 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
 
   const currentModels = LLM_MODELS[formData.llmProvider as keyof typeof LLM_MODELS] || LLM_MODELS.openai;
 
+  // Fetch and apply Brand Voice configuration
+  const handleApplyBrandVoice = async () => {
+    if (!formData.brandId) {
+      setError("Please select a brand first");
+      return;
+    }
+
+    setLoadingBrandVoice(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/voice/agents/auto-config?brandId=${formData.brandId}`);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || data.message || "Failed to fetch brand voice config");
+      }
+
+      const data = await response.json();
+      const { config } = data;
+
+      // Apply the auto-generated configuration
+      setFormData((prev) => ({
+        ...prev,
+        systemPrompt: config.systemPrompt,
+        greeting: config.greeting,
+        temperature: config.temperature,
+        ttsProvider: config.suggestedVoice.provider,
+        voiceId: config.suggestedVoice.voiceId,
+      }));
+
+      setBrandVoiceApplied(true);
+      setUseBrandVoice(true);
+
+      trackEvent("brand_voice_applied", {
+        brand_id: formData.brandId,
+        voice_provider: config.suggestedVoice.provider,
+        voice_id: config.suggestedVoice.voiceId,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to apply brand voice");
+      setUseBrandVoice(false);
+    } finally {
+      setLoadingBrandVoice(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -396,13 +446,55 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <Select
               label="Brand"
               selectedKeys={formData.brandId ? [formData.brandId] : []}
-              onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, brandId: e.target.value });
+                setBrandVoiceApplied(false); // Reset when brand changes
+              }}
               isRequired
             >
               {brands.map((brand) => (
                 <SelectItem key={brand.id}>{brand.name}</SelectItem>
               ))}
             </Select>
+
+            {/* Use Brand Voice - One Brain, Many Voices */}
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Use Brand Voice
+                    </p>
+                    {brandVoiceApplied && (
+                      <Chip size="sm" color="success" variant="flat">
+                        Applied
+                      </Chip>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Auto-configure this agent using your Brand Brain settings.
+                    System prompt, greeting, voice, and personality will match your brand.
+                  </p>
+                </div>
+                <Button
+                  color="secondary"
+                  variant={brandVoiceApplied ? "flat" : "solid"}
+                  size="sm"
+                  isLoading={loadingBrandVoice}
+                  onPress={handleApplyBrandVoice}
+                  startContent={!loadingBrandVoice && <Wand2 className="w-4 h-4" />}
+                  isDisabled={!formData.brandId}
+                >
+                  {brandVoiceApplied ? "Re-apply" : "Apply Brand Voice"}
+                </Button>
+              </div>
+              {brandVoiceApplied && (
+                <p className="mt-2 text-xs text-purple-600 dark:text-purple-400">
+                  Brand voice applied. You can still customize the settings below.
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-between">
               <div>

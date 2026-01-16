@@ -369,7 +369,9 @@ model BrandAudience {
   // Audience Details
   name        String
   description String?  @db.Text
+  demographics String? @db.Text // General demographics summary
   isPrimary   Boolean  @default(false) @map("is_primary")
+  isActive    Boolean  @default(true) @map("is_active")
 
   // Demographics
   ageRange    String?  @map("age_range") // e.g., "25-45"
@@ -2745,4 +2747,303 @@ model AdminAuditLog {
   @@index([resource])
   @@index([createdAt])
   @@map("admin_audit_logs")
+}
+
+// ============================================
+// CROSS-CHANNEL ATTRIBUTION
+// Tracks customer journeys across channels powered by Brand Brain
+// "One Brain, Many Voices" - Attribution across social, voice, email, chat
+// ============================================
+
+enum ChannelType {
+  SOCIAL      // Twitter, LinkedIn, Facebook, Instagram
+  VOICE       // Voice AI agents, phone calls
+  EMAIL       // Email campaigns
+  CHAT        // Web chat widget
+  WEBSITE     // Website visits, form submissions
+  ADS         // Paid advertising (Meta, Google, LinkedIn)
+}
+
+enum TouchpointAction {
+  VIEW        // Saw content/ad
+  ENGAGE      // Liked, commented, shared
+  CLICK       // Clicked link
+  CALL        // Made/received call
+  MESSAGE     // Sent/received message
+  FORM_SUBMIT // Submitted form
+  PURCHASE    // Made purchase
+  SIGNUP      // Signed up
+  DEMO        // Requested demo
+  MEETING     // Scheduled meeting
+}
+
+enum AttributionModel {
+  FIRST_TOUCH   // 100% credit to first touchpoint
+  LAST_TOUCH    // 100% credit to last touchpoint
+  LINEAR        // Equal credit across all touchpoints
+  TIME_DECAY    // More credit to recent touchpoints
+  POSITION      // 40% first, 40% last, 20% middle (U-shaped)
+  CUSTOM        // Custom weights
+}
+
+// Tracks individual customer interactions across channels
+model CustomerTouchpoint {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+  journeyId      String?  @map("journey_id")
+
+  // Customer identification (anonymous or known)
+  customerId     String?  @map("customer_id") // If identified
+  anonymousId    String?  @map("anonymous_id") // For anonymous tracking
+  email          String?
+  phone          String?
+
+  // Channel details
+  channelType    ChannelType @map("channel_type")
+  channelName    String?  @map("channel_name") // e.g., "Twitter", "Voice Agent: Sales Bot"
+  channelId      String?  @map("channel_id") // Reference to social account, voice agent, etc.
+
+  // Action details
+  action         TouchpointAction
+  actionDetail   String?  @map("action_detail") // e.g., "Liked post", "Called for 5 min"
+
+  // Source reference (what triggered this touchpoint)
+  sourceType     String?  @map("source_type") // content_item, call_log, ad_campaign, etc.
+  sourceId       String?  @map("source_id") // ID of the source
+  sourceUrl      String?  @map("source_url")
+  sourceTitle    String?  @map("source_title")
+
+  // UTM and tracking
+  utmSource      String?  @map("utm_source")
+  utmMedium      String?  @map("utm_medium")
+  utmCampaign    String?  @map("utm_campaign")
+  utmContent     String?  @map("utm_content")
+  utmTerm        String?  @map("utm_term")
+  referrer       String?
+
+  // Value estimation
+  engagementScore Int      @default(0) @map("engagement_score") // 0-100
+  estimatedValue  Decimal? @db.Decimal(10, 2) @map("estimated_value")
+
+  // Device & session
+  deviceType     String?  @map("device_type") // mobile, desktop, tablet
+  sessionId      String?  @map("session_id")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+
+  // Metadata
+  metadata       Json?
+
+  // Timestamps
+  occurredAt     DateTime @default(now()) @map("occurred_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  journey        CustomerJourney? @relation(fields: [journeyId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([journeyId])
+  @@index([customerId])
+  @@index([anonymousId])
+  @@index([email])
+  @@index([phone])
+  @@index([channelType])
+  @@index([occurredAt])
+  @@map("customer_touchpoints")
+}
+
+// Groups touchpoints into a customer journey
+model CustomerJourney {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+  leadId         String?  @unique @map("lead_id")
+
+  // Customer identification
+  customerId     String?  @map("customer_id")
+  anonymousId    String?  @map("anonymous_id")
+  email          String?
+  phone          String?
+  fullName       String?  @map("full_name")
+
+  // Journey status
+  status         String   @default("active") // active, converted, dormant
+  isConverted    Boolean  @default(false) @map("is_converted")
+  conversionValue Decimal? @db.Decimal(10, 2) @map("conversion_value")
+  convertedAt    DateTime? @map("converted_at")
+
+  // Summary stats
+  totalTouchpoints Int     @default(0) @map("total_touchpoints")
+  uniqueChannels   Int     @default(0) @map("unique_channels")
+
+  // First/Last touch tracking
+  firstTouchChannel  ChannelType? @map("first_touch_channel")
+  firstTouchAt       DateTime?    @map("first_touch_at")
+  lastTouchChannel   ChannelType? @map("last_touch_channel")
+  lastTouchAt        DateTime?    @map("last_touch_at")
+
+  // Channel breakdown (JSON for flexibility)
+  channelBreakdown  Json?  @map("channel_breakdown") // {social: 5, voice: 2, email: 3}
+
+  // Attribution scores per model
+  attributionScores Json?  @map("attribution_scores") // {first_touch: {...}, linear: {...}}
+
+  // Timestamps
+  startedAt      DateTime @default(now()) @map("started_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  touchpoints    CustomerTouchpoint[]
+  conversions    CrossChannelConversion[]
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([customerId])
+  @@index([email])
+  @@index([phone])
+  @@index([status])
+  @@index([isConverted])
+  @@map("customer_journeys")
+}
+
+// Tracks conversions with multi-channel attribution
+model CrossChannelConversion {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+  journeyId      String   @map("journey_id")
+
+  // Conversion details
+  conversionType String   @map("conversion_type") // purchase, signup, demo, meeting, lead
+  conversionValue Decimal @db.Decimal(10, 2) @map("conversion_value")
+  currency       String   @default("USD")
+
+  // Source reference
+  sourceType     String?  @map("source_type") // Where conversion happened
+  sourceId       String?  @map("source_id")
+
+  // Attribution
+  attributionModel AttributionModel @default(LINEAR) @map("attribution_model")
+
+  // Attribution breakdown by channel
+  // JSON: {social: {value: 40, percent: 40}, voice: {value: 60, percent: 60}}
+  channelAttribution Json @map("channel_attribution")
+
+  // Attribution breakdown by touchpoint
+  // JSON: [{touchpointId: "x", value: 20, percent: 20}, ...]
+  touchpointAttribution Json @map("touchpoint_attribution")
+
+  // Which Brand Brain powered this
+  brandBrainContribution Boolean @default(true) @map("brand_brain_contribution")
+
+  // Timestamps
+  convertedAt    DateTime @default(now()) @map("converted_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  journey        CustomerJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([journeyId])
+  @@index([conversionType])
+  @@index([convertedAt])
+  @@map("cross_channel_conversions")
+}
+
+// Aggregated channel performance metrics for dashboards
+model ChannelPerformanceSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+
+  // Time period
+  periodStart    DateTime @map("period_start")
+  periodEnd      DateTime @map("period_end")
+  periodType     String   @map("period_type") // daily, weekly, monthly
+
+  // Channel
+  channelType    ChannelType @map("channel_type")
+  channelName    String?  @map("channel_name")
+
+  // Touchpoint metrics
+  totalTouchpoints     Int @default(0) @map("total_touchpoints")
+  uniqueCustomers      Int @default(0) @map("unique_customers")
+  newCustomers         Int @default(0) @map("new_customers")
+
+  // Engagement metrics
+  views                Int @default(0)
+  engagements          Int @default(0)
+  clicks               Int @default(0)
+  calls                Int @default(0)
+  messages             Int @default(0)
+  formSubmissions      Int @default(0) @map("form_submissions")
+
+  // Conversion metrics
+  conversions          Int @default(0)
+  conversionRate       Decimal @default(0) @db.Decimal(5, 2) @map("conversion_rate")
+  totalRevenue         Decimal @default(0) @db.Decimal(12, 2) @map("total_revenue")
+
+  // Attribution metrics (across models)
+  firstTouchConversions Int @default(0) @map("first_touch_conversions")
+  lastTouchConversions  Int @default(0) @map("last_touch_conversions")
+  linearConversions     Decimal @default(0) @db.Decimal(10, 2) @map("linear_conversions")
+  firstTouchRevenue     Decimal @default(0) @db.Decimal(12, 2) @map("first_touch_revenue")
+  lastTouchRevenue      Decimal @default(0) @db.Decimal(12, 2) @map("last_touch_revenue")
+  linearRevenue         Decimal @default(0) @db.Decimal(12, 2) @map("linear_revenue")
+
+  // Cross-channel influence
+  assistedConversions  Int @default(0) @map("assisted_conversions") // Helped but wasn't last touch
+  influencedRevenue    Decimal @default(0) @db.Decimal(12, 2) @map("influenced_revenue")
+
+  // Cost tracking (if applicable)
+  totalSpend           Decimal @default(0) @db.Decimal(12, 2) @map("total_spend")
+  costPerConversion    Decimal? @db.Decimal(10, 2) @map("cost_per_conversion")
+  roas                 Decimal? @db.Decimal(8, 2) // Return on ad spend
+
+  // Timestamps
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, brandId, channelType, periodStart, periodType])
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([channelType])
+  @@index([periodStart])
+  @@map("channel_performance_snapshots")
+}
+
+// Configuration for enabled channels per organization
+model ChannelConfig {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  brandId        String?  @map("brand_id")
+
+  // Channel settings
+  channelType    ChannelType @map("channel_type")
+  isEnabled      Boolean  @default(true) @map("is_enabled")
+  isConfigured   Boolean  @default(false) @map("is_configured")
+
+  // Brand Brain integration
+  useBrandBrain  Boolean  @default(true) @map("use_brand_brain")
+  brandBrainId   String?  @map("brand_brain_id")
+
+  // Channel-specific config
+  config         Json     @default("{}")
+
+  // Attribution weight (for custom attribution model)
+  attributionWeight Decimal @default(1) @db.Decimal(3, 2) @map("attribution_weight")
+
+  // Timestamps
+  enabledAt      DateTime? @map("enabled_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, brandId, channelType])
+  @@index([organizationId])
+  @@index([brandId])
+  @@map("channel_configs")
 }
