@@ -467,7 +467,10 @@ export default function RoutingRulesPage() {
                       label="Select Group"
                       placeholder="Choose a group"
                       selectedKeys={formData.groupId ? [formData.groupId] : []}
-                      onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
+                      onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0] as string;
+                        setFormData({ ...formData, groupId: selected || "" });
+                      }}
                       className="mt-4"
                     >
                       {groups.map((group) => (
@@ -482,7 +485,10 @@ export default function RoutingRulesPage() {
                       label="Select Agent"
                       placeholder="Choose an agent"
                       selectedKeys={formData.targetAgentId ? [formData.targetAgentId] : []}
-                      onChange={(e) => setFormData({ ...formData, targetAgentId: e.target.value })}
+                      onSelectionChange={(keys) => {
+                        const selected = Array.from(keys)[0] as string;
+                        setFormData({ ...formData, targetAgentId: selected || "" });
+                      }}
                       className="mt-4"
                     >
                       {agents.map((agent) => (
@@ -515,7 +521,10 @@ export default function RoutingRulesPage() {
                         <Select
                           size="sm"
                           selectedKeys={[condition.field]}
-                          onChange={(e) => updateCondition(index, "field", e.target.value)}
+                          onSelectionChange={(keys) => {
+                            const selected = Array.from(keys)[0] as string;
+                            if (selected) updateCondition(index, "field", selected);
+                          }}
                           className="w-40"
                         >
                           {CONDITION_FIELDS.map((f) => (
@@ -527,7 +536,10 @@ export default function RoutingRulesPage() {
                         <Select
                           size="sm"
                           selectedKeys={[condition.operator]}
-                          onChange={(e) => updateCondition(index, "operator", e.target.value)}
+                          onSelectionChange={(keys) => {
+                            const selected = Array.from(keys)[0] as string;
+                            if (selected) updateCondition(index, "operator", selected);
+                          }}
                           className="w-36"
                         >
                           {CONDITION_OPERATORS.map((op) => (
@@ -565,7 +577,10 @@ export default function RoutingRulesPage() {
                   <Select
                     label="Fallback Action"
                     selectedKeys={[formData.fallbackAction]}
-                    onChange={(e) => setFormData({ ...formData, fallbackAction: e.target.value })}
+                    onSelectionChange={(keys) => {
+                      const selected = Array.from(keys)[0] as string;
+                      if (selected) setFormData({ ...formData, fallbackAction: selected });
+                    }}
                   >
                     {FALLBACK_ACTIONS.map((action) => (
                       <SelectItem key={action.value} value={action.value}>
@@ -594,7 +609,10 @@ export default function RoutingRulesPage() {
                     label="Fallback Agent"
                     placeholder="Select fallback agent"
                     selectedKeys={formData.fallbackAgentId ? [formData.fallbackAgentId] : []}
-                    onChange={(e) => setFormData({ ...formData, fallbackAgentId: e.target.value })}
+                    onSelectionChange={(keys) => {
+                      const selected = Array.from(keys)[0] as string;
+                      setFormData({ ...formData, fallbackAgentId: selected || "" });
+                    }}
                   >
                     {agents.map((agent) => (
                       <SelectItem key={agent.id} value={agent.id}>
