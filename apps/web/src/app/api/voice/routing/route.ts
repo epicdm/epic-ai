@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
 // Schema for condition in a routing rule
@@ -65,10 +66,14 @@ const createRoutingRuleSchema = z.object({
 // GET /api/voice/routing - List all routing rules
 export async function GET(request: NextRequest) {
   try {
-    const { userId, orgId } = await getAuth();
-
-    if (!userId || !orgId) {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -77,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     const rules = await prisma.agentRoutingRule.findMany({
       where: {
-        organizationId: orgId,
+        organizationId: org.id,
         ...(groupId && { groupId }),
         ...(isActive !== null && { isActive: isActive === "true" }),
       },
@@ -129,10 +134,14 @@ export async function GET(request: NextRequest) {
 // POST /api/voice/routing - Create a new routing rule
 export async function POST(request: NextRequest) {
   try {
-    const { userId, orgId } = await getAuth();
-
-    if (!userId || !orgId) {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -166,7 +175,7 @@ export async function POST(request: NextRequest) {
     // Validate group belongs to org if provided
     if (groupId) {
       const group = await prisma.agentGroup.findFirst({
-        where: { id: groupId, organizationId: orgId },
+        where: { id: groupId, organizationId: org.id },
       });
       if (!group) {
         return NextResponse.json(
@@ -179,7 +188,7 @@ export async function POST(request: NextRequest) {
     // Validate target agent belongs to org if provided
     if (targetAgentId) {
       const agent = await prisma.voiceAgent.findFirst({
-        where: { id: targetAgentId, organizationId: orgId },
+        where: { id: targetAgentId, organizationId: org.id },
       });
       if (!agent) {
         return NextResponse.json(
@@ -192,7 +201,7 @@ export async function POST(request: NextRequest) {
     // Create the routing rule
     const rule = await prisma.agentRoutingRule.create({
       data: {
-        organizationId: orgId,
+        organizationId: org.id,
         name,
         description,
         groupId,

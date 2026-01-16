@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
 type RouteParams = {
@@ -69,17 +70,22 @@ const updateRoutingRuleSchema = z.object({
 // GET /api/voice/routing/[id] - Get a single routing rule
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     const rule = await prisma.agentRoutingRule.findFirst({
       where: {
         id,
-        organizationId: orgId,
+        organizationId: org.id,
       },
       include: {
         group: {
@@ -141,16 +147,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/voice/routing/[id] - Update a routing rule
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     // Verify rule belongs to org
     const existingRule = await prisma.agentRoutingRule.findFirst({
-      where: { id, organizationId: orgId },
+      where: { id, organizationId: org.id },
     });
 
     if (!existingRule) {
@@ -172,7 +183,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Validate group belongs to org if provided
     if (data.groupId) {
       const group = await prisma.agentGroup.findFirst({
-        where: { id: data.groupId, organizationId: orgId },
+        where: { id: data.groupId, organizationId: org.id },
       });
       if (!group) {
         return NextResponse.json(
@@ -185,7 +196,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Validate target agent belongs to org if provided
     if (data.targetAgentId) {
       const agent = await prisma.voiceAgent.findFirst({
-        where: { id: data.targetAgentId, organizationId: orgId },
+        where: { id: data.targetAgentId, organizationId: org.id },
       });
       if (!agent) {
         return NextResponse.json(
@@ -239,16 +250,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/voice/routing/[id] - Delete a routing rule
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     // Verify rule belongs to org
     const existingRule = await prisma.agentRoutingRule.findFirst({
-      where: { id, organizationId: orgId },
+      where: { id, organizationId: org.id },
     });
 
     if (!existingRule) {

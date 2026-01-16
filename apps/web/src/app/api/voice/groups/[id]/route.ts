@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
 type RouteParams = {
@@ -33,17 +34,22 @@ const updateGroupSchema = z.object({
 // GET /api/voice/groups/[id] - Get a single agent group
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     const group = await prisma.agentGroup.findFirst({
       where: {
         id,
-        organizationId: orgId,
+        organizationId: org.id,
       },
       include: {
         members: true,
@@ -91,16 +97,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/voice/groups/[id] - Update an agent group
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     // Verify group belongs to org
     const existingGroup = await prisma.agentGroup.findFirst({
-      where: { id, organizationId: orgId },
+      where: { id, organizationId: org.id },
     });
 
     if (!existingGroup) {
@@ -194,16 +205,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/voice/groups/[id] - Delete an agent group
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId, orgId } = await getAuth();
+    const { userId } = await getAuthWithBypass();
     const { id } = await params;
 
-    if (!userId || !orgId) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     // Verify group belongs to org
     const existingGroup = await prisma.agentGroup.findFirst({
-      where: { id, organizationId: orgId },
+      where: { id, organizationId: org.id },
     });
 
     if (!existingGroup) {

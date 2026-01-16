@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@/lib/auth";
+import { getAuthWithBypass } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
+import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
 // Schema for creating a group
@@ -27,14 +28,18 @@ const createGroupSchema = z.object({
 // GET /api/voice/groups - List all agent groups
 export async function GET(request: NextRequest) {
   try {
-    const { userId, orgId } = await getAuth();
-
-    if (!userId || !orgId) {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
+    }
+
     const groups = await prisma.agentGroup.findMany({
-      where: { organizationId: orgId },
+      where: { organizationId: org.id },
       include: {
         members: {
           include: {
@@ -85,10 +90,14 @@ export async function GET(request: NextRequest) {
 // POST /api/voice/groups - Create a new agent group
 export async function POST(request: NextRequest) {
   try {
-    const { userId, orgId } = await getAuth();
-
-    if (!userId || !orgId) {
+    const { userId } = await getAuthWithBypass();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const org = await getUserOrganization();
+    if (!org) {
+      return NextResponse.json({ error: "No organization" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -106,7 +115,7 @@ export async function POST(request: NextRequest) {
     // Create the group with members
     const group = await prisma.agentGroup.create({
       data: {
-        organizationId: orgId,
+        organizationId: org.id,
         name,
         description,
         routingStrategy,
