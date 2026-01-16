@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { WebhookReceiver, WebhookEvent } from "livekit-server-sdk";
 import { prisma, CallDirection, CallStatus, CallOutcome, Prisma } from "@epic-ai/database";
+import { triggerOnCallCompleted, triggerOnCallMissed } from "@/lib/services/cross-channel/triggers";
 
 // LiveKit credentials for webhook verification
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "";
@@ -359,7 +360,7 @@ async function handleParticipantLeft(event: WebhookEvent) {
   );
 
   // Update call log with completion info
-  await prisma.callLog.update({
+  const updatedCall = await prisma.callLog.update({
     where: { id: callLog.id },
     data: {
       status: CallStatus.ENDED,
@@ -372,6 +373,32 @@ async function handleParticipantLeft(event: WebhookEvent) {
   console.log(
     `[Webhook] Call ${callLog.id} ended, duration: ${durationSeconds}s`
   );
+
+  // Trigger cross-channel automations for completed call
+  try {
+    const triggerResult = await triggerOnCallCompleted({
+      callLogId: callLog.id,
+      organizationId: callLog.organizationId,
+      agentId: callLog.agentId || undefined,
+      brandId: undefined, // Could be resolved from agent if needed
+      leadId: (callLog.metadata as Record<string, unknown>)?.leadId as string | undefined,
+      phoneNumber: callLog.phoneNumber || undefined,
+      callerNumber: callLog.callerNumber || undefined,
+      direction: callLog.direction === CallDirection.INBOUND ? "INBOUND" : "OUTBOUND",
+      duration: durationSeconds,
+      outcome: CallOutcome.COMPLETED,
+      metadata: callLog.metadata as Record<string, unknown>,
+    });
+
+    if (triggerResult.triggered > 0) {
+      console.log(
+        `[Webhook] Triggered ${triggerResult.triggered} automation(s) for call ${callLog.id}`
+      );
+    }
+  } catch (triggerError) {
+    console.error("[Webhook] Failed to trigger automations:", triggerError);
+    // Don't fail the webhook response if trigger fails
+  }
 }
 
 /**
@@ -442,6 +469,47 @@ async function handleRoomFinished(event: WebhookEvent) {
     });
 
     console.log(`[Webhook] Marked call ${call.id} as ended (${outcome}, was ${call.status})`);
+
+    // Trigger automations based on outcome
+    try {
+      if (outcome === CallOutcome.NO_ANSWER) {
+        // Trigger missed call automation
+        const triggerResult = await triggerOnCallMissed({
+          organizationId: call.organizationId,
+          callLogId: call.id,
+          callerNumber: call.callerNumber || "",
+          phoneNumber: call.phoneNumber || undefined,
+          agentId: call.agentId || undefined,
+        });
+
+        if (triggerResult.triggered > 0) {
+          console.log(
+            `[Webhook] Triggered ${triggerResult.triggered} missed call automation(s)`
+          );
+        }
+      } else if (outcome === CallOutcome.COMPLETED && durationSeconds > 0) {
+        // Trigger completed call automation
+        const triggerResult = await triggerOnCallCompleted({
+          callLogId: call.id,
+          organizationId: call.organizationId,
+          agentId: call.agentId || undefined,
+          phoneNumber: call.phoneNumber || undefined,
+          callerNumber: call.callerNumber || undefined,
+          direction: call.direction === CallDirection.INBOUND ? "INBOUND" : "OUTBOUND",
+          duration: durationSeconds,
+          outcome: CallOutcome.COMPLETED,
+          metadata: call.metadata as Record<string, unknown>,
+        });
+
+        if (triggerResult.triggered > 0) {
+          console.log(
+            `[Webhook] Triggered ${triggerResult.triggered} completed call automation(s)`
+          );
+        }
+      }
+    } catch (triggerError) {
+      console.error("[Webhook] Failed to trigger automations:", triggerError);
+    }
   }
 }
 

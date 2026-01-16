@@ -91,6 +91,10 @@ export async function GET(request: NextRequest) {
       voiceAgents,
       phoneMappings,
       callStats,
+      journeyStats,
+      conversionStats,
+      multiChannelCount,
+      touchpointBreakdown,
     ] = await Promise.all([
       // Brand Brain status
       brand
@@ -245,6 +249,65 @@ export async function GET(request: NextRequest) {
         console.error("Error fetching call stats:", e);
         return { _count: 0, _sum: { duration: null } };
       }),
+
+      // Cross-Channel Journey Stats
+      prisma.customerJourney.aggregate({
+        where: {
+          organizationId: org.id,
+          startedAt: { gte: startDate },
+        },
+        _count: true,
+        _avg: {
+          totalTouchpoints: true,
+          uniqueChannels: true,
+        },
+      }).catch((e) => {
+        console.error("Error fetching journey stats:", e);
+        return { _count: 0, _avg: { totalTouchpoints: null, uniqueChannels: null } };
+      }),
+
+      // Cross-Channel Conversions (last N days)
+      prisma.crossChannelConversion.aggregate({
+        where: {
+          organizationId: org.id,
+          convertedAt: { gte: startDate },
+        },
+        _count: true,
+        _sum: {
+          conversionValue: true,
+        },
+      }).catch((e) => {
+        console.error("Error fetching conversion stats:", e);
+        return { _count: 0, _sum: { conversionValue: null } };
+      }),
+
+      // Multi-channel Journeys (journeys with 2+ channels)
+      prisma.customerJourney.count({
+        where: {
+          organizationId: org.id,
+          startedAt: { gte: startDate },
+          uniqueChannels: { gte: 2 },
+        },
+      }).catch((e) => {
+        console.error("Error fetching multi-channel count:", e);
+        return 0;
+      }),
+
+      // Channel Touchpoint Breakdown
+      prisma.customerTouchpoint.groupBy({
+        by: ["channelType"],
+        where: {
+          organizationId: org.id,
+          occurredAt: { gte: startDate },
+        },
+        _count: true,
+        _avg: {
+          engagementScore: true,
+        },
+      }).catch((e) => {
+        console.error("Error fetching touchpoint breakdown:", e);
+        return [];
+      }),
     ]);
 
     // Process content stats
@@ -384,6 +447,24 @@ export async function GET(request: NextRequest) {
         totalCalls: callStats._count || 0,
         totalMinutes: Math.round((callStats._sum?.duration || 0) / 60),
         agentsList: (voiceAgents as { id: string; name: string; isActive: boolean; agentType: string }[]).slice(0, 5),
+      },
+
+      // Cross-Channel Synergy metrics
+      crossChannel: {
+        totalJourneys: journeyStats._count || 0,
+        multiChannelJourneys: multiChannelCount as number,
+        avgTouchpoints: Math.round((journeyStats._avg?.totalTouchpoints || 0) * 10) / 10,
+        avgChannelsPerJourney: Math.round((journeyStats._avg?.uniqueChannels || 0) * 10) / 10,
+        conversions: conversionStats._count || 0,
+        conversionValue: Number(conversionStats._sum?.conversionValue || 0),
+        synergyRate: journeyStats._count > 0
+          ? Math.round(((multiChannelCount as number) / journeyStats._count) * 100)
+          : 0,
+        channelBreakdown: (touchpointBreakdown as { channelType: string; _count: number; _avg: { engagementScore: number | null } }[]).map(ch => ({
+          channel: ch.channelType,
+          touchpoints: ch._count,
+          avgEngagement: Math.round((ch._avg?.engagementScore || 0) * 10) / 10,
+        })),
       },
 
       // Period info
@@ -632,6 +713,16 @@ function getEmptyDashboardData(period: number, startDate: Date) {
       totalCalls: 0,
       totalMinutes: 0,
       agentsList: [],
+    },
+    crossChannel: {
+      totalJourneys: 0,
+      multiChannelJourneys: 0,
+      avgTouchpoints: 0,
+      avgChannelsPerJourney: 0,
+      conversions: 0,
+      conversionValue: 0,
+      synergyRate: 0,
+      channelBreakdown: [],
     },
     period: {
       days: period,

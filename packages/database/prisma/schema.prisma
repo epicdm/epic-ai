@@ -233,6 +233,9 @@ model Organization {
   agentGroups         AgentGroup[]
   agentRoutingRules   AgentRoutingRule[]
 
+  // Workflow Automation Relations
+  automations         Automation[]
+
   @@map("organizations")
 }
 
@@ -697,12 +700,19 @@ model ContentItem {
   // Platform-specific variations
   contentVariations ContentVariation[]
 
+  // Cross-Channel Integration
+  triggeredByVoice   Boolean  @default(false) @map("triggered_by_voice")
+  voiceAgentId       String?  @map("voice_agent_id")
+  callLogId          String?  @map("call_log_id")
+  workflowInstanceId String?  @map("workflow_instance_id")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brandId])
   @@index([status])
   @@index([scheduledFor])
+  @@index([workflowInstanceId])
   @@map("content_items")
 }
 
@@ -1247,6 +1257,12 @@ model VoiceAgent {
   settings       Json     @default("{}")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Cross-Channel Integration
+  useBrandVoice      Boolean     @default(true) @map("use_brand_voice")
+  linkedBrandBrainId String?     @map("linked_brand_brain_id")
+  sourceChannel      ChannelType? @map("source_channel")
+  sourceContentId    String?     @map("source_content_id")
 
   // Relations
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -1909,6 +1925,11 @@ model CallLog {
   // Metadata
   metadata       Json?
 
+  // Cross-Channel Integration
+  triggeredBySocial  Boolean  @default(false) @map("triggered_by_social")
+  socialPostId       String?  @map("social_post_id")
+  workflowInstanceId String?  @map("workflow_instance_id")
+
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -1925,6 +1946,7 @@ model CallLog {
   @@index([organizationId])
   @@index([agentId])
   @@index([startedAt])
+  @@index([workflowInstanceId])
   @@map("call_logs")
 }
 
@@ -2777,6 +2799,60 @@ enum TouchpointAction {
   MEETING     // Scheduled meeting
 }
 
+// ============================================
+// WORKFLOW AUTOMATION ENUMS
+// ============================================
+
+enum WorkflowCategory {
+  LEAD_NURTURE
+  CUSTOMER_ONBOARDING
+  RE_ENGAGEMENT
+  EVENT_PROMOTION
+  SUPPORT_ESCALATION
+  SALES_OUTREACH
+  RETENTION
+  FEEDBACK
+  CUSTOM
+}
+
+enum WorkflowTrigger {
+  MANUAL
+  SCHEDULED
+  EVENT
+  CONDITION
+  WEBHOOK
+}
+
+enum WorkflowStatus {
+  PENDING
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum WorkflowAction {
+  SOCIAL_POST
+  SOCIAL_DM
+  SOCIAL_ENGAGE
+  VOICE_CALL_OUTBOUND
+  VOICE_CALL_SCHEDULE
+  VOICE_SMS
+  EMAIL_SEND
+  EMAIL_SEQUENCE_START
+  EMAIL_SEQUENCE_STOP
+  CHAT_MESSAGE
+  CHAT_ASSIGN
+  WAIT
+  CONDITION
+  UPDATE_LEAD
+  NOTIFY_TEAM
+  AI_ANALYZE
+  ATTRIBUTE
+  END
+}
+
 enum AttributionModel {
   FIRST_TOUCH   // 100% credit to first touchpoint
   LAST_TOUCH    // 100% credit to last touchpoint
@@ -3046,4 +3122,93 @@ model ChannelConfig {
   @@index([organizationId])
   @@index([brandId])
   @@map("channel_configs")
+}
+
+// ============================================
+// WORKFLOW AUTOMATION MODELS
+// ============================================
+
+model Automation {
+  id                 String           @id @default(cuid())
+  organizationId     String           @map("organization_id")
+  brandId            String?          @map("brand_id")
+  templateId         String           @map("template_id")
+  name               String
+  description        String?          @db.Text
+  category           WorkflowCategory
+  trigger            WorkflowTrigger
+  triggerConfig      Json             @default("{}") @map("trigger_config")
+  steps              Json             @default("[]")
+  entryStepId        String           @map("entry_step_id")
+  channels           ChannelType[]
+  requiresBrandBrain Boolean          @default(true) @map("requires_brand_brain")
+  isActive           Boolean          @default(false) @map("is_active")
+  totalRuns          Int              @default(0) @map("total_runs")
+  successfulRuns     Int              @default(0) @map("successful_runs")
+  failedRuns         Int              @default(0) @map("failed_runs")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  instances    WorkflowInstance[]
+
+  @@index([organizationId])
+  @@index([brandId])
+  @@index([isActive])
+  @@map("automations")
+}
+
+model WorkflowInstance {
+  id              String         @id @default(cuid())
+  automationId    String         @map("automation_id")
+  organizationId  String         @map("organization_id")
+  brandId         String?        @map("brand_id")
+  leadId          String?        @map("lead_id")
+  customerId      String?        @map("customer_id")
+  journeyId       String?        @map("journey_id")
+  callLogId       String?        @map("call_log_id")
+  contentItemId   String?        @map("content_item_id")
+  status          WorkflowStatus @default(PENDING)
+  currentStepId   String         @map("current_step_id")
+  completedSteps  String[]       @default([]) @map("completed_steps")
+  context         Json           @default("{}")
+  results         Json           @default("{}")
+  errors          Json           @default("[]")
+  startedAt       DateTime       @default(now()) @map("started_at")
+  scheduledNextAt DateTime?      @map("scheduled_next_at")
+  completedAt     DateTime?      @map("completed_at")
+  touchpointsCreated Int         @default(0) @map("touchpoints_created")
+  channelsUsed    ChannelType[]  @default([]) @map("channels_used")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  automation     Automation              @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  stepExecutions WorkflowStepExecution[]
+
+  @@index([automationId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("workflow_instances")
+}
+
+model WorkflowStepExecution {
+  id            String          @id @default(cuid())
+  instanceId    String          @map("instance_id")
+  stepId        String          @map("step_id")
+  action        WorkflowAction
+  channel       ChannelType?
+  success       Boolean
+  output        Json            @default("{}")
+  errorMessage  String?         @map("error_message")
+  retryCount    Int             @default(0) @map("retry_count")
+  touchpointId  String?         @map("touchpoint_id")
+  contentItemId String?         @map("content_item_id")
+  callLogId     String?         @map("call_log_id")
+  nextStepId    String?         @map("next_step_id")
+  executedAt    DateTime        @default(now()) @map("executed_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@map("workflow_step_executions")
 }

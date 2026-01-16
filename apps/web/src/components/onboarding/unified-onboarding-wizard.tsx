@@ -50,10 +50,11 @@ import {
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates";
+import { ChannelSelector } from "@/components/brand/channel-selector";
 
 // Types
 type UserGoal = "content" | "voice" | "campaigns" | "explore";
-type SetupPath = "ai_express" | "ai_social" | "guided" | "expert";
+type SetupPath = "social_first" | "voice_first" | "hybrid" | "guided";
 
 interface UnifiedOnboardingWizardProps {
   userName: string;
@@ -105,58 +106,59 @@ const goalOptions: GoalOption[] = [
   },
 ];
 
+// Channel-centric path options - "One Brain, Many Voices"
 const pathOptions: PathOption[] = [
   {
-    id: "ai_express",
-    title: "AI Express Setup",
-    description: "Let AI configure everything from your website",
+    id: "social_first",
+    title: "Social-First Setup",
+    description: "AI content creation for social media dominance",
     time: "~5 minutes",
-    icon: <ZapIcon className="w-6 h-6" />,
+    icon: <SparklesIcon className="w-6 h-6" />,
     features: [
-      "Automatic brand voice detection",
-      "Content pillars generated",
+      "AI analyzes your brand voice",
+      "Auto-generates content pillars",
       "Optimal posting schedule",
-      "AI configures all 5 phases",
+      "Multi-platform content variations",
     ],
   },
   {
-    id: "ai_social",
-    title: "AI Social Setup",
-    description: "Let AI learn your brand from your social posts",
-    time: "~3 minutes",
-    icon: <SparklesIcon className="w-6 h-6" />,
+    id: "voice_first",
+    title: "Voice-First Setup",
+    description: "AI voice agents for calls and conversations",
+    time: "~5 minutes",
+    icon: <MicIcon className="w-6 h-6" />,
+    features: [
+      "Voice agent personality from Brand Brain",
+      "Call handling & scheduling",
+      "Lead qualification flows",
+      "Conversation intelligence",
+    ],
+  },
+  {
+    id: "hybrid",
+    title: "Hybrid Cross-Channel",
+    description: "One Brand Brain, many voices across all channels",
+    time: "~8 minutes",
+    icon: <ZapIcon className="w-6 h-6" />,
     recommended: true,
     features: [
-      "Analyzes your existing posts",
-      "Learns your voice & style",
-      "Auto-detects content themes",
-      "Best results with connected accounts",
+      "Social + Voice + Email unified",
+      "Cross-channel workflows",
+      "Journey attribution tracking",
+      "AI optimizes channel mix",
     ],
   },
   {
     id: "guided",
-    title: "Guided Setup",
-    description: "Step-by-step setup with smart defaults",
+    title: "Custom Setup",
+    description: "Configure everything manually with guidance",
     time: "~15 minutes",
     icon: <BookOpenIcon className="w-6 h-6" />,
     features: [
       "Industry templates",
-      "Customize each setting",
+      "Step-by-step configuration",
+      "Full customization",
       "Preview before applying",
-      "12 essential steps",
-    ],
-  },
-  {
-    id: "expert",
-    title: "Expert Mode",
-    description: "Full control over every setting",
-    time: "30+ minutes",
-    icon: <WrenchIcon className="w-6 h-6" />,
-    features: [
-      "All 32 configuration steps",
-      "Advanced customization",
-      "Complete flexibility",
-      "For power users",
     ],
   },
 ];
@@ -174,6 +176,7 @@ type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
 const wizardSteps: WizardStep[] = [
   { id: "welcome", title: "Welcome", description: "What brings you here?" },
   { id: "business", title: "Business", description: "Your workspace info" },
+  { id: "channels", title: "Channels", description: "Enable your channels" },
   { id: "path", title: "Setup Path", description: "Choose your journey" },
   { id: "ready", title: "Ready", description: "Let's go!" },
 ];
@@ -186,39 +189,44 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<string | null>(null);
   const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
 
   const handleComplete = useCallback(
     async (data: Record<string, unknown>) => {
       try {
-        // Mark onboarding as complete with path selection
+        // Mark onboarding as complete with path and channel selection
         await fetch("/api/onboarding/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             goal: selectedGoal,
             setupPath: selectedPath,
+            channels: selectedChannels,
           }),
         });
 
         // Track onboarding completion
         trackEvent("onboarding_completed", {
           goal: selectedGoal || "none",
-          setup_path: selectedPath || "none",
+          setup_path: `${selectedPath || "none"}:${selectedChannels.join(",")}`,
           template: selectedTemplate?.id || "none",
         });
 
-        // Navigate based on selected path
-        if (selectedPath === "ai_express") {
-          // Go to Bird's Eye AI wizard (website analysis)
-          router.push("/setup/ai");
-        } else if (selectedPath === "ai_social") {
-          // Go to AI Social Setup (social posts analysis)
+        // Navigate based on selected path - "One Brain, Many Voices" architecture
+        if (selectedPath === "social_first") {
+          // Go to Social-focused AI setup (content creation focus)
           router.push("/setup/ai-social");
+        } else if (selectedPath === "voice_first") {
+          // Go to Voice-focused setup (voice agent creation)
+          router.push("/setup/voice");
+        } else if (selectedPath === "hybrid") {
+          // Go to unified cross-channel setup
+          router.push("/setup/ai");
         } else if (selectedPath === "guided") {
-          // Go to streamlined wizard
+          // Go to guided manual setup
           router.push("/setup?mode=guided");
         } else {
-          // Expert mode - go to full setup hub
+          // Fallback to setup hub
           router.push("/setup");
         }
 
@@ -228,7 +236,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
         router.push("/setup");
       }
     },
-    [router, selectedGoal, selectedPath, selectedTemplate]
+    [router, selectedGoal, selectedPath, selectedTemplate, selectedChannels]
   );
 
   return (
@@ -257,14 +265,23 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
           onAccountsConnected={setConnectedAccounts}
         />
 
-        {/* Step 3: Path Selection */}
+        {/* Step 3: Channel Selection - "One Brain, Many Voices" */}
+        <ChannelSelectionStep
+          selectedChannels={selectedChannels}
+          onChannelsChange={setSelectedChannels}
+          brandName={selectedTemplate?.name}
+          industryId={selectedTemplate?.id}
+        />
+
+        {/* Step 4: Path Selection - Channel-centric */}
         <PathSelectionStep
           selectedPath={selectedPath}
           onPathSelect={setSelectedPath}
           connectedAccounts={connectedAccounts}
+          selectedChannels={selectedChannels}
         />
 
-        {/* Step 4: Ready */}
+        {/* Step 5: Ready */}
         <ReadyStep
           selectedPath={selectedPath}
           selectedGoal={selectedGoal}
@@ -918,41 +935,115 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
   );
 }
 
-// Step 3: Path Selection
+// Step 3: Channel Selection - "One Brain, Many Voices"
+interface ChannelSelectionStepProps {
+  selectedChannels: string[];
+  onChannelsChange: (channels: string[]) => void;
+  brandName?: string;
+  industryId?: string;
+}
+
+function ChannelSelectionStep({
+  selectedChannels,
+  onChannelsChange,
+  brandName,
+  industryId,
+}: ChannelSelectionStepProps) {
+  const { setData } = useWizard();
+
+  const handleChannelsChange = (channels: string[]) => {
+    onChannelsChange(channels);
+    setData("channels", channels);
+  };
+
+  return (
+    <WizardStepContainer stepIndex={2} disableNext={selectedChannels.length === 0}>
+      <WizardStepContent>
+        <ChannelSelector
+          selectedChannels={selectedChannels}
+          onChannelsChange={handleChannelsChange}
+          showContinueButton={false}
+          brandName={brandName}
+          mode="onboarding"
+          industryId={industryId}
+          autoSelectRecommended={true}
+        />
+      </WizardStepContent>
+    </WizardStepContainer>
+  );
+}
+
+// Step 4: Path Selection - Channel-Centric
 interface PathSelectionStepProps {
   selectedPath: SetupPath | null;
   onPathSelect: (path: SetupPath) => void;
   connectedAccounts: string[];
+  selectedChannels: string[];
 }
 
-function PathSelectionStep({ selectedPath, onPathSelect, connectedAccounts }: PathSelectionStepProps) {
+function PathSelectionStep({ selectedPath, onPathSelect, connectedAccounts, selectedChannels }: PathSelectionStepProps) {
   const { setData } = useWizard();
-  const hasSocialAccounts = connectedAccounts.length > 0;
+
+  // Determine channel focus from selected channels
+  const hasSocial = selectedChannels.includes("SOCIAL");
+  const hasVoice = selectedChannels.includes("VOICE");
+  const hasEmail = selectedChannels.includes("EMAIL");
+  const hasMultipleChannels = selectedChannels.length >= 2;
 
   const handlePathSelect = (path: SetupPath) => {
     onPathSelect(path);
     setData("setupPath", path);
   };
 
-  // Show AI Social as recommended when user has connected accounts
+  // Recommend path based on channel selection - "One Brain, Many Voices"
   const getPathOptions = () => {
-    return pathOptions.map(option => ({
-      ...option,
-      // AI Social is recommended when accounts are connected, AI Express when not
-      recommended: hasSocialAccounts
-        ? option.id === 'ai_social'
-        : option.id === 'ai_express',
-    }));
+    return pathOptions.map(option => {
+      let isRecommended = false;
+
+      // Hybrid recommended when multiple channels selected
+      if (hasMultipleChannels && option.id === 'hybrid') {
+        isRecommended = true;
+      }
+      // Social-first recommended when only social selected
+      else if (hasSocial && !hasVoice && option.id === 'social_first') {
+        isRecommended = true;
+      }
+      // Voice-first recommended when only voice selected
+      else if (hasVoice && !hasSocial && option.id === 'voice_first') {
+        isRecommended = true;
+      }
+      // Default to hybrid if nothing specific
+      else if (selectedChannels.length === 0 && option.id === 'hybrid') {
+        isRecommended = true;
+      }
+
+      return {
+        ...option,
+        recommended: isRecommended,
+      };
+    });
+  };
+
+  // Generate dynamic description based on channels
+  const getDescription = () => {
+    if (hasMultipleChannels) {
+      return `You've enabled ${selectedChannels.length} channels. Hybrid setup will unify them under one Brand Brain.`;
+    }
+    if (hasSocial && !hasVoice) {
+      return "Social channel selected. Social-First setup optimizes AI content creation.";
+    }
+    if (hasVoice && !hasSocial) {
+      return "Voice channel selected. Voice-First setup configures AI phone agents.";
+    }
+    return "Choose how to configure your marketing channels.";
   };
 
   return (
-    <WizardStepContainer stepIndex={2} disableNext={!selectedPath}>
+    <WizardStepContainer stepIndex={3} disableNext={!selectedPath}>
       <WizardStepHeader
         icon={<RocketIcon className="w-8 h-8 text-primary" />}
         title="Choose Your Setup Path"
-        description={hasSocialAccounts
-          ? "You connected social accounts! AI Social Setup can analyze your posts."
-          : "How would you like to configure your marketing flywheel?"}
+        description={getDescription()}
       />
 
       <WizardStepContent>
@@ -1025,7 +1116,7 @@ function PathSelectionStep({ selectedPath, onPathSelect, connectedAccounts }: Pa
   );
 }
 
-// Step 4: Ready
+// Step 5: Ready
 interface ReadyStepProps {
   selectedPath: SetupPath | null;
   selectedGoal: UserGoal | null;
@@ -1037,19 +1128,21 @@ function ReadyStep({ selectedPath, selectedGoal }: ReadyStepProps) {
 
   const getNextStepDescription = () => {
     switch (selectedPath) {
-      case "ai_express":
-        return "AI will analyze your website and configure all 5 phases of your marketing flywheel automatically.";
+      case "social_first":
+        return "AI will configure your Brand Brain for social content creation - generating content pillars, voice settings, and optimal posting schedules.";
+      case "voice_first":
+        return "AI will set up your Brand Brain for voice agents - configuring conversation flows, call handling, and lead qualification.";
+      case "hybrid":
+        return "AI will configure your unified Brand Brain to power all channels - social, voice, and email working together with cross-channel workflows.";
       case "guided":
-        return "You'll go through 12 essential steps to configure your flywheel with smart defaults.";
-      case "expert":
-        return "You'll have access to all 32 configuration steps for complete control.";
+        return "You'll configure each setting step-by-step with guidance and smart defaults based on your industry.";
       default:
         return "";
     }
   };
 
   return (
-    <WizardStepContainer stepIndex={3} completeLabel="Start Setup" hidePrev>
+    <WizardStepContainer stepIndex={4} completeLabel="Start Setup" hidePrev>
       <WizardStepHeader
         icon={<span className="text-4xl">🚀</span>}
         title="You're All Set!"

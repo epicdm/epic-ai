@@ -10,10 +10,15 @@
  * Can be used in:
  * - Onboarding flow (after Brand Brain setup)
  * - Dashboard settings (to enable/disable channels)
+ *
+ * Industry-Aware Recommendations:
+ * - When industryId is provided, shows "Recommended" badges for high-priority channels
+ * - Auto-selects high-priority channels on initial render
+ * - Shows tooltip with reason for recommendation on hover
  */
 
-import { useState } from "react";
-import { Card, CardBody, Button, Chip, Switch } from "@heroui/react";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardBody, Button, Chip, Switch, Tooltip } from "@heroui/react";
 import {
   Phone,
   Share2,
@@ -24,7 +29,15 @@ import {
   Sparkles,
   Brain,
   ExternalLink,
+  Star,
+  Info,
 } from "lucide-react";
+import {
+  getChannelRecommendation,
+  getHighPriorityChannels,
+  type ChannelId,
+  type ChannelPriority,
+} from "@/lib/brand-brain/industry-channels";
 
 export interface Channel {
   id: "social" | "voice" | "email" | "chat";
@@ -44,6 +57,10 @@ interface ChannelSelectorProps {
   showContinueButton?: boolean;
   brandName?: string;
   mode?: "onboarding" | "settings";
+  /** Industry ID for showing recommendations (e.g., "tech-startup", "healthcare") */
+  industryId?: string;
+  /** Whether to auto-select recommended channels on mount */
+  autoSelectRecommended?: boolean;
 }
 
 const DEFAULT_CHANNELS: Channel[] = [
@@ -110,8 +127,48 @@ export function ChannelSelector({
   showContinueButton = true,
   brandName,
   mode = "onboarding",
+  industryId,
+  autoSelectRecommended = true,
 }: ChannelSelectorProps) {
   const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
+  // Auto-select high-priority channels when industry is provided
+  useEffect(() => {
+    if (industryId && autoSelectRecommended && !hasAutoSelected && selectedChannels.length === 0) {
+      const highPriorityChannels = getHighPriorityChannels(industryId);
+      // Only auto-select available channels
+      const availableHighPriority = highPriorityChannels.filter((channelId) => {
+        const channel = DEFAULT_CHANNELS.find((c) => c.id === channelId);
+        return channel?.status === "available";
+      });
+      if (availableHighPriority.length > 0) {
+        onChannelsChange(availableHighPriority);
+      }
+      setHasAutoSelected(true);
+    }
+  }, [industryId, autoSelectRecommended, hasAutoSelected, selectedChannels.length, onChannelsChange]);
+
+  // Get recommendation info for a channel
+  const getRecommendation = useCallback(
+    (channelId: string) => {
+      if (!industryId) return null;
+      return getChannelRecommendation(industryId, channelId as ChannelId);
+    },
+    [industryId]
+  );
+
+  // Get priority badge color
+  const getPriorityColor = (priority: ChannelPriority): "success" | "warning" | "default" => {
+    switch (priority) {
+      case "high":
+        return "success";
+      case "medium":
+        return "warning";
+      case "low":
+        return "default";
+    }
+  };
 
   const toggleChannel = (channelId: string) => {
     const channel = DEFAULT_CHANNELS.find((c) => c.id === channelId);
@@ -181,6 +238,7 @@ export function ChannelSelector({
           const isSelected = selectedChannels.includes(channel.id);
           const isAvailable = channel.status === "available";
           const isExpanded = expandedChannel === channel.id;
+          const recommendation = getRecommendation(channel.id);
 
           return (
             <Card
@@ -189,6 +247,7 @@ export function ChannelSelector({
                 cursor-pointer transition-all duration-200
                 ${isSelected ? "border-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20" : "border border-gray-200 dark:border-gray-700"}
                 ${!isAvailable ? "opacity-60" : "hover:shadow-md"}
+                ${recommendation?.priority === "high" && !isSelected ? "ring-2 ring-green-200 dark:ring-green-800" : ""}
               `}
               isPressable={isAvailable}
               onPress={() => isAvailable && toggleChannel(channel.id)}
@@ -198,21 +257,58 @@ export function ChannelSelector({
                   {/* Icon */}
                   <div
                     className={`
-                      w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0
+                      w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 relative
                       ${isSelected
                         ? "bg-purple-600 text-white"
                         : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}
                     `}
                   >
                     {channel.icon}
+                    {/* Recommendation indicator */}
+                    {recommendation?.priority === "high" && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                        <Star className="w-2.5 h-2.5 text-white fill-white" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {channel.name}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {channel.name}
+                        </h3>
+                        {/* Recommendation badge with tooltip */}
+                        {recommendation && (
+                          <Tooltip
+                            content={
+                              <div className="max-w-xs p-1">
+                                <p className="text-sm">{recommendation.reason}</p>
+                              </div>
+                            }
+                            placement="top"
+                          >
+                            <div className="flex items-center">
+                              {recommendation.priority === "high" && (
+                                <Chip
+                                  size="sm"
+                                  color="success"
+                                  variant="flat"
+                                  startContent={<Star className="w-3 h-3" />}
+                                >
+                                  Recommended
+                                </Chip>
+                              )}
+                              {recommendation.priority === "medium" && (
+                                <Chip size="sm" color="warning" variant="flat">
+                                  Good Fit
+                                </Chip>
+                              )}
+                            </div>
+                          </Tooltip>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         {getStatusChip(channel.status)}
                         {isAvailable && (

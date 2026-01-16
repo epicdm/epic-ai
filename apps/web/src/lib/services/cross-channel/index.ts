@@ -14,6 +14,14 @@
 // Export types
 export * from "./types";
 
+// Export workflow executor
+export {
+  WorkflowExecutor,
+  createWorkflowExecutor,
+  type WorkflowContext,
+  type StepExecutionResult,
+} from "./workflow-executor";
+
 // Export workflow templates
 export {
   WORKFLOW_TEMPLATES,
@@ -26,6 +34,34 @@ export {
   getTemplatesByCategory,
   getTemplatesByChannels,
 } from "./workflow-templates";
+
+// Export cross-channel triggers
+export {
+  // Voice triggers
+  triggerOnCallCompleted,
+  triggerOnCallScheduled,
+  triggerOnCallMissed,
+  COMMON_CALL_CONDITIONS,
+  type CallCompletedContext,
+  type CallScheduledContext,
+  // Social triggers
+  triggerOnHighEngagement,
+  triggerOnNewFollower,
+  triggerOnMention,
+  triggerOnContentPerformance,
+  triggerOnContentPublished,
+  COMMON_SOCIAL_TRIGGERS,
+  type HighEngagementContext,
+  type NewFollowerContext,
+  type MentionContext,
+  type ContentPerformanceContext,
+  // Trigger events
+  TRIGGER_EVENTS,
+  TRIGGER_EVENT_METADATA,
+  getTriggersForChannel,
+  getAllTriggers,
+  type TriggerEvent,
+} from "./triggers";
 
 import { ChannelType, AttributionModel } from "@epic-ai/database";
 import { prisma } from "@epic-ai/database";

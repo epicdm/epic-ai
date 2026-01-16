@@ -51,6 +51,8 @@ import {
   PartyPopper,
   Phone,
   Clock,
+  GitMerge,
+  Waypoints,
 } from "lucide-react";
 import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
@@ -150,6 +152,20 @@ interface DashboardData {
       name: string;
       isActive: boolean;
       agentType: string;
+    }[];
+  };
+  crossChannel: {
+    totalJourneys: number;
+    multiChannelJourneys: number;
+    avgTouchpoints: number;
+    avgChannelsPerJourney: number;
+    conversions: number;
+    conversionValue: number;
+    synergyRate: number;
+    channelBreakdown: {
+      channel: string;
+      touchpoints: number;
+      avgEngagement: number;
     }[];
   };
 }
@@ -626,7 +642,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {/* Organic Performance */}
         <Card>
           <CardHeader className="flex justify-between items-center">
@@ -780,6 +796,44 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
               <span className="text-sm">Active Agents</span>
               <Chip color="secondary" variant="flat">
                 {data.voice.activeAgents} of {data.voice.agents}
+              </Chip>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Cross-Channel Synergy */}
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <GitMerge className="w-5 h-5 text-cyan-600" />
+              <span className="font-semibold">Cross-Channel</span>
+            </div>
+            <Button
+              size="sm"
+              variant="light"
+              endContent={<ArrowRight className="w-4 h-4" />}
+              onPress={() => router.push("/dashboard/journeys")}
+            >
+              Details
+            </Button>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-default-50 rounded-lg">
+                <Waypoints className="w-5 h-5 text-default-400 mx-auto mb-1" />
+                <p className="text-xl font-bold">{data.crossChannel.totalJourneys}</p>
+                <p className="text-xs text-default-500">Journeys</p>
+              </div>
+              <div className="text-center p-3 bg-default-50 rounded-lg">
+                <GitMerge className="w-5 h-5 text-default-400 mx-auto mb-1" />
+                <p className="text-xl font-bold">{data.crossChannel.multiChannelJourneys}</p>
+                <p className="text-xs text-default-500">Multi-Channel</p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
+              <span className="text-sm">Synergy Rate</span>
+              <Chip color="primary" variant="flat">
+                {data.crossChannel.synergyRate}%
               </Chip>
             </div>
           </CardBody>

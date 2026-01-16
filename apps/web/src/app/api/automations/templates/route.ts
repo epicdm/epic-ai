@@ -1,109 +1,64 @@
-import { NextResponse } from "next/server";
+/**
+ * Automation Templates API
+ *
+ * Returns available workflow templates for creating automations.
+ * Part of the "One Brain, Many Voices" architecture.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
+import {
+  WORKFLOW_TEMPLATES,
+  getTemplatesByCategory,
+  getTemplatesByChannels,
+} from "@/lib/services/cross-channel/workflow-templates";
+import { WorkflowCategory, ChannelType } from "@epic-ai/database";
 
-const TEMPLATES = [
-  {
-    id: "new-lead-welcome",
-    name: "Welcome New Lead",
-    description: "Add a welcome note when a new lead is created",
-    trigger: "LEAD_CREATED",
-    conditions: [],
-    actions: [
-      {
-        type: "add_lead_activity",
-        config: {
-          activityType: "NOTE",
-          title: "Welcome!",
-          description: "New lead added to the system. Follow up within 24 hours.",
-        },
-      },
-    ],
-  },
-  {
-    id: "call-completed-update-status",
-    name: "Update Lead After Call",
-    description: "Change lead status to CONTACTED after a completed call",
-    trigger: "CALL_COMPLETED",
-    conditions: [],
-    actions: [
-      {
-        type: "update_lead_status",
-        config: { status: "CONTACTED" },
-      },
-      {
-        type: "add_lead_activity",
-        config: {
-          activityType: "CALL",
-          title: "Call completed",
-          description: "Voice call completed successfully",
-        },
-      },
-    ],
-  },
-  {
-    id: "call-failed-tag",
-    name: "Tag Failed Calls",
-    description: "Add a tag to leads when a call fails",
-    trigger: "CALL_FAILED",
-    conditions: [],
-    actions: [
-      {
-        type: "add_lead_tag",
-        config: { tag: "call-failed" },
-      },
-      {
-        type: "add_lead_activity",
-        config: {
-          activityType: "NOTE",
-          title: "Call failed",
-          description: "Voice call attempt failed. Schedule retry.",
-        },
-      },
-    ],
-  },
-  {
-    id: "qualified-lead-notify",
-    name: "Notify on Qualified Lead",
-    description: "Send notification when a lead becomes qualified",
-    trigger: "LEAD_STATUS_CHANGED",
-    conditions: [{ field: "newStatus", operator: "equals", value: "QUALIFIED" }],
-    actions: [
-      {
-        type: "send_notification",
-        config: {
-          notificationType: "email",
-          subject: "New Qualified Lead!",
-          message: "A lead has been qualified and is ready for follow-up.",
-        },
-      },
-    ],
-  },
-  {
-    id: "social-to-lead",
-    name: "Create Lead from Social",
-    description: "Create a new lead when social engagement is detected",
-    trigger: "SOCIAL_ENGAGEMENT",
-    conditions: [],
-    actions: [
-      {
-        type: "create_lead",
-        config: {
-          source: "SOCIAL_MEDIA",
-          status: "NEW",
-        },
-      },
-    ],
-  },
-];
-
-export async function GET() {
+// GET available templates
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(TEMPLATES);
+    const searchParams = request.nextUrl.searchParams;
+    const category = searchParams.get("category") as WorkflowCategory | null;
+    const channels = searchParams.get("channels"); // Comma-separated list
+
+    let templates = Object.values(WORKFLOW_TEMPLATES);
+
+    // Filter by category if provided
+    if (category) {
+      templates = getTemplatesByCategory(category);
+    }
+
+    // Filter by channels if provided
+    if (channels) {
+      const channelList = channels.split(",") as ChannelType[];
+      templates = getTemplatesByChannels(channelList);
+    }
+
+    // Transform templates for API response
+    const response = templates.map((template) => ({
+      id: template.id,
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      channels: template.channels,
+      defaultTrigger: template.defaultTrigger,
+      stepsCount: template.steps.length,
+      requiresBrandBrain: template.requiresBrandBrain ?? true,
+      estimatedDuration: template.estimatedDuration,
+      tags: template.tags || [],
+    }));
+
+    return NextResponse.json({
+      templates: response,
+      total: response.length,
+      categories: Object.values(WorkflowCategory),
+      availableChannels: Object.values(ChannelType),
+    });
   } catch (error) {
     console.error("Error fetching templates:", error);
     return NextResponse.json(
