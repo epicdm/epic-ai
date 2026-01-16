@@ -252,7 +252,7 @@ export default function RoutingRulesPage() {
   const updateCondition = (index: number, field: string, value: string) => {
     const newConditions = [...formData.conditions];
     newConditions[index] = { ...newConditions[index], [field]: value };
-    setFormData({ ...formData, conditions: newConditions });
+    setFormData(prev => ({ ...prev, conditions: newConditions }));
   };
 
   const removeCondition = (index: number) => {
@@ -429,7 +429,7 @@ export default function RoutingRulesPage() {
                   label="Rule Name"
                   placeholder="e.g., VIP Customers, Business Hours"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   isRequired
                 />
 
@@ -437,7 +437,7 @@ export default function RoutingRulesPage() {
                   label="Description"
                   placeholder="Describe when this rule should apply..."
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
 
                 <Input
@@ -448,7 +448,7 @@ export default function RoutingRulesPage() {
                   max={100}
                   value={formData.priority.toString()}
                   onChange={(e) =>
-                    setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })
+                    setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))
                   }
                 />
               </div>
@@ -459,7 +459,7 @@ export default function RoutingRulesPage() {
                 <Tabs
                   selectedKey={formData.targetType}
                   onSelectionChange={(key) =>
-                    setFormData({ ...formData, targetType: key as "group" | "agent" })
+                    setFormData(prev => ({ ...prev, targetType: key as "group" | "agent" }))
                   }
                 >
                   <Tab key="group" title="Agent Group">
@@ -469,7 +469,7 @@ export default function RoutingRulesPage() {
                       selectedKeys={formData.groupId ? [formData.groupId] : []}
                       onSelectionChange={(keys) => {
                         const selected = Array.from(keys)[0] as string;
-                        setFormData({ ...formData, groupId: selected || "" });
+                        setFormData(prev => ({ ...prev, groupId: selected || "" }));
                       }}
                       className="mt-4"
                     >
@@ -487,7 +487,7 @@ export default function RoutingRulesPage() {
                       selectedKeys={formData.targetAgentId ? [formData.targetAgentId] : []}
                       onSelectionChange={(keys) => {
                         const selected = Array.from(keys)[0] as string;
-                        setFormData({ ...formData, targetAgentId: selected || "" });
+                        setFormData(prev => ({ ...prev, targetAgentId: selected || "" }));
                       }}
                       className="mt-4"
                     >
@@ -579,7 +579,7 @@ export default function RoutingRulesPage() {
                     selectedKeys={[formData.fallbackAction]}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] as string;
-                      if (selected) setFormData({ ...formData, fallbackAction: selected });
+                      if (selected) setFormData(prev => ({ ...prev, fallbackAction: selected }));
                     }}
                   >
                     {FALLBACK_ACTIONS.map((action) => (
@@ -596,10 +596,10 @@ export default function RoutingRulesPage() {
                     max={3600}
                     value={formData.maxWaitSeconds.toString()}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
+                      setFormData(prev => ({
+                        ...prev,
                         maxWaitSeconds: parseInt(e.target.value) || 0,
-                      })
+                      }))
                     }
                   />
                 </div>
@@ -611,7 +611,7 @@ export default function RoutingRulesPage() {
                     selectedKeys={formData.fallbackAgentId ? [formData.fallbackAgentId] : []}
                     onSelectionChange={(keys) => {
                       const selected = Array.from(keys)[0] as string;
-                      setFormData({ ...formData, fallbackAgentId: selected || "" });
+                      setFormData(prev => ({ ...prev, fallbackAgentId: selected || "" }));
                     }}
                   >
                     {agents.map((agent) => (
@@ -627,7 +627,7 @@ export default function RoutingRulesPage() {
               <div className="flex items-center gap-4">
                 <Switch
                   isSelected={formData.isActive}
-                  onValueChange={(value) => setFormData({ ...formData, isActive: value })}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, isActive: value }))}
                 >
                   Rule Active
                 </Switch>
