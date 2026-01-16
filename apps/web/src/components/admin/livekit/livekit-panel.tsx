@@ -413,7 +413,7 @@ export function LiveKitPanel() {
     setError(null);
 
     try {
-      const res = await fetch("/api/voice/calls/outbound", {
+      const res = await fetch("/api/admin/livekit/outbound-call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -433,10 +433,15 @@ export function LiveKitPanel() {
         });
         setSuccess(`Test call initiated successfully! Call ID: ${data.callId}`);
       } else {
+        // Handle details - could be string, array of Zod errors, or object
+        let details = data.details || data.message;
+        if (typeof details === "object") {
+          details = JSON.stringify(details, null, 2);
+        }
         setTestCallResult({
           success: false,
           error: data.error || "Failed to initiate call",
-          details: data.details || data.message,
+          details,
         });
         setError(data.error || "Failed to initiate test call");
       }
