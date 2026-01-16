@@ -11,8 +11,8 @@ import { z } from "zod";
 
 const createFlowSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  description: z.string().max(500).optional(),
-  agentId: z.string().optional(),
+  description: z.string().max(500).nullable().optional(),
+  agentId: z.string().nullable().optional(),
 });
 
 // GET all conversation flows for the organization
