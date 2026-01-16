@@ -61,6 +61,11 @@ import {
   Filter,
   PhoneCall,
   Play,
+  Wrench,
+  Database,
+  Settings,
+  Shield,
+  Link,
 } from "lucide-react";
 
 // Types
@@ -165,6 +170,44 @@ interface TestCallResult {
   details?: string;
 }
 
+interface MagnusDiagnostics {
+  overall_status: string;
+  magnus_integration: {
+    status: string;
+    api_response_time_ms: number;
+    total_dids_in_magnus: number;
+  };
+  did_usage: {
+    total_capacity: number;
+    currently_used: number;
+    currently_available: number;
+    utilization_percent: number;
+    health_score: number;
+    status: string;
+    status_message: string;
+  };
+  configuration: {
+    magnus_url: string;
+    sip_server: string;
+    did_range: string;
+  };
+  errors: string[];
+}
+
+interface SipAccountValidation {
+  trunkId: string;
+  number: string;
+  sipAccountExists: boolean;
+  sipAccountId?: string;
+  sipAccountDetails?: {
+    username: string;
+    fromdomain: string;
+    insecure: string;
+    transport: string;
+  };
+  error?: string;
+}
+
 export function LiveKitPanel() {
   const [selectedTab, setSelectedTab] = useState("trunks");
   const [loading, setLoading] = useState(false);
@@ -208,6 +251,12 @@ export function LiveKitPanel() {
   const [testCallAgentId, setTestCallAgentId] = useState("");
   const [testCallLoading, setTestCallLoading] = useState(false);
   const [testCallResult, setTestCallResult] = useState<TestCallResult | null>(null);
+
+  // SIP/Magnus diagnostics state
+  const [magnusDiagnostics, setMagnusDiagnostics] = useState<MagnusDiagnostics | null>(null);
+  const [magnusDiagnosticsLoading, setMagnusDiagnosticsLoading] = useState(false);
+  const [sipValidations, setSipValidations] = useState<SipAccountValidation[]>([]);
+  const [sipValidationsLoading, setSipValidationsLoading] = useState(false);
 
   // Modal states
   const { isOpen: isCreateTrunkOpen, onOpen: onOpenCreateTrunk, onClose: onCloseCreateTrunk } = useDisclosure();
@@ -271,6 +320,8 @@ export function LiveKitPanel() {
       fetchAgents();
     } else if (selectedTab === "test-call") {
       fetchVoiceAgents();
+    } else if (selectedTab === "sip") {
+      fetchMagnusDiagnostics(true);
     }
   }, [selectedTab]);
 
@@ -454,6 +505,66 @@ export function LiveKitPanel() {
       setError(errorMessage);
     } finally {
       setTestCallLoading(false);
+    }
+  };
+
+  // Magnus/SIP diagnostics fetch
+  const fetchMagnusDiagnostics = useCallback(async (validateSip: boolean = true) => {
+    setMagnusDiagnosticsLoading(true);
+    if (validateSip) {
+      setSipValidationsLoading(true);
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (validateSip) {
+        params.set("validateSip", "true");
+      }
+
+      const res = await fetch(`/api/admin/livekit/magnus-diagnostics?${params.toString()}`);
+
+      if (res.ok) {
+        const data = await res.json();
+        setMagnusDiagnostics(data.diagnostics || null);
+        if (validateSip && data.sipAccountValidations) {
+          setSipValidations(data.sipAccountValidations);
+        }
+      } else {
+        const errorData = await res.json();
+        setError(errorData.error || "Failed to fetch Magnus diagnostics");
+      }
+    } catch (err) {
+      console.error("[LiveKit] Error fetching Magnus diagnostics:", err);
+      setError("Failed to fetch Magnus diagnostics");
+    } finally {
+      setMagnusDiagnosticsLoading(false);
+      setSipValidationsLoading(false);
+    }
+  }, []);
+
+  // Fix missing SIP account
+  const handleFixSipAccount = async (phoneNumber: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/livekit/magnus-diagnostics/fix-sip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSuccess(`SIP account created for ${phoneNumber}`);
+        // Refresh diagnostics to show updated status
+        fetchMagnusDiagnostics(true);
+      } else {
+        setError(data.error || "Failed to create SIP account");
+      }
+    } catch (err) {
+      setError("Failed to create SIP account");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1622,6 +1733,343 @@ export function LiveKitPanel() {
                   <div className="flex items-start gap-2">
                     <span className="font-medium text-primary">5.</span>
                     <p>Check the <strong>Rooms</strong> tab to see if a LiveKit room was created for the call.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">6.</span>
+                    <p>Check the <strong>SIP/Magnus</strong> tab to verify SIP accounts are properly configured.</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        </Tab>
+
+        {/* SIP/Magnus Diagnostics Tab */}
+        <Tab key="sip" title={<div className="flex items-center gap-2"><Database className="w-4 h-4" />SIP/Magnus</div>}>
+          <div className="mt-4 space-y-6">
+            {/* Magnus Integration Status */}
+            <Card>
+              <CardHeader className="flex justify-between items-center">
+                <div className="flex gap-3">
+                  <Database className="w-5 h-5 text-primary" />
+                  <div className="flex flex-col">
+                    <p className="text-md font-semibold">Magnus Integration Status</p>
+                    <p className="text-small text-default-500">
+                      Connection status and DID usage from Magnus Billing
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="flat"
+                  startContent={magnusDiagnosticsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  onPress={() => fetchMagnusDiagnostics(true)}
+                  isLoading={magnusDiagnosticsLoading}
+                >
+                  Refresh
+                </Button>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                {magnusDiagnosticsLoading && !magnusDiagnostics ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner />
+                  </div>
+                ) : magnusDiagnostics ? (
+                  <div className="space-y-6">
+                    {/* Overall Status */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-default-500">Overall Status:</span>
+                      <Chip
+                        color={magnusDiagnostics.overall_status === "healthy" ? "success" : magnusDiagnostics.overall_status === "degraded" ? "warning" : "danger"}
+                        variant="flat"
+                        startContent={magnusDiagnostics.overall_status === "healthy" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                      >
+                        {magnusDiagnostics.overall_status.toUpperCase()}
+                      </Chip>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Magnus API Status */}
+                      <Card className="bg-default-50">
+                        <CardBody className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Link className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">API Connection</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Chip
+                              size="sm"
+                              color={magnusDiagnostics.magnus_integration.status === "connected" ? "success" : "danger"}
+                              variant="dot"
+                            >
+                              {magnusDiagnostics.magnus_integration.status}
+                            </Chip>
+                            <span className="text-xs text-default-400">
+                              {magnusDiagnostics.magnus_integration.api_response_time_ms}ms
+                            </span>
+                          </div>
+                          <p className="text-xs text-default-400 mt-2">
+                            Total DIDs: {magnusDiagnostics.magnus_integration.total_dids_in_magnus}
+                          </p>
+                        </CardBody>
+                      </Card>
+
+                      {/* DID Usage */}
+                      <Card className="bg-default-50">
+                        <CardBody className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Phone className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">DID Usage</span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-bold">
+                              {magnusDiagnostics.did_usage.currently_used}
+                            </span>
+                            <span className="text-default-400">
+                              / {magnusDiagnostics.did_usage.total_capacity}
+                            </span>
+                          </div>
+                          <div className="w-full bg-default-200 rounded-full h-2 mt-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                magnusDiagnostics.did_usage.utilization_percent > 80 ? "bg-danger" :
+                                magnusDiagnostics.did_usage.utilization_percent > 50 ? "bg-warning" : "bg-success"
+                              }`}
+                              style={{ width: `${magnusDiagnostics.did_usage.utilization_percent}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-default-400 mt-2">
+                            {magnusDiagnostics.did_usage.utilization_percent.toFixed(1)}% utilized
+                          </p>
+                        </CardBody>
+                      </Card>
+
+                      {/* Health Score */}
+                      <Card className="bg-default-50">
+                        <CardBody className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Shield className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">Health Score</span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className={`text-2xl font-bold ${
+                              magnusDiagnostics.did_usage.health_score >= 80 ? "text-success" :
+                              magnusDiagnostics.did_usage.health_score >= 50 ? "text-warning" : "text-danger"
+                            }`}>
+                              {magnusDiagnostics.did_usage.health_score}
+                            </span>
+                            <span className="text-default-400">/ 100</span>
+                          </div>
+                          <Chip
+                            size="sm"
+                            color={magnusDiagnostics.did_usage.status === "healthy" ? "success" : "warning"}
+                            variant="flat"
+                            className="mt-2"
+                          >
+                            {magnusDiagnostics.did_usage.status_message}
+                          </Chip>
+                        </CardBody>
+                      </Card>
+                    </div>
+
+                    {/* Configuration */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <Settings className="w-4 h-4" /> Configuration
+                      </h4>
+                      <div className="bg-default-50 rounded-lg p-3 font-mono text-xs space-y-1">
+                        <div><span className="text-default-500">Magnus URL:</span> {magnusDiagnostics.configuration.magnus_url}</div>
+                        <div><span className="text-default-500">SIP Server:</span> {magnusDiagnostics.configuration.sip_server}</div>
+                        <div><span className="text-default-500">DID Range:</span> {magnusDiagnostics.configuration.did_range}</div>
+                      </div>
+                    </div>
+
+                    {/* Errors */}
+                    {magnusDiagnostics.errors.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2 flex items-center gap-2 text-danger">
+                          <AlertCircle className="w-4 h-4" /> Errors ({magnusDiagnostics.errors.length})
+                        </h4>
+                        <div className="bg-danger-50 rounded-lg p-3 space-y-1">
+                          {magnusDiagnostics.errors.map((err, i) => (
+                            <p key={i} className="text-xs text-danger">{err}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-default-400">
+                    <Database className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                    <p>No Magnus diagnostics available</p>
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      className="mt-2"
+                      onPress={() => fetchMagnusDiagnostics(true)}
+                    >
+                      Load Diagnostics
+                    </Button>
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* SIP Account Validation */}
+            <Card>
+              <CardHeader className="flex gap-3">
+                <Wrench className="w-5 h-5 text-warning" />
+                <div className="flex flex-col">
+                  <p className="text-md font-semibold">SIP Account Validation</p>
+                  <p className="text-small text-default-500">
+                    Verify that outbound trunk phone numbers have corresponding SIP accounts in Magnus/Asterisk
+                  </p>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                {sipValidationsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner />
+                  </div>
+                ) : sipValidations.length > 0 ? (
+                  <Table aria-label="SIP Account Validations">
+                    <TableHeader>
+                      <TableColumn>TRUNK ID</TableColumn>
+                      <TableColumn>PHONE NUMBER</TableColumn>
+                      <TableColumn>SIP ACCOUNT STATUS</TableColumn>
+                      <TableColumn>DETAILS</TableColumn>
+                      <TableColumn>ACTIONS</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {sipValidations.map((validation, index) => (
+                        <TableRow key={`${validation.trunkId}-${validation.number}-${index}`}>
+                          <TableCell>
+                            <Tooltip content={validation.trunkId}>
+                              <span className="font-mono text-xs">
+                                {validation.trunkId.substring(0, 12)}...
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono">{validation.number}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              color={validation.sipAccountExists ? "success" : "danger"}
+                              variant="flat"
+                              size="sm"
+                              startContent={validation.sipAccountExists ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                            >
+                              {validation.sipAccountExists ? "EXISTS" : "MISSING"}
+                            </Chip>
+                          </TableCell>
+                          <TableCell>
+                            {validation.sipAccountExists && validation.sipAccountDetails ? (
+                              <div className="text-xs space-y-0.5">
+                                <div><span className="text-default-400">insecure:</span> {validation.sipAccountDetails.insecure}</div>
+                                <div><span className="text-default-400">fromdomain:</span> {validation.sipAccountDetails.fromdomain || "N/A"}</div>
+                                <div><span className="text-default-400">transport:</span> {validation.sipAccountDetails.transport || "N/A"}</div>
+                              </div>
+                            ) : validation.error ? (
+                              <span className="text-xs text-danger">{validation.error}</span>
+                            ) : (
+                              <span className="text-xs text-warning">
+                                No SIP account found - calls will fail with 403 Forbidden
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {!validation.sipAccountExists && !validation.error && (
+                              <Button
+                                size="sm"
+                                color="warning"
+                                variant="flat"
+                                startContent={loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wrench className="w-3 h-3" />}
+                                onPress={() => handleFixSipAccount(validation.number)}
+                                isLoading={loading}
+                              >
+                                Create SIP Account
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-default-400">
+                    <Wrench className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                    <p>No SIP validations yet</p>
+                    <p className="text-xs mt-1">Click Refresh above to validate outbound trunk phone numbers</p>
+                  </div>
+                )}
+
+                {/* Summary Stats */}
+                {sipValidations.length > 0 && (
+                  <div className="mt-4 flex gap-4 justify-center">
+                    <Chip color="success" variant="flat">
+                      {sipValidations.filter(v => v.sipAccountExists).length} Valid
+                    </Chip>
+                    <Chip color="danger" variant="flat">
+                      {sipValidations.filter(v => !v.sipAccountExists && !v.error).length} Missing
+                    </Chip>
+                    <Chip color="warning" variant="flat">
+                      {sipValidations.filter(v => v.error).length} Errors
+                    </Chip>
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Troubleshooting Guide */}
+            <Card>
+              <CardHeader className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-warning" />
+                <div className="flex flex-col">
+                  <p className="text-md font-semibold">SIP Call Failure Troubleshooting</p>
+                  <p className="text-small text-default-500">
+                    Common issues when outbound calls fail with 401/403 errors
+                  </p>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <div className="space-y-4 text-sm">
+                  <div className="bg-danger-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-danger mb-2">403 Forbidden Error</h4>
+                    <p className="mb-2">This typically means:</p>
+                    <ul className="list-disc list-inside space-y-1 text-default-600">
+                      <li>The SIP account doesn&apos;t exist in Magnus/Asterisk for the outbound number</li>
+                      <li>The &apos;insecure&apos; setting is wrong (should be &apos;port,invite&apos; for LiveKit)</li>
+                      <li>The &apos;fromdomain&apos; doesn&apos;t match LiveKit&apos;s SIP domain</li>
+                    </ul>
+                    <p className="mt-2 text-xs text-default-400">
+                      Fix: Use the &quot;Create SIP Account&quot; button above to create missing accounts with correct settings
+                    </p>
+                  </div>
+
+                  <div className="bg-warning-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-warning mb-2">401 Unauthorized Error</h4>
+                    <p className="mb-2">This typically means:</p>
+                    <ul className="list-disc list-inside space-y-1 text-default-600">
+                      <li>SIP credentials (username/password) are incorrect</li>
+                      <li>The authentication realm doesn&apos;t match</li>
+                      <li>HMAC signature calculation is failing</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-default-100 rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">Expected SIP Account Settings</h4>
+                    <div className="font-mono text-xs space-y-1 text-default-600">
+                      <div>• <span className="text-primary">username:</span> &lt;phone_number_digits_only&gt;</div>
+                      <div>• <span className="text-primary">insecure:</span> port,invite</div>
+                      <div>• <span className="text-primary">fromdomain:</span> *.sip.livekit.cloud</div>
+                      <div>• <span className="text-primary">transport:</span> udp</div>
+                      <div>• <span className="text-primary">context:</span> from-internal</div>
+                    </div>
                   </div>
                 </div>
               </CardBody>
