@@ -59,6 +59,8 @@ import {
   Bot,
   Activity,
   Filter,
+  PhoneCall,
+  Play,
 } from "lucide-react";
 
 // Types
@@ -147,6 +149,22 @@ interface VoiceCall {
   metadata: Record<string, unknown> | null;
 }
 
+interface VoiceAgentOption {
+  id: string;
+  name: string;
+  organizationId: string;
+  organizationName?: string;
+}
+
+interface TestCallResult {
+  success: boolean;
+  callId?: string;
+  roomName?: string;
+  sipCallId?: string;
+  error?: string;
+  details?: string;
+}
+
 export function LiveKitPanel() {
   const [selectedTab, setSelectedTab] = useState("trunks");
   const [loading, setLoading] = useState(false);
@@ -182,6 +200,14 @@ export function LiveKitPanel() {
   // Agents state
   const [agents, setAgents] = useState<Array<{ id: string; name: string; status: string; job_count?: number }>>([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
+
+  // Test Call state
+  const [voiceAgents, setVoiceAgents] = useState<VoiceAgentOption[]>([]);
+  const [voiceAgentsLoading, setVoiceAgentsLoading] = useState(false);
+  const [testCallPhoneNumber, setTestCallPhoneNumber] = useState("");
+  const [testCallAgentId, setTestCallAgentId] = useState("");
+  const [testCallLoading, setTestCallLoading] = useState(false);
+  const [testCallResult, setTestCallResult] = useState<TestCallResult | null>(null);
 
   // Modal states
   const { isOpen: isCreateTrunkOpen, onOpen: onOpenCreateTrunk, onClose: onCloseCreateTrunk } = useDisclosure();
@@ -243,6 +269,8 @@ export function LiveKitPanel() {
       fetchLogs();
     } else if (selectedTab === "agents") {
       fetchAgents();
+    } else if (selectedTab === "test-call") {
+      fetchVoiceAgents();
     }
   }, [selectedTab]);
 
@@ -357,6 +385,72 @@ export function LiveKitPanel() {
       setAgentsLoading(false);
     }
   }, []);
+
+  const fetchVoiceAgents = useCallback(async () => {
+    setVoiceAgentsLoading(true);
+    try {
+      const res = await fetch("/api/admin/voice-agents");
+      if (res.ok) {
+        const data = await res.json();
+        setVoiceAgents(data.agents || []);
+      }
+    } catch (err) {
+      console.error("[LiveKit] Error fetching voice agents:", err);
+      // Not critical - agent selection is optional
+    } finally {
+      setVoiceAgentsLoading(false);
+    }
+  }, []);
+
+  const handleTestCall = async () => {
+    if (!testCallPhoneNumber) {
+      setError("Please enter a phone number");
+      return;
+    }
+
+    setTestCallLoading(true);
+    setTestCallResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/voice/calls/outbound", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: testCallPhoneNumber,
+          agentId: testCallAgentId || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setTestCallResult({
+          success: true,
+          callId: data.callId,
+          roomName: data.roomName,
+          sipCallId: data.sipCallId,
+        });
+        setSuccess(`Test call initiated successfully! Call ID: ${data.callId}`);
+      } else {
+        setTestCallResult({
+          success: false,
+          error: data.error || "Failed to initiate call",
+          details: data.details || data.message,
+        });
+        setError(data.error || "Failed to initiate test call");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to initiate test call";
+      setTestCallResult({
+        success: false,
+        error: errorMessage,
+      });
+      setError(errorMessage);
+    } finally {
+      setTestCallLoading(false);
+    }
+  };
 
   // Create trunk
   const handleCreateTrunk = async () => {
@@ -695,7 +789,7 @@ export function LiveKitPanel() {
                         <TableRow key={trunk.sip_trunk_id}>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <code className="text-xs">{trunk.sip_trunk_id.slice(0, 12)}...</code>
+                              <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
                                 isIconOnly
                                 size="sm"
@@ -774,7 +868,7 @@ export function LiveKitPanel() {
                         <TableRow key={trunk.sip_trunk_id}>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <code className="text-xs">{trunk.sip_trunk_id.slice(0, 12)}...</code>
+                              <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
                                 isIconOnly
                                 size="sm"
@@ -879,7 +973,7 @@ export function LiveKitPanel() {
                         <TableRow key={rule.sip_dispatch_rule_id}>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <code className="text-xs">{rule.sip_dispatch_rule_id.slice(0, 12)}...</code>
+                              <code className="text-xs">{rule.sip_dispatch_rule_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
                                 isIconOnly
                                 size="sm"
@@ -895,7 +989,7 @@ export function LiveKitPanel() {
                             <div className="flex flex-wrap gap-1">
                               {rule.trunk_ids?.map((id, i) => (
                                 <Chip key={i} size="sm" variant="flat">
-                                  {id.slice(0, 8)}...
+                                  {id?.slice(0, 8) || "N/A"}...
                                 </Chip>
                               ))}
                             </div>
@@ -983,7 +1077,7 @@ export function LiveKitPanel() {
                         <TableRow key={room.sid}>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <code className="text-xs">{room.sid.slice(0, 12)}...</code>
+                              <code className="text-xs">{room.sid?.slice(0, 12) || "N/A"}...</code>
                               <Button
                                 isIconOnly
                                 size="sm"
@@ -1366,6 +1460,165 @@ export function LiveKitPanel() {
                     ))}
                   </div>
                 )}
+              </CardBody>
+            </Card>
+          </div>
+        </Tab>
+
+        {/* Test Call Tab */}
+        <Tab key="test-call" title={<div className="flex items-center gap-2"><PhoneCall className="w-4 h-4" />Test Call</div>}>
+          <div className="mt-4 space-y-6">
+            {/* Test Call Form */}
+            <Card>
+              <CardHeader className="flex gap-3">
+                <PhoneCall className="w-5 h-5 text-primary" />
+                <div className="flex flex-col">
+                  <p className="text-md font-semibold">Initiate Test Outbound Call</p>
+                  <p className="text-small text-default-500">
+                    Test the outbound calling functionality by placing a test call
+                  </p>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody className="space-y-4">
+                <Input
+                  label="Phone Number"
+                  placeholder="Enter phone number (e.g., +17672958382)"
+                  value={testCallPhoneNumber}
+                  onChange={(e) => setTestCallPhoneNumber(e.target.value)}
+                  startContent={<Phone className="w-4 h-4 text-default-400" />}
+                  description="Include country code (e.g., +1 for US)"
+                />
+
+                <Select
+                  label="Voice Agent (Optional)"
+                  placeholder="Select an agent or leave empty for default"
+                  selectedKeys={testCallAgentId ? [testCallAgentId] : []}
+                  onChange={(e) => setTestCallAgentId(e.target.value)}
+                  isLoading={voiceAgentsLoading}
+                >
+                  {voiceAgents.map((agent) => (
+                    <SelectItem key={agent.id}>
+                      {agent.name} {agent.organizationName ? `(${agent.organizationName})` : ""}
+                    </SelectItem>
+                  ))}
+                </Select>
+
+                <div className="flex gap-2">
+                  <Button
+                    color="primary"
+                    startContent={testCallLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                    onPress={handleTestCall}
+                    isLoading={testCallLoading}
+                    isDisabled={!testCallPhoneNumber}
+                  >
+                    Initiate Call
+                  </Button>
+                  <Button
+                    variant="flat"
+                    startContent={<RefreshCw className="w-4 h-4" />}
+                    onPress={fetchVoiceAgents}
+                    isLoading={voiceAgentsLoading}
+                  >
+                    Refresh Agents
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Test Call Result */}
+            {testCallResult && (
+              <Card className={testCallResult.success ? "bg-success-50" : "bg-danger-50"}>
+                <CardHeader className="flex gap-3">
+                  {testCallResult.success ? (
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-danger" />
+                  )}
+                  <div className="flex flex-col">
+                    <p className="text-md font-semibold">
+                      {testCallResult.success ? "Call Initiated Successfully" : "Call Failed"}
+                    </p>
+                  </div>
+                </CardHeader>
+                <Divider />
+                <CardBody>
+                  {testCallResult.success ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-default-500">Call ID</p>
+                          <div className="flex items-center gap-1">
+                            <code className="text-sm">{testCallResult.callId}</code>
+                            <Button
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              onPress={() => copyToClipboard(testCallResult.callId!)}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-default-500">Room Name</p>
+                          <code className="text-sm">{testCallResult.roomName}</code>
+                        </div>
+                        {testCallResult.sipCallId && (
+                          <div>
+                            <p className="text-xs text-default-500">SIP Call ID</p>
+                            <code className="text-sm">{testCallResult.sipCallId}</code>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-success mt-4">
+                        The phone should ring shortly. Check the Call History tab to monitor the call status.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-danger font-medium">{testCallResult.error}</p>
+                      {testCallResult.details && (
+                        <p className="text-sm text-default-500">{testCallResult.details}</p>
+                      )}
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Instructions */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-warning" />
+                  <span className="font-semibold">Troubleshooting Tips</span>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">1.</span>
+                    <p>Ensure you have at least one <strong>Outbound Trunk</strong> configured with valid SIP credentials.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">2.</span>
+                    <p>The phone number format should include the country code (e.g., +17672958382 for US numbers).</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">3.</span>
+                    <p>Check the <strong>Call History</strong> tab to see the call status and any error messages.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">4.</span>
+                    <p>Check the <strong>Logs</strong> tab for detailed voice service logs if the call fails.</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium text-primary">5.</span>
+                    <p>Check the <strong>Rooms</strong> tab to see if a LiveKit room was created for the call.</p>
+                  </div>
+                </div>
               </CardBody>
             </Card>
           </div>
