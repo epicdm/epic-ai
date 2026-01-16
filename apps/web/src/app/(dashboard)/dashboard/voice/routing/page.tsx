@@ -468,8 +468,13 @@ export default function RoutingRulesPage() {
                       placeholder="Choose a group"
                       selectedKeys={formData.groupId ? [formData.groupId] : []}
                       onSelectionChange={(keys) => {
+                        console.log("[DEBUG] Group Select onSelectionChange - keys:", keys, "type:", typeof keys, "size:", keys instanceof Set ? keys.size : 'not a Set');
                         const selected = Array.from(keys)[0] as string;
-                        setFormData(prev => ({ ...prev, groupId: selected || "" }));
+                        console.log("[DEBUG] Group Select - selected value:", selected);
+                        setFormData(prev => {
+                          console.log("[DEBUG] Group Select - prev groupId:", prev.groupId, "new groupId:", selected || "");
+                          return { ...prev, groupId: selected || "" };
+                        });
                       }}
                       className="mt-4"
                     >
