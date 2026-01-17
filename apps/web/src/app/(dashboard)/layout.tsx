@@ -99,20 +99,19 @@ export default async function DashboardLayout({
   };
 
   // If user needs onboarding and isn't on the onboarding page, redirect
-  // We check the current path to avoid redirect loops
+  // We check the current path to avoid redirect loops and unnecessary database queries
   try {
     const headersList = await headers();
     const pathname = headersList.get("x-invoke-path") || "";
 
-    if ((await needsOnboarding()) && !pathname.includes("/onboarding")) {
+    // Only check onboarding status if NOT already on onboarding page
+    if (!pathname.includes("/onboarding") && (await needsOnboarding())) {
       redirect("/onboarding");
     }
-  } catch {
-    // If we can't determine the path, check if onboarding is complete
-    // If not complete, redirect (this is safe because onboarding page won't redirect back)
-    if (await needsOnboarding()) {
-      redirect("/onboarding");
-    }
+  } catch (error) {
+    // If we can't determine the path or there's a database error, fail gracefully
+    // Don't redirect if we're unsure - let the page render
+    console.error("Error in onboarding gate:", error);
   }
 
   // Get user data in parallel - wrap in try/catch for resilience
