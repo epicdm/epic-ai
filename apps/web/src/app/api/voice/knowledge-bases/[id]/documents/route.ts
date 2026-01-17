@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma, KnowledgeDocType, DocumentStatus } from "@epic-ai/database";
+import { prisma, Prisma, KnowledgeDocType, DocumentStatus } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -119,7 +119,7 @@ export async function POST(
         type: data.type as KnowledgeDocType,
         content: data.content || null,
         sourceUrl: data.sourceUrl || null,
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as Prisma.InputJsonValue,
         status: "PENDING" as DocumentStatus,
       },
     });

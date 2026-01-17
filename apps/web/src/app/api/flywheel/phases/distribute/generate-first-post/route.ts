@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const voiceTone = brandBrain?.voiceTone || "professional";
     const brandName = brand.name;
     const industry = brand.industry || "business";
-    const description = brand.description || "";
+    const description = brandBrain?.description || "";
 
     const prompt = `Create a compelling first social media post for a brand with the following details:
 
@@ -94,18 +94,22 @@ Return JSON with this structure:
     const contentItem = await prisma.contentItem.create({
       data: {
         brandId,
-        title: result.title,
         content: result.content,
         contentType: "POST",
         status: "DRAFT",
-        aiGenerated: true,
+        category: result.title, // Store title in category field
+        generatedFrom: {
+          type: "first_post",
+          title: result.title,
+          platforms: result.platforms || platforms || ["twitter"],
+        },
       },
     });
 
     return NextResponse.json({
       content: {
         id: contentItem.id,
-        title: contentItem.title,
+        title: result.title,
         content: contentItem.content,
         platforms: result.platforms || platforms || ["twitter"],
         createdAt: contentItem.createdAt.toISOString(),

@@ -15,6 +15,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  Tooltip,
 } from "@heroui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,8 +27,30 @@ import {
   XCircle,
   Clock,
   Zap,
-  ArrowRight,
+  ArrowDown,
+  Mail,
+  Share2,
+  MessageCircle,
+  Phone,
+  Calendar,
+  Smartphone,
+  GitBranch,
+  UserCheck,
+  Bell,
+  Brain,
+  Target,
+  Flag,
+  Play,
+  Heart,
 } from "lucide-react";
+import {
+  humanizeStep,
+  TRIGGER_LABELS,
+  ACTION_LABELS,
+  getWorkflowSummary,
+  getEstimatedDuration,
+} from "@/lib/services/cross-channel/step-humanizer";
+import { ChannelType } from "@epic-ai/database";
 
 interface AutomationRun {
   id: string;
@@ -38,6 +61,26 @@ interface AutomationRun {
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
+}
+
+interface WorkflowStep {
+  id: string;
+  name: string;
+  action: string;
+  channel?: ChannelType;
+  config?: Record<string, unknown>;
+  branches?: Array<{
+    condition: {
+      field: string;
+      operator: string;
+      value: unknown;
+    };
+    nextStepId: string;
+  }>;
+  onSuccess?: string;
+  onFailure?: string;
+  delayMinutes?: number;
+  useBrandVoice?: boolean;
 }
 
 interface Action {
@@ -59,31 +102,15 @@ interface Automation {
   triggerConfig: unknown;
   conditions: Condition[] | null;
   actions: Action[];
+  steps?: WorkflowStep[];
   isActive: boolean;
   runCount: number;
   lastRunAt: string | null;
   lastRunStatus: string | null;
   runs: AutomationRun[];
+  channels?: string[];
+  templateName?: string;
 }
-
-const TRIGGER_LABELS: Record<string, string> = {
-  LEAD_CREATED: "New Lead Created",
-  LEAD_STATUS_CHANGED: "Lead Status Changed",
-  CALL_COMPLETED: "Call Completed",
-  CALL_FAILED: "Call Failed",
-  SOCIAL_ENGAGEMENT: "Social Engagement",
-  MANUAL: "Manual Trigger",
-};
-
-const ACTION_LABELS: Record<string, string> = {
-  create_lead: "Create Lead",
-  update_lead: "Update Lead",
-  update_lead_status: "Update Lead Status",
-  add_lead_activity: "Add Activity",
-  add_lead_tag: "Add Tag",
-  send_notification: "Send Notification",
-  webhook: "Call Webhook",
-};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -103,6 +130,7 @@ const getStatusIcon = (status: string) => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case "SUCCESS":
+    case "COMPLETED":
       return "success";
     case "FAILED":
       return "danger";
@@ -113,6 +141,105 @@ const getStatusColor = (status: string) => {
     default:
       return "default";
   }
+};
+
+/**
+ * Get the appropriate Lucide icon component for a step
+ */
+const getStepIcon = (iconName: string) => {
+  const iconMap: Record<string, typeof Mail> = {
+    mail: Mail,
+    share: Share2,
+    "message-circle": MessageCircle,
+    heart: Heart,
+    phone: Phone,
+    calendar: Calendar,
+    smartphone: Smartphone,
+    clock: Clock,
+    "git-branch": GitBranch,
+    "user-check": UserCheck,
+    bell: Bell,
+    brain: Brain,
+    target: Target,
+    flag: Flag,
+    play: Play,
+  };
+  return iconMap[iconName] || Play;
+};
+
+/**
+ * Get background color class based on step color
+ */
+const getStepColorClasses = (
+  color: "blue" | "green" | "yellow" | "purple" | "orange" | "red" | "gray"
+) => {
+  const colorMap = {
+    blue: {
+      bg: "bg-blue-100 dark:bg-blue-900/30",
+      icon: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-200 dark:border-blue-800",
+    },
+    green: {
+      bg: "bg-green-100 dark:bg-green-900/30",
+      icon: "text-green-600 dark:text-green-400",
+      border: "border-green-200 dark:border-green-800",
+    },
+    yellow: {
+      bg: "bg-yellow-100 dark:bg-yellow-900/30",
+      icon: "text-yellow-600 dark:text-yellow-400",
+      border: "border-yellow-200 dark:border-yellow-800",
+    },
+    purple: {
+      bg: "bg-purple-100 dark:bg-purple-900/30",
+      icon: "text-purple-600 dark:text-purple-400",
+      border: "border-purple-200 dark:border-purple-800",
+    },
+    orange: {
+      bg: "bg-orange-100 dark:bg-orange-900/30",
+      icon: "text-orange-600 dark:text-orange-400",
+      border: "border-orange-200 dark:border-orange-800",
+    },
+    red: {
+      bg: "bg-red-100 dark:bg-red-900/30",
+      icon: "text-red-600 dark:text-red-400",
+      border: "border-red-200 dark:border-red-800",
+    },
+    gray: {
+      bg: "bg-gray-100 dark:bg-gray-800/50",
+      icon: "text-gray-600 dark:text-gray-400",
+      border: "border-gray-200 dark:border-gray-700",
+    },
+  };
+  return colorMap[color] || colorMap.gray;
+};
+
+/**
+ * Format duration in milliseconds to human readable
+ */
+const formatRunDuration = (ms: number | null): string => {
+  if (!ms) return "-";
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 3600000) return `${Math.round(ms / 60000)}m`;
+  return `${(ms / 3600000).toFixed(1)}h`;
+};
+
+/**
+ * Format relative time
+ */
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.round(diffMs / 60000);
+  const diffHours = Math.round(diffMs / 3600000);
+  const diffDays = Math.round(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
 };
 
 export function AutomationDetail({ automationId }: { automationId: string }) {
@@ -215,69 +342,169 @@ export function AutomationDetail({ automationId }: { automationId: string }) {
         <div className="lg:col-span-2 space-y-6">
           {/* Workflow Visualization */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <h2 className="text-lg font-semibold">Workflow</h2>
+              {automation.steps && automation.steps.length > 0 && (
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>{automation.steps.length} steps</span>
+                  <span>~{getEstimatedDuration(automation.steps)}</span>
+                </div>
+              )}
             </CardHeader>
             <CardBody>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Trigger */}
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="flex-1 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex-1 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                     <p className="font-medium text-gray-900 dark:text-white">
-                      Trigger: {TRIGGER_LABELS[automation.trigger] || automation.trigger}
+                      {TRIGGER_LABELS[automation.trigger] || automation.trigger}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      When this happens, the workflow starts
                     </p>
                   </div>
                 </div>
 
-                {/* Conditions */}
-                {automation.conditions && automation.conditions.length > 0 && (
+                {/* Conditions (if no steps but has conditions) */}
+                {automation.conditions && automation.conditions.length > 0 && !automation.steps?.length && (
                   <>
-                    <div className="flex justify-center">
-                      <ArrowRight className="w-5 h-5 text-gray-400 rotate-90" />
+                    <div className="flex justify-center py-1">
+                      <ArrowDown className="w-5 h-5 text-gray-400" />
                     </div>
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                      <p className="font-medium text-gray-900 dark:text-white mb-2">
-                        Conditions
-                      </p>
-                      <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                        {automation.conditions.map((c, i) => (
-                          <li key={i}>
-                            {c.field} {c.operator} {String(c.value)}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <GitBranch className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <div className="flex-1 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-100 dark:border-yellow-800">
+                        <p className="font-medium text-gray-900 dark:text-white mb-2">
+                          Conditions
+                        </p>
+                        <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                          {automation.conditions.map((c, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <span className="text-yellow-600 dark:text-yellow-400">if</span>
+                              <span className="font-mono bg-yellow-100 dark:bg-yellow-900/50 px-1.5 py-0.5 rounded">
+                                {c.field}
+                              </span>
+                              <span>{c.operator}</span>
+                              <span className="font-mono bg-yellow-100 dark:bg-yellow-900/50 px-1.5 py-0.5 rounded">
+                                {String(c.value)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </>
                 )}
 
-                {/* Actions */}
-                {automation.actions.map((action, index) => (
-                  <div key={index}>
-                    <div className="flex justify-center">
-                      <ArrowRight className="w-5 h-5 text-gray-400 rotate-90" />
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                        <span className="font-bold text-green-600 dark:text-green-400">
-                          {index + 1}
-                        </span>
+                {/* Workflow Steps (if available) */}
+                {automation.steps && automation.steps.length > 0 ? (
+                  automation.steps.map((step, index) => {
+                    const humanized = humanizeStep(step);
+                    const colors = getStepColorClasses(humanized.color);
+                    const IconComponent = getStepIcon(humanized.icon);
+
+                    return (
+                      <div key={step.id}>
+                        <div className="flex justify-center py-1">
+                          <ArrowDown className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center flex-shrink-0`}
+                          >
+                            <IconComponent className={`w-5 h-5 ${colors.icon}`} />
+                          </div>
+                          <div
+                            className={`flex-1 p-4 ${colors.bg} rounded-lg border ${colors.border}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {humanized.title}
+                              </p>
+                              {humanized.channel && (
+                                <Chip size="sm" variant="flat" className="ml-2">
+                                  {humanized.channel}
+                                </Chip>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {humanized.description}
+                            </p>
+                            {humanized.duration && (
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {humanized.duration}
+                              </p>
+                            )}
+                            {humanized.branches && humanized.branches.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                                  Branches:
+                                </p>
+                                <ul className="space-y-1">
+                                  {humanized.branches.map((branch, bi) => (
+                                    <li
+                                      key={bi}
+                                      className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                                    >
+                                      <GitBranch className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                      <span>
+                                        <span className="text-gray-500">if</span>{" "}
+                                        <span className="font-mono">{branch.condition}</span>
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {ACTION_LABELS[action.type] || action.type}
-                        </p>
-                        {action.config && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {JSON.stringify(action.config)}
-                          </p>
-                        )}
+                    );
+                  })
+                ) : (
+                  /* Legacy Actions (fallback if no steps) */
+                  (automation.actions || []).map((action, index) => {
+                    const humanized = humanizeStep({
+                      id: `action-${index}`,
+                      name: ACTION_LABELS[action.type] || action.type,
+                      action: action.type,
+                      config: action.config,
+                    });
+                    const colors = getStepColorClasses(humanized.color);
+                    const IconComponent = getStepIcon(humanized.icon);
+
+                    return (
+                      <div key={index}>
+                        <div className="flex justify-center py-1">
+                          <ArrowDown className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center flex-shrink-0`}
+                          >
+                            <IconComponent className={`w-5 h-5 ${colors.icon}`} />
+                          </div>
+                          <div
+                            className={`flex-1 p-4 ${colors.bg} rounded-lg border ${colors.border}`}
+                          >
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {humanized.title}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {humanized.description}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })
+                )}
               </div>
             </CardBody>
           </Card>
@@ -288,7 +515,7 @@ export function AutomationDetail({ automationId }: { automationId: string }) {
               <h2 className="text-lg font-semibold">Run History</h2>
             </CardHeader>
             <CardBody className="p-0">
-              {automation.runs.length === 0 ? (
+              {(!automation.runs || automation.runs.length === 0) ? (
                 <div className="p-8 text-center text-gray-500">No runs yet</div>
               ) : (
                 <Table aria-label="Run history">
@@ -299,7 +526,7 @@ export function AutomationDetail({ automationId }: { automationId: string }) {
                     <TableColumn>Details</TableColumn>
                   </TableHeader>
                   <TableBody>
-                    {automation.runs.map((run) => (
+                    {(automation.runs || []).map((run) => (
                       <TableRow key={run.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma, CampaignLeadStatus } from "@epic-ai/database";
+import { prisma, Prisma, CampaignLeadStatus } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -177,8 +177,8 @@ export async function POST(
         lastName: lead.lastName,
         email: lead.email,
         company: lead.company,
-        customFields: lead.customFields || {},
-        status: "PENDING",
+        customFields: (lead.customFields || {}) as Prisma.InputJsonValue,
+        status: "PENDING" as const,
       })),
     });
 

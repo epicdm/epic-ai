@@ -87,7 +87,7 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
         {APPROVAL_MODES.map((mode) => {
           const Icon = mode.icon;
           const isSelected = data.approvalMode === mode.value;
-          const colorClasses = {
+          const colorMap = {
             blue: {
               border: isSelected ? "border-blue-500" : "border-gray-200 dark:border-gray-700",
               bg: "bg-blue-100 dark:bg-blue-900/30",
@@ -103,7 +103,8 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
               bg: "bg-orange-100 dark:bg-orange-900/30",
               text: "text-orange-600 dark:text-orange-400",
             },
-          }[mode.color];
+          };
+          const colorClasses = colorMap[mode.color as keyof typeof colorMap] ?? colorMap.blue;
 
           return (
             <Radio

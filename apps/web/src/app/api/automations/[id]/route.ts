@@ -82,6 +82,48 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     // Add template info
     const template = WORKFLOW_TEMPLATES[automation.templateId];
 
+    // Parse steps from JSON
+    const steps = (automation.steps as Array<{
+      id: string;
+      name: string;
+      action: string;
+      config?: Record<string, unknown>;
+      conditions?: Array<{ field: string; operator: string; value: unknown }>;
+    }>) || [];
+
+    // Map steps to actions format for frontend compatibility
+    const actions = steps.map((step) => ({
+      type: step.action,
+      config: step.config || {},
+    }));
+
+    // Extract conditions from first step (typically where trigger conditions are)
+    const conditions = steps[0]?.conditions || null;
+
+    // Map instances to runs format for frontend compatibility
+    const runs = automation.instances.map((instance) => {
+      const startTime = new Date(instance.startedAt).getTime();
+      const endTime = instance.completedAt
+        ? new Date(instance.completedAt).getTime()
+        : null;
+
+      return {
+        id: instance.id,
+        status: instance.status,
+        triggerData: {},
+        actionsExecuted: instance.touchpointsCreated > 0
+          ? Array(instance.touchpointsCreated).fill({ type: "touchpoint" })
+          : [],
+        error: instance.status === "FAILED" ? "Workflow execution failed" : null,
+        startedAt: instance.startedAt,
+        completedAt: instance.completedAt,
+        durationMs: endTime ? endTime - startTime : null,
+      };
+    });
+
+    // Calculate last run info
+    const lastRun = runs.length > 0 ? runs[0] : null;
+
     return NextResponse.json({
       ...automation,
       templateName: template?.name || "Custom",
@@ -89,6 +131,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       channelCount: automation.channels.length,
       instanceCount: automation._count.instances,
       recentInstances: automation.instances,
+      // Frontend compatibility fields
+      actions,
+      conditions,
+      runs,
+      runCount: automation.totalRuns,
+      lastRunAt: lastRun?.startedAt || null,
+      lastRunStatus: lastRun?.status || null,
     });
   } catch (error) {
     console.error("Error fetching automation:", error);

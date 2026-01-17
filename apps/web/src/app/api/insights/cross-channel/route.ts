@@ -294,7 +294,6 @@ async function getChannelPerformanceTimeline(orgId: string, startDate: Date) {
       totalTouchpoints: true,
       conversions: true,
       totalRevenue: true,
-      avgEngagementScore: true,
     },
   });
 
@@ -460,7 +459,7 @@ function generateRecommendations(
   channelStats: ChannelStats[],
   synergyPairs: SynergyPair[],
   topPaths: { converting: JourneyPath[]; common: JourneyPath[] },
-  channelAttribution: Array<{ channel: string; attributedValue: number }>
+  channelAttribution: Array<{ channel: string; attributedValue: number; attributedPercent: number; conversions: number }>
 ): string[] {
   const recommendations: string[] = [];
 

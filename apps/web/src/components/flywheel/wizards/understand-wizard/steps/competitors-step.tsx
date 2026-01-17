@@ -149,7 +149,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                   <Input
                     value={competitor.name}
                     onValueChange={(value) =>
-                      updateCompetitor(competitor.id, { name: value })
+                      updateCompetitor(competitor.id!, { name: value })
                     }
                     placeholder="Competitor Name"
                     variant="underlined"
@@ -163,7 +163,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                   size="sm"
                   variant="light"
                   color="danger"
-                  onPress={() => removeCompetitor(competitor.id)}
+                  onPress={() => removeCompetitor(competitor.id!)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -174,7 +174,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                 placeholder="https://competitor.com"
                 value={competitor.website || ""}
                 onValueChange={(value) =>
-                  updateCompetitor(competitor.id, { website: value })
+                  updateCompetitor(competitor.id!, { website: value })
                 }
                 endContent={
                   competitor.website && (
@@ -195,7 +195,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                 placeholder="What do they do well? What's their positioning?"
                 value={competitor.notes || ""}
                 onValueChange={(value) =>
-                  updateCompetitor(competitor.id, { notes: value })
+                  updateCompetitor(competitor.id!, { notes: value })
                 }
                 minRows={2}
               />
@@ -211,7 +211,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                       <Chip
                         key={index}
                         size="sm"
-                        onClose={() => removeStrength(competitor.id, index)}
+                        onClose={() => removeStrength(competitor.id!, index)}
                         variant="flat"
                         color="success"
                       >
@@ -225,7 +225,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addStrength(competitor.id, (e.target as HTMLInputElement).value);
+                        addStrength(competitor.id!, (e.target as HTMLInputElement).value);
                         (e.target as HTMLInputElement).value = "";
                       }
                     }}
@@ -242,7 +242,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                       <Chip
                         key={index}
                         size="sm"
-                        onClose={() => removeWeakness(competitor.id, index)}
+                        onClose={() => removeWeakness(competitor.id!, index)}
                         variant="flat"
                         color="danger"
                       >
@@ -256,7 +256,7 @@ export function CompetitorsStep({ data, updateData }: CompetitorsStepProps) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addWeakness(competitor.id, (e.target as HTMLInputElement).value);
+                        addWeakness(competitor.id!, (e.target as HTMLInputElement).value);
                         (e.target as HTMLInputElement).value = "";
                       }
                     }}

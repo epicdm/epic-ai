@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { z } from "zod";
 
 const quickWinSchema = z.object({
@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
         where: { userId },
         create: {
           userId,
-          demoVoiceAgent: validated.goal === "voice" ? getDemoVoiceAgent() : null,
-          demoCampaign: validated.goal === "campaigns" ? getDemoCampaign() : null,
-          demoContent: validated.goal === "content" ? getDemoContent() : null,
+          demoVoiceAgent: validated.goal === "voice" ? getDemoVoiceAgent() : Prisma.JsonNull,
+          demoCampaign: validated.goal === "campaigns" ? getDemoCampaign() : Prisma.JsonNull,
+          demoContent: validated.goal === "content" ? getDemoContent() : Prisma.JsonNull,
           demoLeads: getDemoLeads(),
           demoCallLogs: getDemoCallLogs(),
         },

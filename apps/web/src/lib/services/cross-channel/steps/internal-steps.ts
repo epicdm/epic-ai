@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@epic-ai/database";
-import { ChannelType } from "@epic-ai/database";
+import { ChannelType, TouchpointAction } from "@epic-ai/database";
 import { WorkflowStep, WorkflowCondition } from "../types";
 import type { StepExecutionResult } from "../workflow-executor";
 
@@ -14,6 +14,7 @@ import type { StepExecutionResult } from "../workflow-executor";
  * Step configurations
  */
 interface WaitConfig {
+  [key: string]: unknown;
   minutes?: number;
   hours?: number;
   days?: number;
@@ -22,6 +23,7 @@ interface WaitConfig {
 }
 
 interface ConditionConfig {
+  [key: string]: unknown;
   conditions: WorkflowCondition[];
   logic?: "and" | "or";
   trueBranch?: string;
@@ -29,6 +31,7 @@ interface ConditionConfig {
 }
 
 interface UpdateLeadConfig {
+  [key: string]: unknown;
   leadId?: string; // Will use context.leadId if not provided
   status?: string;
   score?: number;
@@ -38,6 +41,7 @@ interface UpdateLeadConfig {
 }
 
 interface NotifyTeamConfig {
+  [key: string]: unknown;
   channel?: "email" | "slack" | "in_app";
   recipients?: string[]; // User IDs or emails
   message: string;
@@ -46,12 +50,14 @@ interface NotifyTeamConfig {
 }
 
 interface AiAnalyzeConfig {
+  [key: string]: unknown;
   analysisType: "sentiment" | "intent" | "summary" | "next_action";
   inputField?: string; // Context field to analyze
   outputField?: string; // Where to store result in context
 }
 
 interface AttributeConfig {
+  [key: string]: unknown;
   action: string;
   actionDetail?: string;
   channel?: ChannelType;
@@ -260,9 +266,9 @@ function evaluateCondition(
     case "is_not_empty":
       return value !== null && value !== undefined && value !== "";
     case "in_list":
-      return Array.isArray(condition.value) && condition.value.includes(value);
+      return Array.isArray(condition.value) && condition.value.includes(value as string);
     case "not_in_list":
-      return Array.isArray(condition.value) && !condition.value.includes(value);
+      return Array.isArray(condition.value) && !condition.value.includes(value as string);
     default:
       return false;
   }
@@ -325,9 +331,9 @@ async function executeUpdateLead(
     }
 
     if (config.score !== undefined) {
-      updateData.leadScore = config.score;
+      updateData.score = config.score;
     } else if (config.scoreAdjustment) {
-      updateData.leadScore = Math.max(0, Math.min(100, (lead.leadScore || 0) + config.scoreAdjustment));
+      updateData.score = Math.max(0, Math.min(100, (lead.score || 0) + config.scoreAdjustment));
     }
 
     if (config.tags && config.tags.length > 0) {
@@ -356,7 +362,7 @@ async function executeUpdateLead(
       output: {
         leadId,
         updatedFields: Object.keys(updateData),
-        newScore: updatedLead.leadScore,
+        newScore: updatedLead.score,
         newStatus: updatedLead.status,
       },
     };
@@ -565,7 +571,7 @@ async function executeAttribute(
         phone: context.phone as string || undefined,
         channelType: config.channel || ChannelType.SOCIAL,
         channelName: config.channelName || "Workflow",
-        action: config.action,
+        action: config.action as TouchpointAction,
         actionDetail: config.actionDetail,
         sourceType: "workflow",
         sourceId: context.workflowInstanceId as string,
@@ -573,7 +579,7 @@ async function executeAttribute(
         estimatedValue: config.estimatedValue,
         metadata: {
           workflowStep: step.id,
-          stepConfig: config,
+          stepConfig: JSON.parse(JSON.stringify(config)),
         },
       },
     });

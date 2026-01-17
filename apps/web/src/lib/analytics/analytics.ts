@@ -84,11 +84,12 @@ export function setUserPropertiesOnce(properties: Record<string, unknown>): void
  * Hook for analytics tracking
  */
 export function useAnalytics() {
-  const track = useCallback(<T extends AnalyticsEvent["name"]>(
-    eventName: T,
-    properties?: Extract<AnalyticsEvent, { name: T }>["properties"]
+  const track = useCallback((
+    eventName: AnalyticsEvent["name"],
+    properties?: Record<string, unknown>
   ) => {
-    trackEvent(eventName, properties);
+    // Cast through the generic trackEvent function
+    (trackEvent as (name: string, props?: Record<string, unknown>) => void)(eventName, properties);
   }, []);
 
   const identify = useCallback((

@@ -84,8 +84,8 @@ export async function GET() {
       activatedAt: progress.activatedAt ?? undefined,
       lastActivePhase: progress.lastActivePhase as FlywheelPhase | undefined,
       lastActiveAt: progress.lastActiveAt,
-      websiteAnalysis: progress.websiteAnalysis as FlywheelState["websiteAnalysis"],
-      industryAnalysis: progress.industryAnalysis as FlywheelState["industryAnalysis"],
+      websiteAnalysis: progress.websiteAnalysis as unknown as FlywheelState["websiteAnalysis"],
+      industryAnalysis: progress.industryAnalysis as unknown as FlywheelState["industryAnalysis"],
     };
 
     return NextResponse.json(flywheelState);

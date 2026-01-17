@@ -77,7 +77,7 @@ export function AIAssistant() {
     const trimmed = input.trim();
     if (!trimmed || state.isLoading) return;
     setInput("");
-    trackEvent("ai_assistant_query", {});
+    trackEvent("ai_assistant_message_sent", { message_length: trimmed.length });
     await sendMessage(trimmed);
   };
 
@@ -141,7 +141,7 @@ export function AIAssistant() {
               isIconOnly
               size="sm"
               variant="light"
-              onPress={(e) => {
+              onClick={(e) => {
                 e.stopPropagation();
                 close();
               }}

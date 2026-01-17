@@ -14,6 +14,8 @@ import type {
   LearnWizardData,
   AutomateWizardData,
   CreateWizardData,
+  MetricType,
+  NotificationSettings,
 } from "@/lib/flywheel/types";
 
 const openai = new OpenAI({
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's organization and brand for context
     const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
+      where: { id: userId },
       include: {
         memberships: {
           include: {
@@ -382,11 +384,11 @@ async function generateLearnConfig(
     reportEmail: true,
     optimizationGoals: [
       {
-        metric: settings.priority as LearnWizardData["priorityMetrics"][0],
+        metric: settings.priority as MetricType,
         priority: "high",
       },
       {
-        metric: settings.metrics[1] as LearnWizardData["priorityMetrics"][0],
+        metric: settings.metrics[1] as MetricType,
         priority: "medium",
       },
     ],
@@ -403,7 +405,7 @@ async function generateAutomateConfig(
     approvalMode: "review" | "auto_queue" | "auto_post";
     contentMix: { educational: number; promotional: number; entertaining: number; engaging: number };
     postsPerWeek: number;
-    notifications: Record<string, boolean>;
+    notifications: NotificationSettings;
   }> = {
     assisted: {
       approvalMode: "review",

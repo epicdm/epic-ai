@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -226,11 +226,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
                 sourceHandle: edge.sourceHandle || null,
                 targetHandle: edge.targetHandle || null,
                 type: edge.type,
-                condition: edge.condition || null,
+                condition: edge.condition ?? Prisma.JsonNull,
                 priority: edge.priority || 0,
                 label: edge.label || null,
                 animated: edge.animated || false,
-                style: edge.style || null,
+                style: edge.style ?? Prisma.JsonNull,
               },
             });
           }

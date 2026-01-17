@@ -77,10 +77,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       // If automation requires brand brain, verify it exists
       if (existing.requiresBrandBrain) {
+        // BrandBrain is linked to Brand, so we need to check through the Brand relation
         const brandBrain = await prisma.brandBrain.findFirst({
           where: {
-            organizationId: org.id,
-            ...(existing.brandId && { brandId: existing.brandId }),
+            brand: {
+              organizationId: org.id,
+              ...(existing.brandId && { id: existing.brandId }),
+            },
           },
         });
 

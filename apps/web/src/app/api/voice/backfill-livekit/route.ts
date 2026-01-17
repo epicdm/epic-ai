@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user is admin (you might want to add proper admin check)
     const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
+      where: { id: userId },
     });
 
     if (!user) {

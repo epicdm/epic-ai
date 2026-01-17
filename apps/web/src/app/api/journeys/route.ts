@@ -116,8 +116,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error getting journeys:", error);
+    // Return detailed error in development
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to get journeys" },
+      { error: "Failed to get journeys", details: process.env.NODE_ENV === "development" ? errorMessage : undefined },
       { status: 500 }
     );
   }

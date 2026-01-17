@@ -710,7 +710,7 @@ export function KnowledgeBaseManager() {
                     variant="light"
                     color="danger"
                     isIconOnly
-                    onPress={(e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteKnowledgeBase(kb);
                     }}

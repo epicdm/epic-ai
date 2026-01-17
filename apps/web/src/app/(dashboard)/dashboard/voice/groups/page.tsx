@@ -367,7 +367,7 @@ export default function AgentGroupsPage() {
                 onChange={(e) => setFormData({ ...formData, routingStrategy: e.target.value })}
               >
                 {ROUTING_STRATEGIES.map((strategy) => (
-                  <SelectItem key={strategy.value} value={strategy.value} description={strategy.description}>
+                  <SelectItem key={strategy.value} description={strategy.description}>
                     {strategy.label}
                   </SelectItem>
                 ))}

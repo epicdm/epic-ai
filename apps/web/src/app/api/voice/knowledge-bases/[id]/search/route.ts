@@ -147,8 +147,9 @@ async function generateEmbedding(text: string, model: string): Promise<number[] 
 /**
  * Convert Buffer to Float32Array
  */
-function bufferToFloatArray(buffer: Buffer): number[] {
-  const floatArray = new Float32Array(buffer.buffer, buffer.byteOffset, buffer.length / 4);
+function bufferToFloatArray(buffer: Buffer | Uint8Array): number[] {
+  const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  const floatArray = new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4);
   return Array.from(floatArray);
 }
 

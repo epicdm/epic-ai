@@ -5,8 +5,28 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
+
+// Type for the agent with included relations
+type AgentWithRelations = Prisma.VoiceAgentGetPayload<{
+  include: {
+    tools: true;
+    knowledgeBases: {
+      include: {
+        knowledgeBase: {
+          select: {
+            id: true;
+            name: true;
+            isActive: true;
+            documentCount: true;
+            chunkCount: true;
+          };
+        };
+      };
+    };
+  };
+}>;
 
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
@@ -30,14 +50,13 @@ export async function POST(
 
     const { id: agentId } = await params;
 
-    // Fetch agent with tools, brand, and knowledge bases
+    // Fetch agent with tools and knowledge bases
     const agent = await prisma.voiceAgent.findFirst({
       where: {
         id: agentId,
         organizationId: org.id,
       },
       include: {
-        brand: true,
         tools: {
           where: { isActive: true },
           orderBy: { createdAt: "asc" },
@@ -58,7 +77,7 @@ export async function POST(
           orderBy: { priority: "desc" },
         },
       },
-    });
+    }) as AgentWithRelations | null;
 
     if (!agent) {
       return NextResponse.json({ error: "Agent not found" }, { status: 404 });
@@ -90,7 +109,7 @@ export async function POST(
         transcriptionEnabled: true,
       },
       // Include tools for function calling
-      tools: agent.tools.map((tool) => ({
+      tools: agent.tools.map((tool: AgentWithRelations["tools"][number]) => ({
         name: tool.name,
         description: tool.description,
         type: tool.type,
@@ -111,13 +130,15 @@ export async function POST(
       // Include RAG knowledge base configuration
       rag: {
         enabled: agent.knowledgeBases.some(
-          (link) => link.isActive && link.knowledgeBase.isActive && link.knowledgeBase.chunkCount > 0
+          (link: AgentWithRelations["knowledgeBases"][number]) =>
+            link.isActive && link.knowledgeBase.isActive && link.knowledgeBase.chunkCount > 0
         ),
         apiUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
         maxResults: agent.knowledgeBases[0]?.maxChunks || 5,
         minScore: agent.knowledgeBases[0]?.minScore || 0.7,
         knowledgeBaseCount: agent.knowledgeBases.filter(
-          (link) => link.isActive && link.knowledgeBase.isActive
+          (link: AgentWithRelations["knowledgeBases"][number]) =>
+            link.isActive && link.knowledgeBase.isActive
         ).length,
       },
       // Include agent ID for RAG endpoint
@@ -143,7 +164,8 @@ export async function POST(
     const result = await response.json();
 
     const activeKnowledgeBases = agent.knowledgeBases.filter(
-      (link) => link.isActive && link.knowledgeBase.isActive
+      (link: AgentWithRelations["knowledgeBases"][number]) =>
+        link.isActive && link.knowledgeBase.isActive
     );
 
     return NextResponse.json({
@@ -153,7 +175,10 @@ export async function POST(
       voiceServiceResult: result,
       toolsCount: agent.tools.length,
       knowledgeBasesCount: activeKnowledgeBases.length,
-      ragEnabled: activeKnowledgeBases.some((link) => link.knowledgeBase.chunkCount > 0),
+      ragEnabled: activeKnowledgeBases.some(
+        (link: AgentWithRelations["knowledgeBases"][number]) =>
+          link.knowledgeBase.chunkCount > 0
+      ),
     });
   } catch (error) {
     console.error("Error syncing agent:", error);

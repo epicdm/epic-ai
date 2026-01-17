@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
         brandContext = `
 Brand Name: ${brand.name}
 Industry: ${brand.industry || "Not specified"}
-Voice: Formality ${brain.formality}/5
-Personality: ${brain.personality || "Professional"}
+Voice: Formality ${brain.formalityLevel}/5
+Personality: ${brain.voiceTone || "Professional"}
 Writing Style: ${brain.writingStyle || "Conversational"}
-${brain.avoidWords ? `Avoid these topics/words: ${brain.avoidWords}` : ""}
+${brain.doNotMention ? `Avoid these topics/words: ${brain.doNotMention}` : ""}
 `;
       }
     }

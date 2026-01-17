@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -110,9 +110,9 @@ export async function POST(request: NextRequest) {
         personalityTraits: validated.personalityTraits || [],
         tone: validated.tone,
         languageStyle: validated.languageStyle,
-        voiceConfig: validated.voiceConfig || {},
+        voiceConfig: (validated.voiceConfig || {}) as Prisma.InputJsonValue,
         capabilities: validated.capabilities,
-        tools: validated.tools,
+        tools: validated.tools as Prisma.InputJsonValue,
         isTemplate: false, // User-created personas are not templates
       },
     });

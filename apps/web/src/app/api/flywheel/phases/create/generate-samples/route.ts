@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
         brandContext = `
 Brand Name: ${brand.name}
 Industry: ${industry}
-Description: ${brand.description || ""}
-Voice: Formality ${brain.formality}/5
-Personality: ${brain.personality || "Professional"}
+Description: ${brain.description || ""}
+Voice: Formality ${brain.formalityLevel}/5
+Personality: ${brain.voiceTone || "Professional"}
 Writing Style: ${brain.writingStyle || "Conversational"}
 `;
       }

@@ -46,11 +46,9 @@ export async function GET(request: NextRequest) {
       description: template.description,
       category: template.category,
       channels: template.channels,
-      defaultTrigger: template.defaultTrigger,
+      trigger: template.trigger,
       stepsCount: template.steps.length,
       requiresBrandBrain: template.requiresBrandBrain ?? true,
-      estimatedDuration: template.estimatedDuration,
-      tags: template.tags || [],
     }));
 
     return NextResponse.json({

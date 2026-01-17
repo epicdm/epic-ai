@@ -6,14 +6,32 @@
  */
 
 import { prisma } from "@epic-ai/database";
-import { ChannelType, ContentStatus, ContentType } from "@epic-ai/database";
+import { AccountStatus, ChannelType, ContentStatus, ContentType, SocialPlatform } from "@epic-ai/database";
 import { WorkflowStep } from "../types";
 import type { StepExecutionResult } from "../workflow-executor";
+
+/**
+ * Convert lowercase platform string to SocialPlatform enum
+ */
+function toPlatformEnum(platform: string): SocialPlatform {
+  const mapping: Record<string, SocialPlatform> = {
+    twitter: SocialPlatform.TWITTER,
+    linkedin: SocialPlatform.LINKEDIN,
+    facebook: SocialPlatform.FACEBOOK,
+    instagram: SocialPlatform.INSTAGRAM,
+    tiktok: SocialPlatform.TIKTOK,
+    youtube: SocialPlatform.YOUTUBE,
+    threads: SocialPlatform.THREADS,
+    bluesky: SocialPlatform.BLUESKY,
+  };
+  return mapping[platform.toLowerCase()] || SocialPlatform.TWITTER;
+}
 
 /**
  * Social step configuration
  */
 interface SocialPostConfig {
+  [key: string]: unknown;
   platform?: "twitter" | "linkedin" | "facebook" | "instagram";
   platforms?: string[];
   content?: string;
@@ -26,6 +44,7 @@ interface SocialPostConfig {
 }
 
 interface SocialDmConfig {
+  [key: string]: unknown;
   platform: "twitter" | "linkedin" | "facebook" | "instagram";
   recipientId: string;
   message: string;
@@ -34,6 +53,7 @@ interface SocialDmConfig {
 }
 
 interface SocialEngageConfig {
+  [key: string]: unknown;
   platform: "twitter" | "linkedin" | "facebook" | "instagram";
   postId: string;
   action: "like" | "comment" | "share";
@@ -84,8 +104,12 @@ async function executeSocialPost(
     if (config.useBrandVoice !== false || config.useAiGeneration) {
       const brandBrain = await prisma.brandBrain.findFirst({
         where: {
-          organizationId,
           ...(brandId && { brandId }),
+          ...(!brandId && {
+            brand: {
+              organizationId,
+            },
+          }),
         },
         select: { id: true },
       });
@@ -111,29 +135,29 @@ async function executeSocialPost(
       };
     }
 
-    // Determine platforms
-    const platforms = config.platforms || (config.platform ? [config.platform] : ["twitter"]);
+    // Determine platforms - convert to enum values
+    const platformStrings = config.platforms || (config.platform ? [config.platform] : ["twitter"]);
+    const platforms = platformStrings.map(p => toPlatformEnum(p));
 
     // Create content item
     const contentItem = await prisma.contentItem.create({
       data: {
-        organizationId,
-        brandId,
-        type: ContentType.POST,
-        title: config.topic || "Workflow Generated Post",
+        brandId: brandId || "",
+        contentType: ContentType.POST,
         content,
         status: config.scheduleAt ? ContentStatus.SCHEDULED : ContentStatus.DRAFT,
-        aiGenerated: config.useAiGeneration || false,
-        brandBrainId,
-        contentPillarId: config.contentPillarId,
+        targetPlatforms: platforms,
         triggeredByVoice: context.callLogId ? true : false,
         voiceAgentId: context.voiceAgentId as string || undefined,
         callLogId: context.callLogId as string || undefined,
         workflowInstanceId: context.workflowInstanceId as string || undefined,
-        metadata: {
+        generatedFrom: {
+          sourceType: "cross-channel-workflow",
           workflowStep: step.id,
-          platforms,
-          source: "cross-channel-workflow",
+          topic: config.topic,
+          useAiGeneration: config.useAiGeneration || false,
+          brandBrainId,
+          contentPillarId: config.contentPillarId,
         },
       },
     });
@@ -142,44 +166,26 @@ async function executeSocialPost(
     for (const platform of platforms) {
       await prisma.contentVariation.create({
         data: {
-          contentItemId: contentItem.id,
+          contentId: contentItem.id,
           platform,
-          content,
-          optimizedForPlatform: false,
+          text: content,
+          isOptimal: false,
           characterCount: content.length,
         },
       });
     }
 
-    // If scheduled, create publishing schedule
+    // If scheduled, update content item with scheduling info
     if (config.scheduleAt) {
       const scheduledDate = new Date(config.scheduleAt);
-      for (const platform of platforms) {
-        // Get social account for platform
-        const socialAccount = await prisma.socialAccount.findFirst({
-          where: {
-            organizationId,
-            platform,
-            isActive: true,
-          },
-        });
 
-        if (socialAccount) {
-          await prisma.publishingSchedule.create({
-            data: {
-              contentItemId: contentItem.id,
-              socialAccountId: socialAccount.id,
-              scheduledAt: scheduledDate,
-              status: "PENDING",
-            },
-          });
-        }
-      }
-
-      // Update content status
+      // Update content item with scheduled time and status
       await prisma.contentItem.update({
         where: { id: contentItem.id },
-        data: { status: ContentStatus.SCHEDULED },
+        data: {
+          status: ContentStatus.SCHEDULED,
+          scheduledFor: scheduledDate,
+        },
       });
     }
 
@@ -194,14 +200,14 @@ async function executeSocialPost(
           customerId: context.customerId as string || undefined,
           email: context.email as string || undefined,
           channelType: ChannelType.SOCIAL,
-          channelName: platforms.join(", "),
-          action: step.touchpointAction || "content_created",
-          actionDetail: `Created social post: ${contentItem.title}`,
+          channelName: platformStrings.join(", "),
+          action: step.touchpointAction || "VIEW",
+          actionDetail: `Created social post for ${platformStrings.join(", ")}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,
           metadata: {
             contentItemId: contentItem.id,
-            platforms,
+            platforms: platformStrings,
           },
         },
       });
@@ -212,7 +218,7 @@ async function executeSocialPost(
       success: true,
       output: {
         contentItemId: contentItem.id,
-        platforms,
+        platforms: platformStrings,
         status: config.scheduleAt ? "scheduled" : "draft",
         scheduledAt: config.scheduleAt,
       },
@@ -253,12 +259,19 @@ async function executeSocialDm(
       };
     }
 
+    const platformEnum = toPlatformEnum(config.platform);
+
     // Get social account for platform
     const socialAccount = await prisma.socialAccount.findFirst({
       where: {
-        organizationId,
-        platform: config.platform,
-        isActive: true,
+        ...(brandId && { brandId }),
+        ...(!brandId && {
+          brand: {
+            organizationId,
+          },
+        }),
+        platform: platformEnum,
+        status: AccountStatus.CONNECTED,
       },
     });
 
@@ -266,7 +279,7 @@ async function executeSocialDm(
       return {
         success: false,
         error: {
-          message: `No active ${config.platform} account found`,
+          message: `No connected ${config.platform} account found`,
           retryable: false,
         },
       };
@@ -288,7 +301,7 @@ async function executeSocialDm(
           email: context.email as string || undefined,
           channelType: ChannelType.SOCIAL,
           channelName: config.platform,
-          action: step.touchpointAction || "message_sent",
+          action: step.touchpointAction || "MESSAGE",
           actionDetail: `Sent DM on ${config.platform}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,
@@ -344,12 +357,19 @@ async function executeSocialEngage(
       };
     }
 
+    const platformEnum = toPlatformEnum(config.platform);
+
     // Get social account for platform
     const socialAccount = await prisma.socialAccount.findFirst({
       where: {
-        organizationId,
-        platform: config.platform,
-        isActive: true,
+        ...(brandId && { brandId }),
+        ...(!brandId && {
+          brand: {
+            organizationId,
+          },
+        }),
+        platform: platformEnum,
+        status: AccountStatus.CONNECTED,
       },
     });
 
@@ -357,7 +377,7 @@ async function executeSocialEngage(
       return {
         success: false,
         error: {
-          message: `No active ${config.platform} account found`,
+          message: `No connected ${config.platform} account found`,
           retryable: false,
         },
       };
@@ -377,7 +397,7 @@ async function executeSocialEngage(
           customerId: context.customerId as string || undefined,
           channelType: ChannelType.SOCIAL,
           channelName: config.platform,
-          action: step.touchpointAction || "engagement",
+          action: step.touchpointAction || "ENGAGE",
           actionDetail: `${config.action} on post ${config.postId}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,

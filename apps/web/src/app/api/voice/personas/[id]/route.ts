@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -119,7 +119,10 @@ export async function PATCH(
 
     const persona = await prisma.voicePersona.update({
       where: { id },
-      data: validated,
+      data: {
+        ...validated,
+        tools: validated.tools as Prisma.InputJsonValue | undefined,
+      },
     });
 
     return NextResponse.json({ persona });

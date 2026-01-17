@@ -388,7 +388,7 @@ export default function EditRoutingRulePage({
                   onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
                 >
                   {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
+                    <SelectItem key={group.id}>
                       {group.name} ({group.routingStrategy.replace(/_/g, " ")})
                     </SelectItem>
                   ))}
@@ -412,7 +412,7 @@ export default function EditRoutingRulePage({
                   onChange={(e) => setFormData({ ...formData, targetAgentId: e.target.value })}
                 >
                   {agents.map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
+                    <SelectItem key={agent.id}>
                       {agent.name} {!agent.isActive && "(Inactive)"}
                     </SelectItem>
                   ))}
@@ -450,7 +450,7 @@ export default function EditRoutingRulePage({
                     className="w-40"
                   >
                     {CONDITION_FIELDS.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
+                      <SelectItem key={f.value}>
                         {f.label}
                       </SelectItem>
                     ))}
@@ -463,7 +463,7 @@ export default function EditRoutingRulePage({
                     className="w-36"
                   >
                     {CONDITION_OPERATORS.map((op) => (
-                      <SelectItem key={op.value} value={op.value}>
+                      <SelectItem key={op.value}>
                         {op.label}
                       </SelectItem>
                     ))}
@@ -505,7 +505,7 @@ export default function EditRoutingRulePage({
               onChange={(e) => setFormData({ ...formData, fallbackAction: e.target.value })}
             >
               {FALLBACK_ACTIONS.map((action) => (
-                <SelectItem key={action.value} value={action.value}>
+                <SelectItem key={action.value}>
                   {action.label}
                 </SelectItem>
               ))}
@@ -535,7 +535,7 @@ export default function EditRoutingRulePage({
                 onChange={(e) => setFormData({ ...formData, fallbackAgentId: e.target.value })}
               >
                 {agents.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
+                  <SelectItem key={agent.id}>
                     {agent.name}
                   </SelectItem>
                 ))}
@@ -548,7 +548,7 @@ export default function EditRoutingRulePage({
                 onChange={(e) => setFormData({ ...formData, fallbackGroupId: e.target.value })}
               >
                 {groups.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
+                  <SelectItem key={group.id}>
                     {group.name}
                   </SelectItem>
                 ))}

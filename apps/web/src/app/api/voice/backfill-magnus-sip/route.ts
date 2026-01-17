@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { clerkId: userId },
+      where: { id: userId },
     });
 
     if (!user) {

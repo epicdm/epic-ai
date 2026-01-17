@@ -311,7 +311,7 @@ export async function enqueueJob(options: EnqueueJobOptions): Promise<JobRespons
     data: {
       type: type as PrismaJobType,
       brandId: brandId ?? null,
-      payload: payload,
+      payload: JSON.parse(JSON.stringify(payload)),
       status: 'PENDING' as PrismaJobStatus,
       attempts: 0,
       maxAttempts: DEFAULT_JOB_OPTIONS.attempts,
@@ -354,21 +354,21 @@ export async function getJob(
 ): Promise<JobResponse | null> {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
-    include: {
-      brand: {
-        select: { organizationId: true },
-      },
-    },
   });
 
   if (!job) {
     return null;
   }
 
-  // Verify organization access
-  const jobOrgId = job.brand?.organizationId;
-  if (jobOrgId && jobOrgId !== organizationId) {
-    return null; // Job belongs to different org
+  // Verify organization access by checking the brand
+  if (job.brandId) {
+    const brand = await prisma.brand.findUnique({
+      where: { id: job.brandId },
+      select: { organizationId: true },
+    });
+    if (brand && brand.organizationId !== organizationId) {
+      return null; // Job belongs to different org
+    }
   }
 
   return jobToResponse(job, organizationId);

@@ -32,7 +32,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         where: { id: userId },
         include: { memberships: true },
       });
-      userHasOrg = testUser?.memberships && testUser.memberships.length > 0;
+      userHasOrg = !!(testUser?.memberships && testUser.memberships.length > 0);
     } else {
       const [syncedUser, clerk] = await Promise.all([
         syncUser(),

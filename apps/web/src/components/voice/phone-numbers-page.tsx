@@ -644,7 +644,7 @@ export function PhoneNumbersPage() {
                   startContent={<Globe className="w-4 h-4 text-gray-400" />}
                 >
                   {COUNTRY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
@@ -658,7 +658,7 @@ export function PhoneNumbersPage() {
                   startContent={<MapPin className="w-4 h-4 text-gray-400" />}
                 >
                   {US_AREA_CODES.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
@@ -822,7 +822,7 @@ export function PhoneNumbersPage() {
                     startContent={<Bot className="w-4 h-4 text-gray-400" />}
                   >
                     {agents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
+                      <SelectItem key={agent.id}>
                         {agent.name}
                       </SelectItem>
                     ))}

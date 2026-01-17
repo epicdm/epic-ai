@@ -163,15 +163,15 @@ export interface WorkflowTemplate {
  * Workflow categories for organization
  */
 export type WorkflowCategory =
-  | "lead_nurture" // Nurturing leads across channels
-  | "customer_onboarding" // Onboarding new customers
-  | "re_engagement" // Re-engaging dormant contacts
-  | "event_promotion" // Promoting events/webinars
-  | "support_escalation" // Support workflow
-  | "sales_outreach" // Sales prospecting
-  | "retention" // Customer retention
-  | "feedback" // Collecting feedback
-  | "custom"; // Custom workflow
+  | "LEAD_NURTURE" // Nurturing leads across channels
+  | "CUSTOMER_ONBOARDING" // Onboarding new customers
+  | "RE_ENGAGEMENT" // Re-engaging dormant contacts
+  | "EVENT_PROMOTION" // Promoting events/webinars
+  | "SUPPORT_ESCALATION" // Support workflow
+  | "SALES_OUTREACH" // Sales prospecting
+  | "RETENTION" // Customer retention
+  | "FEEDBACK" // Collecting feedback
+  | "CUSTOM"; // Custom workflow
 
 /**
  * Workflow instance (running workflow)

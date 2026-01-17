@@ -18,6 +18,13 @@ import {
   CardBody,
   ScrollShadow,
   Chip,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Tooltip,
+  Divider,
 } from "@heroui/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,10 +54,23 @@ import {
   InstagramIcon,
   LinkIcon,
   CheckIcon,
+  Phone,
+  Share2,
+  MessageCircle,
+  MessageSquare,
+  Volume2,
+  Palette,
+  Target,
+  Users,
+  Info,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates";
 import { ChannelSelector } from "@/components/brand/channel-selector";
+import {
+  getIndustryRecommendations,
+  type ChannelRecommendation,
+} from "@/lib/brand-brain/industry-channels";
 
 // Types
 type UserGoal = "content" | "voice" | "campaigns" | "explore";
@@ -162,6 +182,88 @@ const pathOptions: PathOption[] = [
     ],
   },
 ];
+
+// Channel icons and colors for preview
+const CHANNEL_PREVIEW_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  social: {
+    icon: <Share2 className="w-3 h-3" />,
+    color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    label: "Social",
+  },
+  voice: {
+    icon: <Phone className="w-3 h-3" />,
+    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    label: "Voice",
+  },
+  email: {
+    icon: <MailIcon className="w-3 h-3" />,
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    label: "Email",
+  },
+  chat: {
+    icon: <MessageSquare className="w-3 h-3" />,
+    color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    label: "Chat",
+  },
+};
+
+// Generate sample content based on template
+function generateSampleContent(template: BrandTemplate): string[] {
+  const samples: Record<string, string[]> = {
+    "tech-startup": [
+      "Just shipped a new feature that our customers have been asking for. The feedback loop is real. 🚀",
+      "Here's what we learned from analyzing 10,000 user sessions. Thread 👇",
+      "Building in public: Our engineering team just solved a scaling challenge that was keeping us up at night.",
+    ],
+    "ecommerce": [
+      "✨ NEW DROP ALERT ✨ These won't last long - shop the link in bio!",
+      "Your cart is feeling lonely 🛒 Come back and finish what you started!",
+      "5-star reviews don't lie. See why customers are obsessed with this product →",
+    ],
+    "professional-services": [
+      "Key regulatory changes are coming in Q2. Here's what you need to know to stay compliant.",
+      "We helped our client reduce operational costs by 35%. Read the full case study.",
+      "Industry insight: The three metrics that matter most for sustainable growth.",
+    ],
+    "healthcare": [
+      "Small daily habits lead to big health improvements. Start with just 10 minutes of movement today.",
+      "Your wellness journey is unique. We're here to guide you every step of the way.",
+      "Prevention is the best medicine. Schedule your annual check-up today.",
+    ],
+    "real-estate": [
+      "Just Listed: Stunning 3BR home in sought-after neighborhood. DM for details!",
+      "Market update: What rising interest rates mean for buyers this spring.",
+      "Another happy family in their dream home! Congratulations to the Johnsons 🏠🎉",
+    ],
+    "restaurant": [
+      "🍝 Tonight's special: Fresh house-made pasta with truffle cream sauce! Reserve your table now!",
+      "Behind the scenes: Our chef sourcing ingredients at the local farmers market 🥬🍅",
+      "Thank you for making us your neighborhood spot! We appreciate every visit 💕",
+    ],
+    "creative-agency": [
+      "Just wrapped an incredible rebrand project. Sometimes the best work pushes boundaries.",
+      "Hot take: Your brand's visual identity should make you uncomfortable (in a good way).",
+      "Client win: 340% increase in engagement after our social media overhaul. Let's talk about your brand.",
+    ],
+    "fitness": [
+      "💪 NO EXCUSES! Your 6am crew is waiting. Let's crush this Monday!",
+      "Transformation Tuesday: Sarah lost 30lbs in 6 months with our program. Your turn! 🔥",
+      "Quick workout you can do anywhere - 15 mins, no equipment. Save this post!",
+    ],
+    "education": [
+      "Learning never stops. Discover our new course catalog for continuous professional development.",
+      "Student spotlight: Meet Alex, who turned their passion into a career after completing our program.",
+      "The skills gap is real. Here are the 5 competencies every professional needs in 2024.",
+    ],
+    "custom": [
+      "Share your story with your audience in a way that feels authentic to your brand.",
+      "Quality content builds lasting relationships with your customers.",
+      "Every interaction is an opportunity to demonstrate your values.",
+    ],
+  };
+
+  return samples[template.id] || samples["custom"];
+}
 
 // Validation schemas
 const businessInfoSchema = z.object({
@@ -369,6 +471,9 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
   const [facebookConnecting, setFacebookConnecting] = useState(false);
   const [pendingBrandId, setPendingBrandId] = useState<string | null>(null);
   const [pendingOrgId, setPendingOrgId] = useState<string | null>(null);
+  // Template preview modal state
+  const [previewTemplate, setPreviewTemplate] = useState<BrandTemplate | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Notify parent when connected accounts change
   useEffect(() => {
@@ -522,6 +627,27 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
   const handleTemplateSelect = (template: BrandTemplate) => {
     onTemplateSelect(template);
     setShowForm(true);
+  };
+
+  // Open template preview modal instead of immediately selecting
+  const handleTemplatePreview = (template: BrandTemplate) => {
+    setPreviewTemplate(template);
+    setShowPreviewModal(true);
+  };
+
+  // Confirm template from preview modal
+  const handleConfirmTemplate = () => {
+    if (previewTemplate) {
+      handleTemplateSelect(previewTemplate);
+    }
+    setShowPreviewModal(false);
+    setPreviewTemplate(null);
+  };
+
+  // Close preview and show other options
+  const handleClosePreview = () => {
+    setShowPreviewModal(false);
+    setPreviewTemplate(null);
   };
 
   const handleSubmit = async (): Promise<boolean> => {
@@ -687,7 +813,7 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
                       ? "border-2 border-primary bg-primary/5"
                       : "border-2 border-transparent"
                   }`}
-                  onPress={() => handleTemplateSelect(template)}
+                  onPress={() => handleTemplatePreview(template)}
                 >
                   <CardBody className="p-4 text-center">
                     <span className="text-3xl mb-2 block">{template.icon}</span>
@@ -706,6 +832,180 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
           <p className="text-xs text-center text-gray-500 mt-4">
             You can customize everything later!
           </p>
+
+          {/* Template Preview Modal */}
+          <Modal
+            isOpen={showPreviewModal}
+            onClose={handleClosePreview}
+            size="2xl"
+            scrollBehavior="inside"
+          >
+            <ModalContent>
+              {previewTemplate && (
+                <>
+                  <ModalHeader className="flex flex-col gap-1 pb-0">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{previewTemplate.icon}</span>
+                      <div>
+                        <h2 className="text-xl font-semibold">{previewTemplate.name}</h2>
+                        <p className="text-sm text-gray-500 font-normal">{previewTemplate.description}</p>
+                      </div>
+                    </div>
+                  </ModalHeader>
+                  <ModalBody className="py-4">
+                    {/* Voice & Tone Section */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Volume2 className="w-4 h-4 text-primary" />
+                          <h3 className="font-medium text-sm">Voice & Tone</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p className="text-xs text-gray-500">Tone</p>
+                            <p className="text-sm font-medium capitalize">{previewTemplate.voiceTone}</p>
+                          </div>
+                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p className="text-xs text-gray-500">Writing Style</p>
+                            <p className="text-sm font-medium capitalize">{previewTemplate.writingStyle}</p>
+                          </div>
+                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p className="text-xs text-gray-500">Emoji Usage</p>
+                            <p className="text-sm font-medium capitalize">{previewTemplate.emojiStyle}</p>
+                          </div>
+                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p className="text-xs text-gray-500">Call-to-Action</p>
+                            <p className="text-sm font-medium capitalize">{previewTemplate.ctaStyle}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Divider />
+
+                      {/* Sample Content Section */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Palette className="w-4 h-4 text-primary" />
+                          <h3 className="font-medium text-sm">Sample Content in This Voice</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {generateSampleContent(previewTemplate).map((sample, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm italic text-gray-700 dark:text-gray-300 border-l-2 border-primary"
+                            >
+                              "{sample}"
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Divider />
+
+                      {/* Content Pillars Section */}
+                      {previewTemplate.contentPillars && previewTemplate.contentPillars.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-primary" />
+                            <h3 className="font-medium text-sm">Content Pillars</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {previewTemplate.contentPillars.map((pillar, idx) => (
+                              <Chip key={idx} size="sm" variant="flat" color="primary">
+                                {pillar}
+                              </Chip>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Target Audience Section */}
+                      {previewTemplate.targetAudience && previewTemplate.targetAudience.demographics?.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users className="w-4 h-4 text-primary" />
+                            <h3 className="font-medium text-sm">Target Audiences</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {previewTemplate.targetAudience.demographics.map((audience, idx) => (
+                              <Chip key={idx} size="sm" variant="flat" color="secondary">
+                                {audience}
+                              </Chip>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <Divider />
+
+                      {/* Recommended Channels Section */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Share2 className="w-4 h-4 text-primary" />
+                          <h3 className="font-medium text-sm">Recommended Channels</h3>
+                        </div>
+                        {(() => {
+                          const recommendations = getIndustryRecommendations(previewTemplate.id);
+                          if (!recommendations) return (
+                            <p className="text-sm text-gray-500">All channels available</p>
+                          );
+
+                          return (
+                            <div className="space-y-2">
+                              {recommendations.map((rec) => {
+                                const config = CHANNEL_PREVIEW_CONFIG[rec.channelId];
+                                if (!config) return null;
+
+                                return (
+                                  <div
+                                    key={rec.channelId}
+                                    className="flex items-start gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
+                                  >
+                                    <div className={`p-1.5 rounded ${config.color}`}>
+                                      {config.icon}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{config.label}</span>
+                                        <Chip
+                                          size="sm"
+                                          variant="flat"
+                                          color={rec.priority === 'high' ? 'success' : rec.priority === 'medium' ? 'warning' : 'default'}
+                                          className="h-5 text-xs"
+                                        >
+                                          {rec.priority === 'high' ? 'Recommended' : rec.priority === 'medium' ? 'Good fit' : 'Optional'}
+                                        </Chip>
+                                      </div>
+                                      <p className="text-xs text-gray-500 mt-0.5">{rec.reason}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      variant="flat"
+                      onPress={handleClosePreview}
+                    >
+                      Show Me Others
+                    </Button>
+                    <Button
+                      color="primary"
+                      onPress={handleConfirmTemplate}
+                      startContent={<CheckCircleIcon className="w-4 h-4" />}
+                    >
+                      This Looks Right
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
         </WizardStepContent>
       </WizardStepContainer>
     );

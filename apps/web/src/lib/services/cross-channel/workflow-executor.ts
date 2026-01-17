@@ -158,7 +158,7 @@ export class WorkflowExecutor {
     }
 
     // Get the current step from automation steps
-    const steps = instance.automation.steps as WorkflowStep[];
+    const steps = instance.automation.steps as unknown as WorkflowStep[];
     const currentStep = steps.find((s) => s.id === instance.currentStepId);
 
     if (!currentStep) {
@@ -209,12 +209,14 @@ export class WorkflowExecutor {
     const result = await this.executeStep(instance, currentStep);
 
     // Record step execution
+    // Convert action to uppercase for Prisma enum (e.g., "attribute" -> "ATTRIBUTE")
+    const actionEnum = currentStep.action.toUpperCase() as WorkflowAction;
     await prisma.workflowStepExecution.create({
       data: {
         instanceId,
         stepId: currentStep.id,
-        action: currentStep.action as WorkflowAction,
-        channel: currentStep.channel as ChannelType,
+        action: actionEnum,
+        channel: currentStep.channel?.toUpperCase() as ChannelType | undefined,
         success: result.success,
         output: result.output as object || {},
         errorMessage: result.error?.message,
@@ -240,12 +242,12 @@ export class WorkflowExecutor {
       data: {
         context: {
           ...instanceContext,
-          lastStepResult: result,
-        },
+          lastStepResult: result as unknown as Record<string, unknown>,
+        } as object,
         results: {
           ...instanceResults,
-          [currentStep.id]: result,
-        },
+          [currentStep.id]: result as unknown as Record<string, unknown>,
+        } as object,
         completedSteps: [...instance.completedSteps, currentStep.id],
         touchpointsCreated: result.touchpointId
           ? instance.touchpointsCreated + 1
@@ -258,7 +260,7 @@ export class WorkflowExecutor {
       // Handle failure
       if (result.error?.retryable) {
         // Could implement retry logic here
-        const errors = instance.errors as Array<Record<string, unknown>>;
+        const errors = instance.errors as unknown as Array<Record<string, unknown>>;
         await prisma.workflowInstance.update({
           where: { id: instanceId },
           data: {
@@ -272,7 +274,7 @@ export class WorkflowExecutor {
                 retryable: true,
                 retryCount: 1,
               },
-            ],
+            ] as object[],
           },
         });
       }
@@ -306,7 +308,7 @@ export class WorkflowExecutor {
 
     // If no explicit next step, find the next sequential step
     if (!nextStepId) {
-      nextStepId = this.findNextStep(steps, currentStep.id);
+      nextStepId = this.findNextStep(steps, currentStep.id) ?? undefined;
     }
 
     // Advance or complete
@@ -600,9 +602,9 @@ export class WorkflowExecutor {
       case "is_not_empty":
         return value !== null && value !== undefined && value !== "";
       case "in_list":
-        return Array.isArray(condition.value) && condition.value.includes(value);
+        return Array.isArray(condition.value) && (condition.value as unknown[]).includes(value);
       case "not_in_list":
-        return Array.isArray(condition.value) && !condition.value.includes(value);
+        return Array.isArray(condition.value) && !(condition.value as unknown[]).includes(value);
       default:
         return false;
     }

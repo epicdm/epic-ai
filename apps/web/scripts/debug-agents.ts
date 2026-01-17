@@ -59,9 +59,6 @@ async function main() {
       organization: {
         select: { id: true, name: true },
       },
-      brand: {
-        select: { id: true, name: true },
-      },
       phoneMappings: {
         select: { id: true, phoneNumber: true },
       },
@@ -72,9 +69,9 @@ async function main() {
   agents.forEach((agent) => {
     console.log(`  - ${agent.name} (${agent.id})`);
     console.log(`    Organization: ${agent.organization.name} (${agent.organizationId})`);
-    console.log(`    Brand: ${agent.brand?.name || "No brand"} (${agent.brandId})`);
+    console.log(`    Brand ID: ${agent.brandId || "No brand"}`);
     console.log(`    Phone numbers: ${agent.phoneMappings.length}`);
-    agent.phoneMappings.forEach((pm) => {
+    agent.phoneMappings.forEach((pm: { id: string; phoneNumber: string }) => {
       console.log(`      - ${pm.phoneNumber}`);
     });
   });

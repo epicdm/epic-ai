@@ -64,6 +64,8 @@ export interface FlywheelState {
 // ============================================================================
 
 export interface UnderstandWizardData {
+  [key: string]: unknown;
+
   // Step 1: Industry Selection
   industry?: string;
   industryTemplate?: string;
@@ -181,6 +183,8 @@ export interface GeneratedContentData {
 export type FirstPostOption = "skip" | "schedule" | "publish";
 
 export interface DistributeWizardData {
+  [key: string]: unknown;
+
   // Step 1: Connect Accounts
   connectedAccounts?: ConnectedAccountData[];
 
@@ -238,6 +242,8 @@ export interface TimeSlot {
 // ============================================================================
 
 export interface LearnWizardData {
+  [key: string]: unknown;
+
   // Step 1: Analytics Intro
   seenIntro?: boolean;
 
@@ -276,6 +282,8 @@ export interface OptimizationGoal {
 // ============================================================================
 
 export interface AutomateWizardData {
+  [key: string]: unknown;
+
   // Step 1: Autopilot Intro
   seenIntro?: boolean;
 

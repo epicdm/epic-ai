@@ -13,13 +13,13 @@ datasource db {
 // ============================================
 
 model User {
-  id            String   @id // Clerk user ID (e.g., user_2abc123)
-  email         String   @unique
-  firstName     String?  @map("first_name")
-  lastName      String?  @map("last_name")
-  imageUrl      String?  @map("image_url")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id        String   @id // Clerk user ID (e.g., user_2abc123)
+  email     String   @unique
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   memberships            Membership[]
   onboardingProgress     UserOnboardingProgress?
@@ -53,55 +53,55 @@ enum SetupPath {
 // Flywheel Progress tracks the 5-phase wizard system:
 // UNDERSTAND → CREATE → DISTRIBUTE → LEARN → AUTOMATE
 model FlywheelProgress {
-  id                String      @id @default(cuid())
-  userId            String      @unique @map("user_id")
-  brandId           String?     @map("brand_id")
+  id      String  @id @default(cuid())
+  userId  String  @unique @map("user_id")
+  brandId String? @map("brand_id")
 
   // Phase Status (NOT_STARTED | IN_PROGRESS | COMPLETED | SKIPPED)
-  understandPhase   PhaseStatus @default(NOT_STARTED) @map("understand_phase")
-  createPhase       PhaseStatus @default(NOT_STARTED) @map("create_phase")
-  distributePhase   PhaseStatus @default(NOT_STARTED) @map("distribute_phase")
-  learnPhase        PhaseStatus @default(NOT_STARTED) @map("learn_phase")
-  automatePhase     PhaseStatus @default(NOT_STARTED) @map("automate_phase")
+  understandPhase PhaseStatus @default(NOT_STARTED) @map("understand_phase")
+  createPhase     PhaseStatus @default(NOT_STARTED) @map("create_phase")
+  distributePhase PhaseStatus @default(NOT_STARTED) @map("distribute_phase")
+  learnPhase      PhaseStatus @default(NOT_STARTED) @map("learn_phase")
+  automatePhase   PhaseStatus @default(NOT_STARTED) @map("automate_phase")
 
   // Current step in each wizard (-1 = not started)
-  understandStep    Int         @default(-1) @map("understand_step")
-  createStep        Int         @default(-1) @map("create_step")
-  distributeStep    Int         @default(-1) @map("distribute_step")
-  learnStep         Int         @default(-1) @map("learn_step")
-  automateStep      Int         @default(-1) @map("automate_step")
+  understandStep Int @default(-1) @map("understand_step")
+  createStep     Int @default(-1) @map("create_step")
+  distributeStep Int @default(-1) @map("distribute_step")
+  learnStep      Int @default(-1) @map("learn_step")
+  automateStep   Int @default(-1) @map("automate_step")
 
   // Wizard data (JSON for flexibility)
-  understandData    Json?       @map("understand_data")
-  createData        Json?       @map("create_data")
-  distributeData    Json?       @map("distribute_data")
-  learnData         Json?       @map("learn_data")
-  automateData      Json?       @map("automate_data")
+  understandData Json? @map("understand_data")
+  createData     Json? @map("create_data")
+  distributeData Json? @map("distribute_data")
+  learnData      Json? @map("learn_data")
+  automateData   Json? @map("automate_data")
 
   // Smart Defaults cache (AI analysis results)
-  websiteAnalysis   Json?       @map("website_analysis")
-  industryAnalysis  Json?       @map("industry_analysis")
+  websiteAnalysis  Json? @map("website_analysis")
+  industryAnalysis Json? @map("industry_analysis")
 
   // Overall progress
-  overallProgress   Int         @default(0) @map("overall_progress") // 0-100
-  flywheelActive    Boolean     @default(false) @map("flywheel_active")
-  activatedAt       DateTime?   @map("activated_at")
+  overallProgress Int       @default(0) @map("overall_progress") // 0-100
+  flywheelActive  Boolean   @default(false) @map("flywheel_active")
+  activatedAt     DateTime? @map("activated_at")
 
   // Setup path tracking (Phase 3: Polish)
-  setupPath         SetupPath   @default(EXPERT) @map("setup_path")
-  guidedCurrentStep Int         @default(0) @map("guided_current_step")
-  guidedStepData    Json?       @map("guided_step_data")
-  aiConfidence      Json?       @map("ai_confidence") // Per-phase confidence scores
-  lastSavedAt       DateTime?   @map("last_saved_at")
+  setupPath         SetupPath @default(EXPERT) @map("setup_path")
+  guidedCurrentStep Int       @default(0) @map("guided_current_step")
+  guidedStepData    Json?     @map("guided_step_data")
+  aiConfidence      Json?     @map("ai_confidence") // Per-phase confidence scores
+  lastSavedAt       DateTime? @map("last_saved_at")
 
   // Timestamps
-  lastActivePhase   String?     @map("last_active_phase")
-  lastActiveAt      DateTime    @default(now()) @map("last_active_at")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
+  lastActivePhase String?  @map("last_active_phase")
+  lastActiveAt    DateTime @default(now()) @map("last_active_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("flywheel_progress")
 }
@@ -154,7 +154,7 @@ model WizardSession {
 model FeatureDiscoveryState {
   id               String   @id @default(cuid())
   userId           String   @map("user_id")
-  feature          String   // Feature identifier (e.g., "voice_agent", "content_factory")
+  feature          String // Feature identifier (e.g., "voice_agent", "content_factory")
   hasSeenTooltip   Boolean  @default(false) @map("has_seen_tooltip")
   hasDismissed     Boolean  @default(false) @map("has_dismissed")
   interactionCount Int      @default(0) @map("interaction_count")
@@ -195,8 +195,8 @@ model Organization {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Magnus Billing Integration (one user per organization for billing)
-  magnusUserId     String?  @map("magnus_user_id")
-  magnusUsername   String?  @map("magnus_username")
+  magnusUserId   String? @map("magnus_user_id")
+  magnusUsername String? @map("magnus_username")
 
   // Postiz integration removed - using native OAuth
 
@@ -212,29 +212,29 @@ model Organization {
   analyticsSnapshots  AnalyticsSnapshot[]
 
   // Voice Module Relations
-  voiceAgents         VoiceAgent[]
-  voicePersonas       VoicePersona[]
-  sipConfigs          SIPConfig[]
-  phoneMappings       PhoneMapping[]
-  callLogs            CallLog[]
-  voiceCampaigns      VoiceCampaign[]
+  voiceAgents    VoiceAgent[]
+  voicePersonas  VoicePersona[]
+  sipConfigs     SIPConfig[]
+  phoneMappings  PhoneMapping[]
+  callLogs       CallLog[]
+  voiceCampaigns VoiceCampaign[]
 
   // Voice Cost Tracking
-  pricingConfigs      PricingConfig[]
-  voiceUsageRecords   VoiceUsageRecord[]
+  pricingConfigs    PricingConfig[]
+  voiceUsageRecords VoiceUsageRecord[]
 
   // Knowledge Base Relations
-  knowledgeBases      KnowledgeBase[]
+  knowledgeBases KnowledgeBase[]
 
   // Conversation Flow Relations
-  conversationFlows   ConversationFlow[]
+  conversationFlows ConversationFlow[]
 
   // Multi-Agent Routing Relations
-  agentGroups         AgentGroup[]
-  agentRoutingRules   AgentRoutingRule[]
+  agentGroups       AgentGroup[]
+  agentRoutingRules AgentRoutingRule[]
 
   // Workflow Automation Relations
-  automations         Automation[]
+  automations Automation[]
 
   @@map("organizations")
 }
@@ -271,16 +271,16 @@ model Brand {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  brandBrain      BrandBrain?
-  contextSources  ContextSource[]
-  documentUploads DocumentUpload[]
-  socialAccounts  SocialAccount[]
-  contentQueue    ContentItem[]
-  autopilotConfig AutopilotConfig?
-  adAccounts      AdAccount[]
-  leads           Lead[]
-  analytics       ContentAnalytics[]
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brandBrain       BrandBrain?
+  contextSources   ContextSource[]
+  documentUploads  DocumentUpload[]
+  socialAccounts   SocialAccount[]
+  contentQueue     ContentItem[]
+  autopilotConfig  AutopilotConfig?
+  adAccounts       AdAccount[]
+  leads            Lead[]
+  analytics        ContentAnalytics[]
   contentTemplates ContentTemplate[]
 
   @@unique([organizationId, slug])
@@ -292,70 +292,70 @@ model Brand {
 // ============================================
 
 model BrandBrain {
-  id        String   @id @default(cuid())
-  brandId   String   @unique @map("brand_id")
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @unique @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Setup Wizard State
-  setupComplete     Boolean  @default(false) @map("setup_complete")
-  setupStep         Int      @default(0) @map("setup_step")
+  setupComplete Boolean @default(false) @map("setup_complete")
+  setupStep     Int     @default(0) @map("setup_step")
 
   // Brand Identity
-  companyName       String?  @map("company_name")
-  description       String?  @db.Text
-  mission           String?  @db.Text
-  values            String[] @default([])
+  companyName         String?  @map("company_name")
+  description         String?  @db.Text
+  mission             String?  @db.Text
+  values              String[] @default([])
   uniqueSellingPoints String[] @default([]) @map("unique_selling_points")
-  industry          String?
-  targetMarket      String?  @db.Text @map("target_market")
+  industry            String?
+  targetMarket        String?  @map("target_market") @db.Text
 
   // Voice & Tone (Enhanced)
-  voiceTone         VoiceTone @default(PROFESSIONAL) @map("voice_tone")
-  voiceToneCustom   String?  @map("voice_tone_custom") // For custom tone descriptions
-  formalityLevel    Int      @default(3) @map("formality_level") // 1-5 scale
-  writingStyle      String?  @db.Text @map("writing_style")
-  doNotMention      String[] @default([]) @map("do_not_mention") // Topics/words to avoid
-  mustMention       String[] @default([]) @map("must_mention")   // Key messages to include
+  voiceTone       VoiceTone @default(PROFESSIONAL) @map("voice_tone")
+  voiceToneCustom String?   @map("voice_tone_custom") // For custom tone descriptions
+  formalityLevel  Int       @default(3) @map("formality_level") // 1-5 scale
+  writingStyle    String?   @map("writing_style") @db.Text
+  doNotMention    String[]  @default([]) @map("do_not_mention") // Topics/words to avoid
+  mustMention     String[]  @default([]) @map("must_mention") // Key messages to include
 
   // Emoji & Hashtag Settings
-  useEmojis         Boolean  @default(true) @map("use_emojis")
+  useEmojis         Boolean        @default(true) @map("use_emojis")
   emojiFrequency    EmojiFrequency @default(MODERATE) @map("emoji_frequency")
-  emojiStyle        String   @default("moderate") @map("emoji_style") // Legacy, kept for compatibility
-  useHashtags       Boolean  @default(true) @map("use_hashtags")
-  hashtagStyle      HashtagStyle @default(MIXED) @map("hashtag_style")
-  preferredHashtags String[] @default([]) @map("preferred_hashtags")
-  bannedHashtags    String[] @default([]) @map("banned_hashtags")
+  emojiStyle        String         @default("moderate") @map("emoji_style") // Legacy, kept for compatibility
+  useHashtags       Boolean        @default(true) @map("use_hashtags")
+  hashtagStyle      HashtagStyle   @default(MIXED) @map("hashtag_style")
+  preferredHashtags String[]       @default([]) @map("preferred_hashtags")
+  bannedHashtags    String[]       @default([]) @map("banned_hashtags")
 
   // Content Preferences
-  ctaStyle          String   @default("soft") @map("cta_style")       // none, soft, direct, urgent
+  ctaStyle             String   @default("soft") @map("cta_style") // none, soft, direct, urgent
   contentPillarsLegacy String[] @default([]) @map("content_pillars") // Legacy, now using ContentPillar model
 
   // Legacy JSON fields (kept for migration, use related models)
-  targetAudience    Json?    @map("target_audience") // Legacy, now using BrandAudience model
-  buyerPersonas     Json?    @map("buyer_personas")  // Legacy
-  competitors       Json?    // Legacy, now using BrandCompetitor model
-  differentiators   String[] @default([])
+  targetAudience  Json?    @map("target_audience") // Legacy, now using BrandAudience model
+  buyerPersonas   Json?    @map("buyer_personas") // Legacy
+  competitors     Json? // Legacy, now using BrandCompetitor model
+  differentiators String[] @default([])
 
   // AI-Generated Content
-  brandSummary      String?  @db.Text @map("brand_summary") // AI-generated brand summary
-  brandEmbedding    Json?    @map("brand_embedding") // Vector embedding for semantic search
+  brandSummary   String? @map("brand_summary") @db.Text // AI-generated brand summary
+  brandEmbedding Json?   @map("brand_embedding") // Vector embedding for semantic search
 
   // AI Learnings (Legacy, now using BrandLearning model)
-  learnings         Json?    // Legacy: {topHashtags, avoidHashtags, bestPostingTimes, insights}
-  keyMessages       String[] @default([]) @map("key_messages")
+  learnings   Json? // Legacy: {topHashtags, avoidHashtags, bestPostingTimes, insights}
+  keyMessages String[] @default([]) @map("key_messages")
 
   // Last updated by AI
-  lastAnalyzedAt    DateTime? @map("last_analyzed_at")
+  lastAnalyzedAt     DateTime? @map("last_analyzed_at")
   summaryGeneratedAt DateTime? @map("summary_generated_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations to normalized models
-  audiences         BrandAudience[]
-  pillars           ContentPillar[]
-  brandCompetitors  BrandCompetitor[]
-  brandLearnings    BrandLearning[]
+  audiences        BrandAudience[]
+  pillars          ContentPillar[]
+  brandCompetitors BrandCompetitor[]
+  brandLearnings   BrandLearning[]
 
   @@map("brand_brains")
 }
@@ -365,37 +365,37 @@ model BrandBrain {
 // ============================================
 
 model BrandAudience {
-  id          String   @id @default(cuid())
-  brainId     String   @map("brain_id")
-  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+  id      String     @id @default(cuid())
+  brainId String     @map("brain_id")
+  brain   BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
 
   // Audience Details
-  name        String
-  description String?  @db.Text
+  name         String
+  description  String? @db.Text
   demographics String? @db.Text // General demographics summary
-  isPrimary   Boolean  @default(false) @map("is_primary")
-  isActive    Boolean  @default(true) @map("is_active")
+  isPrimary    Boolean @default(false) @map("is_primary")
+  isActive     Boolean @default(true) @map("is_active")
 
   // Demographics
-  ageRange    String?  @map("age_range") // e.g., "25-45"
-  gender      String?  // all, male, female, non-binary
-  location    String[] @default([])
-  income      String?  // e.g., "$50k-$100k"
-  education   String?
+  ageRange  String?  @map("age_range") // e.g., "25-45"
+  gender    String? // all, male, female, non-binary
+  location  String[] @default([])
+  income    String? // e.g., "$50k-$100k"
+  education String?
 
   // Psychographics
-  interests   String[] @default([])
-  painPoints  String[] @default([]) @map("pain_points")
-  goals       String[] @default([])
-  values      String[] @default([])
-  challenges  String[] @default([])
+  interests  String[] @default([])
+  painPoints String[] @default([]) @map("pain_points")
+  goals      String[] @default([])
+  values     String[] @default([])
+  challenges String[] @default([])
 
   // Behavior
-  platforms   SocialPlatform[] @default([])
-  buyingBehavior String? @db.Text @map("buying_behavior")
+  platforms      SocialPlatform[] @default([])
+  buyingBehavior String?          @map("buying_behavior") @db.Text
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brainId])
   @@map("brand_audiences")
@@ -406,32 +406,32 @@ model BrandAudience {
 // ============================================
 
 model ContentPillar {
-  id          String   @id @default(cuid())
-  brainId     String   @map("brain_id")
-  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+  id      String     @id @default(cuid())
+  brainId String     @map("brain_id")
+  brain   BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
 
   // Pillar Details
   name        String
-  description String?  @db.Text
-  color       String?  // For UI display, e.g., "#7C3AED"
-  icon        String?  // Icon name or emoji
+  description String? @db.Text
+  color       String? // For UI display, e.g., "#7C3AED"
+  icon        String? // Icon name or emoji
 
   // Content Guidelines
-  topics      String[] @default([]) // Sub-topics within this pillar
-  hashtags    String[] @default([]) // Recommended hashtags for this pillar
-  tone        VoiceTone? // Override tone for this pillar
+  topics   String[]   @default([]) // Sub-topics within this pillar
+  hashtags String[]   @default([]) // Recommended hashtags for this pillar
+  tone     VoiceTone? // Override tone for this pillar
 
   // Usage
-  priority    Int      @default(1) // 1 = highest priority
-  frequency   Int      @default(20) // Percentage of content (0-100)
-  isActive    Boolean  @default(true) @map("is_active")
+  priority  Int     @default(1) // 1 = highest priority
+  frequency Int     @default(20) // Percentage of content (0-100)
+  isActive  Boolean @default(true) @map("is_active")
 
   // Performance tracking
-  postCount   Int      @default(0) @map("post_count")
-  avgEngagement Decimal? @db.Decimal(5, 4) @map("avg_engagement")
+  postCount     Int      @default(0) @map("post_count")
+  avgEngagement Decimal? @map("avg_engagement") @db.Decimal(5, 4)
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brainId])
   @@map("content_pillars")
@@ -442,14 +442,14 @@ model ContentPillar {
 // ============================================
 
 model BrandCompetitor {
-  id          String   @id @default(cuid())
-  brainId     String   @map("brain_id")
-  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+  id      String     @id @default(cuid())
+  brainId String     @map("brain_id")
+  brain   BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
 
   // Competitor Info
   name        String
   website     String?
-  description String?  @db.Text
+  description String? @db.Text
 
   // Social Presence
   twitterHandle   String? @map("twitter_handle")
@@ -461,14 +461,14 @@ model BrandCompetitor {
   strengths       String[] @default([])
   weaknesses      String[] @default([])
   differentiators String[] @default([]) // How we differ from them
-  contentStrategy String?  @db.Text @map("content_strategy")
+  contentStrategy String?  @map("content_strategy") @db.Text
 
   // Monitoring
-  isMonitored     Boolean  @default(false) @map("is_monitored")
-  lastAnalyzed    DateTime? @map("last_analyzed")
+  isMonitored  Boolean   @default(false) @map("is_monitored")
+  lastAnalyzed DateTime? @map("last_analyzed")
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brainId])
   @@map("brand_competitors")
@@ -479,31 +479,31 @@ model BrandCompetitor {
 // ============================================
 
 model BrandLearning {
-  id          String   @id @default(cuid())
-  brainId     String   @map("brain_id")
-  brain       BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
+  id      String     @id @default(cuid())
+  brainId String     @map("brain_id")
+  brain   BrandBrain @relation(fields: [brainId], references: [id], onDelete: Cascade)
 
   // Learning Details
-  type        LearningType
-  insight     String   @db.Text
-  confidence  Decimal  @default(0.5) @db.Decimal(3, 2) // 0.00 - 1.00
+  type       LearningType
+  insight    String       @db.Text
+  confidence Decimal      @default(0.5) @db.Decimal(3, 2) // 0.00 - 1.00
 
   // Source
-  sourceData  Json?    @map("source_data") // Raw data that led to this insight
-  platform    SocialPlatform? // Platform-specific learning
+  sourceData Json?           @map("source_data") // Raw data that led to this insight
+  platform   SocialPlatform? // Platform-specific learning
 
   // Application
-  isActive    Boolean  @default(true) @map("is_active")
-  appliedCount Int     @default(0) @map("applied_count")
-  successRate Decimal? @db.Decimal(5, 4) @map("success_rate")
+  isActive     Boolean  @default(true) @map("is_active")
+  appliedCount Int      @default(0) @map("applied_count")
+  successRate  Decimal? @map("success_rate") @db.Decimal(5, 4)
 
   // Validity
-  validFrom   DateTime @default(now()) @map("valid_from")
-  validUntil  DateTime? @map("valid_until")
-  isExpired   Boolean  @default(false) @map("is_expired")
+  validFrom  DateTime  @default(now()) @map("valid_from")
+  validUntil DateTime? @map("valid_until")
+  isExpired  Boolean   @default(false) @map("is_expired")
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brainId])
   @@index([type])
@@ -515,21 +515,21 @@ model BrandLearning {
 // ============================================
 
 model ContextSource {
-  id        String   @id @default(cuid())
-  brandId   String   @map("brand_id")
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Source Type
-  type      ContextSourceType
-  name      String
+  type ContextSourceType
+  name String
 
   // Source Configuration
-  config    Json     // Type-specific config (url, email, apiKey, etc.)
+  config Json // Type-specific config (url, email, apiKey, etc.)
 
   // Status
   status    ContextSourceStatus @default(PENDING)
-  lastSync  DateTime? @map("last_sync")
-  syncError String?   @map("sync_error")
+  lastSync  DateTime?           @map("last_sync")
+  syncError String?             @map("sync_error")
 
   // Extracted content
   contextItems ContextItem[]
@@ -545,18 +545,18 @@ model ContextSource {
 }
 
 enum ContextSourceType {
-  WEBSITE         // Scrape website content
-  RSS_FEED        // RSS/Atom feed
-  PDF_UPLOAD      // Uploaded documents
-  GOOGLE_DOCS     // Google Docs integration
-  NOTION          // Notion integration
-  EMAIL_FORWARD   // Forwarded emails
-  MANUAL_NOTE     // Manual text input
-  CRM_HUBSPOT     // HubSpot CRM
-  CRM_SALESFORCE  // Salesforce CRM
-  SOCIAL_MENTION  // Social media mentions
-  NEWS_SEARCH     // Google News / industry news
-  COMPETITOR      // Competitor website monitoring
+  WEBSITE // Scrape website content
+  RSS_FEED // RSS/Atom feed
+  PDF_UPLOAD // Uploaded documents
+  GOOGLE_DOCS // Google Docs integration
+  NOTION // Notion integration
+  EMAIL_FORWARD // Forwarded emails
+  MANUAL_NOTE // Manual text input
+  CRM_HUBSPOT // HubSpot CRM
+  CRM_SALESFORCE // Salesforce CRM
+  SOCIAL_MENTION // Social media mentions
+  NEWS_SEARCH // Google News / industry news
+  COMPETITOR // Competitor website monitoring
 }
 
 enum ContextSourceStatus {
@@ -568,35 +568,35 @@ enum ContextSourceStatus {
 }
 
 model ContextItem {
-  id            String   @id @default(cuid())
-  sourceId      String   @map("source_id")
-  source        ContextSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  id       String        @id @default(cuid())
+  sourceId String        @map("source_id")
+  source   ContextSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
   // Content
-  title         String?
-  content       String   @db.Text
-  summary       String?  @db.Text  // AI-generated summary
-  url           String?
+  title   String?
+  content String  @db.Text
+  summary String? @db.Text // AI-generated summary
+  url     String?
 
   // Metadata
-  contentType   String   @default("text") @map("content_type") // text, news, product, service, testimonial
-  importance    Int      @default(5) // 1-10 scale
-  isEvergreen   Boolean  @default(false) @map("is_evergreen")
+  contentType String  @default("text") @map("content_type") // text, news, product, service, testimonial
+  importance  Int     @default(5) // 1-10 scale
+  isEvergreen Boolean @default(false) @map("is_evergreen")
 
   // AI Processing
-  embedding     Json?    // Vector embedding for semantic search
-  keywords      String[] @default([])
-  topics        String[] @default([])
+  embedding Json? // Vector embedding for semantic search
+  keywords  String[] @default([])
+  topics    String[] @default([])
 
   // Usage tracking
-  usedInPosts   Int      @default(0) @map("used_in_posts")
-  lastUsedAt    DateTime? @map("last_used_at")
+  usedInPosts Int       @default(0) @map("used_in_posts")
+  lastUsedAt  DateTime? @map("last_used_at")
 
   // Timestamps
-  publishedAt   DateTime? @map("published_at") // Original publish date
-  expiresAt     DateTime? @map("expires_at")   // When content becomes stale
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  publishedAt DateTime? @map("published_at") // Original publish date
+  expiresAt   DateTime? @map("expires_at") // When content becomes stale
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@index([sourceId])
   @@index([contentType])
@@ -608,22 +608,22 @@ model ContextItem {
 // ============================================
 
 model DocumentUpload {
-  id          String   @id @default(cuid())
-  brandId     String   @map("brand_id")
-  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // File Info
-  fileName    String   @map("file_name")
-  fileUrl     String   @map("file_url")        // Vercel Blob URL
-  mimeType    String   @map("mime_type")
-  fileSize    Int      @map("file_size")       // Size in bytes
+  fileName String @map("file_name")
+  fileUrl  String @map("file_url") // Vercel Blob URL
+  mimeType String @map("mime_type")
+  fileSize Int    @map("file_size") // Size in bytes
 
   // Processing Status
-  status      DocumentStatus @default(PENDING)
-  errorMessage String?  @map("error_message")
+  status       DocumentStatus @default(PENDING)
+  errorMessage String?        @map("error_message")
 
   // Linked Context Source (created after processing)
-  contextSourceId String?  @unique @map("context_source_id")
+  contextSourceId String?        @unique @map("context_source_id")
   contextSource   ContextSource? @relation(fields: [contextSourceId], references: [id], onDelete: SetNull)
 
   // Processing Metadata
@@ -632,9 +632,9 @@ model DocumentUpload {
   wordCount   Int?      @map("word_count")
 
   // Timestamps
-  uploadedBy  String    @map("uploaded_by")   // User ID
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  uploadedBy String   @map("uploaded_by") // User ID
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@index([brandId])
   @@index([status])
@@ -653,58 +653,58 @@ enum DocumentStatus {
 // ============================================
 
 model ContentItem {
-  id        String   @id @default(cuid())
-  brandId   String   @map("brand_id")
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Content
-  content       String   @db.Text
-  contentHtml   String?  @db.Text @map("content_html") // Rich text version
+  content     String  @db.Text
+  contentHtml String? @map("content_html") @db.Text // Rich text version
 
   // Media
-  mediaUrls     String[] @default([]) @map("media_urls")
-  mediaType     String?  @map("media_type") // image, video, carousel
+  mediaUrls String[] @default([]) @map("media_urls")
+  mediaType String?  @map("media_type") // image, video, carousel
 
   // Platform-specific versions
-  variations    Json?    // {twitter: "...", linkedin: "...", instagram: "..."}
+  variations Json? // {twitter: "...", linkedin: "...", instagram: "..."}
 
   // Type & Category
-  contentType   ContentType @default(POST) @map("content_type")
-  category      String?     // Product launch, testimonial, educational, etc.
+  contentType ContentType @default(POST) @map("content_type")
+  category    String? // Product launch, testimonial, educational, etc.
 
   // Generation Details
-  generatedFrom Json?       @map("generated_from") // {sourceType, sourceIds, prompt}
-  aiModel       String?     @map("ai_model")
-  aiPrompt      String?     @db.Text @map("ai_prompt")
+  generatedFrom Json?   @map("generated_from") // {sourceType, sourceIds, prompt}
+  aiModel       String? @map("ai_model")
+  aiPrompt      String? @map("ai_prompt") @db.Text
 
   // Scheduling
-  status        ContentStatus @default(DRAFT)
-  scheduledFor  DateTime?     @map("scheduled_for")
-  publishedAt   DateTime?     @map("published_at")
+  status       ContentStatus @default(DRAFT)
+  scheduledFor DateTime?     @map("scheduled_for")
+  publishedAt  DateTime?     @map("published_at")
 
   // Approval
-  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
-  approvedBy     String?        @map("approved_by")
-  approvedAt     DateTime?      @map("approved_at")
-  rejectionReason String?       @map("rejection_reason")
+  approvalStatus  ApprovalStatus @default(PENDING) @map("approval_status")
+  approvedBy      String?        @map("approved_by")
+  approvedAt      DateTime?      @map("approved_at")
+  rejectionReason String?        @map("rejection_reason")
 
   // Target platforms
   targetPlatforms SocialPlatform[] @default([]) @map("target_platforms")
 
   // Publishing results
-  publishResults  PublishResult[]
+  publishResults PublishResult[]
 
   // Performance
-  analytics       ContentAnalytics[]
+  analytics ContentAnalytics[]
 
   // Platform-specific variations
   contentVariations ContentVariation[]
 
   // Cross-Channel Integration
-  triggeredByVoice   Boolean  @default(false) @map("triggered_by_voice")
-  voiceAgentId       String?  @map("voice_agent_id")
-  callLogId          String?  @map("call_log_id")
-  workflowInstanceId String?  @map("workflow_instance_id")
+  triggeredByVoice   Boolean @default(false) @map("triggered_by_voice")
+  voiceAgentId       String? @map("voice_agent_id")
+  callLogId          String? @map("call_log_id")
+  workflowInstanceId String? @map("workflow_instance_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -717,29 +717,29 @@ model ContentItem {
 }
 
 enum ContentType {
-  POST          // Regular social post
-  STORY         // Story/ephemeral content
-  REEL          // Short video
-  THREAD        // Twitter thread / LinkedIn carousel
-  AD            // Paid ad creative
-  BLOG_EXCERPT  // Blog post excerpt
+  POST // Regular social post
+  STORY // Story/ephemeral content
+  REEL // Short video
+  THREAD // Twitter thread / LinkedIn carousel
+  AD // Paid ad creative
+  BLOG_EXCERPT // Blog post excerpt
 }
 
 enum ContentStatus {
-  DRAFT         // Just created
-  PENDING       // Awaiting approval
-  APPROVED      // Approved, waiting to schedule
-  SCHEDULED     // Scheduled for posting
-  PUBLISHING    // Currently being published
-  PUBLISHED     // Successfully posted
-  FAILED        // Publishing failed
-  ARCHIVED      // No longer active
+  DRAFT // Just created
+  PENDING // Awaiting approval
+  APPROVED // Approved, waiting to schedule
+  SCHEDULED // Scheduled for posting
+  PUBLISHING // Currently being published
+  PUBLISHED // Successfully posted
+  FAILED // Publishing failed
+  ARCHIVED // No longer active
 }
 
 enum ApprovalStatus {
-  PENDING       // Needs review
-  APPROVED      // Approved for posting
-  REJECTED      // Rejected by user
+  PENDING // Needs review
+  APPROVED // Approved for posting
+  REJECTED // Rejected by user
   AUTO_APPROVED // Auto-approved by rules
 }
 
@@ -796,23 +796,23 @@ enum SocialPlatform {
 }
 
 model PublishResult {
-  id            String   @id @default(cuid())
-  contentId     String   @map("content_id")
-  content       ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  contentId String      @map("content_id")
+  content   ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform      SocialPlatform
-  accountId     String   @map("account_id")
+  platform  SocialPlatform
+  accountId String         @map("account_id")
 
   // Result
-  status        PublishStatus @default(PENDING)
-  platformPostId String?  @map("platform_post_id")
-  postUrl       String?   @map("post_url")
-  error         String?
+  status         PublishStatus @default(PENDING)
+  platformPostId String?       @map("platform_post_id")
+  postUrl        String?       @map("post_url")
+  error          String?
 
   // Timing
-  attemptedAt   DateTime  @default(now()) @map("attempted_at")
-  publishedAt   DateTime? @map("published_at")
+  attemptedAt DateTime  @default(now()) @map("attempted_at")
+  publishedAt DateTime? @map("published_at")
 
   @@index([contentId])
   @@map("publish_results")
@@ -831,12 +831,12 @@ enum PublishStatus {
 // ============================================
 
 model AutopilotConfig {
-  id        String   @id @default(cuid())
-  brandId   String   @unique @map("brand_id")
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @unique @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Master Toggle
-  enabled   Boolean  @default(false)
+  enabled Boolean @default(false)
 
   // Approval Mode
   approvalMode ApprovalMode @default(REVIEW) @map("approval_mode")
@@ -845,21 +845,21 @@ model AutopilotConfig {
   vetoWindowHours Int @default(2) @map("veto_window_hours")
 
   // Posting Schedule
-  postsPerWeek      Int      @default(7) @map("posts_per_week")
-  postingDays       Int[]    @default([1, 2, 3, 4, 5]) @map("posting_days") // 0=Sun, 6=Sat
-  postingTimesUtc   String[] @default(["14:00", "18:00"]) @map("posting_times_utc")
-  timezone          String   @default("America/New_York")
+  postsPerWeek    Int      @default(7) @map("posts_per_week")
+  postingDays     Int[]    @default([1, 2, 3, 4, 5]) @map("posting_days") // 0=Sun, 6=Sat
+  postingTimesUtc String[] @default(["14:00", "18:00"]) @map("posting_times_utc")
+  timezone        String   @default("America/New_York")
 
   // Content Mix (percentages)
-  contentMix        Json     @default("{\"educational\": 40, \"promotional\": 20, \"engagement\": 20, \"news\": 20}") @map("content_mix")
+  contentMix Json @default("{\"educational\": 40, \"promotional\": 20, \"engagement\": 20, \"news\": 20}") @map("content_mix")
 
   // Platform Preferences
-  enabledPlatforms  SocialPlatform[] @default([]) @map("enabled_platforms")
-  platformPriority  Json?    @map("platform_priority") // Order of platform importance
+  enabledPlatforms SocialPlatform[] @default([]) @map("enabled_platforms")
+  platformPriority Json?            @map("platform_priority") // Order of platform importance
 
   // Generation Settings
-  generateImages    Boolean  @default(true) @map("generate_images")
-  imageStyle        String   @default("modern") @map("image_style") // modern, minimal, bold, playful
+  generateImages Boolean @default(true) @map("generate_images")
+  imageStyle     String  @default("modern") @map("image_style") // modern, minimal, bold, playful
 
   // Notifications
   notifyOnGeneration Boolean @default(true) @map("notify_on_generation")
@@ -873,9 +873,9 @@ model AutopilotConfig {
 }
 
 enum ApprovalMode {
-  REVIEW      // All posts require manual approval
-  AUTO_QUEUE  // Auto-approve to queue, user can veto
-  AUTO_POST   // Full autopilot, posts automatically
+  REVIEW // All posts require manual approval
+  AUTO_QUEUE // Auto-approve to queue, user can veto
+  AUTO_POST // Full autopilot, posts automatically
 }
 
 // ============================================
@@ -883,26 +883,26 @@ enum ApprovalMode {
 // ============================================
 
 model SocialAccount {
-  id           String    @id @default(cuid())
-  brandId      String    @map("brand_id")
-  brand        Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform     SocialPlatform
+  platform SocialPlatform
 
   // Account Info
-  platformId   String?   @map("platform_id")
-  username     String?
-  displayName  String?   @map("display_name")
-  avatar       String?
-  profileUrl   String?   @map("profile_url")
+  platformId  String? @map("platform_id")
+  username    String?
+  displayName String? @map("display_name")
+  avatar      String?
+  profileUrl  String? @map("profile_url")
 
   // OAuth Tokens (encrypted in production)
   accessToken  String?   @map("access_token") @db.Text
   refreshToken String?   @map("refresh_token") @db.Text
   tokenExpires DateTime? @map("token_expires")
   tokenScope   String?   @map("token_scope")
-  tokenType    String?   @map("token_type")   // bearer
+  tokenType    String?   @map("token_type") // bearer
 
   // Token refresh management
   refreshExpiresAt DateTime? @map("refresh_expires_at")
@@ -911,28 +911,28 @@ model SocialAccount {
   refreshError     String?   @map("refresh_error")
 
   // PKCE support (Twitter)
-  codeVerifier     String?   @map("code_verifier") @db.Text  // Temporary, cleared after exchange
+  codeVerifier String? @map("code_verifier") @db.Text // Temporary, cleared after exchange
 
   // Status
-  status       AccountStatus @default(PENDING)
-  lastUsed     DateTime?     @map("last_used")
-  lastError    String?       @map("last_error")
+  status    AccountStatus @default(PENDING)
+  lastUsed  DateTime?     @map("last_used")
+  lastError String?       @map("last_error")
 
   // Settings
-  settings     Json      @default("{}")
-  isDefault    Boolean   @default(false) @map("is_default")
+  settings  Json    @default("{}")
+  isDefault Boolean @default(false) @map("is_default")
 
   // Platform stats (cached from API)
-  followerCount  Int?     @map("follower_count")
-  followingCount Int?     @map("following_count")
-  postCount      Int?     @map("post_count")
-  platformData   Json?    @map("platform_data")  // Extra platform-specific data
+  followerCount  Int?  @map("follower_count")
+  followingCount Int?  @map("following_count")
+  postCount      Int?  @map("post_count")
+  platformData   Json? @map("platform_data") // Extra platform-specific data
 
   // Content variations assigned to this account
   contentVariations ContentVariation[]
 
-  connectedAt  DateTime  @default(now()) @map("connected_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  connectedAt DateTime @default(now()) @map("connected_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@unique([brandId, platform, platformId])
   @@index([brandId])
@@ -949,15 +949,15 @@ enum AccountStatus {
 
 // OAuth State for CSRF protection
 model OAuthState {
-  id          String   @id @default(cuid())
-  state       String   @unique
-  platform    SocialPlatform
-  brandId     String   @map("brand_id")
-  userId      String   @map("user_id")
-  codeVerifier String? @map("code_verifier")  // For PKCE (Twitter)
-  redirectUrl String?  @map("redirect_url")
-  expiresAt   DateTime @map("expires_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           String         @id @default(cuid())
+  state        String         @unique
+  platform     SocialPlatform
+  brandId      String         @map("brand_id")
+  userId       String         @map("user_id")
+  codeVerifier String?        @map("code_verifier") // For PKCE (Twitter)
+  redirectUrl  String?        @map("redirect_url")
+  expiresAt    DateTime       @map("expires_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
 
   @@index([state])
   @@index([expiresAt])
@@ -969,33 +969,33 @@ model OAuthState {
 // ============================================
 
 model ContentAnalytics {
-  id          String   @id @default(cuid())
-  brandId     String   @map("brand_id")
-  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  contentId   String   @map("content_id")
-  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  brandId   String      @map("brand_id")
+  brand     Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  contentId String      @map("content_id")
+  content   ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform    SocialPlatform
+  platform SocialPlatform
 
   // Engagement Metrics
-  impressions Int      @default(0)
-  reach       Int      @default(0)
-  likes       Int      @default(0)
-  comments    Int      @default(0)
-  shares      Int      @default(0)
-  saves       Int      @default(0)
-  clicks      Int      @default(0)
+  impressions Int @default(0)
+  reach       Int @default(0)
+  likes       Int @default(0)
+  comments    Int @default(0)
+  shares      Int @default(0)
+  saves       Int @default(0)
+  clicks      Int @default(0)
 
   // Calculated
-  engagementRate Decimal? @db.Decimal(5, 4) @map("engagement_rate")
+  engagementRate Decimal? @map("engagement_rate") @db.Decimal(5, 4)
 
   // Video-specific
-  videoViews     Int?     @map("video_views")
-  avgWatchTime   Int?     @map("avg_watch_time") // seconds
+  videoViews   Int? @map("video_views")
+  avgWatchTime Int? @map("avg_watch_time") // seconds
 
   // Snapshot time
-  recordedAt  DateTime @default(now()) @map("recorded_at")
+  recordedAt DateTime @default(now()) @map("recorded_at")
 
   @@index([brandId])
   @@index([contentId])
@@ -1007,21 +1007,21 @@ model ContentAnalytics {
 // ============================================
 
 model AdAccount {
-  id        String   @id @default(cuid())
-  brandId   String   @map("brand_id")
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform  AdPlatform
+  platform AdPlatform
 
   // Account info
-  accountId     String?   @map("account_id")
-  accountName   String    @map("account_name")
+  accountId   String? @map("account_id")
+  accountName String  @map("account_name")
 
   // Credentials (encrypted in production)
-  accessToken   String?   @map("access_token") @db.Text
-  refreshToken  String?   @map("refresh_token") @db.Text
-  tokenExpiry   DateTime? @map("token_expiry")
+  accessToken  String?   @map("access_token") @db.Text
+  refreshToken String?   @map("refresh_token") @db.Text
+  tokenExpiry  DateTime? @map("token_expiry")
 
   // Status
   status    AccountStatus @default(PENDING)
@@ -1048,39 +1048,39 @@ enum AdPlatform {
 }
 
 model AdCampaign {
-  id        String   @id @default(cuid())
-  brandId   String   @map("brand_id")
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
 
   // Account reference
-  adAccountId String?   @map("ad_account_id")
+  adAccountId String?    @map("ad_account_id")
   adAccount   AdAccount? @relation(fields: [adAccountId], references: [id], onDelete: SetNull)
 
   // External reference
-  externalId  String?   @map("external_id")
+  externalId String? @map("external_id")
 
   // Campaign info
-  name        String
-  platform    AdPlatform
-  objective   CampaignObjective @default(LEAD_GENERATION)
-  status      CampaignStatus @default(DRAFT)
+  name      String
+  platform  AdPlatform
+  objective CampaignObjective @default(LEAD_GENERATION)
+  status    CampaignStatus    @default(DRAFT)
 
   // Budget
-  dailyBudget   Decimal?  @db.Decimal(10, 2) @map("daily_budget")
-  totalBudget   Decimal?  @db.Decimal(10, 2) @map("total_budget")
-  currency      String    @default("USD")
+  dailyBudget Decimal? @map("daily_budget") @db.Decimal(10, 2)
+  totalBudget Decimal? @map("total_budget") @db.Decimal(10, 2)
+  currency    String   @default("USD")
 
   // Targeting (JSON)
-  targeting     Json?
+  targeting Json?
 
   // Schedule
-  startDate     DateTime? @map("start_date")
-  endDate       DateTime? @map("end_date")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
 
   // Performance
-  impressions   Int       @default(0)
-  clicks        Int       @default(0)
-  leads         Int       @default(0)
-  spend         Decimal   @default(0) @db.Decimal(10, 2)
+  impressions Int     @default(0)
+  clicks      Int     @default(0)
+  leads       Int     @default(0)
+  spend       Decimal @default(0) @db.Decimal(10, 2)
 
   // Leads from this campaign
   capturedLeads Lead[]
@@ -1115,38 +1115,38 @@ enum CampaignStatus {
 // ============================================
 
 model Lead {
-  id             String   @id @default(cuid())
-  brandId        String   @map("brand_id")
-  brand          Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  organizationId String   @map("organization_id")
+  id             String       @id @default(cuid())
+  brandId        String       @map("brand_id")
+  brand          Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  organizationId String       @map("organization_id")
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Contact Info
-  email          String?
-  phone          String?
-  firstName      String    @map("first_name")
-  lastName       String?   @map("last_name")
-  company        String?
-  jobTitle       String?   @map("job_title")
+  email     String?
+  phone     String?
+  firstName String  @map("first_name")
+  lastName  String? @map("last_name")
+  company   String?
+  jobTitle  String? @map("job_title")
 
   // Source
-  source         LeadSource @default(MANUAL)
-  sourcePlatform String?    @map("source_platform")
-  campaignId     String?    @map("campaign_id")
+  source         LeadSource  @default(MANUAL)
+  sourcePlatform String?     @map("source_platform")
+  campaignId     String?     @map("campaign_id")
   campaign       AdCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  utmParams      Json?      @map("utm_params")
+  utmParams      Json?       @map("utm_params")
 
   // Status
-  status         LeadStatus @default(NEW)
-  score          Int        @default(0)
+  status LeadStatus @default(NEW)
+  score  Int        @default(0)
 
   // Notes
-  notes          String?    @db.Text
-  tags           String[]   @default([])
-  customFields   Json       @default("{}") @map("custom_fields")
+  notes        String?  @db.Text
+  tags         String[] @default([])
+  customFields Json     @default("{}") @map("custom_fields")
 
-  createdAt      DateTime   @default(now()) @map("created_at")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brandId])
   @@index([organizationId])
@@ -1189,43 +1189,43 @@ enum LeadStatus {
 // ============================================
 
 model VoiceAgent {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
-  personaId      String?  @map("persona_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
+  personaId      String? @map("persona_id")
 
   // Basic Info
-  name           String
-  description    String?  @db.Text
-  agentType      AgentType @default(INBOUND) @map("agent_type")
+  name        String
+  description String?   @db.Text
+  agentType   AgentType @default(INBOUND) @map("agent_type")
 
   // Instructions
-  systemPrompt   String?  @db.Text @map("system_prompt")
-  customInstructions String? @db.Text @map("custom_instructions")
+  systemPrompt       String? @map("system_prompt") @db.Text
+  customInstructions String? @map("custom_instructions") @db.Text
 
   // LLM Configuration
-  llmProvider    String   @default("openai") @map("llm_provider")
-  llmModel       String   @default("gpt-4o-mini") @map("llm_model")
-  temperature    Float    @default(0.7)
-  language       String   @default("en-US")
+  llmProvider String @default("openai") @map("llm_provider")
+  llmModel    String @default("gpt-4o-mini") @map("llm_model")
+  temperature Float  @default(0.7)
+  language    String @default("en-US")
 
   // STT Configuration
-  sttProvider    String   @default("deepgram") @map("stt_provider")
-  sttModel       String   @default("nova-2") @map("stt_model")
-  sttLanguage    String   @default("en") @map("stt_language")
+  sttProvider String @default("deepgram") @map("stt_provider")
+  sttModel    String @default("nova-2") @map("stt_model")
+  sttLanguage String @default("en") @map("stt_language")
 
   // TTS Configuration
-  ttsProvider    String   @default("openai") @map("tts_provider")
-  ttsModel       String?  @map("tts_model")
-  ttsVoiceId     String?  @map("tts_voice_id")
-  voiceId        String?  @map("voice_id") // Legacy
+  ttsProvider String  @default("openai") @map("tts_provider")
+  ttsModel    String? @map("tts_model")
+  ttsVoiceId  String? @map("tts_voice_id")
+  voiceId     String? @map("voice_id") // Legacy
 
   // Realtime API Configuration
-  realtimeVoice  String   @default("alloy") @map("realtime_voice")
+  realtimeVoice String @default("alloy") @map("realtime_voice")
 
   // VAD Configuration
-  vadEnabled     Boolean  @default(true) @map("vad_enabled")
-  vadProvider    String   @default("silero") @map("vad_provider")
+  vadEnabled  Boolean @default(true) @map("vad_enabled")
+  vadProvider String  @default("silero") @map("vad_provider")
 
   // Turn Detection
   turnDetectionModel String @default("multilingual") @map("turn_detection_model")
@@ -1241,37 +1241,37 @@ model VoiceAgent {
   minInterruptionDuration  Float   @default(0.2) @map("min_interruption_duration")
 
   // Greeting Configuration
-  greetingEnabled Boolean  @default(true) @map("greeting_enabled")
-  greetingMessage String?  @db.Text @map("greeting_message")
+  greetingEnabled Boolean @default(true) @map("greeting_enabled")
+  greetingMessage String? @map("greeting_message") @db.Text
 
   // Multi-Channel Configuration
-  channels       Json     @default("{}") // {voice: {}, chat: {}, sms: {}}
+  channels Json @default("{}") // {voice: {}, chat: {}, sms: {}}
 
   // Deployment
-  deploymentMode String   @default("production") @map("deployment_mode")
-  filePath       String?  @map("file_path")
-  status         String   @default("created")
+  deploymentMode String  @default("production") @map("deployment_mode")
+  filePath       String? @map("file_path")
+  status         String  @default("created")
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  settings       Json     @default("{}")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Cross-Channel Integration
-  useBrandVoice      Boolean     @default(true) @map("use_brand_voice")
-  linkedBrandBrainId String?     @map("linked_brand_brain_id")
+  useBrandVoice      Boolean      @default(true) @map("use_brand_voice")
+  linkedBrandBrainId String?      @map("linked_brand_brain_id")
   sourceChannel      ChannelType? @map("source_channel")
-  sourceContentId    String?     @map("source_content_id")
+  sourceContentId    String?      @map("source_content_id")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  persona        VoicePersona? @relation(fields: [personaId], references: [id], onDelete: SetNull)
-  phoneMappings  PhoneMapping[]
-  callLogs       CallLog[]
-  campaigns      VoiceCampaign[]
-  tools          AgentTool[]
-  knowledgeBases AgentKnowledgeBase[]
+  organization     Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  persona          VoicePersona?        @relation(fields: [personaId], references: [id], onDelete: SetNull)
+  phoneMappings    PhoneMapping[]
+  callLogs         CallLog[]
+  campaigns        VoiceCampaign[]
+  tools            AgentTool[]
+  knowledgeBases   AgentKnowledgeBase[]
   conversationFlow ConversationFlow?
 
   @@index([organizationId])
@@ -1290,45 +1290,45 @@ enum AgentType {
 // ============================================
 
 model AgentTool {
-  id             String   @id @default(cuid())
-  agentId        String   @map("agent_id")
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  agentId        String @map("agent_id")
+  organizationId String @map("organization_id")
 
   // Tool Definition
-  name           String   // e.g., "lookup_customer", "schedule_appointment"
-  description    String   @db.Text // Shown to AI to understand when to use
-  type           ToolType @default(WEBHOOK)
+  name        String // e.g., "lookup_customer", "schedule_appointment"
+  description String   @db.Text // Shown to AI to understand when to use
+  type        ToolType @default(WEBHOOK)
 
   // Webhook Configuration (for WEBHOOK type)
-  webhookUrl     String?  @map("webhook_url")
-  webhookMethod  String   @default("POST") @map("webhook_method") // GET, POST, PUT
-  webhookHeaders Json     @default("{}") @map("webhook_headers") // {"Authorization": "Bearer xxx"}
+  webhookUrl     String? @map("webhook_url")
+  webhookMethod  String  @default("POST") @map("webhook_method") // GET, POST, PUT
+  webhookHeaders Json    @default("{}") @map("webhook_headers") // {"Authorization": "Bearer xxx"}
 
   // Authentication
-  authType       String?  @map("auth_type") // none, api_key, bearer, basic
-  authConfig     Json     @default("{}") @map("auth_config") // encrypted credentials
+  authType   String? @map("auth_type") // none, api_key, bearer, basic
+  authConfig Json    @default("{}") @map("auth_config") // encrypted credentials
 
   // Parameters Schema (JSON Schema format for OpenAI function calling)
-  parameters     Json     @default("{}") // {"type": "object", "properties": {...}}
-  requiredParams Json     @default("[]") @map("required_params") // ["customer_id"]
+  parameters     Json @default("{}") // {"type": "object", "properties": {...}}
+  requiredParams Json @default("[]") @map("required_params") // ["customer_id"]
 
   // Response Handling
-  responseMapping Json    @default("{}") @map("response_mapping") // Map API response to AI context
-  timeoutMs      Int      @default(10000) @map("timeout_ms")
-  retryCount     Int      @default(1) @map("retry_count")
+  responseMapping Json @default("{}") @map("response_mapping") // Map API response to AI context
+  timeoutMs       Int  @default(10000) @map("timeout_ms")
+  retryCount      Int  @default(1) @map("retry_count")
 
   // Built-in Tool Configuration (for BUILTIN type)
-  builtinType    String?  @map("builtin_type") // transfer_call, end_call, send_sms, etc.
-  builtinConfig  Json     @default("{}") @map("builtin_config")
+  builtinType   String? @map("builtin_type") // transfer_call, end_call, send_sms, etc.
+  builtinConfig Json    @default("{}") @map("builtin_config")
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  agent          VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  usages         AgentToolUsage[]
+  agent  VoiceAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  usages AgentToolUsage[]
 
   @@index([agentId])
   @@index([organizationId])
@@ -1336,23 +1336,23 @@ model AgentTool {
 }
 
 model AgentToolUsage {
-  id           String   @id @default(cuid())
-  toolId       String   @map("tool_id")
-  callLogId    String?  @map("call_log_id")
+  id        String  @id @default(cuid())
+  toolId    String  @map("tool_id")
+  callLogId String? @map("call_log_id")
 
   // Execution Details
-  executedAt   DateTime @default(now()) @map("executed_at")
-  durationMs   Int?     @map("duration_ms")
-  status       String   @default("pending") // pending, success, failed, timeout
+  executedAt DateTime @default(now()) @map("executed_at")
+  durationMs Int?     @map("duration_ms")
+  status     String   @default("pending") // pending, success, failed, timeout
 
   // Request/Response
-  inputParams  Json     @default("{}") @map("input_params")
+  inputParams  Json    @default("{}") @map("input_params")
   response     Json?
-  errorMessage String?  @db.Text @map("error_message")
+  errorMessage String? @map("error_message") @db.Text
 
   // Relations
-  tool         AgentTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
-  callLog      CallLog?  @relation(fields: [callLogId], references: [id], onDelete: SetNull)
+  tool    AgentTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  callLog CallLog?  @relation(fields: [callLogId], references: [id], onDelete: SetNull)
 
   @@index([toolId])
   @@index([callLogId])
@@ -1360,9 +1360,9 @@ model AgentToolUsage {
 }
 
 enum ToolType {
-  WEBHOOK    // Call external API
-  BUILTIN    // Built-in actions (transfer, end call, etc.)
-  FUNCTION   // Custom code execution (future)
+  WEBHOOK // Call external API
+  BUILTIN // Built-in actions (transfer, end call, etc.)
+  FUNCTION // Custom code execution (future)
 }
 
 // ============================================
@@ -1370,50 +1370,50 @@ enum ToolType {
 // ============================================
 
 model AgentGroup {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
 
   // Basic Info
-  name           String
-  description    String?  @db.Text
+  name        String
+  description String? @db.Text
 
   // Routing Strategy
   routingStrategy RoutingStrategy @default(ROUND_ROBIN) @map("routing_strategy")
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  members        AgentGroupMember[]
-  routingRules   AgentRoutingRule[]
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      AgentGroupMember[]
+  routingRules AgentRoutingRule[]
 
   @@index([organizationId])
   @@map("agent_groups")
 }
 
 model AgentGroupMember {
-  id             String   @id @default(cuid())
-  groupId        String   @map("group_id")
-  agentId        String   @map("agent_id")
+  id      String @id @default(cuid())
+  groupId String @map("group_id")
+  agentId String @map("agent_id")
 
   // Member Config
-  priority       Int      @default(0)  // Higher priority = preferred
-  weight         Int      @default(100) // For weighted routing (0-100)
-  maxConcurrent  Int      @default(5) @map("max_concurrent") // Max simultaneous calls
+  priority      Int @default(0) // Higher priority = preferred
+  weight        Int @default(100) // For weighted routing (0-100)
+  maxConcurrent Int @default(5) @map("max_concurrent") // Max simultaneous calls
 
   // Skills (for skills-based routing)
-  skills         Json     @default("[]") // ["sales", "support", "spanish"]
+  skills Json @default("[]") // ["sales", "support", "spanish"]
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  group          AgentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group AgentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, agentId])
   @@index([groupId])
@@ -1422,41 +1422,41 @@ model AgentGroupMember {
 }
 
 model AgentRoutingRule {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  groupId        String?  @map("group_id")
-  targetAgentId  String?  @map("target_agent_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  groupId        String? @map("group_id")
+  targetAgentId  String? @map("target_agent_id")
 
   // Rule Info
-  name           String
-  description    String?  @db.Text
-  priority       Int      @default(0) // Higher = evaluated first
+  name        String
+  description String? @db.Text
+  priority    Int     @default(0) // Higher = evaluated first
 
   // Conditions (JSON array of conditions)
-  conditions     Json     @default("[]") // [{type: "time_of_day", operator: "between", value: ["09:00", "17:00"]}]
+  conditions Json @default("[]") // [{type: "time_of_day", operator: "between", value: ["09:00", "17:00"]}]
 
   // Fallback Configuration
-  fallbackAgentId  String? @map("fallback_agent_id")
-  fallbackGroupId  String? @map("fallback_group_id")
-  fallbackAction   String  @default("voicemail") @map("fallback_action") // voicemail, message, queue
+  fallbackAgentId String? @map("fallback_agent_id")
+  fallbackGroupId String? @map("fallback_group_id")
+  fallbackAction  String  @default("voicemail") @map("fallback_action") // voicemail, message, queue
 
   // Transfer Settings
-  announcementMessage String? @db.Text @map("announcement_message")
-  holdMusic          String? @map("hold_music") // URL to hold music
-  maxWaitSeconds     Int     @default(300) @map("max_wait_seconds")
+  announcementMessage String? @map("announcement_message") @db.Text
+  holdMusic           String? @map("hold_music") // URL to hold music
+  maxWaitSeconds      Int     @default(300) @map("max_wait_seconds")
 
   // Schedule (optional time-based activation)
   scheduleEnabled Boolean @default(false) @map("schedule_enabled")
   schedule        Json    @default("{}") // {days: ["mon","tue"], startTime: "09:00", endTime: "17:00", timezone: "America/New_York"}
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  group          AgentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  group        AgentGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([groupId])
@@ -1465,12 +1465,12 @@ model AgentRoutingRule {
 }
 
 enum RoutingStrategy {
-  ROUND_ROBIN     // Distribute evenly across agents
-  LEAST_BUSY      // Route to agent with fewest active calls
-  PRIORITY        // Route to highest priority available agent
-  WEIGHTED        // Random weighted distribution
-  SKILLS_BASED    // Match required skills
-  RANDOM          // Random selection
+  ROUND_ROBIN // Distribute evenly across agents
+  LEAST_BUSY // Route to agent with fewest active calls
+  PRIORITY // Route to highest priority available agent
+  WEIGHTED // Random weighted distribution
+  SKILLS_BASED // Match required skills
+  RANDOM // Random selection
 }
 
 // ============================================
@@ -1478,33 +1478,33 @@ enum RoutingStrategy {
 // ============================================
 
 model KnowledgeBase {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
 
   // Basic Info
-  name           String
-  description    String?  @db.Text
+  name        String
+  description String? @db.Text
 
   // Configuration
-  embeddingModel String   @default("text-embedding-3-small") @map("embedding_model")
-  chunkSize      Int      @default(1000) @map("chunk_size")
-  chunkOverlap   Int      @default(200) @map("chunk_overlap")
+  embeddingModel String @default("text-embedding-3-small") @map("embedding_model")
+  chunkSize      Int    @default(1000) @map("chunk_size")
+  chunkOverlap   Int    @default(200) @map("chunk_overlap")
 
   // Stats
-  documentCount  Int      @default(0) @map("document_count")
-  chunkCount     Int      @default(0) @map("chunk_count")
-  totalTokens    Int      @default(0) @map("total_tokens")
+  documentCount Int @default(0) @map("document_count")
+  chunkCount    Int @default(0) @map("chunk_count")
+  totalTokens   Int @default(0) @map("total_tokens")
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  lastSyncedAt   DateTime? @map("last_synced_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastSyncedAt DateTime? @map("last_synced_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  documents      KnowledgeDocument[]
-  chunks         KnowledgeChunk[]
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents           KnowledgeDocument[]
+  chunks              KnowledgeChunk[]
   agentKnowledgeBases AgentKnowledgeBase[]
 
   @@index([organizationId])
@@ -1512,36 +1512,36 @@ model KnowledgeBase {
 }
 
 model KnowledgeDocument {
-  id               String   @id @default(cuid())
-  knowledgeBaseId  String   @map("knowledge_base_id")
+  id              String @id @default(cuid())
+  knowledgeBaseId String @map("knowledge_base_id")
 
   // Document Info
-  name             String
-  type             KnowledgeDocType @default(TEXT)
-  sourceUrl        String?  @map("source_url")
-  filePath         String?  @map("file_path")
-  mimeType         String?  @map("mime_type")
+  name      String
+  type      KnowledgeDocType @default(TEXT)
+  sourceUrl String?          @map("source_url")
+  filePath  String?          @map("file_path")
+  mimeType  String?          @map("mime_type")
 
   // Content
-  content          String?  @db.Text // Raw extracted text
-  metadata         Json     @default("{}") // {author, created, etc.}
+  content  String? @db.Text // Raw extracted text
+  metadata Json    @default("{}") // {author, created, etc.}
 
   // Processing
-  status           DocumentStatus @default(PENDING)
-  errorMessage     String?  @db.Text @map("error_message")
-  processedAt      DateTime? @map("processed_at")
+  status       DocumentStatus @default(PENDING)
+  errorMessage String?        @map("error_message") @db.Text
+  processedAt  DateTime?      @map("processed_at")
 
   // Stats
-  chunkCount       Int      @default(0) @map("chunk_count")
-  tokenCount       Int      @default(0) @map("token_count")
-  characterCount   Int      @default(0) @map("character_count")
+  chunkCount     Int @default(0) @map("chunk_count")
+  tokenCount     Int @default(0) @map("token_count")
+  characterCount Int @default(0) @map("character_count")
 
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
-  chunks           KnowledgeChunk[]
+  knowledgeBase KnowledgeBase    @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks        KnowledgeChunk[]
 
   @@index([knowledgeBaseId])
   @@index([status])
@@ -1549,27 +1549,27 @@ model KnowledgeDocument {
 }
 
 model KnowledgeChunk {
-  id               String   @id @default(cuid())
-  knowledgeBaseId  String   @map("knowledge_base_id")
-  documentId       String   @map("document_id")
+  id              String @id @default(cuid())
+  knowledgeBaseId String @map("knowledge_base_id")
+  documentId      String @map("document_id")
 
   // Chunk Content
-  content          String   @db.Text
-  chunkIndex       Int      @map("chunk_index")
+  content    String @db.Text
+  chunkIndex Int    @map("chunk_index")
 
   // Embedding
-  embedding        Bytes?   // Stored as binary for efficiency
-  embeddingModel   String?  @map("embedding_model")
+  embedding      Bytes? // Stored as binary for efficiency
+  embeddingModel String? @map("embedding_model")
 
   // Metadata
-  metadata         Json     @default("{}") // {section, page, etc.}
-  tokenCount       Int      @default(0) @map("token_count")
+  metadata   Json @default("{}") // {section, page, etc.}
+  tokenCount Int  @default(0) @map("token_count")
 
-  createdAt        DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
-  document         KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase     @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  document      KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([knowledgeBaseId])
   @@index([documentId])
@@ -1578,21 +1578,21 @@ model KnowledgeChunk {
 
 // Link table for many-to-many relationship between agents and knowledge bases
 model AgentKnowledgeBase {
-  id               String   @id @default(cuid())
-  agentId          String   @map("agent_id")
-  knowledgeBaseId  String   @map("knowledge_base_id")
+  id              String @id @default(cuid())
+  agentId         String @map("agent_id")
+  knowledgeBaseId String @map("knowledge_base_id")
 
   // Configuration
-  priority         Int      @default(0) // Higher = searched first
-  maxChunks        Int      @default(5) @map("max_chunks") // Max chunks to retrieve per query
-  minScore         Float    @default(0.7) @map("min_score") // Minimum similarity score
+  priority  Int   @default(0) // Higher = searched first
+  maxChunks Int   @default(5) @map("max_chunks") // Max chunks to retrieve per query
+  minScore  Float @default(0.7) @map("min_score") // Minimum similarity score
 
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  agent            VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  knowledgeBase    KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  agent         VoiceAgent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
 
   @@unique([agentId, knowledgeBaseId])
   @@index([agentId])
@@ -1601,12 +1601,12 @@ model AgentKnowledgeBase {
 }
 
 enum KnowledgeDocType {
-  TEXT       // Plain text
-  PDF        // PDF document
-  URL        // Web page
-  MARKDOWN   // Markdown file
-  DOCX       // Word document
-  CSV        // CSV data
+  TEXT // Plain text
+  PDF // PDF document
+  URL // Web page
+  MARKDOWN // Markdown file
+  DOCX // Word document
+  CSV // CSV data
 }
 
 // ============================================
@@ -1614,36 +1614,36 @@ enum KnowledgeDocType {
 // ============================================
 
 model ConversationFlow {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  agentId        String?  @unique @map("agent_id") // One flow per agent
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  agentId        String? @unique @map("agent_id") // One flow per agent
 
   // Basic Info
-  name           String
-  description    String?  @db.Text
+  name        String
+  description String? @db.Text
 
   // Version Control
-  version        Int      @default(1)
-  isPublished    Boolean  @default(false) @map("is_published")
-  publishedAt    DateTime? @map("published_at")
+  version     Int       @default(1)
+  isPublished Boolean   @default(false) @map("is_published")
+  publishedAt DateTime? @map("published_at")
 
   // Flow Configuration
-  startNodeId    String?  @map("start_node_id") // Entry point node
-  settings       Json     @default("{}") // Global flow settings
+  startNodeId String? @map("start_node_id") // Entry point node
+  settings    Json    @default("{}") // Global flow settings
 
   // Canvas State (for visual editor)
-  viewport       Json     @default("{\"x\":0,\"y\":0,\"zoom\":1}") // {x, y, zoom}
+  viewport Json @default("{\"x\":0,\"y\":0,\"zoom\":1}") // {x, y, zoom}
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  nodes          FlowNode[]
-  edges          FlowEdge[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        VoiceAgent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  nodes        FlowNode[]
+  edges        FlowEdge[]
 
   @@index([organizationId])
   @@index([agentId])
@@ -1651,23 +1651,23 @@ model ConversationFlow {
 }
 
 model FlowNode {
-  id             String   @id @default(cuid())
-  flowId         String   @map("flow_id")
+  id     String @id @default(cuid())
+  flowId String @map("flow_id")
 
   // Node Identification
-  nodeId         String   @map("node_id") // Unique within flow (for React Flow)
-  type           FlowNodeType @default(MESSAGE)
+  nodeId String       @map("node_id") // Unique within flow (for React Flow)
+  type   FlowNodeType @default(MESSAGE)
 
   // Node Content
-  label          String
-  content        String?  @db.Text // Message content, prompt, etc.
+  label   String
+  content String? @db.Text // Message content, prompt, etc.
 
   // Position (for visual editor)
-  positionX      Float    @default(0) @map("position_x")
-  positionY      Float    @default(0) @map("position_y")
+  positionX Float @default(0) @map("position_x")
+  positionY Float @default(0) @map("position_y")
 
   // Configuration based on type
-  config         Json     @default("{}")
+  config Json @default("{}")
   // For MESSAGE: {text, ssml, audioUrl}
   // For CONDITION: {variable, operator, value}
   // For INPUT: {variable, validation, timeout}
@@ -1677,15 +1677,15 @@ model FlowNode {
   // For END: {outcome, summary}
 
   // Metadata
-  metadata       Json     @default("{}")
+  metadata Json @default("{}")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  flow           ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  outgoingEdges  FlowEdge[] @relation("SourceNode")
-  incomingEdges  FlowEdge[] @relation("TargetNode")
+  flow          ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  outgoingEdges FlowEdge[]       @relation("SourceNode")
+  incomingEdges FlowEdge[]       @relation("TargetNode")
 
   @@unique([flowId, nodeId])
   @@index([flowId])
@@ -1693,37 +1693,37 @@ model FlowNode {
 }
 
 model FlowEdge {
-  id             String   @id @default(cuid())
-  flowId         String   @map("flow_id")
+  id     String @id @default(cuid())
+  flowId String @map("flow_id")
 
   // Edge Identification
-  edgeId         String   @map("edge_id") // Unique within flow (for React Flow)
-  sourceNodeId   String   @map("source_node_id") // FK to FlowNode.nodeId
-  targetNodeId   String   @map("target_node_id") // FK to FlowNode.nodeId
-  sourceHandle   String?  @map("source_handle") // Output handle ID
-  targetHandle   String?  @map("target_handle") // Input handle ID
+  edgeId       String  @map("edge_id") // Unique within flow (for React Flow)
+  sourceNodeId String  @map("source_node_id") // FK to FlowNode.nodeId
+  targetNodeId String  @map("target_node_id") // FK to FlowNode.nodeId
+  sourceHandle String? @map("source_handle") // Output handle ID
+  targetHandle String? @map("target_handle") // Input handle ID
 
   // Edge Type
-  type           FlowEdgeType @default(DEFAULT)
+  type FlowEdgeType @default(DEFAULT)
 
   // Condition (for conditional edges)
-  condition      Json?    // {variable, operator, value} or {intent} or {sentiment}
-  priority       Int      @default(0) // For multiple conditions, higher = evaluated first
+  condition Json? // {variable, operator, value} or {intent} or {sentiment}
+  priority  Int   @default(0) // For multiple conditions, higher = evaluated first
 
   // Label
-  label          String?
+  label String?
 
   // Styling
-  animated       Boolean  @default(false)
-  style          Json?    // {stroke, strokeWidth, etc.}
+  animated Boolean @default(false)
+  style    Json? // {stroke, strokeWidth, etc.}
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  flow           ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  sourceNode     FlowNode @relation("SourceNode", fields: [flowId, sourceNodeId], references: [flowId, nodeId], onDelete: Cascade)
-  targetNode     FlowNode @relation("TargetNode", fields: [flowId, targetNodeId], references: [flowId, nodeId], onDelete: Cascade)
+  flow       ConversationFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceNode FlowNode         @relation("SourceNode", fields: [flowId, sourceNodeId], references: [flowId, nodeId], onDelete: Cascade)
+  targetNode FlowNode         @relation("TargetNode", fields: [flowId, targetNodeId], references: [flowId, nodeId], onDelete: Cascade)
 
   @@unique([flowId, edgeId])
   @@index([flowId])
@@ -1733,24 +1733,24 @@ model FlowEdge {
 }
 
 enum FlowNodeType {
-  START          // Entry point
-  MESSAGE        // Speak a message
-  INPUT          // Wait for user input, store in variable
-  CONDITION      // Branch based on condition
-  INTENT         // Branch based on detected intent
-  TOOL_CALL      // Execute a tool/function
-  TRANSFER       // Transfer to human/another agent
-  WAIT           // Pause for duration
-  SET_VARIABLE   // Set a conversation variable
-  END            // End the conversation
+  START // Entry point
+  MESSAGE // Speak a message
+  INPUT // Wait for user input, store in variable
+  CONDITION // Branch based on condition
+  INTENT // Branch based on detected intent
+  TOOL_CALL // Execute a tool/function
+  TRANSFER // Transfer to human/another agent
+  WAIT // Pause for duration
+  SET_VARIABLE // Set a conversation variable
+  END // End the conversation
 }
 
 enum FlowEdgeType {
-  DEFAULT        // Normal transition
-  CONDITIONAL    // Based on variable/condition
-  INTENT_MATCH   // Based on intent detection
-  FALLBACK       // When no other edge matches
-  ERROR          // On error/exception
+  DEFAULT // Normal transition
+  CONDITIONAL // Based on variable/condition
+  INTENT_MATCH // Based on intent detection
+  FALLBACK // When no other edge matches
+  ERROR // On error/exception
 }
 
 // ============================================
@@ -1758,37 +1758,37 @@ enum FlowEdgeType {
 // ============================================
 
 model VoicePersona {
-  id             String   @id @default(cuid())
-  organizationId String?  @map("organization_id") // NULL for system templates
+  id             String  @id @default(cuid())
+  organizationId String? @map("organization_id") // NULL for system templates
 
   // Basic Info
-  name           String
-  type           String   // sales, support, receptionist, etc.
-  description    String?  @db.Text
+  name        String
+  type        String // sales, support, receptionist, etc.
+  description String? @db.Text
 
   // Personality
-  instructions   String   @db.Text
-  personalityTraits Json? @map("personality_traits") // ["helpful", "patient"]
-  tone           String?  // professional, friendly, casual
-  languageStyle  String?  @map("language_style") // concise, detailed
+  instructions      String  @db.Text
+  personalityTraits Json?   @map("personality_traits") // ["helpful", "patient"]
+  tone              String? // professional, friendly, casual
+  languageStyle     String? @map("language_style") // concise, detailed
 
   // Voice Configuration
-  voiceConfig    Json?    @map("voice_config") // {voice_id, provider, speed}
+  voiceConfig Json? @map("voice_config") // {voice_id, provider, speed}
 
   // Capabilities
-  capabilities   Json     @default("[\"voice\"]") // ["voice", "chat", "sms"]
-  tools          Json     @default("[]") // Tool configurations
+  capabilities Json @default("[\"voice\"]") // ["voice", "chat", "sms"]
+  tools        Json @default("[]") // Tool configurations
 
   // Meta
-  isTemplate     Boolean  @default(false) @map("is_template")
-  agentCount     Int      @default(0) @map("agent_count")
+  isTemplate Boolean @default(false) @map("is_template")
+  agentCount Int     @default(0) @map("agent_count")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  agents         VoiceAgent[]
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agents       VoiceAgent[]
 
   @@index([organizationId])
   @@map("voice_personas")
@@ -1799,22 +1799,22 @@ model VoicePersona {
 // ============================================
 
 model SIPConfig {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
 
   // Basic Info
-  name           String
-  provider       String   @default("magnus") // magnus, twilio, etc.
+  name     String
+  provider String @default("magnus") // magnus, twilio, etc.
 
   // Magnus Billing Integration
-  magnusTrunkId  String?  @map("magnus_trunk_id")
+  magnusTrunkId   String? @map("magnus_trunk_id")
   magnusAccountId String? @map("magnus_account_id")
 
   // SIP Settings
-  sipUrl         String   @map("sip_url")
-  sipUsername    String?  @map("sip_username")
-  sipPassword    String?  @map("sip_password") // Encrypted
-  sipTransport   String   @default("tcp") @map("sip_transport") // tcp, udp, tls
+  sipUrl       String  @map("sip_url")
+  sipUsername  String? @map("sip_username")
+  sipPassword  String? @map("sip_password") // Encrypted
+  sipTransport String  @default("tcp") @map("sip_transport") // tcp, udp, tls
 
   // Capabilities
   inboundEnabled  Boolean @default(true) @map("inbound_enabled")
@@ -1822,16 +1822,16 @@ model SIPConfig {
   isDefault       Boolean @default(false) @map("is_default")
 
   // Status
-  status         String   @default("pending") // pending, active, error
-  lastChecked    DateTime? @map("last_checked")
-  errorMessage   String?  @map("error_message")
+  status       String    @default("pending") // pending, active, error
+  lastChecked  DateTime? @map("last_checked")
+  errorMessage String?   @map("error_message")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  phoneMappings  PhoneMapping[]
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phoneMappings PhoneMapping[]
 
   @@index([organizationId])
   @@map("sip_configs")
@@ -1842,41 +1842,41 @@ model SIPConfig {
 // ============================================
 
 model PhoneMapping {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  agentId        String?  @map("agent_id")
-  sipConfigId    String?  @map("sip_config_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  agentId        String? @map("agent_id")
+  sipConfigId    String? @map("sip_config_id")
 
   // Phone Number
-  phoneNumber    String   @unique @map("phone_number")
-  countryCode    String?  @map("country_code")
-  areaCode       String?  @map("area_code")
+  phoneNumber String  @unique @map("phone_number")
+  countryCode String? @map("country_code")
+  areaCode    String? @map("area_code")
 
   // Magnus Integration
-  magnusDidId    String?  @map("magnus_did_id")
-  magnusStatus   String?  @map("magnus_status")
+  magnusDidId  String? @map("magnus_did_id")
+  magnusStatus String? @map("magnus_status")
 
   // LiveKit Integration
-  livekitTrunkId         String?  @map("livekit_trunk_id")         // Inbound trunk ID
-  livekitOutboundTrunkId String?  @map("livekit_outbound_trunk_id") // Outbound trunk ID
-  livekitDispatchRuleId  String?  @map("livekit_dispatch_rule_id")
+  livekitTrunkId         String? @map("livekit_trunk_id") // Inbound trunk ID
+  livekitOutboundTrunkId String? @map("livekit_outbound_trunk_id") // Outbound trunk ID
+  livekitDispatchRuleId  String? @map("livekit_dispatch_rule_id")
 
   // Routing
-  routingType    String   @default("agent") @map("routing_type") // agent, ivr, forward
-  forwardTo      String?  @map("forward_to")
+  routingType String  @default("agent") @map("routing_type") // agent, ivr, forward
+  forwardTo   String? @map("forward_to")
 
   // Status
-  isActive       Boolean  @default(true) @map("is_active")
-  isVerified     Boolean  @default(false) @map("is_verified")
+  isActive   Boolean @default(true) @map("is_active")
+  isVerified Boolean @default(false) @map("is_verified")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  sipConfig      SIPConfig? @relation(fields: [sipConfigId], references: [id], onDelete: SetNull)
-  callLogs       CallLog[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        VoiceAgent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  sipConfig    SIPConfig?   @relation(fields: [sipConfigId], references: [id], onDelete: SetNull)
+  callLogs     CallLog[]
 
   @@index([organizationId])
   @@index([phoneNumber])
@@ -1888,11 +1888,11 @@ model PhoneMapping {
 // ============================================
 
 model CallLog {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  agentId        String?  @map("agent_id")
-  phoneMappingId String?  @map("phone_mapping_id")
-  campaignId     String?  @map("campaign_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  agentId        String? @map("agent_id")
+  phoneMappingId String? @map("phone_mapping_id")
+  campaignId     String? @map("campaign_id")
 
   // Call Identifiers
   livekitRoomName String? @map("livekit_room_name")
@@ -1900,48 +1900,48 @@ model CallLog {
   sipCallId       String? @map("sip_call_id")
 
   // Call Details
-  direction      CallDirection @default(INBOUND)
-  phoneNumber    String?  @map("phone_number")
-  callerNumber   String?  @map("caller_number")
+  direction    CallDirection @default(INBOUND)
+  phoneNumber  String?       @map("phone_number")
+  callerNumber String?       @map("caller_number")
 
   // Timing
-  startedAt      DateTime @default(now()) @map("started_at")
-  endedAt        DateTime? @map("ended_at")
-  duration       Int?     // Duration in seconds
+  startedAt DateTime  @default(now()) @map("started_at")
+  endedAt   DateTime? @map("ended_at")
+  duration  Int? // Duration in seconds
 
   // Status & Outcome
-  status         CallStatus @default(ACTIVE)
-  outcome        CallOutcome?
+  status  CallStatus   @default(ACTIVE)
+  outcome CallOutcome?
 
   // Recording
-  recordingUrl   String?  @map("recording_url")
-  transcriptId   String?  @map("transcript_id")
+  recordingUrl String? @map("recording_url")
+  transcriptId String? @map("transcript_id")
 
   // Cost Tracking (Magnus CDR)
-  cost           Decimal? @db.Decimal(10, 4)
-  costCurrency   String   @default("USD") @map("cost_currency")
-  magnusCdrId    String?  @map("magnus_cdr_id")
+  cost         Decimal? @db.Decimal(10, 4)
+  costCurrency String   @default("USD") @map("cost_currency")
+  magnusCdrId  String?  @map("magnus_cdr_id")
 
   // Metadata
-  metadata       Json?
+  metadata Json?
 
   // Cross-Channel Integration
-  triggeredBySocial  Boolean  @default(false) @map("triggered_by_social")
-  socialPostId       String?  @map("social_post_id")
-  workflowInstanceId String?  @map("workflow_instance_id")
+  triggeredBySocial  Boolean @default(false) @map("triggered_by_social")
+  socialPostId       String? @map("social_post_id")
+  workflowInstanceId String? @map("workflow_instance_id")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  agent          VoiceAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  phoneMapping   PhoneMapping? @relation(fields: [phoneMappingId], references: [id], onDelete: SetNull)
-  campaign       VoiceCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  transcript     CallTranscript?
-  events         CallEvent[]
-  costBreakdown  CallCostBreakdown?
-  toolUsages     AgentToolUsage[]
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent         VoiceAgent?        @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  phoneMapping  PhoneMapping?      @relation(fields: [phoneMappingId], references: [id], onDelete: SetNull)
+  campaign      VoiceCampaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  transcript    CallTranscript?
+  events        CallEvent[]
+  costBreakdown CallCostBreakdown?
+  toolUsages    AgentToolUsage[]
 
   @@index([organizationId])
   @@index([agentId])
@@ -1977,29 +1977,29 @@ enum CallOutcome {
 // ============================================
 
 model CallEvent {
-  id             String   @id @default(cuid())
-  callLogId      String   @map("call_log_id")
+  id        String @id @default(cuid())
+  callLogId String @map("call_log_id")
 
   // Event Details
-  eventId        String   @unique @map("event_id") // Idempotency key
-  eventType      String   @map("event_type")
-  timestamp      DateTime
+  eventId   String   @unique @map("event_id") // Idempotency key
+  eventType String   @map("event_type")
+  timestamp DateTime
 
   // Participant Info
-  participantId  String?  @map("participant_id")
-  participantSid String?  @map("participant_sid")
+  participantId  String? @map("participant_id")
+  participantSid String? @map("participant_sid")
 
   // Payload
-  rawPayload     Json     @map("raw_payload")
+  rawPayload Json @map("raw_payload")
 
   // Processing
-  processed      Boolean  @default(true)
-  errorMessage   String?  @map("error_message")
+  processed    Boolean @default(true)
+  errorMessage String? @map("error_message")
 
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  callLog        CallLog  @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+  callLog CallLog @relation(fields: [callLogId], references: [id], onDelete: Cascade)
 
   @@index([callLogId])
   @@map("call_events")
@@ -2010,57 +2010,57 @@ model CallEvent {
 // ============================================
 
 model CallTranscript {
-  id             String   @id @default(cuid())
-  callLogId      String   @unique @map("call_log_id")
+  id        String @id @default(cuid())
+  callLogId String @unique @map("call_log_id")
 
   // Transcript Metadata
-  language       String?
-  duration       Float?
-  segmentCount   Int      @default(0) @map("segment_count")
+  language     String?
+  duration     Float?
+  segmentCount Int     @default(0) @map("segment_count")
 
   // Analysis
-  sentiment      String?  // positive, negative, neutral
-  summary        String?  @db.Text
-  keywords       Json?
+  sentiment String? // positive, negative, neutral
+  summary   String? @db.Text
+  keywords  Json?
 
   // Status
-  status         String   @default("processing") // processing, completed, failed
-  errorMessage   String?  @map("error_message")
+  status       String  @default("processing") // processing, completed, failed
+  errorMessage String? @map("error_message")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  completedAt    DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
 
   // Relations
-  callLog        CallLog  @relation(fields: [callLogId], references: [id], onDelete: Cascade)
-  segments       TranscriptSegment[]
+  callLog  CallLog             @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+  segments TranscriptSegment[]
 
   @@map("call_transcripts")
 }
 
 model TranscriptSegment {
-  id             String   @id @default(cuid())
-  transcriptId   String   @map("transcript_id")
+  id           String @id @default(cuid())
+  transcriptId String @map("transcript_id")
 
   // Segment Info
-  sequenceNumber Int      @map("sequence_number")
-  speaker        String   // agent, user
-  speakerId      String?  @map("speaker_id")
+  sequenceNumber Int     @map("sequence_number")
+  speaker        String // agent, user
+  speakerId      String? @map("speaker_id")
 
   // Timing
-  startTime      Float    @map("start_time")
-  endTime        Float    @map("end_time")
+  startTime Float @map("start_time")
+  endTime   Float @map("end_time")
 
   // Content
-  text           String   @db.Text
-  confidence     Float?
-  language       String?
-  isFinal        Boolean  @default(true) @map("is_final")
+  text       String  @db.Text
+  confidence Float?
+  language   String?
+  isFinal    Boolean @default(true) @map("is_final")
 
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  transcript     CallTranscript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  transcript CallTranscript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
 
   @@index([transcriptId])
   @@map("transcript_segments")
@@ -2071,45 +2071,45 @@ model TranscriptSegment {
 // ============================================
 
 model VoiceCampaign {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  agentId        String   @map("agent_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  agentId        String @map("agent_id")
 
   // Basic Info
-  name           String
-  description    String?  @db.Text
+  name        String
+  description String? @db.Text
 
   // Status
-  status         CampaignVoiceStatus @default(DRAFT)
+  status CampaignVoiceStatus @default(DRAFT)
 
   // Schedule
-  timezone       String   @default("America/New_York")
-  startDate      DateTime? @map("start_date")
-  endDate        DateTime? @map("end_date")
-  callWindowStart String? @map("call_window_start") // "09:00"
-  callWindowEnd   String? @map("call_window_end")   // "17:00"
-  callDays       Int[]    @default([1, 2, 3, 4, 5]) @map("call_days") // 1=Mon
+  timezone        String    @default("America/New_York")
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  callWindowStart String?   @map("call_window_start") // "09:00"
+  callWindowEnd   String?   @map("call_window_end") // "17:00"
+  callDays        Int[]     @default([1, 2, 3, 4, 5]) @map("call_days") // 1=Mon
 
   // Dialing Settings
-  maxConcurrentCalls Int  @default(1) @map("max_concurrent_calls")
-  callsPerHour   Int      @default(30) @map("calls_per_hour")
-  retryAttempts  Int      @default(2) @map("retry_attempts")
-  retryDelayMinutes Int   @default(60) @map("retry_delay_minutes")
+  maxConcurrentCalls Int @default(1) @map("max_concurrent_calls")
+  callsPerHour       Int @default(30) @map("calls_per_hour")
+  retryAttempts      Int @default(2) @map("retry_attempts")
+  retryDelayMinutes  Int @default(60) @map("retry_delay_minutes")
 
   // Stats
-  totalLeads     Int      @default(0) @map("total_leads")
-  calledCount    Int      @default(0) @map("called_count")
-  answeredCount  Int      @default(0) @map("answered_count")
-  convertedCount Int      @default(0) @map("converted_count")
+  totalLeads     Int @default(0) @map("total_leads")
+  calledCount    Int @default(0) @map("called_count")
+  answeredCount  Int @default(0) @map("answered_count")
+  convertedCount Int @default(0) @map("converted_count")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  agent          VoiceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  leads          CampaignLead[]
-  callLogs       CallLog[]
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        VoiceAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  leads        CampaignLead[]
+  callLogs     CallLog[]
 
   @@index([organizationId])
   @@index([status])
@@ -2126,34 +2126,34 @@ enum CampaignVoiceStatus {
 }
 
 model CampaignLead {
-  id             String   @id @default(cuid())
-  campaignId     String   @map("campaign_id")
+  id         String @id @default(cuid())
+  campaignId String @map("campaign_id")
 
   // Contact Info
-  phoneNumber    String   @map("phone_number")
-  firstName      String?  @map("first_name")
-  lastName       String?  @map("last_name")
-  email          String?
-  company        String?
+  phoneNumber String  @map("phone_number")
+  firstName   String? @map("first_name")
+  lastName    String? @map("last_name")
+  email       String?
+  company     String?
 
   // Custom Data
-  customFields   Json?    @map("custom_fields")
+  customFields Json? @map("custom_fields")
 
   // Call Status
-  status         CampaignLeadStatus @default(PENDING)
-  callAttempts   Int      @default(0) @map("call_attempts")
-  lastCalledAt   DateTime? @map("last_called_at")
-  nextCallAt     DateTime? @map("next_call_at")
+  status       CampaignLeadStatus @default(PENDING)
+  callAttempts Int                @default(0) @map("call_attempts")
+  lastCalledAt DateTime?          @map("last_called_at")
+  nextCallAt   DateTime?          @map("next_call_at")
 
   // Outcome
-  outcome        String?  // completed, voicemail, no_answer, etc.
-  notes          String?  @db.Text
+  outcome String? // completed, voicemail, no_answer, etc.
+  notes   String? @db.Text
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  campaign       VoiceCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign VoiceCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
   @@index([status])
@@ -2174,50 +2174,50 @@ enum CampaignLeadStatus {
 // ============================================
 
 model Subscription {
-  id                   String    @id @default(cuid())
-  organizationId       String    @map("organization_id")
-  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
-  stripePriceId        String?   @map("stripe_price_id")
-  plan                 String    @default("starter")
-  status               String    @default("active")
+  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
+  stripePriceId        String? @map("stripe_price_id")
+  plan                 String  @default("starter")
+  status               String  @default("active")
 
   // Limits
-  brandsLimit          Int       @default(1) @map("brands_limit")
-  postsPerMonth        Int       @default(30) @map("posts_per_month")
-  socialAccounts       Int       @default(3) @map("social_accounts")
+  brandsLimit         Int @default(1) @map("brands_limit")
+  postsPerMonth       Int @default(30) @map("posts_per_month")
+  socialAccounts      Int @default(3) @map("social_accounts")
   // Legacy limits (kept for migration)
-  socialAccountsLimit  Int       @default(3) @map("social_accounts_limit")
-  usersLimit           Int       @default(1) @map("users_limit")
-  voiceMinutesLimit    Int       @default(100) @map("voice_minutes_limit")
+  socialAccountsLimit Int @default(3) @map("social_accounts_limit")
+  usersLimit          Int @default(1) @map("users_limit")
+  voiceMinutesLimit   Int @default(100) @map("voice_minutes_limit")
 
-  currentPeriodStart   DateTime? @map("current_period_start")
-  currentPeriodEnd     DateTime? @map("current_period_end")
-  trialEnd             DateTime? @map("trial_end")
+  currentPeriodStart DateTime? @map("current_period_start")
+  currentPeriodEnd   DateTime? @map("current_period_end")
+  trialEnd           DateTime? @map("trial_end")
 
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("subscriptions")
 }
 
 model Usage {
-  id              String   @id @default(cuid())
-  organizationId  String   @map("organization_id")
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  periodStart     DateTime @map("period_start")
-  periodEnd       DateTime @map("period_end")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
 
-  postsGenerated  Int      @default(0) @map("posts_generated")
-  postsPublished  Int      @default(0) @map("posts_published")
-  imagesGenerated Int      @default(0) @map("images_generated")
-  videosGenerated Int      @default(0) @map("videos_generated")
-  videoCostCents  Int      @default(0) @map("video_cost_cents")
-  aiTokensUsed    BigInt   @default(0) @map("ai_tokens_used")
+  postsGenerated  Int    @default(0) @map("posts_generated")
+  postsPublished  Int    @default(0) @map("posts_published")
+  imagesGenerated Int    @default(0) @map("images_generated")
+  videosGenerated Int    @default(0) @map("videos_generated")
+  videoCostCents  Int    @default(0) @map("video_cost_cents")
+  aiTokensUsed    BigInt @default(0) @map("ai_tokens_used")
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([organizationId, periodStart])
   @@map("usage")
@@ -2228,30 +2228,30 @@ model Usage {
 // ============================================
 
 model Job {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Job Type
-  type      JobType
+  type JobType
 
   // Reference
-  brandId   String?  @map("brand_id")
+  brandId String? @map("brand_id")
 
   // Payload
-  payload   Json
+  payload Json
 
   // Status
-  status    JobStatus @default(PENDING)
-  attempts  Int       @default(0)
-  maxAttempts Int     @default(3) @map("max_attempts")
+  status      JobStatus @default(PENDING)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
 
   // Scheduling
-  runAt     DateTime  @default(now()) @map("run_at")
-  startedAt DateTime? @map("started_at")
+  runAt       DateTime  @default(now()) @map("run_at")
+  startedAt   DateTime? @map("started_at")
   completedAt DateTime? @map("completed_at")
 
   // Result
-  result    Json?
-  error     String?
+  result Json?
+  error  String?
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -2284,14 +2284,14 @@ enum JobStatus {
 // ============================================
 
 model LearningHistory {
-  id        String   @id @default(cuid())
-  brandId   String   @map("brand_id")
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
 
   // Learning Period
-  period    String   // week, month, quarter
+  period String // week, month, quarter
 
   // Learned Data
-  learnings Json     // Full learning data snapshot
+  learnings Json // Full learning data snapshot
 
   // Application
   appliedAt DateTime @map("applied_at")
@@ -2307,39 +2307,39 @@ model LearningHistory {
 // ============================================
 
 model ContentVariation {
-  id          String   @id @default(cuid())
-  contentId   String   @map("content_id")
-  content     ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  contentId String      @map("content_id")
+  content   ContentItem @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform    SocialPlatform
+  platform SocialPlatform
 
   // Content
   text        String   @db.Text
   hashtags    String[] @default([])
-  mediaPrompt String?  @db.Text @map("media_prompt") // AI prompt for image generation
+  mediaPrompt String?  @map("media_prompt") @db.Text // AI prompt for image generation
   mediaUrl    String?  @map("media_url") // Generated or uploaded media
 
   // Platform-specific metadata
   characterCount Int     @default(0) @map("character_count")
-  isOptimal     Boolean @default(true) @map("is_optimal") // Meets platform best practices
+  isOptimal      Boolean @default(true) @map("is_optimal") // Meets platform best practices
 
   // Status (can be posted independently)
-  status      VariationStatus @default(PENDING)
+  status VariationStatus @default(PENDING)
 
   // Publishing
-  accountId   String?   @map("account_id")
+  accountId   String?        @map("account_id")
   account     SocialAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  postId      String?   @map("post_id") // Platform post ID
-  postUrl     String?   @map("post_url")
-  publishedAt DateTime? @map("published_at")
+  postId      String?        @map("post_id") // Platform post ID
+  postUrl     String?        @map("post_url")
+  publishedAt DateTime?      @map("published_at")
   error       String?
 
   // Analytics
-  analytics   PostAnalytics?
+  analytics PostAnalytics?
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([contentId])
   @@index([contentId, platform])
@@ -2362,32 +2362,32 @@ enum VariationStatus {
 // ============================================
 
 model ContentTemplate {
-  id          String   @id @default(cuid())
-  brandId     String   @map("brand_id")
-  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  brandId String @map("brand_id")
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   // Template info
   name        String
-  description String?  @db.Text
-  category    String?  // tip, announcement, promotion, engagement, etc.
+  description String? @db.Text
+  category    String? // tip, announcement, promotion, engagement, etc.
 
   // Template content
-  promptTemplate String  @db.Text @map("prompt_template") // Template with {{variables}}
+  promptTemplate String   @map("prompt_template") @db.Text // Template with {{variables}}
   variables      String[] @default([]) // List of variable names
 
   // Example output
-  exampleOutput  String?  @db.Text @map("example_output")
+  exampleOutput String? @map("example_output") @db.Text
 
   // Platforms this template is good for
-  platforms      SocialPlatform[] @default([])
+  platforms SocialPlatform[] @default([])
 
   // Usage stats
-  timesUsed      Int      @default(0) @map("times_used")
+  timesUsed Int @default(0) @map("times_used")
 
-  isActive       Boolean  @default(true) @map("is_active")
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([brandId])
   @@index([brandId, category])
@@ -2399,27 +2399,27 @@ model ContentTemplate {
 // ============================================
 
 model PublishingSchedule {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id    String       @id @default(cuid())
+  orgId String       @map("org_id")
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Schedule settings
-  platform      SocialPlatform
+  platform SocialPlatform
 
   // Days of week (0=Sunday, 1=Monday, etc.)
-  activeDays    Int[] @default([1, 2, 3, 4, 5]) @map("active_days") // Mon-Fri by default
+  activeDays Int[] @default([1, 2, 3, 4, 5]) @map("active_days") // Mon-Fri by default
 
   // Posting times (in UTC, as "HH:MM" strings)
-  postingTimes  String[] @default(["09:00", "12:00", "17:00"]) @map("posting_times")
+  postingTimes String[] @default(["09:00", "12:00", "17:00"]) @map("posting_times")
 
   // Timezone
-  timezone      String @default("UTC")
+  timezone String @default("UTC")
 
   // Max posts per day
   maxPostsPerDay Int @default(3) @map("max_posts_per_day")
 
   // Is this schedule active
-  isActive      Boolean @default(true) @map("is_active")
+  isActive Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2430,35 +2430,35 @@ model PublishingSchedule {
 }
 
 model PublishingLog {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id    String       @id @default(cuid())
+  orgId String       @map("org_id")
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // What was published
-  variationId   String?  @map("variation_id")
-  contentId     String?  @map("content_id")
+  variationId String? @map("variation_id")
+  contentId   String? @map("content_id")
 
   // Platform
-  platform      SocialPlatform
-  accountId     String?  @map("account_id")
+  platform  SocialPlatform
+  accountId String?        @map("account_id")
 
   // Result
-  status        PublishingStatus
+  status PublishingStatus
 
   platformPostId String? @map("platform_post_id")
-  platformUrl   String?  @map("platform_url")
+  platformUrl    String? @map("platform_url")
 
   // Error info
-  errorCode     String?  @map("error_code")
-  errorMessage  String?  @db.Text @map("error_message")
+  errorCode    String? @map("error_code")
+  errorMessage String? @map("error_message") @db.Text
 
   // Timing
-  scheduledFor  DateTime? @map("scheduled_for")
-  attemptedAt   DateTime @default(now()) @map("attempted_at")
-  completedAt   DateTime? @map("completed_at")
+  scheduledFor DateTime? @map("scheduled_for")
+  attemptedAt  DateTime  @default(now()) @map("attempted_at")
+  completedAt  DateTime? @map("completed_at")
 
   // Retry info
-  attemptNumber Int @default(1) @map("attempt_number")
+  attemptNumber Int       @default(1) @map("attempt_number")
   nextRetryAt   DateTime? @map("next_retry_at")
 
   @@index([orgId, attemptedAt])
@@ -2480,35 +2480,35 @@ enum PublishingStatus {
 // ============================================
 
 model PostAnalytics {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id    String       @id @default(cuid())
+  orgId String       @map("org_id")
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Link to content variation
-  variationId   String   @unique @map("variation_id")
-  variation     ContentVariation @relation(fields: [variationId], references: [id], onDelete: Cascade)
+  variationId String           @unique @map("variation_id")
+  variation   ContentVariation @relation(fields: [variationId], references: [id], onDelete: Cascade)
 
   // Platform
-  platform      SocialPlatform
-  accountId     String   @map("account_id")
+  platform  SocialPlatform
+  accountId String         @map("account_id")
 
   // Core metrics
-  impressions   Int @default(0)
-  reach         Int @default(0)
-  engagements   Int @default(0)
+  impressions Int @default(0)
+  reach       Int @default(0)
+  engagements Int @default(0)
 
   // Engagement breakdown
-  likes         Int @default(0)
-  comments      Int @default(0)
-  shares        Int @default(0)
-  saves         Int @default(0)
-  clicks        Int @default(0)
+  likes    Int @default(0)
+  comments Int @default(0)
+  shares   Int @default(0)
+  saves    Int @default(0)
+  clicks   Int @default(0)
 
   // Calculated metrics
   engagementRate Float @default(0) @map("engagement_rate") // engagements / impressions * 100
 
   // Video-specific (if applicable)
-  videoViews    Int? @map("video_views")
+  videoViews     Int? @map("video_views")
   videoWatchTime Int? @map("video_watch_time") // seconds
 
   // Profile impact
@@ -2516,23 +2516,23 @@ model PostAnalytics {
   newFollowers  Int @default(0) @map("new_followers")
 
   // Content analysis
-  contentLength Int?  @map("content_length")             // Character count
+  contentLength Int?    @map("content_length") // Character count
   hasMedia      Boolean @default(false) @map("has_media")
   hasHashtags   Boolean @default(false) @map("has_hashtags")
-  hashtagCount  Int @default(0) @map("hashtag_count")
+  hashtagCount  Int     @default(0) @map("hashtag_count")
   hasEmojis     Boolean @default(false) @map("has_emojis")
   hasLinks      Boolean @default(false) @map("has_links")
   hasQuestion   Boolean @default(false) @map("has_question")
   hasCTA        Boolean @default(false) @map("has_cta")
 
   // Timing
-  publishedAt   DateTime @map("published_at")
-  dayOfWeek     Int      @map("day_of_week")              // 0-6
-  hourOfDay     Int      @map("hour_of_day")              // 0-23
+  publishedAt DateTime @map("published_at")
+  dayOfWeek   Int      @map("day_of_week") // 0-6
+  hourOfDay   Int      @map("hour_of_day") // 0-23
 
   // Tracking
-  lastFetched   DateTime @default(now()) @map("last_fetched")
-  fetchCount    Int @default(1) @map("fetch_count")
+  lastFetched DateTime @default(now()) @map("last_fetched")
+  fetchCount  Int      @default(1) @map("fetch_count")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2545,24 +2545,24 @@ model PostAnalytics {
 }
 
 model AnalyticsSnapshot {
-  id        String   @id @default(cuid())
-  orgId     String   @map("org_id")
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id    String       @id @default(cuid())
+  orgId String       @map("org_id")
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Period
-  periodType    AnalyticsPeriod @map("period_type")
-  periodStart   DateTime @map("period_start")
-  periodEnd     DateTime @map("period_end")
+  periodType  AnalyticsPeriod @map("period_type")
+  periodStart DateTime        @map("period_start")
+  periodEnd   DateTime        @map("period_end")
 
   // Platform (null = all platforms combined)
-  platform      SocialPlatform?
+  platform SocialPlatform?
 
   // Aggregate metrics
-  totalPosts        Int @default(0) @map("total_posts")
-  totalImpressions  Int @default(0) @map("total_impressions")
-  totalEngagements  Int @default(0) @map("total_engagements")
-  totalFollowers    Int @default(0) @map("total_followers")
-  followerGrowth    Int @default(0) @map("follower_growth")
+  totalPosts       Int @default(0) @map("total_posts")
+  totalImpressions Int @default(0) @map("total_impressions")
+  totalEngagements Int @default(0) @map("total_engagements")
+  totalFollowers   Int @default(0) @map("total_followers")
+  followerGrowth   Int @default(0) @map("follower_growth")
 
   // Averages
   avgEngagementRate Float @default(0) @map("avg_engagement_rate")
@@ -2570,10 +2570,10 @@ model AnalyticsSnapshot {
   avgEngagements    Float @default(0) @map("avg_engagements")
 
   // Best performers
-  topPostId         String? @map("top_post_id")
-  topHashtags       String[] @default([]) @map("top_hashtags")
-  bestDayOfWeek     Int? @map("best_day_of_week")
-  bestHourOfDay     Int? @map("best_hour_of_day")
+  topPostId     String?  @map("top_post_id")
+  topHashtags   String[] @default([]) @map("top_hashtags")
+  bestDayOfWeek Int?     @map("best_day_of_week")
+  bestHourOfDay Int?     @map("best_hour_of_day")
 
   // Content breakdown
   postsWithMedia    Int @default(0) @map("posts_with_media")
@@ -2599,35 +2599,35 @@ enum AnalyticsPeriod {
 // ============================================
 
 model PricingConfig {
-  id             String   @id @default(cuid())
-  organizationId String?  @map("organization_id") // NULL for system default
-  configName     String   @map("config_name")
+  id             String  @id @default(cuid())
+  organizationId String? @map("organization_id") // NULL for system default
+  configName     String  @map("config_name")
 
   // STT Providers (per minute)
-  deepgramNova2PerMin     Decimal @default(0.08) @db.Decimal(10, 6) @map("deepgram_nova2_per_min")
-  deepgramWhisperPerMin   Decimal @default(0.08) @db.Decimal(10, 6) @map("deepgram_whisper_per_min")
-  assemblyaiPerMin        Decimal @default(0.05) @db.Decimal(10, 6) @map("assemblyai_per_min")
+  deepgramNova2PerMin   Decimal @default(0.08) @map("deepgram_nova2_per_min") @db.Decimal(10, 6)
+  deepgramWhisperPerMin Decimal @default(0.08) @map("deepgram_whisper_per_min") @db.Decimal(10, 6)
+  assemblyaiPerMin      Decimal @default(0.05) @map("assemblyai_per_min") @db.Decimal(10, 6)
 
   // LLM Providers (per 1M tokens)
-  openaiGpt4oMiniInput    Decimal @default(15.00) @db.Decimal(10, 6) @map("openai_gpt4o_mini_input_per_1m")
-  openaiGpt4oMiniOutput   Decimal @default(60.00) @db.Decimal(10, 6) @map("openai_gpt4o_mini_output_per_1m")
-  openaiGpt4Input         Decimal @default(30.00) @db.Decimal(10, 6) @map("openai_gpt4_input_per_1m")
-  openaiGpt4Output        Decimal @default(60.00) @db.Decimal(10, 6) @map("openai_gpt4_output_per_1m")
-  anthropicClaudeInput    Decimal @default(3.00) @db.Decimal(10, 6) @map("anthropic_claude_input_per_1m")
-  anthropicClaudeOutput   Decimal @default(15.00) @db.Decimal(10, 6) @map("anthropic_claude_output_per_1m")
+  openaiGpt4oMiniInput  Decimal @default(15.00) @map("openai_gpt4o_mini_input_per_1m") @db.Decimal(10, 6)
+  openaiGpt4oMiniOutput Decimal @default(60.00) @map("openai_gpt4o_mini_output_per_1m") @db.Decimal(10, 6)
+  openaiGpt4Input       Decimal @default(30.00) @map("openai_gpt4_input_per_1m") @db.Decimal(10, 6)
+  openaiGpt4Output      Decimal @default(60.00) @map("openai_gpt4_output_per_1m") @db.Decimal(10, 6)
+  anthropicClaudeInput  Decimal @default(3.00) @map("anthropic_claude_input_per_1m") @db.Decimal(10, 6)
+  anthropicClaudeOutput Decimal @default(15.00) @map("anthropic_claude_output_per_1m") @db.Decimal(10, 6)
 
   // TTS Providers
-  openaiTtsPer1mChars     Decimal @default(15.00) @db.Decimal(10, 6) @map("openai_tts_per_1m_chars")
-  cartesiaPerAudioMin     Decimal @default(1.50) @db.Decimal(10, 6) @map("cartesia_per_audio_min")
-  elevenlabsPer1kChars    Decimal @default(0.18) @db.Decimal(10, 6) @map("elevenlabs_per_1k_chars")
+  openaiTtsPer1mChars  Decimal @default(15.00) @map("openai_tts_per_1m_chars") @db.Decimal(10, 6)
+  cartesiaPerAudioMin  Decimal @default(1.50) @map("cartesia_per_audio_min") @db.Decimal(10, 6)
+  elevenlabsPer1kChars Decimal @default(0.18) @map("elevenlabs_per_1k_chars") @db.Decimal(10, 6)
 
   // Telephony
-  inboundPerMinute        Decimal @default(0.001) @db.Decimal(10, 6) @map("inbound_per_minute")
-  outboundPerMinute       Decimal @default(0.002) @db.Decimal(10, 6) @map("outbound_per_minute")
-  didMonthly              Decimal @default(2.00) @db.Decimal(10, 6) @map("did_monthly")
+  inboundPerMinute  Decimal @default(0.001) @map("inbound_per_minute") @db.Decimal(10, 6)
+  outboundPerMinute Decimal @default(0.002) @map("outbound_per_minute") @db.Decimal(10, 6)
+  didMonthly        Decimal @default(2.00) @map("did_monthly") @db.Decimal(10, 6)
 
   // Platform overhead
-  platformOverheadPerMin  Decimal @default(0.01) @db.Decimal(10, 6) @map("platform_overhead_per_min")
+  platformOverheadPerMin Decimal @default(0.01) @map("platform_overhead_per_min") @db.Decimal(10, 6)
 
   // Status
   isDefault     Boolean  @default(false) @map("is_default")
@@ -2637,8 +2637,8 @@ model PricingConfig {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  costBreakdowns   CallCostBreakdown[]
+  organization   Organization?       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  costBreakdowns CallCostBreakdown[]
 
   @@unique([organizationId, configName])
   @@index([organizationId])
@@ -2646,78 +2646,78 @@ model PricingConfig {
 }
 
 model CallCostBreakdown {
-  id         String @id @default(cuid())
-  callLogId  String @unique @map("call_log_id")
+  id        String @id @default(cuid())
+  callLogId String @unique @map("call_log_id")
 
   // STT Costs
-  sttProvider      String  @map("stt_provider")
-  sttModel         String  @map("stt_model")
-  sttMinutes       Decimal @db.Decimal(10, 4) @map("stt_minutes")
-  sttCost          Decimal @db.Decimal(10, 6) @map("stt_cost")
+  sttProvider String  @map("stt_provider")
+  sttModel    String  @map("stt_model")
+  sttMinutes  Decimal @map("stt_minutes") @db.Decimal(10, 4)
+  sttCost     Decimal @map("stt_cost") @db.Decimal(10, 6)
 
   // LLM Costs
-  llmProvider      String  @map("llm_provider")
-  llmModel         String  @map("llm_model")
-  llmInputTokens   Int     @map("llm_input_tokens")
-  llmOutputTokens  Int     @map("llm_output_tokens")
-  llmCost          Decimal @db.Decimal(10, 6) @map("llm_cost")
+  llmProvider     String  @map("llm_provider")
+  llmModel        String  @map("llm_model")
+  llmInputTokens  Int     @map("llm_input_tokens")
+  llmOutputTokens Int     @map("llm_output_tokens")
+  llmCost         Decimal @map("llm_cost") @db.Decimal(10, 6)
 
   // TTS Costs
-  ttsProvider      String  @map("tts_provider")
-  ttsModel         String? @map("tts_model")
-  ttsCharacters    Int     @map("tts_characters")
-  ttsAudioSeconds  Decimal? @db.Decimal(10, 4) @map("tts_audio_seconds")
-  ttsCost          Decimal @db.Decimal(10, 6) @map("tts_cost")
+  ttsProvider     String   @map("tts_provider")
+  ttsModel        String?  @map("tts_model")
+  ttsCharacters   Int      @map("tts_characters")
+  ttsAudioSeconds Decimal? @map("tts_audio_seconds") @db.Decimal(10, 4)
+  ttsCost         Decimal  @map("tts_cost") @db.Decimal(10, 6)
 
   // Telephony Costs
   telephonyDirection String  @map("telephony_direction") // inbound, outbound
-  telephonyMinutes   Decimal @db.Decimal(10, 4) @map("telephony_minutes")
-  telephonyCost      Decimal @db.Decimal(10, 6) @map("telephony_cost")
+  telephonyMinutes   Decimal @map("telephony_minutes") @db.Decimal(10, 4)
+  telephonyCost      Decimal @map("telephony_cost") @db.Decimal(10, 6)
 
   // Platform Costs
-  platformCost     Decimal @db.Decimal(10, 6) @map("platform_cost")
+  platformCost Decimal @map("platform_cost") @db.Decimal(10, 6)
 
   // Totals
-  totalRealCost    Decimal @db.Decimal(10, 6) @map("total_real_cost")
-  totalCustomerCost Decimal @db.Decimal(10, 6) @map("total_customer_cost")
+  totalRealCost     Decimal @map("total_real_cost") @db.Decimal(10, 6)
+  totalCustomerCost Decimal @map("total_customer_cost") @db.Decimal(10, 6)
 
   // Pricing tier used
-  pricingConfigId  String? @map("pricing_config_id")
+  pricingConfigId String? @map("pricing_config_id")
 
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  callLog       CallLog       @relation(fields: [callLogId], references: [id], onDelete: Cascade)
+  callLog       CallLog        @relation(fields: [callLogId], references: [id], onDelete: Cascade)
   pricingConfig PricingConfig? @relation(fields: [pricingConfigId], references: [id], onDelete: SetNull)
 
   @@map("call_cost_breakdowns")
 }
 
 model VoiceUsageRecord {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
 
   // Time period
-  periodStart    DateTime @map("period_start")
-  periodEnd      DateTime @map("period_end")
-  periodType     String   @map("period_type") // daily, weekly, monthly
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  periodType  String   @map("period_type") // daily, weekly, monthly
 
   // Usage metrics
-  totalCalls       Int     @default(0) @map("total_calls")
-  totalMinutes     Decimal @default(0) @db.Decimal(10, 2) @map("total_minutes")
-  totalCost        Decimal @default(0) @db.Decimal(10, 2) @map("total_cost")
+  totalCalls   Int     @default(0) @map("total_calls")
+  totalMinutes Decimal @default(0) @map("total_minutes") @db.Decimal(10, 2)
+  totalCost    Decimal @default(0) @map("total_cost") @db.Decimal(10, 2)
 
   // Breakdown by category
-  sttCost          Decimal @default(0) @db.Decimal(10, 2) @map("stt_cost")
-  llmCost          Decimal @default(0) @db.Decimal(10, 2) @map("llm_cost")
-  ttsCost          Decimal @default(0) @db.Decimal(10, 2) @map("tts_cost")
-  telephonyCost    Decimal @default(0) @db.Decimal(10, 2) @map("telephony_cost")
+  sttCost       Decimal @default(0) @map("stt_cost") @db.Decimal(10, 2)
+  llmCost       Decimal @default(0) @map("llm_cost") @db.Decimal(10, 2)
+  ttsCost       Decimal @default(0) @map("tts_cost") @db.Decimal(10, 2)
+  telephonyCost Decimal @default(0) @map("telephony_cost") @db.Decimal(10, 2)
 
   // Breakdown by direction
-  inboundCalls     Int     @default(0) @map("inbound_calls")
-  outboundCalls    Int     @default(0) @map("outbound_calls")
-  inboundMinutes   Decimal @default(0) @db.Decimal(10, 2) @map("inbound_minutes")
-  outboundMinutes  Decimal @default(0) @db.Decimal(10, 2) @map("outbound_minutes")
+  inboundCalls    Int     @default(0) @map("inbound_calls")
+  outboundCalls   Int     @default(0) @map("outbound_calls")
+  inboundMinutes  Decimal @default(0) @map("inbound_minutes") @db.Decimal(10, 2)
+  outboundMinutes Decimal @default(0) @map("outbound_minutes") @db.Decimal(10, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2736,13 +2736,13 @@ model VoiceUsageRecord {
 // ============================================
 
 model SystemConfig {
-  id          String   @id @default(cuid())
-  key         String   @unique  // Config key identifier
-  value       String   @db.Text // Config value (may be JSON or encrypted)
-  category    String   // Category: livekit, magnus, sip, api_keys, general
-  description String?  @db.Text // Human-readable description
-  isEncrypted Boolean  @default(false) @map("is_encrypted") // Whether value is encrypted
-  isActive    Boolean  @default(true) @map("is_active")
+  id          String  @id @default(cuid())
+  key         String  @unique // Config key identifier
+  value       String  @db.Text // Config value (may be JSON or encrypted)
+  category    String // Category: livekit, magnus, sip, api_keys, general
+  description String? @db.Text // Human-readable description
+  isEncrypted Boolean @default(false) @map("is_encrypted") // Whether value is encrypted
+  isActive    Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -2753,15 +2753,15 @@ model SystemConfig {
 
 // Admin audit log for tracking changes
 model AdminAuditLog {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  action      String   // create, update, delete
-  resource    String   // system_config, etc.
-  resourceId  String?  @map("resource_id")
-  oldValue    Json?    @map("old_value")
-  newValue    Json?    @map("new_value")
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
+  id         String  @id @default(cuid())
+  userId     String  @map("user_id")
+  action     String // create, update, delete
+  resource   String // system_config, etc.
+  resourceId String? @map("resource_id")
+  oldValue   Json?   @map("old_value")
+  newValue   Json?   @map("new_value")
+  ipAddress  String? @map("ip_address")
+  userAgent  String? @map("user_agent")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -2778,25 +2778,25 @@ model AdminAuditLog {
 // ============================================
 
 enum ChannelType {
-  SOCIAL      // Twitter, LinkedIn, Facebook, Instagram
-  VOICE       // Voice AI agents, phone calls
-  EMAIL       // Email campaigns
-  CHAT        // Web chat widget
-  WEBSITE     // Website visits, form submissions
-  ADS         // Paid advertising (Meta, Google, LinkedIn)
+  SOCIAL // Twitter, LinkedIn, Facebook, Instagram
+  VOICE // Voice AI agents, phone calls
+  EMAIL // Email campaigns
+  CHAT // Web chat widget
+  WEBSITE // Website visits, form submissions
+  ADS // Paid advertising (Meta, Google, LinkedIn)
 }
 
 enum TouchpointAction {
-  VIEW        // Saw content/ad
-  ENGAGE      // Liked, commented, shared
-  CLICK       // Clicked link
-  CALL        // Made/received call
-  MESSAGE     // Sent/received message
+  VIEW // Saw content/ad
+  ENGAGE // Liked, commented, shared
+  CLICK // Clicked link
+  CALL // Made/received call
+  MESSAGE // Sent/received message
   FORM_SUBMIT // Submitted form
-  PURCHASE    // Made purchase
-  SIGNUP      // Signed up
-  DEMO        // Requested demo
-  MEETING     // Scheduled meeting
+  PURCHASE // Made purchase
+  SIGNUP // Signed up
+  DEMO // Requested demo
+  MEETING // Scheduled meeting
 }
 
 // ============================================
@@ -2854,69 +2854,69 @@ enum WorkflowAction {
 }
 
 enum AttributionModel {
-  FIRST_TOUCH   // 100% credit to first touchpoint
-  LAST_TOUCH    // 100% credit to last touchpoint
-  LINEAR        // Equal credit across all touchpoints
-  TIME_DECAY    // More credit to recent touchpoints
-  POSITION      // 40% first, 40% last, 20% middle (U-shaped)
-  CUSTOM        // Custom weights
+  FIRST_TOUCH // 100% credit to first touchpoint
+  LAST_TOUCH // 100% credit to last touchpoint
+  LINEAR // Equal credit across all touchpoints
+  TIME_DECAY // More credit to recent touchpoints
+  POSITION // 40% first, 40% last, 20% middle (U-shaped)
+  CUSTOM // Custom weights
 }
 
 // Tracks individual customer interactions across channels
 model CustomerTouchpoint {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
-  journeyId      String?  @map("journey_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
+  journeyId      String? @map("journey_id")
 
   // Customer identification (anonymous or known)
-  customerId     String?  @map("customer_id") // If identified
-  anonymousId    String?  @map("anonymous_id") // For anonymous tracking
-  email          String?
-  phone          String?
+  customerId  String? @map("customer_id") // If identified
+  anonymousId String? @map("anonymous_id") // For anonymous tracking
+  email       String?
+  phone       String?
 
   // Channel details
-  channelType    ChannelType @map("channel_type")
-  channelName    String?  @map("channel_name") // e.g., "Twitter", "Voice Agent: Sales Bot"
-  channelId      String?  @map("channel_id") // Reference to social account, voice agent, etc.
+  channelType ChannelType @map("channel_type")
+  channelName String?     @map("channel_name") // e.g., "Twitter", "Voice Agent: Sales Bot"
+  channelId   String?     @map("channel_id") // Reference to social account, voice agent, etc.
 
   // Action details
-  action         TouchpointAction
-  actionDetail   String?  @map("action_detail") // e.g., "Liked post", "Called for 5 min"
+  action       TouchpointAction
+  actionDetail String?          @map("action_detail") // e.g., "Liked post", "Called for 5 min"
 
   // Source reference (what triggered this touchpoint)
-  sourceType     String?  @map("source_type") // content_item, call_log, ad_campaign, etc.
-  sourceId       String?  @map("source_id") // ID of the source
-  sourceUrl      String?  @map("source_url")
-  sourceTitle    String?  @map("source_title")
+  sourceType  String? @map("source_type") // content_item, call_log, ad_campaign, etc.
+  sourceId    String? @map("source_id") // ID of the source
+  sourceUrl   String? @map("source_url")
+  sourceTitle String? @map("source_title")
 
   // UTM and tracking
-  utmSource      String?  @map("utm_source")
-  utmMedium      String?  @map("utm_medium")
-  utmCampaign    String?  @map("utm_campaign")
-  utmContent     String?  @map("utm_content")
-  utmTerm        String?  @map("utm_term")
-  referrer       String?
+  utmSource   String? @map("utm_source")
+  utmMedium   String? @map("utm_medium")
+  utmCampaign String? @map("utm_campaign")
+  utmContent  String? @map("utm_content")
+  utmTerm     String? @map("utm_term")
+  referrer    String?
 
   // Value estimation
   engagementScore Int      @default(0) @map("engagement_score") // 0-100
-  estimatedValue  Decimal? @db.Decimal(10, 2) @map("estimated_value")
+  estimatedValue  Decimal? @map("estimated_value") @db.Decimal(10, 2)
 
   // Device & session
-  deviceType     String?  @map("device_type") // mobile, desktop, tablet
-  sessionId      String?  @map("session_id")
-  ipAddress      String?  @map("ip_address")
-  userAgent      String?  @map("user_agent")
+  deviceType String? @map("device_type") // mobile, desktop, tablet
+  sessionId  String? @map("session_id")
+  ipAddress  String? @map("ip_address")
+  userAgent  String? @map("user_agent")
 
   // Metadata
-  metadata       Json?
+  metadata Json?
 
   // Timestamps
-  occurredAt     DateTime @default(now()) @map("occurred_at")
-  createdAt      DateTime @default(now()) @map("created_at")
+  occurredAt DateTime @default(now()) @map("occurred_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   // Relations
-  journey        CustomerJourney? @relation(fields: [journeyId], references: [id], onDelete: SetNull)
+  journey CustomerJourney? @relation(fields: [journeyId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
   @@index([brandId])
@@ -2932,48 +2932,48 @@ model CustomerTouchpoint {
 
 // Groups touchpoints into a customer journey
 model CustomerJourney {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
-  leadId         String?  @unique @map("lead_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
+  leadId         String? @unique @map("lead_id")
 
   // Customer identification
-  customerId     String?  @map("customer_id")
-  anonymousId    String?  @map("anonymous_id")
-  email          String?
-  phone          String?
-  fullName       String?  @map("full_name")
+  customerId  String? @map("customer_id")
+  anonymousId String? @map("anonymous_id")
+  email       String?
+  phone       String?
+  fullName    String? @map("full_name")
 
   // Journey status
-  status         String   @default("active") // active, converted, dormant
-  isConverted    Boolean  @default(false) @map("is_converted")
-  conversionValue Decimal? @db.Decimal(10, 2) @map("conversion_value")
-  convertedAt    DateTime? @map("converted_at")
+  status          String    @default("active") // active, converted, dormant
+  isConverted     Boolean   @default(false) @map("is_converted")
+  conversionValue Decimal?  @map("conversion_value") @db.Decimal(10, 2)
+  convertedAt     DateTime? @map("converted_at")
 
   // Summary stats
-  totalTouchpoints Int     @default(0) @map("total_touchpoints")
-  uniqueChannels   Int     @default(0) @map("unique_channels")
+  totalTouchpoints Int @default(0) @map("total_touchpoints")
+  uniqueChannels   Int @default(0) @map("unique_channels")
 
   // First/Last touch tracking
-  firstTouchChannel  ChannelType? @map("first_touch_channel")
-  firstTouchAt       DateTime?    @map("first_touch_at")
-  lastTouchChannel   ChannelType? @map("last_touch_channel")
-  lastTouchAt        DateTime?    @map("last_touch_at")
+  firstTouchChannel ChannelType? @map("first_touch_channel")
+  firstTouchAt      DateTime?    @map("first_touch_at")
+  lastTouchChannel  ChannelType? @map("last_touch_channel")
+  lastTouchAt       DateTime?    @map("last_touch_at")
 
   // Channel breakdown (JSON for flexibility)
-  channelBreakdown  Json?  @map("channel_breakdown") // {social: 5, voice: 2, email: 3}
+  channelBreakdown Json? @map("channel_breakdown") // {social: 5, voice: 2, email: 3}
 
   // Attribution scores per model
-  attributionScores Json?  @map("attribution_scores") // {first_touch: {...}, linear: {...}}
+  attributionScores Json? @map("attribution_scores") // {first_touch: {...}, linear: {...}}
 
   // Timestamps
-  startedAt      DateTime @default(now()) @map("started_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  startedAt DateTime @default(now()) @map("started_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  touchpoints    CustomerTouchpoint[]
-  conversions    CrossChannelConversion[]
+  touchpoints CustomerTouchpoint[]
+  conversions CrossChannelConversion[]
 
   @@index([organizationId])
   @@index([brandId])
@@ -2987,19 +2987,19 @@ model CustomerJourney {
 
 // Tracks conversions with multi-channel attribution
 model CrossChannelConversion {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
-  journeyId      String   @map("journey_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
+  journeyId      String  @map("journey_id")
 
   // Conversion details
-  conversionType String   @map("conversion_type") // purchase, signup, demo, meeting, lead
-  conversionValue Decimal @db.Decimal(10, 2) @map("conversion_value")
-  currency       String   @default("USD")
+  conversionType  String  @map("conversion_type") // purchase, signup, demo, meeting, lead
+  conversionValue Decimal @map("conversion_value") @db.Decimal(10, 2)
+  currency        String  @default("USD")
 
   // Source reference
-  sourceType     String?  @map("source_type") // Where conversion happened
-  sourceId       String?  @map("source_id")
+  sourceType String? @map("source_type") // Where conversion happened
+  sourceId   String? @map("source_id")
 
   // Attribution
   attributionModel AttributionModel @default(LINEAR) @map("attribution_model")
@@ -3016,11 +3016,11 @@ model CrossChannelConversion {
   brandBrainContribution Boolean @default(true) @map("brand_brain_contribution")
 
   // Timestamps
-  convertedAt    DateTime @default(now()) @map("converted_at")
-  createdAt      DateTime @default(now()) @map("created_at")
+  convertedAt DateTime @default(now()) @map("converted_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  journey        CustomerJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  journey CustomerJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([brandId])
@@ -3032,57 +3032,57 @@ model CrossChannelConversion {
 
 // Aggregated channel performance metrics for dashboards
 model ChannelPerformanceSnapshot {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
 
   // Time period
-  periodStart    DateTime @map("period_start")
-  periodEnd      DateTime @map("period_end")
-  periodType     String   @map("period_type") // daily, weekly, monthly
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  periodType  String   @map("period_type") // daily, weekly, monthly
 
   // Channel
-  channelType    ChannelType @map("channel_type")
-  channelName    String?  @map("channel_name")
+  channelType ChannelType @map("channel_type")
+  channelName String?     @map("channel_name")
 
   // Touchpoint metrics
-  totalTouchpoints     Int @default(0) @map("total_touchpoints")
-  uniqueCustomers      Int @default(0) @map("unique_customers")
-  newCustomers         Int @default(0) @map("new_customers")
+  totalTouchpoints Int @default(0) @map("total_touchpoints")
+  uniqueCustomers  Int @default(0) @map("unique_customers")
+  newCustomers     Int @default(0) @map("new_customers")
 
   // Engagement metrics
-  views                Int @default(0)
-  engagements          Int @default(0)
-  clicks               Int @default(0)
-  calls                Int @default(0)
-  messages             Int @default(0)
-  formSubmissions      Int @default(0) @map("form_submissions")
+  views           Int @default(0)
+  engagements     Int @default(0)
+  clicks          Int @default(0)
+  calls           Int @default(0)
+  messages        Int @default(0)
+  formSubmissions Int @default(0) @map("form_submissions")
 
   // Conversion metrics
-  conversions          Int @default(0)
-  conversionRate       Decimal @default(0) @db.Decimal(5, 2) @map("conversion_rate")
-  totalRevenue         Decimal @default(0) @db.Decimal(12, 2) @map("total_revenue")
+  conversions    Int     @default(0)
+  conversionRate Decimal @default(0) @map("conversion_rate") @db.Decimal(5, 2)
+  totalRevenue   Decimal @default(0) @map("total_revenue") @db.Decimal(12, 2)
 
   // Attribution metrics (across models)
-  firstTouchConversions Int @default(0) @map("first_touch_conversions")
-  lastTouchConversions  Int @default(0) @map("last_touch_conversions")
-  linearConversions     Decimal @default(0) @db.Decimal(10, 2) @map("linear_conversions")
-  firstTouchRevenue     Decimal @default(0) @db.Decimal(12, 2) @map("first_touch_revenue")
-  lastTouchRevenue      Decimal @default(0) @db.Decimal(12, 2) @map("last_touch_revenue")
-  linearRevenue         Decimal @default(0) @db.Decimal(12, 2) @map("linear_revenue")
+  firstTouchConversions Int     @default(0) @map("first_touch_conversions")
+  lastTouchConversions  Int     @default(0) @map("last_touch_conversions")
+  linearConversions     Decimal @default(0) @map("linear_conversions") @db.Decimal(10, 2)
+  firstTouchRevenue     Decimal @default(0) @map("first_touch_revenue") @db.Decimal(12, 2)
+  lastTouchRevenue      Decimal @default(0) @map("last_touch_revenue") @db.Decimal(12, 2)
+  linearRevenue         Decimal @default(0) @map("linear_revenue") @db.Decimal(12, 2)
 
   // Cross-channel influence
-  assistedConversions  Int @default(0) @map("assisted_conversions") // Helped but wasn't last touch
-  influencedRevenue    Decimal @default(0) @db.Decimal(12, 2) @map("influenced_revenue")
+  assistedConversions Int     @default(0) @map("assisted_conversions") // Helped but wasn't last touch
+  influencedRevenue   Decimal @default(0) @map("influenced_revenue") @db.Decimal(12, 2)
 
   // Cost tracking (if applicable)
-  totalSpend           Decimal @default(0) @db.Decimal(12, 2) @map("total_spend")
-  costPerConversion    Decimal? @db.Decimal(10, 2) @map("cost_per_conversion")
-  roas                 Decimal? @db.Decimal(8, 2) // Return on ad spend
+  totalSpend        Decimal  @default(0) @map("total_spend") @db.Decimal(12, 2)
+  costPerConversion Decimal? @map("cost_per_conversion") @db.Decimal(10, 2)
+  roas              Decimal? @db.Decimal(8, 2) // Return on ad spend
 
   // Timestamps
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([organizationId, brandId, channelType, periodStart, periodType])
   @@index([organizationId])
@@ -3094,29 +3094,29 @@ model ChannelPerformanceSnapshot {
 
 // Configuration for enabled channels per organization
 model ChannelConfig {
-  id             String   @id @default(cuid())
-  organizationId String   @map("organization_id")
-  brandId        String?  @map("brand_id")
+  id             String  @id @default(cuid())
+  organizationId String  @map("organization_id")
+  brandId        String? @map("brand_id")
 
   // Channel settings
-  channelType    ChannelType @map("channel_type")
-  isEnabled      Boolean  @default(true) @map("is_enabled")
-  isConfigured   Boolean  @default(false) @map("is_configured")
+  channelType  ChannelType @map("channel_type")
+  isEnabled    Boolean     @default(true) @map("is_enabled")
+  isConfigured Boolean     @default(false) @map("is_configured")
 
   // Brand Brain integration
-  useBrandBrain  Boolean  @default(true) @map("use_brand_brain")
-  brandBrainId   String?  @map("brand_brain_id")
+  useBrandBrain Boolean @default(true) @map("use_brand_brain")
+  brandBrainId  String? @map("brand_brain_id")
 
   // Channel-specific config
-  config         Json     @default("{}")
+  config Json @default("{}")
 
   // Attribution weight (for custom attribution model)
-  attributionWeight Decimal @default(1) @db.Decimal(3, 2) @map("attribution_weight")
+  attributionWeight Decimal @default(1) @map("attribution_weight") @db.Decimal(3, 2)
 
   // Timestamps
-  enabledAt      DateTime? @map("enabled_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  enabledAt DateTime? @map("enabled_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   @@unique([organizationId, brandId, channelType])
   @@index([organizationId])
@@ -3159,28 +3159,28 @@ model Automation {
 }
 
 model WorkflowInstance {
-  id              String         @id @default(cuid())
-  automationId    String         @map("automation_id")
-  organizationId  String         @map("organization_id")
-  brandId         String?        @map("brand_id")
-  leadId          String?        @map("lead_id")
-  customerId      String?        @map("customer_id")
-  journeyId       String?        @map("journey_id")
-  callLogId       String?        @map("call_log_id")
-  contentItemId   String?        @map("content_item_id")
-  status          WorkflowStatus @default(PENDING)
-  currentStepId   String         @map("current_step_id")
-  completedSteps  String[]       @default([]) @map("completed_steps")
-  context         Json           @default("{}")
-  results         Json           @default("{}")
-  errors          Json           @default("[]")
-  startedAt       DateTime       @default(now()) @map("started_at")
-  scheduledNextAt DateTime?      @map("scheduled_next_at")
-  completedAt     DateTime?      @map("completed_at")
-  touchpointsCreated Int         @default(0) @map("touchpoints_created")
-  channelsUsed    ChannelType[]  @default([]) @map("channels_used")
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  id                 String         @id @default(cuid())
+  automationId       String         @map("automation_id")
+  organizationId     String         @map("organization_id")
+  brandId            String?        @map("brand_id")
+  leadId             String?        @map("lead_id")
+  customerId         String?        @map("customer_id")
+  journeyId          String?        @map("journey_id")
+  callLogId          String?        @map("call_log_id")
+  contentItemId      String?        @map("content_item_id")
+  status             WorkflowStatus @default(PENDING)
+  currentStepId      String         @map("current_step_id")
+  completedSteps     String[]       @default([]) @map("completed_steps")
+  context            Json           @default("{}")
+  results            Json           @default("{}")
+  errors             Json           @default("[]")
+  startedAt          DateTime       @default(now()) @map("started_at")
+  scheduledNextAt    DateTime?      @map("scheduled_next_at")
+  completedAt        DateTime?      @map("completed_at")
+  touchpointsCreated Int            @default(0) @map("touchpoints_created")
+  channelsUsed       ChannelType[]  @default([]) @map("channels_used")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
 
   automation     Automation              @relation(fields: [automationId], references: [id], onDelete: Cascade)
   stepExecutions WorkflowStepExecution[]
@@ -3192,20 +3192,20 @@ model WorkflowInstance {
 }
 
 model WorkflowStepExecution {
-  id            String          @id @default(cuid())
-  instanceId    String          @map("instance_id")
-  stepId        String          @map("step_id")
+  id            String         @id @default(cuid())
+  instanceId    String         @map("instance_id")
+  stepId        String         @map("step_id")
   action        WorkflowAction
   channel       ChannelType?
   success       Boolean
-  output        Json            @default("{}")
-  errorMessage  String?         @map("error_message")
-  retryCount    Int             @default(0) @map("retry_count")
-  touchpointId  String?         @map("touchpoint_id")
-  contentItemId String?         @map("content_item_id")
-  callLogId     String?         @map("call_log_id")
-  nextStepId    String?         @map("next_step_id")
-  executedAt    DateTime        @default(now()) @map("executed_at")
+  output        Json           @default("{}")
+  errorMessage  String?        @map("error_message")
+  retryCount    Int            @default(0) @map("retry_count")
+  touchpointId  String?        @map("touchpoint_id")
+  contentItemId String?        @map("content_item_id")
+  callLogId     String?        @map("call_log_id")
+  nextStepId    String?        @map("next_step_id")
+  executedAt    DateTime       @default(now()) @map("executed_at")
 
   instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 

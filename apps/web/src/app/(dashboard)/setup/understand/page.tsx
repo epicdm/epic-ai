@@ -118,7 +118,7 @@ export default async function UnderstandPage({ searchParams }: PageProps) {
           id: c.id,
           name: c.name,
           website: c.website ?? undefined,
-          notes: c.notes ?? undefined,
+          notes: c.description ?? undefined,
         })),
       };
     }

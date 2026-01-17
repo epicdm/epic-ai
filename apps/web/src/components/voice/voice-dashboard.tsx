@@ -138,7 +138,7 @@ export function VoiceDashboard() {
   useEffect(() => {
     // If in demo mode, use demo data
     if (isDemo && demoData) {
-      const demoAgent = demoData.voiceAgent as VoiceAgent;
+      const demoAgent = demoData.voiceAgent as unknown as VoiceAgent;
       setAgents(demoAgent ? [demoAgent] : []);
       setStats(demoData.stats?.voice || null);
       setLoading(false);

@@ -126,10 +126,12 @@ export async function GET(
     }
 
     // Get brand info
-    const brand = await prisma.brand.findUnique({
-      where: { id: agent.brandId },
-      select: { id: true, name: true },
-    });
+    const brand = agent.brandId
+      ? await prisma.brand.findUnique({
+          where: { id: agent.brandId },
+          select: { id: true, name: true },
+        })
+      : null;
 
     return NextResponse.json({ ...agent, brand });
   } catch (error) {
@@ -199,10 +201,12 @@ export async function PATCH(
       data: updateData,
     });
 
-    const brand = await prisma.brand.findUnique({
-      where: { id: agent.brandId },
-      select: { id: true, name: true },
-    });
+    const brand = agent.brandId
+      ? await prisma.brand.findUnique({
+          where: { id: agent.brandId },
+          select: { id: true, name: true },
+        })
+      : null;
 
     return NextResponse.json({ ...agent, brand });
   } catch (error) {

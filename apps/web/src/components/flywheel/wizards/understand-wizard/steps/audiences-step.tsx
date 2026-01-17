@@ -160,7 +160,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   <Input
                     value={audience.name}
                     onValueChange={(value) =>
-                      updateAudience(audience.id, { name: value })
+                      updateAudience(audience.id!, { name: value })
                     }
                     placeholder="Persona Name"
                     variant="underlined"
@@ -174,7 +174,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   size="sm"
                   variant="light"
                   color="danger"
-                  onPress={() => removeAudience(audience.id)}
+                  onPress={() => removeAudience(audience.id!)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -185,7 +185,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                 placeholder="Describe this persona..."
                 value={audience.description || ""}
                 onValueChange={(value) =>
-                  updateAudience(audience.id, { description: value })
+                  updateAudience(audience.id!, { description: value })
                 }
                 minRows={2}
               />
@@ -195,7 +195,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                 placeholder="Age, location, profession, etc."
                 value={audience.demographics || ""}
                 onValueChange={(value) =>
-                  updateAudience(audience.id, { demographics: value })
+                  updateAudience(audience.id!, { demographics: value })
                 }
               />
 
@@ -208,7 +208,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   {audience.painPoints?.map((point, index) => (
                     <Chip
                       key={index}
-                      onClose={() => removePainPoint(audience.id, index)}
+                      onClose={() => removePainPoint(audience.id!, index)}
                       variant="flat"
                       color="danger"
                     >
@@ -220,14 +220,14 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   <Input
                     size="sm"
                     placeholder="Add a pain point..."
-                    value={newPainPoint[audience.id] || ""}
+                    value={newPainPoint[audience.id!] || ""}
                     onValueChange={(value) =>
-                      setNewPainPoint((prev) => ({ ...prev, [audience.id]: value }))
+                      setNewPainPoint((prev) => ({ ...prev, [audience.id!]: value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addPainPoint(audience.id);
+                        addPainPoint(audience.id!);
                       }
                     }}
                   />
@@ -235,7 +235,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                     size="sm"
                     isIconOnly
                     variant="flat"
-                    onPress={() => addPainPoint(audience.id)}
+                    onPress={() => addPainPoint(audience.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -251,7 +251,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   {audience.goals?.map((goal, index) => (
                     <Chip
                       key={index}
-                      onClose={() => removeGoal(audience.id, index)}
+                      onClose={() => removeGoal(audience.id!, index)}
                       variant="flat"
                       color="success"
                     >
@@ -263,14 +263,14 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                   <Input
                     size="sm"
                     placeholder="Add a goal..."
-                    value={newGoal[audience.id] || ""}
+                    value={newGoal[audience.id!] || ""}
                     onValueChange={(value) =>
-                      setNewGoal((prev) => ({ ...prev, [audience.id]: value }))
+                      setNewGoal((prev) => ({ ...prev, [audience.id!]: value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addGoal(audience.id);
+                        addGoal(audience.id!);
                       }
                     }}
                   />
@@ -278,7 +278,7 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                     size="sm"
                     isIconOnly
                     variant="flat"
-                    onPress={() => addGoal(audience.id)}
+                    onPress={() => addGoal(audience.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>

@@ -53,11 +53,14 @@ import {
   Clock,
   GitMerge,
   Waypoints,
+  Share2,
 } from "lucide-react";
 import { FlywheelProgressCard } from "@/components/flywheel";
 import { LearningLoopCard } from "./learning-loop-card";
 import type { FlywheelState, FlywheelPhase, PhaseState, PhaseStatusType } from "@/lib/flywheel/types";
 import { PHASE_DEPENDENCIES } from "@/lib/flywheel/constants";
+import { WelcomeModal } from "./welcome-modal";
+import { useFirstVisit } from "@/hooks/use-first-visit";
 
 interface DashboardData {
   brand: {
@@ -243,6 +246,22 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState("30");
   const [showActivationModal, setShowActivationModal] = useState(flywheelJustActivated);
+
+  // Track first visit for welcome modal
+  const { isFirstVisit, markVisited } = useFirstVisit({ key: "dashboard" });
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  // Show welcome modal on first visit (only after data loads)
+  useEffect(() => {
+    if (isFirstVisit && !loading && data && !flywheelJustActivated) {
+      setShowWelcomeModal(true);
+    }
+  }, [isFirstVisit, loading, data, flywheelJustActivated]);
+
+  const handleCloseWelcome = () => {
+    setShowWelcomeModal(false);
+    markVisited();
+  };
 
   // Calculate onboarding progress
   const getOnboardingStatus = (dashboardData: DashboardData) => {
@@ -872,10 +891,24 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
               </div>
             ) : (
               <div className="text-center py-8">
-                <Lightbulb className="w-12 h-12 text-default-200 mx-auto mb-3" />
-                <p className="text-default-500">
-                  No insights yet. Keep posting to unlock AI recommendations!
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-warning/20 to-warning/5 flex items-center justify-center mx-auto mb-4">
+                  <Lightbulb className="w-8 h-8 text-warning" />
+                </div>
+                <h4 className="font-medium text-default-700 mb-2">
+                  Your AI is Warming Up
+                </h4>
+                <p className="text-sm text-default-500 max-w-xs mx-auto mb-4">
+                  Once you publish content and engage with leads, I&apos;ll analyze
+                  what&apos;s working and suggest improvements to boost your results.
                 </p>
+                <Button
+                  size="sm"
+                  color="warning"
+                  variant="flat"
+                  onPress={() => router.push("/dashboard/content/create")}
+                >
+                  Create Your First Post
+                </Button>
               </div>
             )}
           </CardBody>
@@ -938,8 +971,16 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
               </div>
             ) : (
               <div className="text-center py-8">
-                <Activity className="w-12 h-12 text-default-200 mx-auto mb-3" />
-                <p className="text-default-500">No recent activity</p>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center mx-auto mb-4">
+                  <Activity className="w-8 h-8 text-secondary" />
+                </div>
+                <h4 className="font-medium text-default-700 mb-2">
+                  No Activity Yet
+                </h4>
+                <p className="text-sm text-default-500 max-w-xs mx-auto">
+                  Your timeline will show published posts, new leads, voice calls,
+                  and AI insights as they happen. Start by creating content!
+                </p>
               </div>
             )}
           </CardBody>
@@ -990,14 +1031,21 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
             </div>
           ) : (
             <div className="text-center py-6">
-              <p className="text-default-500 mb-3">
-                No accounts connected yet
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-4">
+                <Share2 className="w-8 h-8 text-primary" />
+              </div>
+              <h4 className="font-medium text-default-700 mb-2">
+                Amplify Your Reach
+              </h4>
+              <p className="text-sm text-default-500 max-w-sm mx-auto mb-4">
+                Connect your social accounts to publish content everywhere with your
+                consistent brand voice. More channels = more engagement opportunities!
               </p>
               <Button
                 color="primary"
                 onPress={() => router.push("/dashboard/social/accounts")}
               >
-                Connect Account
+                Connect First Account
               </Button>
             </div>
           )}
@@ -1029,6 +1077,13 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
           </CardBody>
         </Card>
       )}
+
+      {/* First-Time Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={handleCloseWelcome}
+        companyName={data?.brandBrain?.companyName || undefined}
+      />
 
       {/* Flywheel Activation Celebration Modal */}
       <Modal

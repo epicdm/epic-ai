@@ -254,7 +254,8 @@ export function AIContentWizard({
       });
       setEditedVariations(edited);
 
-      trackEvent("ai_content_generated", {
+      trackEvent("content_generated", {
+        type: "ai_wizard",
         pillar: selectedPillar?.name || "custom",
         platforms: selectedPlatforms.join(","),
         topic,
@@ -342,7 +343,9 @@ export function AIContentWizard({
 
       setPublishSuccess(true);
 
-      trackEvent("ai_content_published", {
+      trackEvent("content_published", {
+        platform: selectedPlatforms[0] || "multi",
+        scheduled: publishOption !== "now",
         pillar: selectedPillar?.name || "custom",
         platforms: selectedPlatforms.join(","),
         publishOption,

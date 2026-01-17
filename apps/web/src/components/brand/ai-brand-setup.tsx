@@ -460,21 +460,21 @@ export function AIBrandSetup({
             </AccordionItem>
 
             {/* Hashtags */}
-            {result.analysis?.contentPatterns.hashtagsUsed.length > 0 && (
+            {(result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0) > 0 ? (
               <AccordionItem
                 key="hashtags"
                 aria-label="Hashtags"
                 startContent={<Hash className="w-5 h-5 text-green-500" />}
                 title="Hashtags Found"
-                subtitle={`${result.analysis.contentPatterns.hashtagsUsed.length} hashtags`}
+                subtitle={`${result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0} hashtags`}
               >
                 <div className="flex flex-wrap gap-1 py-2">
-                  {result.analysis.contentPatterns.hashtagsUsed.map((tag, i) => (
+                  {result.analysis?.contentPatterns?.hashtagsUsed?.map((tag, i) => (
                     <Chip key={i} size="sm" color="success" variant="flat">{tag}</Chip>
                   ))}
                 </div>
               </AccordionItem>
-            )}
+            ) : null}
 
             {/* Engagement Insights */}
             <AccordionItem

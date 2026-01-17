@@ -31,14 +31,17 @@ export async function POST(request: NextRequest) {
       const brand = await prisma.brand.findUnique({
         where: { id: brandId },
         include: {
-          brandBrain: true,
-          contentPillars: true,
+          brandBrain: {
+            include: {
+              pillars: true,
+            },
+          },
         },
       });
 
       if (brand) {
         industry = brand.industry || "business";
-        const pillars = brand.contentPillars
+        const pillars = brand.brandBrain?.pillars
           ?.map((p) => p.name)
           .join(", ") || "";
 

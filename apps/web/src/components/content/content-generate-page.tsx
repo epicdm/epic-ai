@@ -126,6 +126,7 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
         setGeneratedContent(data.content || []);
         setStep(2);
         trackEvent("content_generated", {
+          type: contentType,
           content_type: contentType,
           platforms: platforms.join(","),
           tone,

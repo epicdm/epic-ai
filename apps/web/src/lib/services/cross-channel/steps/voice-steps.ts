@@ -14,6 +14,7 @@ import type { StepExecutionResult } from "../workflow-executor";
  * Voice step configurations
  */
 interface VoiceCallOutboundConfig {
+  [key: string]: unknown;
   agentId?: string;
   phoneNumber: string;
   topic?: string;
@@ -23,6 +24,7 @@ interface VoiceCallOutboundConfig {
 }
 
 interface VoiceCallScheduleConfig {
+  [key: string]: unknown;
   agentId?: string;
   phoneNumber: string;
   scheduledAt: string;
@@ -33,6 +35,7 @@ interface VoiceCallScheduleConfig {
 }
 
 interface VoiceSmsConfig {
+  [key: string]: unknown;
   phoneNumber: string;
   message: string;
   useAiGeneration?: boolean;
@@ -97,13 +100,12 @@ async function executeVoiceCallOutbound(
     // Get or select voice agent
     let agentId = config.agentId;
     if (!agentId) {
-      // Find an active outbound agent
+      // Find an active agent (filter by agentType if needed)
       const agent = await prisma.voiceAgent.findFirst({
         where: {
           organizationId,
           ...(brandId && { brandId }),
           isActive: true,
-          capabilities: { has: "outbound" },
         },
         select: { id: true },
       });
@@ -125,18 +127,17 @@ async function executeVoiceCallOutbound(
       data: {
         agentId,
         organizationId,
-        brandId,
         direction: CallDirection.OUTBOUND,
-        status: CallStatus.INITIATED,
-        fromNumber: "", // Will be populated by voice service
-        toNumber: config.phoneNumber,
+        status: CallStatus.RINGING,
+        phoneNumber: config.phoneNumber,
         triggeredBySocial: context.contentItemId ? true : false,
         socialPostId: context.contentItemId as string || undefined,
         workflowInstanceId: context.workflowInstanceId as string || undefined,
         metadata: {
           workflowStep: step.id,
           topic: config.topic,
-          callContext: config.context,
+          callContext: config.context ? JSON.parse(JSON.stringify(config.context)) : undefined,
+          brandId,
           source: "cross-channel-workflow",
         },
       },
@@ -160,7 +161,7 @@ async function executeVoiceCallOutbound(
           channelType: ChannelType.VOICE,
           channelName: "Voice AI",
           channelId: agentId,
-          action: step.touchpointAction || "call_initiated",
+          action: step.touchpointAction || "CALL",
           actionDetail: `Outbound call initiated to ${config.phoneNumber}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,
@@ -242,7 +243,6 @@ async function executeVoiceCallSchedule(
           organizationId,
           ...(brandId && { brandId }),
           isActive: true,
-          capabilities: { has: "outbound" },
         },
         select: { id: true },
       });
@@ -266,19 +266,18 @@ async function executeVoiceCallSchedule(
       data: {
         agentId,
         organizationId,
-        brandId,
         direction: CallDirection.OUTBOUND,
-        status: CallStatus.INITIATED, // Will be changed to a scheduled status
-        fromNumber: "",
-        toNumber: config.phoneNumber,
-        scheduledAt: scheduledDate,
+        status: CallStatus.RINGING, // Will be changed to a scheduled status
+        phoneNumber: config.phoneNumber,
         triggeredBySocial: context.contentItemId ? true : false,
         socialPostId: context.contentItemId as string || undefined,
         workflowInstanceId: context.workflowInstanceId as string || undefined,
         metadata: {
           workflowStep: step.id,
           topic: config.topic,
-          callContext: config.context,
+          callContext: config.context ? JSON.parse(JSON.stringify(config.context)) : undefined,
+          brandId,
+          scheduledAt: scheduledDate.toISOString(),
           scheduled: true,
           reminderEnabled: config.reminder,
           reminderMinutesBefore: config.reminderMinutesBefore,
@@ -302,7 +301,7 @@ async function executeVoiceCallSchedule(
           channelType: ChannelType.VOICE,
           channelName: "Voice AI",
           channelId: agentId,
-          action: step.touchpointAction || "call_scheduled",
+          action: step.touchpointAction || "CALL",
           actionDetail: `Call scheduled for ${scheduledDate.toISOString()}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,
@@ -384,13 +383,10 @@ async function executeVoiceSms(
     // Create a record of the SMS (could be a separate model, but using call log for now)
     const smsLog = await prisma.callLog.create({
       data: {
-        agentId: "sms", // Special identifier for SMS
         organizationId,
-        brandId,
         direction: CallDirection.OUTBOUND,
-        status: CallStatus.COMPLETED,
-        fromNumber: "",
-        toNumber: config.phoneNumber,
+        status: CallStatus.ENDED,
+        phoneNumber: config.phoneNumber,
         duration: 0,
         triggeredBySocial: context.contentItemId ? true : false,
         socialPostId: context.contentItemId as string || undefined,
@@ -399,6 +395,7 @@ async function executeVoiceSms(
           type: "sms",
           workflowStep: step.id,
           message: config.message,
+          brandId,
           source: "cross-channel-workflow",
         },
       },
@@ -416,7 +413,7 @@ async function executeVoiceSms(
           phone: config.phoneNumber,
           channelType: ChannelType.VOICE, // SMS is part of voice channel
           channelName: "SMS",
-          action: step.touchpointAction || "sms_sent",
+          action: step.touchpointAction || "MESSAGE",
           actionDetail: `SMS sent to ${config.phoneNumber}`,
           sourceType: "workflow",
           sourceId: context.workflowInstanceId as string,

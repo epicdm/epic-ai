@@ -87,31 +87,61 @@ export async function syncUser() {
     }
 
     // Normal upsert - either new user or same Clerk ID
-    const user = await prisma.user.upsert({
-      where: { id: clerkUser.id },
-      update: {
-        email: primaryEmail,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        imageUrl: clerkUser.imageUrl,
-      },
-      create: {
-        id: clerkUser.id,
-        email: primaryEmail,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        imageUrl: clerkUser.imageUrl,
-      },
-      include: {
-        memberships: {
-          include: {
-            organization: true,
+    // Wrapped in retry logic to handle race conditions when multiple requests
+    // try to create the same user simultaneously
+    try {
+      const user = await prisma.user.upsert({
+        where: { id: clerkUser.id },
+        update: {
+          email: primaryEmail,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+        create: {
+          id: clerkUser.id,
+          email: primaryEmail,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          imageUrl: clerkUser.imageUrl,
+        },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return user;
+      return user;
+    } catch (upsertError: unknown) {
+      // Handle race condition: if unique constraint fails, the user was created
+      // by another concurrent request - just fetch it
+      if (
+        upsertError &&
+        typeof upsertError === "object" &&
+        "code" in upsertError &&
+        upsertError.code === "P2002"
+      ) {
+        console.log(
+          `[syncUser] Race condition detected for user ${clerkUser.id}, fetching existing record`
+        );
+        const existingUser = await prisma.user.findUnique({
+          where: { id: clerkUser.id },
+          include: {
+            memberships: {
+              include: {
+                organization: true,
+              },
+            },
+          },
+        });
+        return existingUser;
+      }
+      // Re-throw other errors
+      throw upsertError;
+    }
   } catch (error) {
     console.error("Error syncing user:", error);
     return null;

@@ -116,7 +116,7 @@ export function PostComposer() {
         const generatedContent = data.content?.text || data.content?.variations?.[0]?.text || "";
         setContent(generatedContent);
         trackEvent("ai_content_generated", {
-          topic: topic || customTopic || selectedPillar,
+          topic: topic || customTopic || selectedPillar || undefined,
           platforms: targetPlatforms,
         });
       } else {

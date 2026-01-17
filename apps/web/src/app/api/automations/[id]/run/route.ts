@@ -102,7 +102,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Create workflow executor and start the workflow
     const executor = createWorkflowExecutor(org.id, automation.brandId || undefined);
-    const instance = await executor.startWorkflow(id, workflowContext);
+    const result = await executor.startWorkflow(id, workflowContext);
+
+    // Fetch the full instance for response details
+    const instance = await prisma.workflowInstance.findUnique({
+      where: { id: result.instanceId },
+      select: {
+        id: true,
+        automationId: true,
+        status: true,
+        currentStepId: true,
+        startedAt: true,
+        context: true,
+      },
+    });
 
     // Add template info for response
     const template = WORKFLOW_TEMPLATES[automation.templateId];
@@ -110,14 +123,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         success: true,
-        instance: {
-          id: instance.id,
-          automationId: instance.automationId,
-          status: instance.status,
-          currentStepId: instance.currentStepId,
-          startedAt: instance.startedAt,
-          context: instance.context,
-        },
+        instance: instance
+          ? {
+              id: instance.id,
+              automationId: instance.automationId,
+              status: instance.status,
+              currentStepId: instance.currentStepId,
+              startedAt: instance.startedAt,
+              context: instance.context,
+            }
+          : {
+              id: result.instanceId,
+              status: result.status,
+            },
         automation: {
           id: automation.id,
           name: automation.name,

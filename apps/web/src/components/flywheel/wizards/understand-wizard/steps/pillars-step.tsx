@@ -175,7 +175,7 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                   <Input
                     value={pillar.name}
                     onValueChange={(value) =>
-                      updatePillar(pillar.id, { name: value })
+                      updatePillar(pillar.id!, { name: value })
                     }
                     placeholder="Pillar Name"
                     variant="underlined"
@@ -193,7 +193,7 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                     size="sm"
                     variant="light"
                     color="danger"
-                    onPress={() => removePillar(pillar.id)}
+                    onPress={() => removePillar(pillar.id!)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -205,7 +205,7 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                 placeholder="What topics does this pillar cover?"
                 value={pillar.description || ""}
                 onValueChange={(value) =>
-                  updatePillar(pillar.id, { description: value })
+                  updatePillar(pillar.id!, { description: value })
                 }
                 minRows={2}
               />
@@ -219,7 +219,7 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                   {pillar.topics?.map((topic, topicIndex) => (
                     <Chip
                       key={topicIndex}
-                      onClose={() => removeTopic(pillar.id, topicIndex)}
+                      onClose={() => removeTopic(pillar.id!, topicIndex)}
                       variant="flat"
                       color="secondary"
                     >
@@ -231,14 +231,14 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                   <Input
                     size="sm"
                     placeholder="Add a sub-topic..."
-                    value={newTopic[pillar.id] || ""}
+                    value={newTopic[pillar.id!] || ""}
                     onValueChange={(value) =>
-                      setNewTopic((prev) => ({ ...prev, [pillar.id]: value }))
+                      setNewTopic((prev) => ({ ...prev, [pillar.id!]: value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addTopic(pillar.id);
+                        addTopic(pillar.id!);
                       }
                     }}
                   />
@@ -246,7 +246,7 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                     size="sm"
                     isIconOnly
                     variant="flat"
-                    onPress={() => addTopic(pillar.id)}
+                    onPress={() => addTopic(pillar.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>

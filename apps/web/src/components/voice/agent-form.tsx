@@ -50,7 +50,7 @@ interface AgentFormProps {
     id: string;
     name: string;
     description: string | null;
-    brandId: string;
+    brandId: string | null;
     systemPrompt: string | null;
     greeting: string | null;
     llmProvider: string;

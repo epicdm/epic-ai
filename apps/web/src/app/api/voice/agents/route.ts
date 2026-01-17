@@ -481,6 +481,7 @@ export async function POST(request: NextRequest) {
     let provisioningDetails: {
       raceConditionsEncountered?: number;
       utilizationPercent?: number;
+      livekitWarnings?: string[];
     } | null = null;
 
     // Provision Magnus SIP and DID if requested (default: true)

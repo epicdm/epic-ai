@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
 import { getUserOrganization } from "@/lib/sync-user";
-import { prisma } from "@epic-ai/database";
+import { prisma, Prisma } from "@epic-ai/database";
 import { WorkflowTrigger, WorkflowCategory } from "@epic-ai/database";
 import {
   WORKFLOW_TEMPLATES,
@@ -82,6 +82,9 @@ export async function GET(request: NextRequest) {
         templateDescription: template?.description,
         channelCount: automation.channels.length,
         instanceCount: automation._count.instances,
+        runCount: automation.totalRuns, // Map totalRuns to runCount for frontend
+        lastRunAt: null, // TODO: Add last instance completed date
+        lastRunStatus: null, // TODO: Add last instance status
       };
     });
 
@@ -151,8 +154,9 @@ export async function POST(request: NextRequest) {
     // Use custom steps or template steps
     const steps = customSteps || template.steps;
 
-    // Find entry step (first step or explicitly marked)
-    const entryStepId = steps[0]?.id || "step-1";
+    // Find entry step - use template's entryStepId or derive from first step
+    const firstStep = steps[0] as { id?: string } | undefined;
+    const entryStepId = template.entryStepId || firstStep?.id || "step-1";
 
     // Create automation
     const automation = await prisma.automation.create({
@@ -163,8 +167,8 @@ export async function POST(request: NextRequest) {
         name: name || template.name,
         description: description || template.description,
         category: template.category as WorkflowCategory,
-        trigger: (template.defaultTrigger || WorkflowTrigger.MANUAL) as WorkflowTrigger,
-        triggerConfig: triggerConfig || template.defaultTriggerConfig || {},
+        trigger: (template.trigger || WorkflowTrigger.MANUAL) as WorkflowTrigger,
+        triggerConfig: (triggerConfig || template.triggerConfig || {}) as Prisma.InputJsonValue,
         steps: steps as object,
         entryStepId,
         channels: template.channels,

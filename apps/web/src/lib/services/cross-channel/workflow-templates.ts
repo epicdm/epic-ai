@@ -21,7 +21,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
   name: "Lead Nurture Sequence",
   description:
     "Nurture leads across social, email, and voice channels with consistent brand messaging. Perfect for converting engaged prospects into customers.",
-  category: "lead_nurture",
+  category: "LEAD_NURTURE",
 
   trigger: "event",
   triggerConfig: {
@@ -227,7 +227,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
   name: "Customer Onboarding",
   description:
     "Onboard new customers with personalized welcome sequences across email, voice, and social. Ensures a smooth start and high satisfaction.",
-  category: "customer_onboarding",
+  category: "CUSTOMER_ONBOARDING",
 
   trigger: "event",
   triggerConfig: {
@@ -371,7 +371,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
   name: "Re-engagement Campaign",
   description:
     "Re-engage dormant contacts with a personalized multi-channel approach. Voice check-ins, social touchpoints, and win-back offers.",
-  category: "re_engagement",
+  category: "RE_ENGAGEMENT",
 
   trigger: "condition",
   triggerConfig: {
@@ -588,7 +588,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
   name: "Event Promotion",
   description:
     "Promote webinars, events, or launches across all channels. Includes announcements, reminders, and personal outreach for high-value contacts.",
-  category: "event_promotion",
+  category: "EVENT_PROMOTION",
 
   trigger: "manual",
   triggerConfig: {},
@@ -794,7 +794,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
   name: "Sales Outreach Sequence",
   description:
     "Structured sales outreach across channels. Social warming, personalized emails, and voice calls to book meetings with qualified prospects.",
-  category: "sales_outreach",
+  category: "SALES_OUTREACH",
 
   trigger: "event",
   triggerConfig: {

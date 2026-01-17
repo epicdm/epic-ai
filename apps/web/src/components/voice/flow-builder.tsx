@@ -63,14 +63,14 @@ type FlowEdgeType =
   | "FALLBACK"
   | "ERROR";
 
-interface FlowNodeData {
+interface FlowNodeData extends Record<string, unknown> {
   label: string;
   type: FlowNodeType;
   content?: string | null;
   config?: Record<string, unknown>;
 }
 
-interface FlowEdgeData {
+interface FlowEdgeData extends Record<string, unknown> {
   edgeId: string;
   type: FlowEdgeType;
   condition?: Record<string, unknown> | null;

@@ -84,9 +84,9 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
     // Both are lowercase now so comparison works
     const filteredSchedule: ScheduleData = {};
     for (const [day, slots] of Object.entries(DEFAULT_SCHEDULE)) {
-      filteredSchedule[day as keyof ScheduleData] = slots.map((slot) => ({
+      filteredSchedule[day as keyof ScheduleData] = slots.map((slot: TimeSlot) => ({
         ...slot,
-        platforms: slot.platforms.filter((p) => connectedPlatformIds.includes(p.toLowerCase())),
+        platforms: slot.platforms.filter((p: string) => connectedPlatformIds.includes(p.toLowerCase())),
       }));
     }
     updateData({ schedule: filteredSchedule });

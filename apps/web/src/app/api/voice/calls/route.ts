@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthWithBypass } from "@/lib/auth";
-import { prisma, CallDirection, CallStatus, CallOutcome } from "@epic-ai/database";
+import { prisma, Prisma, CallDirection, CallStatus, CallOutcome } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import { z } from "zod";
 
@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
       data: {
         organizationId: org.id,
         ...validated,
+        metadata: validated.metadata as Prisma.InputJsonValue | undefined,
       },
       include: {
         agent: { select: { id: true, name: true } },
