@@ -314,23 +314,8 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
           template: selectedTemplate?.id || "none",
         });
 
-        // Navigate based on selected path - "One Brain, Many Voices" architecture
-        if (selectedPath === "social_first") {
-          // Go to Social-focused AI setup (content creation focus)
-          router.push("/setup/ai-social");
-        } else if (selectedPath === "voice_first") {
-          // Go to Voice-focused setup (voice agent creation)
-          router.push("/setup/voice");
-        } else if (selectedPath === "hybrid") {
-          // Go to unified cross-channel setup
-          router.push("/setup/ai");
-        } else if (selectedPath === "guided") {
-          // Go to guided manual setup
-          router.push("/setup?mode=guided");
-        } else {
-          // Fallback to setup hub
-          router.push("/setup");
-        }
+        // Route directly to dashboard - onboarding complete
+        router.push("/dashboard");
 
         router.refresh();
       } catch (error) {

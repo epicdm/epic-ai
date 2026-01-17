@@ -1,7 +1,9 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { syncUser } from "@/lib/sync-user";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { prisma } from "@epic-ai/database";
 
 // Development UAT bypass - allows testing without auth in development mode
 const isUATBypassEnabled =
@@ -29,6 +31,30 @@ export default async function DashboardLayout({
 
   if (!userId) {
     redirect("/sign-in");
+  }
+
+  // Single onboarding gate for ALL dashboard routes
+  // This check runs for every dashboard route including /onboarding
+  // The /onboarding page itself will render the wizard and not redirect back
+  const onboardingProgress = await prisma.userOnboardingProgress.findUnique({
+    where: { userId },
+  });
+
+  // If user hasn't completed onboarding and isn't on the onboarding page, redirect
+  // We check the current path to avoid redirect loops
+  try {
+    const headersList = await headers();
+    const pathname = headersList.get("x-invoke-path") || "";
+
+    if (!onboardingProgress?.onboardingCompletedAt && !pathname.includes("/onboarding")) {
+      redirect("/onboarding");
+    }
+  } catch {
+    // If we can't determine the path, check if onboarding is complete
+    // If not complete, redirect (this is safe because onboarding page won't redirect back)
+    if (!onboardingProgress?.onboardingCompletedAt) {
+      redirect("/onboarding");
+    }
   }
 
   // Get user data in parallel - wrap in try/catch for resilience

@@ -5,188 +5,57 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  Share2,
-  Phone,
-  Users,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  BarChart3,
-  Zap,
-  FlaskConical,
-  Megaphone,
-  Brain,
-  FileText,
-  CheckSquare,
-  Globe,
-  Database,
-  Calendar,
 } from "lucide-react";
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-  children?: { name: string; href: string }[];
-}
+import { ROUTE_CONFIG, getRoutesBySection, type RouteConfig } from "@/lib/routes/route-config";
 
 interface NavSection {
   title: string;
   subtitle: string;
-  items: NavItem[];
+  items: RouteConfig[];
 }
 
-// Organized by Flywheel stages: Understand → Create → Distribute → Learn → Automate
+// Build navigation from centralized route config
 const navigationSections: NavSection[] = [
   {
     title: "",
     subtitle: "",
-    items: [
-      {
-        name: "Dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-      },
-    ],
+    items: ROUTE_CONFIG.filter((r) => r.id === "dashboard"),
   },
   {
     title: "Understand",
     subtitle: "Your brand identity",
-    items: [
-      {
-        name: "Brand Brain",
-        href: "/dashboard/brand",
-        icon: Brain,
-        children: [
-          { name: "Overview", href: "/dashboard/brand" },
-          { name: "Voice & Style", href: "/dashboard/brand/voice" },
-          { name: "Strategy", href: "/dashboard/brand/strategy" },
-        ],
-      },
-      {
-        name: "Context Engine",
-        href: "/dashboard/context",
-        icon: Database,
-        children: [
-          { name: "Sources", href: "/dashboard/context" },
-          { name: "Documents", href: "/dashboard/context?tab=documents" },
-          { name: "Search", href: "/dashboard/context?tab=search" },
-        ],
-      },
-    ],
+    items: getRoutesBySection("understand"),
   },
   {
     title: "Create",
     subtitle: "Content factory",
-    items: [
-      {
-        name: "Content",
-        href: "/dashboard/content",
-        icon: FileText,
-        children: [
-          { name: "Queue", href: "/dashboard/content" },
-          { name: "Approval Queue", href: "/dashboard/content/approval" },
-          { name: "Generate", href: "/dashboard/content/generate" },
-          { name: "Published", href: "/dashboard/content/published" },
-        ],
-      },
-      {
-        name: "Calendar",
-        href: "/dashboard/calendar",
-        icon: Calendar,
-      },
-    ],
+    items: getRoutesBySection("create"),
   },
   {
     title: "Distribute",
     subtitle: "Reach your audience",
-    items: [
-      {
-        name: "Social Accounts",
-        href: "/dashboard/social",
-        icon: Share2,
-        children: [
-          { name: "Overview", href: "/dashboard/social" },
-          { name: "AI Suggestions", href: "/dashboard/social/suggestions" },
-          { name: "Autopilot Settings", href: "/dashboard/social/settings" },
-          { name: "Create Post", href: "/dashboard/content/generate" },
-          { name: "Accounts", href: "/dashboard/social/accounts" },
-        ],
-      },
-      {
-        name: "Voice AI",
-        href: "/dashboard/voice",
-        icon: Phone,
-        children: [
-          { name: "Agents", href: "/dashboard/voice" },
-          { name: "Calls", href: "/dashboard/voice/calls" },
-          { name: "Phone Numbers", href: "/dashboard/voice/numbers" },
-        ],
-      },
-      {
-        name: "Ads",
-        href: "/dashboard/ads",
-        icon: Megaphone,
-        children: [
-          { name: "Dashboard", href: "/dashboard/ads" },
-          { name: "Create Campaign", href: "/dashboard/ads/create" },
-          { name: "Ad Accounts", href: "/dashboard/ads/accounts" },
-        ],
-      },
-    ],
+    items: getRoutesBySection("distribute"),
   },
   {
     title: "Learn",
     subtitle: "Measure & improve",
-    items: [
-      {
-        name: "Analytics",
-        href: "/dashboard/analytics",
-        icon: BarChart3,
-      },
-      {
-        name: "Leads",
-        href: "/dashboard/leads",
-        icon: Users,
-      },
-    ],
+    items: getRoutesBySection("learn"),
   },
   {
     title: "Automate",
     subtitle: "Set it & forget it",
-    items: [
-      {
-        name: "Automations",
-        href: "/dashboard/automations",
-        icon: Zap,
-      },
-      {
-        name: "Integration Tests",
-        href: "/dashboard/test",
-        icon: FlaskConical,
-        badge: "Dev",
-      },
-    ],
+    items: getRoutesBySection("automate"),
   },
 ];
 
 // Flatten for auto-expand logic
 const allNavItems = navigationSections.flatMap((section) => section.items);
 
-const bottomNavigation: NavItem[] = [
-  {
-    name: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-    children: [
-      { name: "General", href: "/dashboard/settings" },
-      { name: "Publishing", href: "/dashboard/settings/publishing" },
-    ],
-  },
-];
+// Settings at bottom
+const bottomNavigation: RouteConfig[] = getRoutesBySection("settings");
 
 interface SidebarProps {
   collapsed: boolean;
@@ -221,10 +90,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
-  const renderNavItem = (item: NavItem) => {
+  const renderNavItem = (item: RouteConfig) => {
     const active = isActive(item.href);
     const expanded = expandedItems.includes(item.href);
     const hasChildren = item.children && item.children.length > 0;
+    const Icon = item.icon;
 
     return (
       <div key={item.href}>
@@ -244,15 +114,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             collapsed && "justify-center px-2"
           )}
         >
-          <item.icon
-            className={cn(
-              "flex-shrink-0",
-              collapsed ? "w-6 h-6" : "w-5 h-5",
-              active
-                ? "text-brand-600 dark:text-brand-400"
-                : "text-gray-500 dark:text-gray-500"
-            )}
-          />
+          {Icon && (
+            <Icon
+              className={cn(
+                "flex-shrink-0",
+                collapsed ? "w-6 h-6" : "w-5 h-5",
+                active
+                  ? "text-brand-600 dark:text-brand-400"
+                  : "text-gray-500 dark:text-gray-500"
+              )}
+            />
+          )}
           {!collapsed && (
             <>
               <span className="flex-1">{item.name}</span>

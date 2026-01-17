@@ -52,6 +52,38 @@ import {
 } from "@/lib/services/cross-channel/step-humanizer";
 import { ChannelType } from "@epic-ai/database";
 
+// Channel configuration for visual display
+const CHANNEL_CONFIG: Record<
+  string,
+  { icon: React.ReactNode; color: string; label: string }
+> = {
+  EMAIL: {
+    icon: <Mail className="w-3 h-3" />,
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    label: "Email",
+  },
+  SOCIAL: {
+    icon: <Share2 className="w-3 h-3" />,
+    color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    label: "Social",
+  },
+  VOICE: {
+    icon: <Phone className="w-3 h-3" />,
+    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    label: "Voice",
+  },
+  CHAT: {
+    icon: <MessageCircle className="w-3 h-3" />,
+    color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+    label: "Chat",
+  },
+  SMS: {
+    icon: <Smartphone className="w-3 h-3" />,
+    color: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+    label: "SMS",
+  },
+};
+
 interface AutomationRun {
   id: string;
   status: string;
@@ -61,6 +93,7 @@ interface AutomationRun {
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
+  channelsUsed?: ChannelType[];
 }
 
 interface WorkflowStep {
@@ -523,6 +556,7 @@ export function AutomationDetail({ automationId }: { automationId: string }) {
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Started</TableColumn>
                     <TableColumn>Duration</TableColumn>
+                    <TableColumn>Channels</TableColumn>
                     <TableColumn>Details</TableColumn>
                   </TableHeader>
                   <TableBody>
@@ -551,6 +585,30 @@ export function AutomationDetail({ automationId }: { automationId: string }) {
                         </TableCell>
                         <TableCell>
                           {run.durationMs ? `${run.durationMs}ms` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {run.channelsUsed && run.channelsUsed.length > 0 ? (
+                              run.channelsUsed.map((channel) => {
+                                const config = CHANNEL_CONFIG[channel];
+                                if (!config) return null;
+                                return (
+                                  <Tooltip key={channel} content={config.label}>
+                                    <div
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-md ${config.color}`}
+                                    >
+                                      {config.icon}
+                                      <span className="text-xs font-medium">
+                                        {config.label}
+                                      </span>
+                                    </div>
+                                  </Tooltip>
+                                );
+                              })
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {run.error ? (

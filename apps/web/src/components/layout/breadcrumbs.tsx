@@ -3,70 +3,59 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
+import { getBreadcrumbs } from "@/lib/routes/route-config";
 
-const routeLabels: Record<string, string> = {
-  dashboard: "Dashboard",
-  social: "Social Media",
-  voice: "Voice AI",
-  leads: "Leads",
-  settings: "Settings",
-  automations: "Automations",
-  analytics: "Analytics",
-  create: "Create Post",
-  accounts: "Accounts",
-  agents: "Agents",
-  calls: "Calls",
-  numbers: "Phone Numbers",
-  onboarding: "Onboarding",
-};
-
+/**
+ * Breadcrumbs component using centralized route config
+ * Automatically generates breadcrumb trail based on current pathname
+ */
 export function Breadcrumbs() {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  const breadcrumbs = getBreadcrumbs(pathname);
 
-  // Don't show breadcrumbs on root dashboard
-  if (segments.length <= 1) {
+  // Don't show breadcrumbs on root dashboard or if only one item
+  if (breadcrumbs.length <= 1 || pathname === "/dashboard") {
     return null;
   }
 
-  const breadcrumbs = segments.map((segment, index) => {
-    const href = "/" + segments.slice(0, index + 1).join("/");
-    const label = routeLabels[segment] || segment;
-    const isLast = index === segments.length - 1;
-
-    return {
-      href,
-      label,
-      isLast,
-    };
-  });
-
   return (
-    <nav className="hidden md:flex items-center gap-1 text-sm">
+    <nav className="hidden md:flex items-center gap-1 text-sm" aria-label="Breadcrumb">
+      {/* Home / Dashboard link */}
       <Link
         href="/dashboard"
-        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        aria-label="Dashboard"
       >
         <Home className="w-4 h-4" />
       </Link>
 
-      {breadcrumbs.map((crumb) => (
-        <div key={crumb.href} className="flex items-center">
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-          {crumb.isLast ? (
-            <span className="px-1 text-gray-700 dark:text-gray-300 font-medium">
-              {crumb.label}
-            </span>
-          ) : (
-            <Link
-              href={crumb.href}
-              className="px-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              {crumb.label}
-            </Link>
-          )}
-        </div>
-      ))}
+      {breadcrumbs.map((crumb, index) => {
+        const isLast = index === breadcrumbs.length - 1;
+        const Icon = crumb.icon;
+
+        return (
+          <div key={crumb.id} className="flex items-center gap-1">
+            <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+
+            {isLast ? (
+              // Current page - not clickable
+              <div className="flex items-center gap-1.5 px-1 text-gray-700 dark:text-gray-300 font-medium">
+                {Icon && <Icon className="w-4 h-4" />}
+                <span>{crumb.name}</span>
+              </div>
+            ) : (
+              // Parent pages - clickable
+              <Link
+                href={crumb.href}
+                className="flex items-center gap-1.5 px-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                {Icon && <Icon className="w-4 h-4" />}
+                <span>{crumb.name}</span>
+              </Link>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 }

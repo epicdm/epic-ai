@@ -118,6 +118,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         startedAt: instance.startedAt,
         completedAt: instance.completedAt,
         durationMs: endTime ? endTime - startTime : null,
+        channelsUsed: instance.channelsUsed,
       };
     });
 
