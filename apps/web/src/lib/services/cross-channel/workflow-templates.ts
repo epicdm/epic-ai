@@ -7,8 +7,13 @@
  * "One Brain, Many Voices" - Same brand personality, multiple touchpoints.
  */
 
-import { ChannelType } from "@epic-ai/database";
-import { WorkflowTemplate, WorkflowCategory } from "./types";
+import {
+  ChannelType,
+  WorkflowTrigger,
+  WorkflowAction,
+  WorkflowCategory,
+} from "@epic-ai/database";
+import { WorkflowTemplate } from "./types";
 
 /**
  * Lead Nurture Workflow
@@ -21,9 +26,9 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
   name: "Lead Nurture Sequence",
   description:
     "Nurture leads across social, email, and voice channels with consistent brand messaging. Perfect for converting engaged prospects into customers.",
-  category: "LEAD_NURTURE",
+  category: WorkflowCategory.LEAD_NURTURE,
 
-  trigger: "event",
+  trigger: WorkflowTrigger.EVENT,
   triggerConfig: {
     event: "lead.created",
     conditions: [
@@ -44,7 +49,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_1",
       name: "Record Initial Touchpoint",
-      action: "attribute",
+      action: WorkflowAction.ATTRIBUTE,
       config: {
         touchpointType: "lead_created",
       },
@@ -55,7 +60,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_2",
       name: "Welcome Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "welcome",
@@ -71,7 +76,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_3",
       name: "Wait 2 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 2,
         unit: "days",
@@ -82,7 +87,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_4",
       name: "Check Engagement",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -106,7 +111,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_5a",
       name: "High-Value Social Engage",
-      action: "social_dm",
+      action: WorkflowAction.SOCIAL_DM,
       channel: ChannelType.SOCIAL,
       config: {
         messageType: "personalized_outreach",
@@ -121,7 +126,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_5b",
       name: "Nurture Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "value_proposition",
@@ -135,7 +140,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_6a",
       name: "Schedule Discovery Call",
-      action: "voice_call_schedule",
+      action: WorkflowAction.VOICE_CALL_SCHEDULE,
       channel: ChannelType.VOICE,
       config: {
         callType: "discovery",
@@ -149,7 +154,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_6b",
       name: "Wait 3 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 3,
         unit: "days",
@@ -159,7 +164,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_6b_check",
       name: "Re-check Engagement",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -183,7 +188,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_7",
       name: "Update Lead Status",
-      action: "update_lead",
+      action: WorkflowAction.UPDATE_LEAD,
       config: {
         status: "QUALIFIED",
         addTag: "nurture_complete",
@@ -193,7 +198,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_end_success",
       name: "Complete - Success",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "success",
         notifyTeam: true,
@@ -202,7 +207,7 @@ export const LEAD_NURTURE_WORKFLOW: WorkflowTemplate = {
     {
       id: "step_end_dormant",
       name: "Complete - Dormant",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "dormant",
         scheduleReEngagement: true,
@@ -227,9 +232,9 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
   name: "Customer Onboarding",
   description:
     "Onboard new customers with personalized welcome sequences across email, voice, and social. Ensures a smooth start and high satisfaction.",
-  category: "CUSTOMER_ONBOARDING",
+  category: WorkflowCategory.CUSTOMER_ONBOARDING,
 
-  trigger: "event",
+  trigger: WorkflowTrigger.EVENT,
   triggerConfig: {
     event: "customer.created",
   },
@@ -243,7 +248,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_1",
       name: "Welcome Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "customer_welcome",
@@ -258,7 +263,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_2",
       name: "Wait 1 Day",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 1,
         unit: "days",
@@ -269,7 +274,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_3",
       name: "Onboarding Call",
-      action: "voice_call_outbound",
+      action: WorkflowAction.VOICE_CALL_OUTBOUND,
       channel: ChannelType.VOICE,
       config: {
         callType: "onboarding",
@@ -286,7 +291,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_4",
       name: "Social Connection",
-      action: "social_engage",
+      action: WorkflowAction.SOCIAL_ENGAGE,
       channel: ChannelType.SOCIAL,
       config: {
         action: "follow_and_welcome",
@@ -301,7 +306,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_4_alt",
       name: "Missed Call - Email Follow-up",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "missed_onboarding_call",
@@ -313,7 +318,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_5",
       name: "Wait 5 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 5,
         unit: "days",
@@ -323,7 +328,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_6",
       name: "Check-in Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "onboarding_checkin",
@@ -337,7 +342,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_7",
       name: "Update Customer Status",
-      action: "update_lead",
+      action: WorkflowAction.UPDATE_LEAD,
       config: {
         status: "ONBOARDED",
         addTag: "onboarding_complete",
@@ -347,7 +352,7 @@ export const CUSTOMER_ONBOARDING_WORKFLOW: WorkflowTemplate = {
     {
       id: "onb_end",
       name: "Complete",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "onboarded",
         notifyTeam: true,
@@ -371,9 +376,9 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
   name: "Re-engagement Campaign",
   description:
     "Re-engage dormant contacts with a personalized multi-channel approach. Voice check-ins, social touchpoints, and win-back offers.",
-  category: "RE_ENGAGEMENT",
+  category: WorkflowCategory.RE_ENGAGEMENT,
 
-  trigger: "condition",
+  trigger: WorkflowTrigger.CONDITION,
   triggerConfig: {
     conditions: [
       {
@@ -398,7 +403,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_1",
       name: "AI Analysis",
-      action: "ai_analyze",
+      action: WorkflowAction.AI_ANALYZE,
       config: {
         analyzeType: "re_engagement_potential",
         factors: ["past_engagement", "purchase_history", "social_activity"],
@@ -408,7 +413,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_2",
       name: "Segment by Potential",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -440,7 +445,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_3a",
       name: "Personal Check-in Call",
-      action: "voice_call_outbound",
+      action: WorkflowAction.VOICE_CALL_OUTBOUND,
       channel: ChannelType.VOICE,
       config: {
         callType: "check_in",
@@ -457,7 +462,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_3b",
       name: "We Miss You Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "we_miss_you",
@@ -472,7 +477,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_3c",
       name: "Social Retargeting",
-      action: "social_engage",
+      action: WorkflowAction.SOCIAL_ENGAGE,
       channel: ChannelType.SOCIAL,
       config: {
         action: "retarget_post",
@@ -486,7 +491,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_4",
       name: "Wait 3 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 3,
         unit: "days",
@@ -496,7 +501,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_5",
       name: "Check Response",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -520,7 +525,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_6_engaged",
       name: "Update Status - Re-engaged",
-      action: "update_lead",
+      action: WorkflowAction.UPDATE_LEAD,
       config: {
         status: "ACTIVE",
         removeTag: "dormant",
@@ -531,7 +536,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_6_no_response",
       name: "Final Offer Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "final_offer",
@@ -546,7 +551,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_end_success",
       name: "Complete - Re-engaged",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "re_engaged",
         notifyTeam: true,
@@ -555,7 +560,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_end_attempted",
       name: "Complete - Attempted",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "attempted",
         scheduleNextAttempt: true,
@@ -565,7 +570,7 @@ export const RE_ENGAGEMENT_WORKFLOW: WorkflowTemplate = {
     {
       id: "re_end_low",
       name: "Complete - Low Priority",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "low_priority_touched",
       },
@@ -588,9 +593,9 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
   name: "Event Promotion",
   description:
     "Promote webinars, events, or launches across all channels. Includes announcements, reminders, and personal outreach for high-value contacts.",
-  category: "EVENT_PROMOTION",
+  category: WorkflowCategory.EVENT_PROMOTION,
 
-  trigger: "manual",
+  trigger: WorkflowTrigger.MANUAL,
   triggerConfig: {},
 
   channels: [ChannelType.SOCIAL, ChannelType.EMAIL, ChannelType.VOICE],
@@ -608,7 +613,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_1",
       name: "Social Announcement",
-      action: "social_post",
+      action: WorkflowAction.SOCIAL_POST,
       channel: ChannelType.SOCIAL,
       config: {
         contentType: "event_announcement",
@@ -623,7 +628,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_2",
       name: "Email Invitation",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "event_invitation",
@@ -637,7 +642,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_3",
       name: "Wait Until 3 Days Before",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         waitUntil: "{{event.date - 3 days}}",
       },
@@ -646,7 +651,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_4",
       name: "Segment by Registration",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -670,7 +675,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_5a",
       name: "Reminder Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "event_reminder",
@@ -684,7 +689,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_5b",
       name: "Check Lead Score for Voice",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -708,7 +713,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_5b_call",
       name: "Personal Invitation Call",
-      action: "voice_call_outbound",
+      action: WorkflowAction.VOICE_CALL_OUTBOUND,
       channel: ChannelType.VOICE,
       config: {
         callType: "event_invitation",
@@ -724,7 +729,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_5b_email",
       name: "Last Chance Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "event_last_chance",
@@ -738,7 +743,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_6a",
       name: "Social Reminder Post",
-      action: "social_post",
+      action: WorkflowAction.SOCIAL_POST,
       channel: ChannelType.SOCIAL,
       config: {
         contentType: "event_reminder",
@@ -752,7 +757,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_6b",
       name: "Wait for Event",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         waitUntil: "{{event.date + 1 day}}",
       },
@@ -761,7 +766,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_end_registered",
       name: "Complete - Registered",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "registered",
         addToAttendeeList: true,
@@ -770,7 +775,7 @@ export const EVENT_PROMOTION_WORKFLOW: WorkflowTemplate = {
     {
       id: "evt_end_not_registered",
       name: "Complete - Not Registered",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "not_registered",
         addToFollowUpList: true,
@@ -794,9 +799,9 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
   name: "Sales Outreach Sequence",
   description:
     "Structured sales outreach across channels. Social warming, personalized emails, and voice calls to book meetings with qualified prospects.",
-  category: "SALES_OUTREACH",
+  category: WorkflowCategory.SALES_OUTREACH,
 
-  trigger: "event",
+  trigger: WorkflowTrigger.EVENT,
   triggerConfig: {
     event: "lead.qualified",
   },
@@ -810,7 +815,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_1",
       name: "Social Research & Connect",
-      action: "social_engage",
+      action: WorkflowAction.SOCIAL_ENGAGE,
       channel: ChannelType.SOCIAL,
       config: {
         action: "research_and_connect",
@@ -825,7 +830,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_2",
       name: "Wait 1 Day",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 1,
         unit: "days",
@@ -836,7 +841,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_3",
       name: "Personalized Email #1",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "sales_intro",
@@ -854,7 +859,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_4",
       name: "Wait 3 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 3,
         unit: "days",
@@ -865,7 +870,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_5",
       name: "Check Email Engagement",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -889,7 +894,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_6a",
       name: "Voice Follow-up",
-      action: "voice_call_outbound",
+      action: WorkflowAction.VOICE_CALL_OUTBOUND,
       channel: ChannelType.VOICE,
       config: {
         callType: "sales_follow_up",
@@ -907,7 +912,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_6b",
       name: "Follow-up Email #2",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "sales_follow_up",
@@ -922,7 +927,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_7",
       name: "Check Call Outcome",
-      action: "condition",
+      action: WorkflowAction.CONDITION,
       config: {},
       branches: [
         {
@@ -954,7 +959,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_7b",
       name: "Wait 4 Days",
-      action: "wait",
+      action: WorkflowAction.WAIT,
       config: {
         duration: 4,
         unit: "days",
@@ -964,7 +969,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_8",
       name: "Final Touch - Breakup Email",
-      action: "email_send",
+      action: WorkflowAction.EMAIL_SEND,
       channel: ChannelType.EMAIL,
       config: {
         template: "sales_breakup",
@@ -979,7 +984,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_end_meeting",
       name: "Complete - Meeting Booked",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "meeting_booked",
         notifyTeam: true,
@@ -989,7 +994,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_end_not_interested",
       name: "Complete - Not Interested",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "not_interested",
         addToDoNotContact: false,
@@ -1000,7 +1005,7 @@ export const SALES_OUTREACH_WORKFLOW: WorkflowTemplate = {
     {
       id: "sales_end_nurture",
       name: "Complete - Move to Nurture",
-      action: "end",
+      action: WorkflowAction.END,
       config: {
         outcome: "move_to_nurture",
         addToNurtureList: true,

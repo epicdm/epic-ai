@@ -7,48 +7,26 @@
  * "One Brain, Many Voices" - Consistent brand experience across channels.
  */
 
-import { ChannelType, TouchpointAction, AttributionModel } from "@epic-ai/database";
+import {
+  ChannelType,
+  TouchpointAction,
+  AttributionModel,
+  WorkflowTrigger,
+  WorkflowAction,
+  WorkflowCategory,
+  WorkflowStatus,
+} from "@epic-ai/database";
 
 // Re-export for convenience
-export { ChannelType, TouchpointAction, AttributionModel };
-
-/**
- * Workflow trigger types
- */
-export type WorkflowTrigger =
-  | "manual" // User-initiated
-  | "scheduled" // Time-based
-  | "event" // Event-driven (lead created, call ended, etc.)
-  | "condition" // Condition-based (lead score > X, etc.)
-  | "webhook"; // External webhook
-
-/**
- * Workflow step action types mapped to channels
- */
-export type WorkflowAction =
-  // Social actions
-  | "social_post" // Publish a social media post
-  | "social_dm" // Send a direct message
-  | "social_engage" // Like/comment on content
-  // Voice actions
-  | "voice_call_outbound" // Initiate outbound call
-  | "voice_call_schedule" // Schedule a call
-  | "voice_sms" // Send SMS
-  // Email actions
-  | "email_send" // Send email
-  | "email_sequence_start" // Start email sequence
-  | "email_sequence_stop" // Stop email sequence
-  // Chat actions
-  | "chat_message" // Send chat message
-  | "chat_assign" // Assign to agent
-  // Internal actions
-  | "wait" // Wait for time/condition
-  | "condition" // Conditional branch
-  | "update_lead" // Update lead status/score
-  | "notify_team" // Send internal notification
-  | "ai_analyze" // AI analysis step
-  | "attribute" // Record attribution touchpoint
-  | "end"; // End workflow
+export {
+  ChannelType,
+  TouchpointAction,
+  AttributionModel,
+  WorkflowTrigger,
+  WorkflowAction,
+  WorkflowCategory,
+  WorkflowStatus,
+};
 
 /**
  * Condition operators for workflow logic
@@ -159,19 +137,7 @@ export interface WorkflowTemplate {
   updatedAt?: Date;
 }
 
-/**
- * Workflow categories for organization
- */
-export type WorkflowCategory =
-  | "LEAD_NURTURE" // Nurturing leads across channels
-  | "CUSTOMER_ONBOARDING" // Onboarding new customers
-  | "RE_ENGAGEMENT" // Re-engaging dormant contacts
-  | "EVENT_PROMOTION" // Promoting events/webinars
-  | "SUPPORT_ESCALATION" // Support workflow
-  | "SALES_OUTREACH" // Sales prospecting
-  | "RETENTION" // Customer retention
-  | "FEEDBACK" // Collecting feedback
-  | "CUSTOM"; // Custom workflow
+// WorkflowCategory is now imported from Prisma (see imports above)
 
 /**
  * Workflow instance (running workflow)
@@ -188,7 +154,7 @@ export interface WorkflowInstance {
   journeyId?: string;
 
   // State
-  status: "pending" | "running" | "paused" | "completed" | "failed" | "cancelled";
+  status: WorkflowStatus;
   currentStepId: string;
   completedSteps: string[];
 
