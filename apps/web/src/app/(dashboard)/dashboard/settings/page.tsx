@@ -1,6 +1,5 @@
-import { getAuthWithBypass } from "@/lib/auth";
+import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { SettingsContent } from "@/components/settings/settings-content";
 
@@ -13,10 +12,10 @@ export default async function SettingsPage() {
     redirect("/sign-in");
   }
 
-  const organization = await getUserOrganization();
+  const organization = await getCurrentOrganization();
 
   if (!organization) {
-    throw new Error("Organization not found - please contact support");
+    redirect("/onboarding");
   }
 
   // Get organization's brands - wrapped in try-catch for resilience
