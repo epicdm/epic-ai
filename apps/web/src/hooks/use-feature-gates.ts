@@ -23,17 +23,21 @@ export function useFeatureGates() {
       
       try {
         const response = await fetch(`/api/user/unlocks?userId=${session.user.id}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load unlocks: ${response.status}`);
+        }
         const { unlocks } = await response.json();
+        const safeUnlocks = Array.isArray(unlocks) ? unlocks : [];
         
         const states = Object.values(FeatureGate).reduce((acc, gate) => {
-          const unlock = unlocks.find((u: any) => u.featureId === gate);
+          const unlock = safeUnlocks.find((u: any) => u.featureId === gate);
           const dependencies = FEATURE_DEPENDENCIES[gate];
           
           acc[gate] = {
             isUnlocked: !!unlock?.unlockedAt,
             unlockRequirements: getUnlockDescription(gate),
             isDependencyMet: dependencies.every(dep => 
-              unlocks.some((u: any) => u.featureId === dep && u.unlockedAt)
+              safeUnlocks.some((u: any) => u.featureId === dep && u.unlockedAt)
             )
           };
           return acc;
@@ -68,6 +72,11 @@ export function useFeatureGates() {
     return !featureStates[gate]?.isUnlocked;
   }, [featureStates]);
 
+  const isFeatureUnlocked = useCallback((gate: FeatureGate): boolean => {
+    if (!featureStates) return false;
+    return !!featureStates[gate]?.isUnlocked;
+  }, [featureStates]);
+
   const unlockFeature = useCallback(async (gate: FeatureGate) => {
     try {
       const response = await fetch(`/api/user/unlocks`, {
@@ -100,6 +109,7 @@ export function useFeatureGates() {
     featureStates,
     isLoading,
     isLocked,
+    isFeatureUnlocked,
     getUnlockRequirements: getUnlockDescription,
     unlockFeature
   };

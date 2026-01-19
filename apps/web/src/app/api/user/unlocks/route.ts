@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/database";
 
+export const runtime = "nodejs";
+
 export async function GET(req: Request) {
   const { userId } = getAuth(req);
   
