@@ -412,6 +412,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
 
         {/* Step 2: Business Info */}
         <BusinessInfoStep
+          selectedGoal={selectedGoal}
           selectedTemplate={selectedTemplate}
           onTemplateSelect={setSelectedTemplate}
           onSetupComplete={(orgId, bId) => {
@@ -512,13 +513,20 @@ function WelcomeStep({ userName, selectedGoal, onGoalSelect }: WelcomeStepProps)
 
 // Step 2: Business Info
 interface BusinessInfoStepProps {
+  selectedGoal: UserGoal | null;
   selectedTemplate: BrandTemplate | null;
   onTemplateSelect: (template: BrandTemplate) => void;
   onSetupComplete: (orgId: string, brandId: string) => void;
   onAccountsConnected: (accounts: string[]) => void;
 }
 
-function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete, onAccountsConnected }: BusinessInfoStepProps) {
+function BusinessInfoStep({
+  selectedGoal,
+  selectedTemplate,
+  onTemplateSelect,
+  onSetupComplete,
+  onAccountsConnected,
+}: BusinessInfoStepProps) {
   const { setData, setError, setLoading, isLoading } = useWizard();
   const [showForm, setShowForm] = useState(false);
   const [localConnectedAccounts, setLocalConnectedAccounts] = useState<string[]>([]);
