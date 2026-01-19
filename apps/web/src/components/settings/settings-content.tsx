@@ -10,22 +10,22 @@ interface Organization {
   id: string;
   name: string;
   slug: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 interface Brand {
   id: string;
   name: string;
   website: string | null;
-  createdAt: Date;
+  createdAt: string;
 }
 
 interface Subscription {
   id: string;
   plan: string;
   status: string;
-  trialEnd: Date | null;
-  currentPeriodEnd: Date | null;
+  trialEnd: string | null;
+  currentPeriodEnd: string | null;
 }
 
 interface SettingsContentProps {

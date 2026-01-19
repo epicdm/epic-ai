@@ -44,11 +44,31 @@ export default async function SettingsPage() {
   // For UAT bypass, use a placeholder email
   const userEmail = isUATBypass ? "uat-test@epic.dm" : null;
 
+  const organizationData = {
+    ...organization,
+    createdAt: organization.createdAt.toISOString(),
+  };
+
+  const brandsData = brands.map((brand) => ({
+    ...brand,
+    createdAt: brand.createdAt.toISOString(),
+  }));
+
+  const subscriptionData = subscription
+    ? {
+        ...subscription,
+        trialEnd: subscription.trialEnd ? subscription.trialEnd.toISOString() : null,
+        currentPeriodEnd: subscription.currentPeriodEnd
+          ? subscription.currentPeriodEnd.toISOString()
+          : null,
+      }
+    : null;
+
   return (
     <SettingsContent
-      organization={organization}
-      brands={brands}
-      subscription={subscription}
+      organization={organizationData}
+      brands={brandsData}
+      subscription={subscriptionData}
       userEmail={userEmail}
     />
   );
