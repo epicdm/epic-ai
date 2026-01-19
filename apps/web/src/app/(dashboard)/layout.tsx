@@ -10,6 +10,9 @@ const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
   process.env.UAT_AUTH_BYPASS === "true";
 
+// Force dynamic rendering - prevents prerender errors during build
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {
