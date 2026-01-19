@@ -27,6 +27,7 @@ model User {
   wizardSessions         WizardSession[]
   featureDiscoveryStates FeatureDiscoveryState[]
   userUnlocks            UserUnlock[]
+  userFeatures           UserFeature[]
   demoModeData           DemoModeData?
 
   @@map("users")
@@ -182,6 +183,35 @@ model UserUnlock {
   @@unique([userId, featureId])
   @@index([featureId])
   @@map("user_unlocks")
+}
+
+model Feature {
+  id               String       @id
+  name             String
+  description      String?
+  unlockConditions Json?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  userFeatures UserFeature[]
+
+  @@map("features")
+}
+
+model UserFeature {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  featureId  String    @map("feature_id")
+  unlockedAt DateTime? @map("unlocked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId])
+  @@index([featureId])
+  @@map("user_features")
 }
 
 model DemoModeData {
