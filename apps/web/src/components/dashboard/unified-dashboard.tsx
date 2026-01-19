@@ -331,10 +331,29 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
 
   const { startTour } = useTour();
 
+  const [isMounted, setIsMounted] = useState(false);
+  const [isHealthy, setIsHealthy] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+
   useEffect(() => {
     // Start dashboard tour on first load
     startTour('dashboard-overview');
   }, [startTour]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, { threshold: 0.1 });
+    
+    const element = document.querySelector('[data-testid="dashboard-content"]');
+    if (element) observer.observe(element);
+    
+    return () => observer.disconnect();
+  }, []);
 
   if (loading) {
     return (
@@ -369,26 +388,6 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
   }
 
   const onboarding = data ? getOnboardingStatus(data) : null;
-
-  const [isMounted, setIsMounted] = useState(false);
-  const [isHealthy, setIsHealthy] = useState(true);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const [isVisible, setIsVisible] = useState(false);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsVisible(entry.isIntersecting);
-    }, { threshold: 0.1 });
-    
-    const element = document.querySelector('[data-testid="dashboard-content"]');
-    if (element) observer.observe(element);
-    
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <main 
