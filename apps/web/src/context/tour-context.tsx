@@ -47,7 +47,17 @@ export function TourProvider({ children }: { children: ReactNode }) {
 export function useTour() {
   const context = useContext(TourContext);
   if (!context) {
-    throw new Error('useTour must be used within a TourProvider');
+    if (process.env.NODE_ENV !== "production") {
+      throw new Error("useTour must be used within a TourProvider");
+    }
+    return {
+      currentTour: null,
+      currentStep: 0,
+      startTour: () => {},
+      nextStep: () => {},
+      prevStep: () => {},
+      endTour: () => {},
+    };
   }
   return context;
 }
