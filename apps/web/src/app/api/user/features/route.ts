@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/database";
+import { prisma } from "@/lib/db";
+
+export const runtime = "nodejs";
 
 interface FeatureGate {
   id: string;
@@ -21,22 +23,29 @@ export async function GET(req: Request) {
   }
 
   try {
-    const userFeatures = await prisma.userFeature.findMany({
-      where: { userId },
-      include: { feature: true }
-    });
+    const [allFeatures, userFeatures] = await Promise.all([
+      prisma.feature.findMany(),
+      prisma.userFeature.findMany({
+        where: { userId },
+        include: { feature: true }
+      })
+    ]);
 
-    const features: Record<string, FeatureGate> = userFeatures.reduce(
-      (acc: Record<string, FeatureGate>, uf) => ({
+    const unlockedById = new Map(
+      userFeatures.map(uf => [uf.featureId, uf.unlockedAt] as const)
+    );
+
+    const features: Record<string, FeatureGate> = allFeatures.reduce(
+      (acc: Record<string, FeatureGate>, feature) => ({
         ...acc,
-        [uf.feature.id]: {
-          id: uf.feature.id,
-          name: uf.feature.name,
-          description: uf.feature.description,
-          unlockConditions: uf.feature.unlockConditions,
-          unlockedAt: uf.unlockedAt
+        [feature.id]: {
+          id: feature.id,
+          name: feature.name,
+          description: feature.description ?? undefined,
+          unlockConditions: feature.unlockConditions,
+          unlockedAt: unlockedById.get(feature.id)
         }
-      }), 
+      }),
       {}
     );
 
