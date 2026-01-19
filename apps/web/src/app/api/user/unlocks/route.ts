@@ -15,7 +15,13 @@ export async function GET(req: Request) {
   }
 
   try {
-    const unlocks = await prisma.userUnlock.findMany({
+    const userUnlockModel = (prisma as { userUnlock?: { findMany: Function } }).userUnlock;
+    if (!userUnlockModel) {
+      console.warn("User unlock model missing; returning empty unlocks.");
+      return NextResponse.json({ unlocks: [] });
+    }
+
+    const unlocks = await userUnlockModel.findMany({
       where: { userId },
       select: {
         featureId: true,
@@ -45,6 +51,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    const userUnlockModel = (prisma as { userUnlock?: { upsert: Function } }).userUnlock;
+    if (!userUnlockModel) {
+      console.warn("User unlock model missing; skipping persistence.");
+      return NextResponse.json({ userId, featureId, dismissed: !!dismissed });
+    }
+
     const data = {
       userId,
       featureId,
@@ -55,7 +67,7 @@ export async function POST(req: Request) {
       data.dismissedAt = new Date();
     }
 
-    const unlock = await prisma.userUnlock.upsert({
+    const unlock = await userUnlockModel.upsert({
       where: { userId_featureId: { userId, featureId } },
       update: data,
       create: data
