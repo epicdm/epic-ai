@@ -26,6 +26,7 @@ model User {
   flywheelProgress       FlywheelProgress?
   wizardSessions         WizardSession[]
   featureDiscoveryStates FeatureDiscoveryState[]
+  userUnlocks            UserUnlock[]
   demoModeData           DemoModeData?
 
   @@map("users")
@@ -165,6 +166,22 @@ model FeatureDiscoveryState {
 
   @@unique([userId, feature])
   @@map("feature_discovery_state")
+}
+
+model UserUnlock {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  featureId   String    @map("feature_id")
+  unlockedAt  DateTime? @map("unlocked_at")
+  dismissedAt DateTime? @map("dismissed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId])
+  @@index([featureId])
+  @@map("user_unlocks")
 }
 
 model DemoModeData {
