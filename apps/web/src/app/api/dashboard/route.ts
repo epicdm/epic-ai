@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(getEmptyDashboardData(period, startDate));
     }
 
+    console.log("[Dashboard API] Resolving brand for org", org.id);
+
     // Get brand for this org - prefer brands with connected social accounts,
     // otherwise get the most recently created one
     let brand = await prisma.brand.findFirst({
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
       });
     }
-    console.log('[Dashboard API] brand:', brand?.id, brand?.name);
+    console.log("[Dashboard API] brand:", brand?.id, brand?.name);
 
     // DIAGNOSTIC: Check all brands and social accounts for this org
     const allBrandsForOrg = await prisma.brand.findMany({

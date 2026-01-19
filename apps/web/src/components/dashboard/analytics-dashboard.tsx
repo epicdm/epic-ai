@@ -3,7 +3,6 @@
 import { useState, Suspense } from "react";
 import { Card, CardBody, Tab, Tabs, Spinner } from "@heroui/react";
 import { LineChart, BarChart } from "@/components/ui/charts";
-import { useAnalytics } from "@/hooks/use-analytics";
 
 type TimeRange = "7d" | "30d" | "90d";
 

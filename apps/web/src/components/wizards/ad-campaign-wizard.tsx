@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
 import { Button, Card, CardBody, Input, Select, SelectItem, Slider, Textarea } from "@heroui/react";
 import { useRouter } from "next/navigation";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { useAnalytics } from "@/lib/analytics";
 
 type WizardStep = {
   id: string;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
 import { Button, Card, CardBody, Slider, Select, SelectItem, Textarea } from "@heroui/react";
 import { useRouter } from "next/navigation";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { useAnalytics } from "@/lib/analytics";
 
 export function ContentBatchWizard({ brandId }: { brandId: string }) {
   const router = useRouter();

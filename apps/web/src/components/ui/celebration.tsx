@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { useAnalytics } from "@/lib/analytics";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
 
 type CelebrationType = "confetti" | "toast" | "modal";

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "next-themes",
     "posthog-js",
   ],
+  productionBrowserSourceMaps: true,
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",

@@ -5,7 +5,7 @@ import { Modal, Button } from "@heroui/react";
 import { Search, X, Home, FilePlus, BarChart2, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { useAnalytics } from "@/lib/analytics";
 
 type CommandItem = {
   id: string;

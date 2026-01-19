@@ -46,7 +46,13 @@ export async function processScheduledContent(): Promise<number> {
     let totalPublished = 0;
 
     // Process each brand's scheduled content
-    for (const { brandId } of brandsWithScheduledContent) {
+    for (const item of brandsWithScheduledContent) {
+      const brandId = item?.brandId;
+      if (!brandId) {
+        console.warn('[PublishingEngine] Skipping item with undefined brandId');
+        continue;
+      }
+      
       try {
         const queueManager = new ContentQueueManager(brandId);
         const publishedCount = await queueManager.processScheduledContent();

@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Divider } from "@heroui/react";
-import { useAnalytics } from "@/hooks/use-analytics";
+import { useAnalytics } from "@/lib/analytics";
 import { WhyExplanationCard } from "@/components/ui/why-explanation-card";
 
 type WhyExplanationModalProps = {
