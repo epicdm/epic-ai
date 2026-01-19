@@ -11,7 +11,6 @@ import { CelebrationProvider } from "@/components/ui/celebration";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { HelpProvider } from "@/context/help-context";
 import { Suspense } from "react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,7 +63,7 @@ export const ClientRootLayout = () => {
       {nudges.map(nudge => (
         <SmartNudge key={nudge.id} nudge={nudge} />
       ))}
-      <ClientLayout />
+      <CommandPalette />
     </div>
   );
 };

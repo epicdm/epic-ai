@@ -59,12 +59,14 @@ export default async function DashboardLayout({
           },
         },
       }),
-      prisma.contentItem.count({ where: { createdById: userId } }),
+      prisma.contentItem.count({ where: { brandId: { not: null } } }),
       prisma.socialAccount.count({
         where: {
-          organization: {
-            memberships: {
-              some: { userId },
+          brand: {
+            organization: {
+              memberships: {
+                some: { userId },
+              },
             },
           },
         },
