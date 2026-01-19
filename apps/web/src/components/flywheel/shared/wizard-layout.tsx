@@ -3,7 +3,7 @@ import { Card, CardBody, CardHeader, Progress, Button, Link, Tooltip } from "@he
 import { ChevronLeft, ChevronRight, X, Check, Sparkles, Home, ChevronRight as ChevronRightIcon, Undo2, Redo2, History, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { WizardStep, WizardNavigation } from "@/lib/flywheel/types";
-import { showCelebration } from "@/components/ui/celebration";
+import { useCelebration } from "@/components/ui/celebration";
 
 interface WizardLayoutProps {
   title: string;

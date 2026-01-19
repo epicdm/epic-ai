@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, Button, Collapse } from "@heroui/react";
+import { Card, CardBody, Button } from "@heroui/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
