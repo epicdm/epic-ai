@@ -20,6 +20,7 @@ const inter = Inter({
 
 // Force dynamic rendering - prevents prerender errors with auth/DB in nested layouts
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export const metadata: Metadata = {
   title: "Epic AI - AI Marketing Platform",
