@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm db:generate && pnpm build",
-  "installCommand": "pnpm install",
+  "buildCommand": "pnpm db:generate && cd apps/web && TURBOPACK_VERBOSE=1 pnpm build 2>&1 | tail -100",
+  "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "apps/web/.next"
 }
