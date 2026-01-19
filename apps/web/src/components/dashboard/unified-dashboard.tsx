@@ -330,6 +330,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
   }, [loadDashboard]);
 
   const { startTour } = useTour();
+  const { isFeatureUnlocked } = useFeatureGates();
 
   const [isMounted, setIsMounted] = useState(false);
   const [isHealthy, setIsHealthy] = useState(true);
