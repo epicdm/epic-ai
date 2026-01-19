@@ -56,7 +56,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { brandId, codeVerifier, userId } = oauthState;
+  const brandId = oauthState.brandId;
+  const codeVerifier = oauthState.codeVerifier;
+  const userId = oauthState.userId;
+
+  if (!brandId) {
+    await prisma.oAuthState.delete({ where: { id: oauthState.id } });
+    return NextResponse.redirect(
+      `${baseUrl}/dashboard/social/accounts?error=missing_brand`
+    );
+  }
 
   // Delete the used state
   await prisma.oAuthState.delete({ where: { id: oauthState.id } });

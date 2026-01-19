@@ -97,7 +97,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { brandId, redirectUrl: storedData } = oauthState;
+  const brandId = oauthState.brandId;
+  const storedData = oauthState.redirectUrl;
+
+  if (!brandId) {
+    await prisma.oAuthState.delete({ where: { id: oauthState.id } });
+    return NextResponse.redirect(
+      `${baseUrl}/dashboard/social/accounts?error=missing_brand`
+    );
+  }
 
   // Parse stored data (JSON with platform and returnUrl)
   let platform: 'facebook' | 'instagram' = 'facebook';
