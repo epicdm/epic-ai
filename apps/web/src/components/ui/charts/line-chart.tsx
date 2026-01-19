@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useAnalytics } from "@/hooks/use-analytics";
 
 ChartJS.register(
   CategoryScale,
@@ -23,19 +24,23 @@ ChartJS.register(
 );
 
 export function LineChart({
-  data,
-  xKey,
-  yKey
+  brandId,
+  timeRange
 }: {
-  data: Record<string, any>[];
-  xKey: string;
-  yKey: string;
+  brandId: string;
+  timeRange: "7d" | "30d" | "90d";
 }) {
+  const { data, isLoading } = useAnalytics({ brandId, timeRange, metric: "engagement" });
+
+  if (isLoading || !data) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
+
   const chartData = {
-    labels: data.map(item => item[xKey]),
+    labels: data.map((item: any) => item.date),
     datasets: [{
-      label: yKey,
-      data: data.map(item => item[yKey]),
+      label: "Engagement Rate",
+      data: data.map((item: any) => item.value),
       borderColor: 'rgb(75, 192, 192)',
       tension: 0.1
     }]

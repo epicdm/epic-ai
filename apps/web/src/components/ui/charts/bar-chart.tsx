@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useAnalytics } from "@/hooks/use-analytics";
 
 ChartJS.register(
   CategoryScale,
@@ -21,19 +22,23 @@ ChartJS.register(
 );
 
 export function BarChart({
-  data,
-  xKey,
-  yKey
+  brandId,
+  timeRange
 }: {
-  data: Record<string, any>[];
-  xKey: string;
-  yKey: string;
+  brandId: string;
+  timeRange: "7d" | "30d" | "90d";
 }) {
+  const { data, isLoading } = useAnalytics({ brandId, timeRange, metric: "content" });
+
+  if (isLoading || !data) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
+
   const chartData = {
-    labels: data.map(item => item[xKey]),
+    labels: data.map((item: any) => item.label),
     datasets: [{
-      label: yKey,
-      data: data.map(item => item[yKey]),
+      label: "Content Performance",
+      data: data.map((item: any) => item.value),
       backgroundColor: 'rgba(54, 162, 235, 0.5)',
     }]
   };
