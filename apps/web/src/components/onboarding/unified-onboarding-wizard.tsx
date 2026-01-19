@@ -338,7 +338,7 @@ const nudgeConfigs: NudgeConfig[] = [
     type: "suggestion",
     title: "Goal Selection",
     message: "Selecting a goal will help us recommend better templates",
-    icon: <Sparkles className="w-5 h-5" />,
+    icon: <SparklesIcon className="w-5 h-5" />,
     triggers: { idle: 15, confusion: true }
   }
 ];
