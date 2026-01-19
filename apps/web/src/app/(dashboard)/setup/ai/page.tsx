@@ -43,8 +43,7 @@ export default async function AIExpressSetupPage() {
   });
 
   if (!membership?.organization) {
-    // No organization - redirect to onboarding
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   const organization = membership.organization;

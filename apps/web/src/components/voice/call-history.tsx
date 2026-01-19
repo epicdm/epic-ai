@@ -16,6 +16,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Phone, PhoneIncoming, PhoneOutgoing, DollarSign } from "lucide-react";
 import { PRICING } from "@/components/ui/cost-estimator";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Call {
   id: string;
@@ -120,19 +121,33 @@ export function CallHistory() {
           </CardBody>
         </Card>
       ) : calls.length === 0 ? (
-        <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Phone className="w-8 h-8 text-gray-400" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No Calls Yet
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Calls will appear here once your voice agents start handling them.
-            </p>
-          </CardBody>
-        </Card>
+        <EmptyState
+          icon={<Phone className="w-full h-full" />}
+          title="No Calls Yet"
+          description="Your voice agents will appear here once activated."
+          features={[
+            "📞 Sales outreach",
+            "💬 Customer support",
+            "📅 Appointment booking",
+            "📊 Surveys & feedback",
+          ]}
+          actions={[
+            {
+              label: "Create Your First Agent",
+              variant: "primary",
+              onClick: () => window.location.href = "/dashboard/voice",
+            },
+            {
+              label: "Hear Examples",
+              variant: "secondary",
+              onClick: () => {
+                // Could open a modal with sample recordings or link to demos
+                window.open("/docs/voice-examples", "_blank");
+              },
+            },
+          ]}
+          variant="card"
+        />
       ) : (
         <Card>
           <CardBody className="p-0">

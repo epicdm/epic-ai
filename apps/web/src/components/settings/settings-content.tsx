@@ -87,8 +87,7 @@ export function SettingsContent({
         setResetMessage({ type: "success", text: data.message || "Reset complete! Redirecting..." });
         // Redirect to appropriate page based on reset type:
         // - Full reset (org deleted): /setup → which will redirect to /onboarding (no org)
-        // - Brand reset OR simple reset: /onboarding?force=true → show full wizard with Facebook option
-        //   (MasterOnboardingWizard on dashboard lacks Facebook option, so always use UnifiedOnboardingWizard)
+        // - Brand reset OR simple reset: /onboarding?force=true → show full wizard
         setTimeout(() => {
           if (removeOrganizationOnReset) {
             window.location.href = "/setup";

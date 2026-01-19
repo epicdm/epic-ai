@@ -61,6 +61,13 @@ import type { FlywheelState, FlywheelPhase, PhaseState, PhaseStatusType } from "
 import { PHASE_DEPENDENCIES } from "@/lib/flywheel/constants";
 import { WelcomeModal } from "./welcome-modal";
 import { useFirstVisit } from "@/hooks/use-first-visit";
+import { FeatureHighlightCard } from "@/components/ui/feature-highlight-card";
+import { useFeatureGates } from "@/hooks/use-feature-gates";
+import { ProgressWidget } from "./progress-widget";
+import { AnalyticsDashboard } from "./analytics-dashboard";
+import { FlywheelHealth } from "./flywheel-health";
+import { Suspense } from "react";
+import { useTour } from "@/hooks/use-tour";
 
 interface DashboardData {
   brand: {
@@ -322,9 +329,16 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
     loadDashboard();
   }, [loadDashboard]);
 
+  const { startTour } = useTour();
+
+  useEffect(() => {
+    // Start dashboard tour on first load
+    startTour('dashboard-overview');
+  }, [startTour]);
+
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" data-testid="loading-state">
         <Spinner size="lg" />
       </div>
     );
@@ -332,7 +346,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12" data-testid="error-state">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger/10 flex items-center justify-center">
             <Activity className="w-8 h-8 text-danger" />
@@ -356,8 +370,41 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
 
   const onboarding = data ? getOnboardingStatus(data) : null;
 
+  const { featureGates, isFeatureUnlocked } = useFeatureGates();
+
+  const [isMounted, setIsMounted] = useState(false);
+  const [isHealthy, setIsHealthy] = useState(false);
+
+  useEffect(() => {
+    console.log('Mounting UnifiedDashboard');
+    setIsMounted(true);
+    
+    checkApiHealth().then(healthy => {
+      console.log('API Health:', healthy);
+      setIsHealthy(healthy);
+    });
+  }, []);
+
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, { threshold: 0.1 });
+    
+    const element = document.querySelector('[data-testid="dashboard-content"]');
+    if (element) observer.observe(element);
+    
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <main 
+      className="flex flex-col gap-6 p-6 min-h-[80vh]" 
+      data-testid="main-content"
+      data-mounted={isMounted}
+      data-healthy={isHealthy}
+    >
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -505,7 +552,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                     </Tooltip>
                   ))}
                 </div>
-                <Chip size="sm" variant="flat" color="default">
+                <Chip size="sm" color="default" variant="flat">
                   {data.flywheel.score}%
                 </Chip>
               </div>
@@ -590,6 +637,29 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
           </Card>
         );
       })()}
+
+      {/* Feature Highlights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <ProgressWidget />
+        <FeatureHighlightCard
+          title="AI Content Generator"
+          description="Create posts optimized for each platform"
+          icon={<Sparkles className="w-4 h-4" />}
+          status={isFeatureUnlocked("content_generator") ? "unlocked" : "locked"}
+          unlockRequirement="Complete onboarding"
+          quickAction={() => router.push("/dashboard/content")}
+          confidence={92}
+        />
+        <FeatureHighlightCard
+          title="Cross-Channel Workflows"
+          description="Automate content across platforms"
+          icon={<GitMerge className="w-4 h-4" />}
+          status={isFeatureUnlocked("workflows") ? "unlocked" : "locked"}
+          unlockRequirement="Create 3 content pieces"
+          quickAction={() => router.push("/dashboard/automations")}
+          confidence={85}
+        />
+      </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -859,6 +929,33 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         </Card>
       </div>
 
+      <div 
+        className="flex flex-col gap-6 p-6 min-h-[80vh]" 
+        data-testid="dashboard-content"
+        data-visible={isVisible}
+        data-test-mode={process.env.NODE_ENV === 'test'}
+      >
+        <Suspense fallback={
+          <div 
+            className="flex items-center justify-center h-full" 
+            data-testid="loading-spinner"
+          >
+            <Spinner size="lg" />
+          </div>
+        }>
+          {isHealthy ? (
+            <>
+              <FlywheelHealth brandId={data.brand.id} />
+              <AnalyticsDashboard brandId={data.brand.id} />
+            </>
+          ) : (
+            <div className="text-center py-8 text-danger-500">
+              API service unavailable
+            </div>
+          )}
+        </Suspense>
+      </div>
+
       {/* AI Insights & Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* AI Insights */}
@@ -977,7 +1074,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                 <h4 className="font-medium text-default-700 mb-2">
                   No Activity Yet
                 </h4>
-                <p className="text-sm text-default-500 max-w-xs mx-auto">
+                <p className="text-sm text-default-500">
                   Your timeline will show published posts, new leads, voice calls,
                   and AI insights as they happen. Start by creating content!
                 </p>
@@ -1167,7 +1264,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
           )}
         </ModalContent>
       </Modal>
-    </div>
+    </main>
   );
 }
 

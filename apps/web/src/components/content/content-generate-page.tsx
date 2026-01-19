@@ -34,6 +34,7 @@ import {
   Video,
   RefreshCw,
 } from "lucide-react";
+import { AIConfidence } from "@/components/ui/ai-confidence";
 
 interface BrandBrain {
   id: string;
@@ -84,6 +85,55 @@ interface GeneratedContent {
   content: string;
   hashtags: string[];
   imagePrompt?: string;
+}
+
+// Helper function to determine recommended tones based on Brand Brain voice
+function getRecommendedTones(brandVoiceTone: string | null): {
+  toneKey: string;
+  confidence: number;
+  reason: string;
+}[] {
+  if (!brandVoiceTone) return [];
+
+  const toneRecommendations: Record<string, { toneKey: string; confidence: number; reason: string }[]> = {
+    professional: [
+      { toneKey: "professional", confidence: 95, reason: "Matches your brand's professional voice perfectly" },
+      { toneKey: "educational", confidence: 88, reason: "Complements professional tone with informative content" },
+      { toneKey: "inspirational", confidence: 82, reason: "Professional brands can inspire while maintaining credibility" },
+    ],
+    casual: [
+      { toneKey: "casual", confidence: 95, reason: "Matches your brand's casual, friendly voice" },
+      { toneKey: "humorous", confidence: 88, reason: "Casual brands often use humor effectively" },
+      { toneKey: "enthusiastic", confidence: 85, reason: "Enthusiasm pairs well with casual communication" },
+    ],
+    friendly: [
+      { toneKey: "casual", confidence: 92, reason: "Friendly brands resonate with casual communication" },
+      { toneKey: "enthusiastic", confidence: 88, reason: "Enthusiasm enhances friendly brand perception" },
+      { toneKey: "inspirational", confidence: 85, reason: "Friendly brands can inspire without being overly formal" },
+    ],
+    authoritative: [
+      { toneKey: "professional", confidence: 93, reason: "Authority requires professional communication" },
+      { toneKey: "educational", confidence: 90, reason: "Authoritative brands excel at educating their audience" },
+      { toneKey: "inspirational", confidence: 85, reason: "Authority can inspire trust and action" },
+    ],
+    witty: [
+      { toneKey: "humorous", confidence: 95, reason: "Wit and humor go hand in hand" },
+      { toneKey: "casual", confidence: 88, reason: "Witty communication works best in casual contexts" },
+      { toneKey: "enthusiastic", confidence: 82, reason: "Enthusiasm amplifies witty content" },
+    ],
+    conversational: [
+      { toneKey: "casual", confidence: 93, reason: "Conversational brands thrive with casual tone" },
+      { toneKey: "enthusiastic", confidence: 87, reason: "Conversations are more engaging with enthusiasm" },
+      { toneKey: "humorous", confidence: 83, reason: "Humor makes conversations memorable" },
+    ],
+    empowering: [
+      { toneKey: "inspirational", confidence: 95, reason: "Empowerment is best delivered through inspiration" },
+      { toneKey: "enthusiastic", confidence: 90, reason: "Enthusiasm drives empowering messages" },
+      { toneKey: "educational", confidence: 85, reason: "Education empowers through knowledge" },
+    ],
+  };
+
+  return toneRecommendations[brandVoiceTone.toLowerCase()] || [];
 }
 
 export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentGeneratePageProps) {
@@ -345,7 +395,21 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
                 onSelectionChange={(keys) => setTone(Array.from(keys)[0] as string)}
               >
                 {TONES.map((t) => (
-                  <SelectItem key={t.key}>{t.label}</SelectItem>
+                  <SelectItem key={t.key}>
+                    <div className="flex items-center gap-2">
+                      <span>{t.label}</span>
+                      {(() => {
+                        const recommendations = getRecommendedTones(brain?.voiceTone);
+                        const recommendation = recommendations.find(r => r.toneKey === t.key);
+                        return recommendation ? (
+                          <AIConfidence
+                            score={recommendation.confidence}
+                            variant="dots"
+                          />
+                        ) : null;
+                      })()}
+                    </div>
+                  </SelectItem>
                 ))}
               </Select>
 

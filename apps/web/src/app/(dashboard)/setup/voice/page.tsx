@@ -38,15 +38,14 @@ export default async function VoiceSetupPage() {
   });
 
   if (!membership?.organization) {
-    // No organization - redirect to onboarding
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   const organization = membership.organization;
   const brand = organization.brands[0];
 
   if (!brand) {
-    redirect("/onboarding");
+    throw new Error("Brand not found - please contact support");
   }
 
   return (

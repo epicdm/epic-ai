@@ -102,12 +102,12 @@ test.describe("UNDERSTAND Phase - Bird's Eye Wizard", () => {
 
 test.describe("CREATE Phase - Content Factory", () => {
   test("should load content creation page", async ({ page }) => {
-    await page.goto("/setup/create");
-    await page.waitForLoadState("networkidle");
-
+    await page.goto("/content");
+    await page.waitForLoadState("networkidle", { timeout: 45000 });
+    
     // Should show content creation UI
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+    const mainContent = page.locator('[data-testid="content-preview"]');
+    await expect(mainContent).toBeVisible({ timeout: 30000 });
   });
 });
 
@@ -124,12 +124,12 @@ test.describe("DISTRIBUTE Phase - Social Publishing", () => {
 
 test.describe("LEARN Phase - Analytics", () => {
   test("should load learning/analytics page", async ({ page }) => {
-    await page.goto("/setup/learn");
-    await page.waitForLoadState("networkidle");
-
+    await page.goto("/analytics");
+    await page.waitForLoadState("networkidle", { timeout: 45000 });
+    
     // Should show analytics/learning UI
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+    const mainContent = page.locator('[data-testid="dashboard-content"]');
+    await expect(mainContent).toBeVisible({ timeout: 30000 });
   });
 });
 

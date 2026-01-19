@@ -48,7 +48,7 @@ export default async function UnderstandPage({ searchParams }: PageProps) {
   });
 
   if (!user) {
-    redirect("/onboarding");
+    throw new Error("User not found - please contact support");
   }
 
   // Get or create flywheel progress

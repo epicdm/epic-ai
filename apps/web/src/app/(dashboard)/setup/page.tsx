@@ -61,7 +61,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
   });
 
   if (!user || user.memberships.length === 0) {
-    redirect("/onboarding");
+    throw new Error("Organization membership not found - please contact support");
   }
 
   const organization = user.memberships[0].organization;
@@ -69,7 +69,7 @@ export default async function SetupPage({ searchParams }: SetupPageProps) {
 
   // For guided mode, we need a brand
   if (mode === "guided" && !brand) {
-    redirect("/onboarding");
+    throw new Error("Brand not found - please contact support");
   }
 
   // Get or create flywheel progress

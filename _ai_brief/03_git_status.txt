@@ -1,0 +1,99 @@
+On branch staging
+Your branch is up to date with 'origin/staging'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   apps/web/src/app/(dashboard)/dashboard/analytics/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/automations/[id]/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/automations/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/brand/context/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/brand/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/calendar/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/content/generate/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/content/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/context/documents/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/context/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/context/search/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/journeys/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/leads/[id]/edit/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/leads/[id]/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/leads/new/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/leads/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/settings/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/settings/publishing/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/settings/usage/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/social/accounts/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/social/create/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/social/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/test/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/agents/[id]/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/agents/new/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/calls/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/flows/[id]/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/flows/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/numbers/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/templates/page.tsx
+	modified:   apps/web/src/app/(dashboard)/dashboard/voice/test/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/ai-setup/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/ai-social/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/ai/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/guided/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/understand/page.tsx
+	modified:   apps/web/src/app/(dashboard)/setup/voice/page.tsx
+	modified:   apps/web/src/components/analytics/AnalyticsDashboard.tsx
+	modified:   apps/web/src/components/automations/automations-dashboard.tsx
+	modified:   apps/web/src/components/brand/channel-selector.tsx
+	modified:   apps/web/src/components/content/ai-content-wizard.tsx
+	modified:   apps/web/src/components/content/content-generate-page.tsx
+	modified:   apps/web/src/components/leads/leads-dashboard.tsx
+	deleted:    apps/web/src/components/onboarding/master-onboarding-wizard.tsx
+	modified:   apps/web/src/components/onboarding/unified-onboarding-wizard.tsx
+	modified:   apps/web/src/components/onboarding/voice-template-picker.tsx
+	modified:   apps/web/src/components/settings/settings-content.tsx
+	modified:   apps/web/src/components/social/social-accounts-page.tsx
+	modified:   apps/web/src/components/voice/call-history.tsx
+	modified:   apps/web/src/components/voice/voice-templates.tsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.env.staging
+	.playwright-mcp/clerk-signin-options.png
+	.playwright-mcp/clerk-signin-page.png
+	.playwright-mcp/page-2026-01-17T19-21-17-363Z.png
+	.playwright-mcp/page-2026-01-17T19-25-56-921Z.png
+	CROSS_CHANNEL_IMPLEMENTATION_STATUS.md
+	PHASE_6_TEST_RESULTS.md
+	REMAINING_GAPS_COMPLETED.md
+	ROUTING_CONSOLIDATION_COMPLETE.md
+	_ai_brief/
+	analyze_codebase.sh
+	apps/web/src/app/(dashboard)/onboarding/quick-wins/
+	apps/web/src/app/api/onboarding/quick-wins/
+	apps/web/src/components/onboarding/quick-wins-wizard.tsx
+	apps/web/src/components/ui/ai-badge.tsx
+	apps/web/src/components/ui/ai-confidence.tsx
+	docs/EXECUTIVE_SUMMARY.md
+	docs/QUICK_REFERENCE.md
+	docs/SALES_PITCH.md
+	docs/USER_ADMIN_MANUAL.md
+	release-audit/audit.config.ts
+	release-audit/output/2fa-filled.png
+	release-audit/output/2fa-page.png
+	release-audit/output/2fa-result.png
+	release-audit/output/ACTION_PLAN.md
+	release-audit/output/CORRECTED_AUDIT_REPORT.md
+	release-audit/output/DEVOPS_AUDIT_REPORT.md
+	release-audit/output/FINAL_GO_NO_GO_REPORT.md
+	release-audit/output/auth-state.json
+	release-audit/output/auth-success.png
+	release-audit/output/report.json
+	release-audit/output/report.md
+	release-audit/package.json
+	release-audit/playwright.config.ts
+	release-audit/pnpm-lock.yaml
+	release-audit/src/
+
+no changes added to commit (use "git add" and/or "git commit -a")

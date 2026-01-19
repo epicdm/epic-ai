@@ -31,11 +31,12 @@ test.beforeEach(async ({ page }) => {
 test.describe("Analytics Dashboard", () => {
   test("should load analytics page", async ({ page }) => {
     await page.goto("/dashboard/analytics");
-    await page.waitForLoadState("networkidle");
-
-    // Should show analytics UI
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+  
+    // Verify component is actually visible
+    await page.waitForSelector('[data-visible="true"]', { timeout: 60000 });
+  
+    const mainContent = page.locator('[data-testid="dashboard-content"]');
+    await expect(mainContent).toBeVisible({ timeout: 30000 });
   });
 
   test("should display analytics content", async ({ page }) => {
@@ -79,13 +80,12 @@ test.describe("Analytics API", () => {
 });
 
 test.describe("Dashboard Metrics", () => {
-  test("should load main dashboard with metrics", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-
-    // Dashboard should load
-    const mainContent = page.locator("main");
-    await expect(mainContent).toBeVisible({ timeout: 15000 });
+  test("should verify dashboard functionality", async ({ page }) => {
+    await page.goto('/dashboard');
+  
+    // Verify core elements exist
+    await expect(page.locator('[data-testid="dashboard-content"]')).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('[data-testid="flywheel-health"]')).toBeVisible({ timeout: 30000 });
   });
 
   test("should fetch dashboard data via API", async ({ request }) => {

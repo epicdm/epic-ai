@@ -71,6 +71,10 @@ import {
   getIndustryRecommendations,
   type ChannelRecommendation,
 } from "@/lib/brand-brain/industry-channels";
+import { AIBadge } from "@/components/ui/ai-badge";
+import { AIConfidence } from "@/components/ui/ai-confidence";
+import { useSmartNudges } from "@/hooks/use-smart-nudges";
+import { SmartNudge } from "@/components/ui/smart-nudge";
 
 // Types
 type UserGoal = "content" | "voice" | "campaigns" | "explore";
@@ -274,6 +278,43 @@ const businessInfoSchema = z.object({
 
 type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
 
+// Helper function to determine which templates are recommended for each goal
+function getRecommendedTemplatesForGoal(goal: UserGoal | null): {
+  templateId: string;
+  confidence: number;
+  reason: string;
+}[] {
+  if (!goal) return [];
+
+  const recommendations: Record<UserGoal, { templateId: string; confidence: number; reason: string }[]> = {
+    content: [
+      { templateId: "tech-startup", confidence: 92, reason: "Perfect for content marketing with tech-savvy audiences" },
+      { templateId: "creative-agency", confidence: 88, reason: "Ideal for showcasing creative content and portfolio work" },
+      { templateId: "ecommerce", confidence: 85, reason: "Great for product storytelling and promotional content" },
+      { templateId: "education", confidence: 82, reason: "Excellent for educational content and thought leadership" },
+    ],
+    voice: [
+      { templateId: "professional-services", confidence: 90, reason: "Optimized for client communication and consultations" },
+      { templateId: "healthcare", confidence: 88, reason: "Perfect for patient outreach and appointment booking" },
+      { templateId: "real-estate", confidence: 85, reason: "Ideal for lead qualification and property inquiries" },
+      { templateId: "restaurant", confidence: 82, reason: "Great for reservations and customer support" },
+    ],
+    campaigns: [
+      { templateId: "ecommerce", confidence: 92, reason: "Built for conversion-focused outreach campaigns" },
+      { templateId: "real-estate", confidence: 88, reason: "Perfect for lead nurturing and follow-ups" },
+      { templateId: "fitness", confidence: 85, reason: "Optimized for member acquisition campaigns" },
+      { templateId: "professional-services", confidence: 82, reason: "Ideal for B2B outreach and relationship building" },
+    ],
+    explore: [
+      { templateId: "tech-startup", confidence: 85, reason: "Versatile template to explore all features" },
+      { templateId: "creative-agency", confidence: 82, reason: "Great for testing creative content capabilities" },
+      { templateId: "ecommerce", confidence: 80, reason: "Good balance of content types to explore" },
+    ],
+  };
+
+  return recommendations[goal] || [];
+}
+
 // Wizard steps
 const wizardSteps: WizardStep[] = [
   { id: "welcome", title: "Welcome", description: "What brings you here?" },
@@ -281,6 +322,25 @@ const wizardSteps: WizardStep[] = [
   { id: "channels", title: "Channels", description: "Enable your channels" },
   { id: "path", title: "Setup Path", description: "Choose your journey" },
   { id: "ready", title: "Ready", description: "Let's go!" },
+];
+
+const nudgeConfigs: NudgeConfig[] = [
+  {
+    id: "onboarding_help",
+    type: "hint",
+    title: "Need help?",
+    message: "We recommend starting with the quick setup wizard",
+    icon: <Info className="w-5 h-5" />,
+    triggers: { idle: 30 } // After 30 seconds of inactivity
+  },
+  {
+    id: "goal_selection",
+    type: "suggestion",
+    title: "Goal Selection",
+    message: "Selecting a goal will help us recommend better templates",
+    icon: <Sparkles className="w-5 h-5" />,
+    triggers: { idle: 15, confusion: true }
+  }
 ];
 
 export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardingWizardProps) {
@@ -292,6 +352,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
   const [brandId, setBrandId] = useState<string | null>(null);
   const [connectedAccounts, setConnectedAccounts] = useState<string[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const { activeNudge, trackAction, dismissNudge } = useSmartNudges(nudgeConfigs);
 
   const handleComplete = useCallback(
     async (data: Record<string, unknown>) => {
@@ -328,6 +389,14 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {activeNudge && (
+        <div className="mb-4">
+          <SmartNudge 
+            nudge={activeNudge} 
+            onDismiss={dismissNudge}
+          />
+        </div>
+      )}
       <Wizard
         steps={wizardSteps}
         onComplete={handleComplete}
@@ -788,29 +857,44 @@ function BusinessInfoStep({ selectedTemplate, onTemplateSelect, onSetupComplete,
 
           <ScrollShadow className="max-h-[280px]">
             <div className="grid grid-cols-2 gap-3">
-              {brandTemplates.map((template) => (
-                <Card
-                  key={template.id}
-                  isPressable
-                  isHoverable
-                  className={`transition-all ${
-                    selectedTemplate?.id === template.id
-                      ? "border-2 border-primary bg-primary/5"
-                      : "border-2 border-transparent"
-                  }`}
-                  onPress={() => handleTemplatePreview(template)}
-                >
-                  <CardBody className="p-4 text-center">
-                    <span className="text-3xl mb-2 block">{template.icon}</span>
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                      {template.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {template.description}
-                    </p>
-                  </CardBody>
-                </Card>
-              ))}
+              {brandTemplates.map((template) => {
+                const recommendation = getRecommendedTemplatesForGoal(selectedGoal)
+                  .find(r => r.templateId === template.id);
+                  
+                return (
+                  <Card 
+                    key={template.id}
+                    isPressable
+                    isHoverable
+                    className={`transition-all ${selectedTemplate?.id === template.id ? "border-2 border-primary bg-primary/5" : "border-2 border-transparent"}`}
+                    onPress={() => handleTemplatePreview(template)}
+                  >
+                    <CardBody className="flex flex-col gap-2">
+                      <div className="flex items-start justify-between">
+                        <span className="text-2xl">{template.icon}</span>
+                        {recommendation && (
+                          <AIBadge 
+                            type="recommended" 
+                            size="sm"
+                            reason={recommendation.reason}
+                            confidence={recommendation.confidence}
+                            position="corner"
+                          />
+                        )}
+                      </div>
+                      <h3 className="font-medium">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground">{template.description}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {template.tags?.map((tag) => (
+                          <Chip key={tag} size="sm" variant="flat">
+                            {tag}
+                          </Chip>
+                        ))}
+                      </div>
+                    </CardBody>
+                  </Card>
+                );
+              })}
             </div>
           </ScrollShadow>
 
@@ -1489,4 +1573,22 @@ function ReadyStep({ selectedPath, selectedGoal }: ReadyStepProps) {
       </WizardStepContent>
     </WizardStepContainer>
   );
+}
+
+interface BrandTemplate {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+  tags?: string[];
+  voiceTone: string;
+  writingStyle: string;
+  emojiStyle: string;
+  ctaStyle: string;
+  contentPillars: string[];
+  targetAudience: string;
+  suggestedHashtags: string[];
+  sampleValues: string[];
+  recommendedFor?: string[];
+  popular?: boolean;
 }

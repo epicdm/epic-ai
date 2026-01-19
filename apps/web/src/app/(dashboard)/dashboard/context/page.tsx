@@ -17,7 +17,7 @@ export default async function ContextPage() {
 
   const organization = await getUserOrganization();
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   // Get brand with context sources - wrapped in try-catch for resilience

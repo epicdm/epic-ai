@@ -17,7 +17,7 @@ export default async function DocumentsPage() {
 
   const organization = await getUserOrganization();
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   // Get brand with document uploads

@@ -27,7 +27,7 @@ export default async function AnalyticsPage() {
   });
 
   if (!membership) {
-    redirect('/onboarding');
+    throw new Error("Organization membership not found - please contact support");
   }
 
   const brand = await prisma.brand.findFirst({

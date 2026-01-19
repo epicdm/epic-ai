@@ -41,9 +41,8 @@ export default async function AISetupPage() {
 
   const organization = user?.memberships[0]?.organization;
 
-  // If no organization, redirect to onboarding
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   // Get existing brand or create one if needed (for users after data reset)

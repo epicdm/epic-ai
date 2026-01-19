@@ -1,0 +1,7 @@
+./apps/web/.next/dev/server/app
+./apps/web/.next/dev/server/pages
+./apps/web/.next/server/app
+./apps/web/.next/server/pages
+./apps/web/src/lib/routes
+./apps/web/src/app
+./postiz-auto-login/node_modules/express/lib/router

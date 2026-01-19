@@ -1,6 +1,6 @@
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { needsOnboarding, getUserOrganization } from "@/lib/sync-user";
+import { getUserOrganization } from "@/lib/sync-user";
 import { UsagePageClient } from "./client";
 
 export default async function UsagePage() {
@@ -10,16 +10,10 @@ export default async function UsagePage() {
     redirect("/sign-in");
   }
 
-  // Check if user needs onboarding
-  const needs = await needsOnboarding();
-  if (needs) {
-    redirect("/onboarding");
-  }
-
   const organization = await getUserOrganization();
 
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   return <UsagePageClient />;

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Card, CardBody, CardFooter, Button, Chip, Spinner } from "@heroui/react";
 import { cn } from "@/lib/utils";
+import { AIBadge } from "@/components/ui/ai-badge";
+import { AIConfidence } from "@/components/ui/ai-confidence";
 
 export interface VoiceTemplate {
   id: string;
@@ -37,6 +39,21 @@ const agentTypeLabels: Record<string, string> = {
   OUTBOUND: "Outbound",
   HYBRID: "Hybrid",
 };
+
+// Helper function to determine recommended voice agent templates
+function getRecommendedVoiceTemplates(): {
+  templateId: string;
+  confidence: number;
+  reason: string;
+}[] {
+  return [
+    { templateId: "sales-assistant", confidence: 95, reason: "Most popular for sales outreach and lead qualification" },
+    { templateId: "customer-support", confidence: 93, reason: "Most popular for customer service and FAQ handling" },
+    { templateId: "appointment-booking", confidence: 90, reason: "Versatile HYBRID agent for scheduling across industries" },
+    { templateId: "receptionist", confidence: 88, reason: "Great all-purpose front desk agent for general inquiries" },
+    { templateId: "survey-feedback", confidence: 85, reason: "Quick to set up for collecting customer feedback" },
+  ];
+}
 
 export function VoiceTemplatePicker({
   templates,
@@ -104,7 +121,20 @@ export function VoiceTemplatePicker({
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{template.icon}</span>
                   <div>
-                    <h3 className="font-semibold text-lg">{template.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-lg">{template.name}</h3>
+                      {/* Add confidence dots inline */}
+                      {(() => {
+                        const recommendations = getRecommendedVoiceTemplates();
+                        const recommendation = recommendations.find(r => r.templateId === template.id);
+                        return recommendation ? (
+                          <AIConfidence
+                            score={recommendation.confidence}
+                            variant="dots"
+                          />
+                        ) : null;
+                      })()}
+                    </div>
                     <p className="text-sm text-default-500">
                       {template.estimatedSetupTime} setup
                     </p>
@@ -118,6 +148,22 @@ export function VoiceTemplatePicker({
               </div>
 
               <p className="text-sm text-default-600">{template.description}</p>
+
+              {/* AI Recommendation Badge */}
+              {(() => {
+                const recommendations = getRecommendedVoiceTemplates();
+                const recommendation = recommendations.find(r => r.templateId === template.id);
+                return recommendation ? (
+                  <div className="mb-4 flex justify-start">
+                    <AIBadge
+                      type="recommended"
+                      reason={recommendation.reason}
+                      confidence={recommendation.confidence}
+                      size="sm"
+                    />
+                  </div>
+                ) : null;
+              })()}
 
               <div className="flex flex-wrap gap-1">
                 <Chip
@@ -192,7 +238,33 @@ export function QuickTemplatePicker({
           )}
         >
           <span className="text-4xl">{template.icon}</span>
-          <span className="font-medium text-sm text-center">{template.name}</span>
+          <div className="flex items-center gap-1.5 justify-center">
+            <span className="font-medium text-sm text-center">{template.name}</span>
+            {/* Add confidence dots inline */}
+            {(() => {
+              const recommendations = getRecommendedVoiceTemplates();
+              const recommendation = recommendations.find(r => r.templateId === template.id);
+              return recommendation ? (
+                <AIConfidence
+                  score={recommendation.confidence}
+                  variant="dots"
+                />
+              ) : null;
+            })()}
+          </div>
+          {/* AI Recommendation Badge */}
+          {(() => {
+            const recommendations = getRecommendedVoiceTemplates();
+            const recommendation = recommendations.find(r => r.templateId === template.id);
+            return recommendation ? (
+              <AIBadge
+                type="recommended"
+                reason={recommendation.reason}
+                confidence={recommendation.confidence}
+                size="sm"
+              />
+            ) : null;
+          })()}
           <span className="text-xs text-default-500">{template.estimatedSetupTime}</span>
         </button>
       ))}

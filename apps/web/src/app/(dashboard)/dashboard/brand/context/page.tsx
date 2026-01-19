@@ -17,7 +17,7 @@ export default async function Page() {
 
   const organization = await getUserOrganization();
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   const brand = await prisma.brand.findFirst({

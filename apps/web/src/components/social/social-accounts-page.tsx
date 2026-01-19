@@ -23,8 +23,10 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface SocialAccount {
   id: string;
@@ -436,19 +438,33 @@ export function SocialAccountsPage() {
           </CardBody>
         </Card>
       ) : (
-        <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-3xl">🔗</span>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No Accounts Connected
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Connect your social media accounts to start scheduling and publishing posts.
-            </p>
-          </CardBody>
-        </Card>
+        <EmptyState
+          icon={<Share2 className="w-full h-full" />}
+          title="Connect Your First Social Account"
+          description="Start publishing to Facebook, LinkedIn, Twitter, and Instagram. Your Brand Brain will optimize content for each platform."
+          features={[
+            "LinkedIn (perfect for B2B SaaS)",
+            "Instagram (great for visual brands)",
+            "Twitter (real-time engagement)",
+            "Facebook (broad audience reach)",
+          ]}
+          actions={[
+            {
+              label: "Connect Facebook",
+              variant: "primary",
+              onClick: () => handleConnect("FACEBOOK"),
+            },
+            {
+              label: "See All Platforms",
+              variant: "secondary",
+              onClick: () => {
+                const connectSection = document.querySelector('h2');
+                connectSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              },
+            },
+          ]}
+          variant="card"
+        />
       )}
     </div>
   );

@@ -33,6 +33,7 @@ import {
   Facebook,
   Instagram,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface AnalyticsStats {
   totalPosts: number;
@@ -148,6 +149,39 @@ export function AnalyticsDashboard({ orgId, brandId }: Props) {
       <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
+    );
+  }
+
+  // Show empty state if no posts published yet
+  if (stats?.totalPosts === 0 && recentPosts.length === 0) {
+    return (
+      <EmptyState
+        icon={<BarChart3 className="w-full h-full" />}
+        title="Analytics Will Appear Here"
+        description="Once you publish content, I'll show you what's working."
+        features={[
+          "📊 Engagement rates by platform",
+          "📈 Best posting times",
+          "🎯 Top performing content types",
+          "💡 AI-powered insights",
+        ]}
+        actions={[
+          {
+            label: "Publish Your First Post",
+            variant: "primary",
+            onClick: () => window.location.href = "/dashboard/content/generate",
+          },
+          {
+            label: "View Sample Report",
+            variant: "secondary",
+            onClick: () => {
+              // Show demo/sample report - could open a modal or documentation
+              window.open("/docs/analytics-sample", "_blank");
+            },
+          },
+        ]}
+        variant="card"
+      />
     );
   }
 

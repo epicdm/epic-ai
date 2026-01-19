@@ -10,6 +10,7 @@ import {
   Chip,
 } from "@heroui/react";
 import { Plus, Trash2, Layers, Sparkles, GripVertical } from "lucide-react";
+import { AIBadge } from "@/components/ui/ai-badge";
 import type { UnderstandWizardData, ContentPillarData } from "@/lib/flywheel/types";
 
 interface PillarsStepProps {
@@ -133,31 +134,51 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
           isLoading={isGenerating}
           isDisabled={!data.industry && !data.brandDescription}
         >
-          AI Suggest
+          AI Suggest Pillars
+          <AIBadge 
+            type="suggestion" 
+            size="sm"
+            reason="Based on your brand details"
+            className="ml-2"
+          />
         </Button>
       </div>
 
       {/* Quick Add Suggestions */}
       {pillars.length < 5 && (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Quick add suggested pillars:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedPillars
-              .filter((name) => !usedPillarNames.includes(name.toLowerCase()))
-              .map((name) => (
-                <Chip
-                  key={name}
-                  variant="bordered"
-                  className="cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30"
-                  onClick={() => addPillar(name)}
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  {name}
-                </Chip>
-              ))}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6">
+          {suggestedPillars
+            .filter((name) => !usedPillarNames.includes(name.toLowerCase()))
+            .map((topic) => {
+              const isHighPriority = [
+                "Industry Trends", 
+                "Customer Success", 
+                "Thought Leadership"
+              ].includes(topic);
+              
+              return (
+                <div key={topic} className="relative">
+                  <Button 
+                    variant="flat" 
+                    size="sm"
+                    onPress={() => addPillar(topic)}
+                    className="w-full text-left justify-start"
+                  >
+                    {topic}
+                    {isHighPriority && (
+                      <AIBadge 
+                        type="recommended" 
+                        size="sm"
+                        reason="High engagement for your industry"
+                        confidence={85}
+                        position="corner"
+                        className="absolute top-1 right-1"
+                      />
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
         </div>
       )}
 

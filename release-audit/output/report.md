@@ -1,0 +1,196 @@
+# Release Audit Report
+
+Base URL: https://staging.leads.epic.dm
+Generated: 2026-01-17T16:52:11.967Z
+
+## Executive Summary
+**Decision: NO-GO**
+
+### Severity Counts
+- Blocker: 0
+- High: 2
+- Medium: 124
+- Low: 0
+
+## Journeys
+- **Homepage reachable**: PASS — Loaded successfully (https://staging.leads.epic.dm/)
+- **Login + 2FA**: FAIL — locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('textbox', { name: 'Email address' }) to be visible[22m
+
+
+## Issues
+- [HIGH] http-error @ https://staging.leads.epic.dm/help — HTTP 404
+- [HIGH] console-error @ https://staging.leads.epic.dm/help — Failed to load resource: the server responded with a status of 404 ()
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/ — GET https://staging.leads.epic.dm/dashboard?_rsc=18t7j -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/ — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=15moa -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard — GET https://staging.leads.epic.dm/dashboard?_rsc=15moa -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/calendar — GET https://staging.leads.epic.dm/dashboard?_rsc=1nzg4 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/analytics — GET https://staging.leads.epic.dm/dashboard/analytics?_rsc=1i5ay -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/analytics — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1ers5 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/analytics — GET https://staging.leads.epic.dm/dashboard?_rsc=1ers5 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/leads — GET https://staging.leads.epic.dm/dashboard?_rsc=1n6oi -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1rtdx -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations — GET https://staging.leads.epic.dm/dashboard?_rsc=1rtdx -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/test — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=j0n69 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/test — GET https://staging.leads.epic.dm/dashboard/test?_rsc=j0n69 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand — GET https://staging.leads.epic.dm/dashboard/brand/strategy?_rsc=1mzwc -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand — GET https://staging.leads.epic.dm/dashboard/brand/voice?_rsc=1mzwc -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand — GET https://staging.leads.epic.dm/dashboard/brand?_rsc=1mzwc -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand/voice — GET https://staging.leads.epic.dm/dashboard/brand/voice?_rsc=1r6ez -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand/strategy — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=12jut -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/brand/strategy — GET https://staging.leads.epic.dm/dashboard/brand?_rsc=1q8ln -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context — GET https://staging.leads.epic.dm/dashboard?_rsc=1joao -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context — GET https://staging.leads.epic.dm/dashboard/context?_rsc=1joao -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context — GET https://staging.leads.epic.dm/dashboard/context/search?_rsc=1joao -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context — GET https://staging.leads.epic.dm/dashboard/context/documents?_rsc=pzsat -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context?tab=search — GET https://staging.leads.epic.dm/dashboard/context/search?_rsc=1q0pk -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context?tab=search — GET https://staging.leads.epic.dm/dashboard/context/documents?_rsc=eoccn -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1joan -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/content?_rsc=1joan -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/content?_rsc=pzsak -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/settings?_rsc=1joan -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/social/accounts?_rsc=1joan -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/settings?_rsc=pzsak -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content — GET https://staging.leads.epic.dm/dashboard/social/accounts?_rsc=pzsak -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/approval — GET https://staging.leads.epic.dm/dashboard/content/published?_rsc=xcmto -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/approval — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=xcmto -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/approval — GET https://staging.leads.epic.dm/dashboard?_rsc=18ooe -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/approval — GET https://staging.leads.epic.dm/dashboard/content?_rsc=18ooe -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/approval — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=18ooe -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/generate — GET https://staging.leads.epic.dm/dashboard/content/published?_rsc=1c45b -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/generate — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1ng6x -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/published — GET https://staging.leads.epic.dm/dashboard/content?_rsc=1bge8 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/published — GET https://staging.leads.epic.dm/dashboard/content/published?_rsc=1ucad -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/content/published — GET https://staging.leads.epic.dm/dashboard/content?_rsc=1ucad -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social — GET https://staging.leads.epic.dm/dashboard?_rsc=140n7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social — GET https://staging.leads.epic.dm/dashboard/social/suggestions?_rsc=1349j -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/suggestions — GET https://staging.leads.epic.dm/dashboard?_rsc=r3798 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/suggestions — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=r3798 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/suggestions — GET https://staging.leads.epic.dm/dashboard/social/suggestions?_rsc=r3798 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/settings — GET https://staging.leads.epic.dm/dashboard/social/settings?_rsc=114o2 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/settings — GET https://staging.leads.epic.dm/dashboard/social?_rsc=114o2 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/settings — GET https://staging.leads.epic.dm/dashboard/social?_rsc=11h17 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/accounts — GET https://staging.leads.epic.dm/dashboard?_rsc=aw2ik -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/accounts — GET https://staging.leads.epic.dm/dashboard/social/settings?_rsc=aw2ik -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/social/accounts — GET https://staging.leads.epic.dm/dashboard/social?_rsc=aw2ik -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkfbyjs80001l504kys4t0ez?_rsc=1ndyl -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkdcoce90001k004n38hhzxg?_rsc=1ndyl -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkfc9iq40001jl04437pdceo?_rsc=1ndyl -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/settings/usage?_rsc=1ndyl -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/new?_rsc=1ndyl -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/test?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/groups?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/routing?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/knowledge-bases?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkdcoce90001k004n38hhzxg?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/numbers?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkfbyjs80001l504kys4t0ez?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkfc9iq40001jl04437pdceo?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice — GET https://staging.leads.epic.dm/dashboard/settings/usage?_rsc=3ea9a -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/calls — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=1ko7e -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/calls — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=36oxi -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/ads — GET https://staging.leads.epic.dm/dashboard/ads?_rsc=1idxv -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/ads — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1146m -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/ads — GET https://staging.leads.epic.dm/dashboard/ads/accounts?_rsc=1idxv -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/ads — GET https://staging.leads.epic.dm/dashboard/ads/create?_rsc=1idxv -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/ads/create — GET https://staging.leads.epic.dm/dashboard/ads/create?_rsc=1bwgo -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/settings/publishing — GET https://staging.leads.epic.dm/dashboard/settings?_rsc=142xd -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/settings/publishing — GET https://staging.leads.epic.dm/dashboard/settings/publishing?_rsc=142xd -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/settings/publishing — GET https://staging.leads.epic.dm/dashboard/settings?_rsc=7vgvo -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/leads/new — GET https://staging.leads.epic.dm/dashboard/leads/new?_rsc=rgdzn -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001 — GET https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001?_rsc=18vyf -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001 — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=c7r85 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001 — GET https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001?_rsc=c7r85 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001 — GET https://staging.leads.epic.dm/dashboard/automations?_rsc=c7r85 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/documents — GET https://staging.leads.epic.dm/dashboard?_rsc=ghv21 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/documents — GET https://staging.leads.epic.dm/dashboard/context?_rsc=ghv21 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/documents — GET https://staging.leads.epic.dm/dashboard/context/search?_rsc=ghv21 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/search — GET https://staging.leads.epic.dm/dashboard/context/documents?_rsc=1q0pk -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/search — GET https://staging.leads.epic.dm/dashboard/context?_rsc=1q0pk -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/context/search — GET https://staging.leads.epic.dm/dashboard?_rsc=1q0pk -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/agents/new — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=uy4c7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/agents/new — GET https://staging.leads.epic.dm/dashboard/voice/agents/new?_rsc=uy4c7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/agents/new — GET https://staging.leads.epic.dm/dashboard?_rsc=uy4c7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/agents/new — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=16a5x -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/settings/usage — GET https://staging.leads.epic.dm/dashboard/settings?_rsc=llwhd -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/agents/cmkfbyjs80001l504kys4t0ez — GET https://staging.leads.epic.dm/dashboard/voice/agents/cmkfbyjs80001l504kys4t0ez?_rsc=1rl48 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/knowledge-bases — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=tja0r -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/knowledge-bases — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=196tw -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/flows — GET https://staging.leads.epic.dm/dashboard/voice/flows?_rsc=1kqk7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/flows — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=1kqk7 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/flows — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=391qj -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups — GET https://staging.leads.epic.dm/dashboard?_rsc=qb4zu -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=qb4zu -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1110j -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups — GET https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8?_rsc=qb4zu -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups — GET https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8?_rsc=1110j -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=zv68d -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=zv68d -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing — GET https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15?_rsc=zv68d -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing — GET https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15?_rsc=yfix8 -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/test — GET https://staging.leads.epic.dm/dashboard?_rsc=tpjdm -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/test — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1odih -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/test — GET https://staging.leads.epic.dm/dashboard?_rsc=1odih -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=u11re -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8?_rsc=u11re -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/groups?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/routing?_rsc=1qp8z -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/groups?_rsc=u11re -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 — GET https://staging.leads.epic.dm/dashboard/voice/routing?_rsc=u11re -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15 — GET https://staging.leads.epic.dm/dashboard/voice?_rsc=1a7nq -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15 — GET https://staging.leads.epic.dm/dashboard/calendar?_rsc=1a7nq -> net::ERR_ABORTED
+- [MEDIUM] asset-error @ https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15 — GET https://staging.leads.epic.dm/dashboard/voice/calls?_rsc=xhqeo -> net::ERR_ABORTED
+
+## Crawl Map
+- 200 https://staging.leads.epic.dm/ (depth=0) title="Dashboard | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard (depth=1) title="Dashboard | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/calendar (depth=1) title="Content Calendar | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/analytics (depth=1) title="Analytics | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/leads (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/automations (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/test (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/brand (depth=1) title="Brand Brain | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/brand/voice (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/brand/strategy (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/context (depth=1) title="Context Engine | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/context?tab=documents (depth=1) title="Documents | Context Engine | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/context?tab=search (depth=1) title="Search | Context Engine | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/content (depth=1) title="Content Factory | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/content/approval (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/content/generate (depth=1) title="Create Content | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/content/published (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/social (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/social/suggestions (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/social/settings (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/social/accounts (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/calls (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/numbers (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/ads (depth=1) title="Ads | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/ads/create (depth=1) title="Create Campaign | Ads"
+- 200 https://staging.leads.epic.dm/dashboard/ads/accounts (depth=1) title="Ad Accounts | Ads"
+- 200 https://staging.leads.epic.dm/dashboard/settings (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/settings/publishing (depth=1) title="Publishing Settings | Epic AI"
+- 404 https://staging.leads.epic.dm/help (depth=1) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/leads/new (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/automations/test_automation_manual_001 (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/context/documents (depth=2) title="Documents | Context Engine | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/context/search (depth=2) title="Search | Context Engine | Epic AI"
+- 200 https://staging.leads.epic.dm/dashboard/voice/agents/new (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/settings/usage (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/agents/cmkfc9iq40001jl04437pdceo (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/agents/cmkfbyjs80001l504kys4t0ez (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/agents/cmkdcoce90001k004n38hhzxg (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/knowledge-bases (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/flows (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/groups (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/routing (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/test (depth=2) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/groups/cmkgf03od0001l104faexgax8 (depth=3) title="Epic AI - AI Marketing Platform"
+- 200 https://staging.leads.epic.dm/dashboard/voice/routing/cmkggbanm0001la04gdbc9b15 (depth=3) title="Epic AI - AI Marketing Platform"

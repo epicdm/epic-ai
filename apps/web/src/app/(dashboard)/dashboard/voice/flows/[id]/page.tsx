@@ -1,6 +1,5 @@
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { needsOnboarding } from "@/lib/sync-user";
 import { FlowEditorPage } from "@/components/voice/flow-editor-page";
 
 type Props = {
@@ -12,10 +11,6 @@ export default async function FlowDetailPage({ params }: Props) {
 
   if (!userId) {
     redirect("/sign-in");
-  }
-
-  if (await needsOnboarding()) {
-    redirect("/onboarding");
   }
 
   const { id } = await params;

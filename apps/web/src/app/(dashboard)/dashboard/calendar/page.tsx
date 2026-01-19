@@ -26,7 +26,7 @@ export default async function CalendarPage() {
   });
 
   if (!membership) {
-    redirect("/onboarding");
+    throw new Error("Organization membership not found - please contact support");
   }
 
   return (

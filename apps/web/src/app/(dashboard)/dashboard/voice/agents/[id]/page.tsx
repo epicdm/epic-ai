@@ -1,6 +1,6 @@
 import { getAuth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { needsOnboarding, getUserOrganization } from "@/lib/sync-user";
+import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { AgentForm } from "@/components/voice/agent-form";
 
@@ -15,13 +15,9 @@ export default async function AgentDetailPage({ params }: PageProps) {
     redirect("/sign-in");
   }
 
-  if (await needsOnboarding()) {
-    redirect("/onboarding");
-  }
-
   const org = await getUserOrganization();
   if (!org) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   const { id } = await params;

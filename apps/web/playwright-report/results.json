@@ -1,0 +1,2242 @@
+{
+  "config": {
+    "configFile": "/opt/epic-ai/apps/web/playwright.config.ts",
+    "rootDir": "/opt/epic-ai/apps/web/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/opt/epic-ai/apps/web/playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/opt/epic-ai/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/opt/epic-ai/apps/web/playwright-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/opt/epic-ai/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000,
+      "stdout": "pipe",
+      "stderr": "pipe"
+    }
+  },
+  "suites": [
+    {
+      "title": "global-ux.spec.ts",
+      "file": "global-ux.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Navigation",
+          "file": "global-ux.spec.ts",
+          "line": 33,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should render main navigation on dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12118,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:52:08.084Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-3e64cf7282942b00422c",
+              "file": "global-ux.spec.ts",
+              "line": 34,
+              "column": 7
+            },
+            {
+              "title": "should navigate between dashboard sections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18190,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:52:20.406Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-09ac7c4fe76ef3f96af5",
+              "file": "global-ux.spec.ts",
+              "line": 59,
+              "column": 7
+            },
+            {
+              "title": "should have working internal links",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1680,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:80:23",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 23,
+                          "line": 80
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 78 |\u001b[39m     \u001b[36mconst\u001b[39m internalLinks \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'a[href^=\"/\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 79 |\u001b[39m     \u001b[36mconst\u001b[39m linkCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m internalLinks\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m     expect(linkCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 82 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 83 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 23,
+                            "line": 80
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n\u001b[0m \u001b[90m 78 |\u001b[39m     \u001b[36mconst\u001b[39m internalLinks \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'a[href^=\"/\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 79 |\u001b[39m     \u001b[36mconst\u001b[39m linkCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m internalLinks\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m     expect(linkCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 82 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 83 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:80:23\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:52:38.637Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Navigation-should-have-working-internal-links-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Navigation-should-have-working-internal-links-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 23,
+                        "line": 80
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-9e5d06617ee891c975b4",
+              "file": "global-ux.spec.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "should render main navigation on dashboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2344,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:22.010Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-72c8ccdb07dfb262b0da",
+              "file": "global-ux.spec.ts",
+              "line": 34,
+              "column": 7
+            },
+            {
+              "title": "should navigate between dashboard sections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9981,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:24.571Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-4af2fbd1fdd713bd3269",
+              "file": "global-ux.spec.ts",
+              "line": 59,
+              "column": 7
+            },
+            {
+              "title": "should have working internal links",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2165,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:80:23",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 23,
+                          "line": 80
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 78 |\u001b[39m     \u001b[36mconst\u001b[39m internalLinks \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'a[href^=\"/\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 79 |\u001b[39m     \u001b[36mconst\u001b[39m linkCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m internalLinks\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m     expect(linkCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 82 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 83 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 23,
+                            "line": 80
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n\u001b[0m \u001b[90m 78 |\u001b[39m     \u001b[36mconst\u001b[39m internalLinks \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'a[href^=\"/\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 79 |\u001b[39m     \u001b[36mconst\u001b[39m linkCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m internalLinks\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 80 |\u001b[39m     expect(linkCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 81 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 82 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 83 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:80:23\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:34.589Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Navigation-should-have-working-internal-links-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Navigation-should-have-working-internal-links-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 23,
+                        "line": 80
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-b720d36afdb553e6711f",
+              "file": "global-ux.spec.ts",
+              "line": 73,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Responsive Design",
+          "file": "global-ux.spec.ts",
+          "line": 84,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display correctly on mobile viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16639,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:94:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 94
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 92 |\u001b[39m     \u001b[90m// Main content should still be visible\u001b[39m\n \u001b[90m 93 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 94 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 95 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 96 |\u001b[39m\n \u001b[90m 97 |\u001b[39m   test(\u001b[32m\"should display correctly on tablet viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 94
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 92 |\u001b[39m     \u001b[90m// Main content should still be visible\u001b[39m\n \u001b[90m 93 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 94 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 95 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 96 |\u001b[39m\n \u001b[90m 97 |\u001b[39m   test(\u001b[32m\"should display correctly on tablet viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:94:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:52:41.632Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-2e23f-orrectly-on-mobile-viewport-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-2e23f-orrectly-on-mobile-viewport-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 94
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-f3faa3c40d67e5b0e1af",
+              "file": "global-ux.spec.ts",
+              "line": 85,
+              "column": 7
+            },
+            {
+              "title": "should display correctly on tablet viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17026,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:106:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 106
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 104 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 106 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 107 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 108 |\u001b[39m\n \u001b[90m 109 |\u001b[39m   test(\u001b[32m\"should display correctly on desktop viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 106
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 104 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 106 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 107 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 108 |\u001b[39m\n \u001b[90m 109 |\u001b[39m   test(\u001b[32m\"should display correctly on desktop viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:106:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:52:59.976Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-4b5a7-orrectly-on-tablet-viewport-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-4b5a7-orrectly-on-tablet-viewport-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 106
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-55cc4171d3877b292d9e",
+              "file": "global-ux.spec.ts",
+              "line": 97,
+              "column": 7
+            },
+            {
+              "title": "should display correctly on desktop viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17050,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:118:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 118
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 116 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 117 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n \u001b[90m 121 |\u001b[39m   test(\u001b[32m\"should show mobile menu toggle on small screens\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 118
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 116 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 117 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n \u001b[90m 121 |\u001b[39m   test(\u001b[32m\"should show mobile menu toggle on small screens\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:118:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:53:18.762Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-d3c7f-rrectly-on-desktop-viewport-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-d3c7f-rrectly-on-desktop-viewport-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 118
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-ca081765dad2e54e1f90",
+              "file": "global-ux.spec.ts",
+              "line": 109,
+              "column": 7
+            },
+            {
+              "title": "should show mobile menu toggle on small screens",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1985,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:53:37.540Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-2b7e0fe5720e2fdec03a",
+              "file": "global-ux.spec.ts",
+              "line": 121,
+              "column": 7
+            },
+            {
+              "title": "should display correctly on mobile viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17200,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:94:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 94
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 92 |\u001b[39m     \u001b[90m// Main content should still be visible\u001b[39m\n \u001b[90m 93 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 94 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 95 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 96 |\u001b[39m\n \u001b[90m 97 |\u001b[39m   test(\u001b[32m\"should display correctly on tablet viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 94
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 92 |\u001b[39m     \u001b[90m// Main content should still be visible\u001b[39m\n \u001b[90m 93 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 94 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 95 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 96 |\u001b[39m\n \u001b[90m 97 |\u001b[39m   test(\u001b[32m\"should display correctly on tablet viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:94:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:38.281Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-2e23f-orrectly-on-mobile-viewport-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-2e23f-orrectly-on-mobile-viewport-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 94
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-2a60a52646992c3ca34f",
+              "file": "global-ux.spec.ts",
+              "line": 85,
+              "column": 7
+            },
+            {
+              "title": "should display correctly on tablet viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17959,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:106:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 106
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 104 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 106 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 107 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 108 |\u001b[39m\n \u001b[90m 109 |\u001b[39m   test(\u001b[32m\"should display correctly on desktop viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 106
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 104 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 105 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 106 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 107 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 108 |\u001b[39m\n \u001b[90m 109 |\u001b[39m   test(\u001b[32m\"should display correctly on desktop viewport\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:106:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:57.202Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-4b5a7-orrectly-on-tablet-viewport-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-4b5a7-orrectly-on-tablet-viewport-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 106
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-92a7564793642b1d2521",
+              "file": "global-ux.spec.ts",
+              "line": 97,
+              "column": 7
+            },
+            {
+              "title": "should display correctly on desktop viewport",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19943,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:118:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 118
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 116 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 117 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n \u001b[90m 121 |\u001b[39m   test(\u001b[32m\"should show mobile menu toggle on small screens\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 118
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 116 |\u001b[39m     \u001b[90m// Main content should be visible\u001b[39m\n \u001b[90m 117 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 118 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 119 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 120 |\u001b[39m\n \u001b[90m 121 |\u001b[39m   test(\u001b[32m\"should show mobile menu toggle on small screens\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:118:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:56:16.844Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-d3c7f-rrectly-on-desktop-viewport-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Responsive-Desig-d3c7f-rrectly-on-desktop-viewport-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 118
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-cb722a37a0a5e2faeb05",
+              "file": "global-ux.spec.ts",
+              "line": 109,
+              "column": 7
+            },
+            {
+              "title": "should show mobile menu toggle on small screens",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2224,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:56:38.471Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-1d0ebc970cbe51b3b8d3",
+              "file": "global-ux.spec.ts",
+              "line": 121,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Theme Toggle",
+          "file": "global-ux.spec.ts",
+          "line": 139,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load with default theme",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1789,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:53:39.743Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-cda80bf8c761c9cd4561",
+              "file": "global-ux.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should have theme-related elements",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16817,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:162:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 162
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 160 |\u001b[39m     \u001b[90m// Just verify page loads - theme toggle is optional\u001b[39m\n \u001b[90m 161 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 164 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 165 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 162
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 160 |\u001b[39m     \u001b[90m// Just verify page loads - theme toggle is optional\u001b[39m\n \u001b[90m 161 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 164 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 165 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:162:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:53:41.573Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Theme-Toggle-should-have-theme-related-elements-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Theme-Toggle-should-have-theme-related-elements-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 162
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-fa271c89f35d3d446fe0",
+              "file": "global-ux.spec.ts",
+              "line": 149,
+              "column": 7
+            },
+            {
+              "title": "should load with default theme",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2211,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:56:40.898Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-3ef655a386d7e99af9a3",
+              "file": "global-ux.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "should have theme-related elements",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17308,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:162:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 162
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 160 |\u001b[39m     \u001b[90m// Just verify page loads - theme toggle is optional\u001b[39m\n \u001b[90m 161 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 164 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 165 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 162
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 160 |\u001b[39m     \u001b[90m// Just verify page loads - theme toggle is optional\u001b[39m\n \u001b[90m 161 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 162 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 163 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 164 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 165 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:162:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:56:43.147Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Theme-Toggle-should-have-theme-related-elements-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Theme-Toggle-should-have-theme-related-elements-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 162
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-804d95b8fb9a5e33eca4",
+              "file": "global-ux.spec.ts",
+              "line": 149,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Loading States",
+          "file": "global-ux.spec.ts",
+          "line": 166,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should show content after loading",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16903,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:175:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 175
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 173 |\u001b[39m     \u001b[90m// Content should be visible\u001b[39m\n \u001b[90m 174 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 175 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 176 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 177 |\u001b[39m\n \u001b[90m 178 |\u001b[39m   test(\u001b[32m\"should not show infinite loading spinner\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 175
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 173 |\u001b[39m     \u001b[90m// Content should be visible\u001b[39m\n \u001b[90m 174 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 175 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 176 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 177 |\u001b[39m\n \u001b[90m 178 |\u001b[39m   test(\u001b[32m\"should not show infinite loading spinner\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:175:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:53:59.905Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-should-show-content-after-loading-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-should-show-content-after-loading-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 175
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-d75a518f0cda160a4dfc",
+              "file": "global-ux.spec.ts",
+              "line": 167,
+              "column": 7
+            },
+            {
+              "title": "should not show infinite loading spinner",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13987,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:187:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 187
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 185 |\u001b[39m     \u001b[90m// Main content should be visible (not just a spinner)\u001b[39m\n \u001b[90m 186 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 187 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 188 |\u001b[39m\n \u001b[90m 189 |\u001b[39m     \u001b[90m// Verify there's actual content\u001b[39m\n \u001b[90m 190 |\u001b[39m     \u001b[36mconst\u001b[39m content \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m mainContent\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 187
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 185 |\u001b[39m     \u001b[90m// Main content should be visible (not just a spinner)\u001b[39m\n \u001b[90m 186 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 187 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 188 |\u001b[39m\n \u001b[90m 189 |\u001b[39m     \u001b[90m// Verify there's actual content\u001b[39m\n \u001b[90m 190 |\u001b[39m     \u001b[36mconst\u001b[39m content \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m mainContent\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:187:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:54:18.516Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-s-db491-ow-infinite-loading-spinner-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-s-db491-ow-infinite-loading-spinner-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 187
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-c55966a3e11e696f75dd",
+              "file": "global-ux.spec.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "should show content after loading",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17747,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:175:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 175
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 173 |\u001b[39m     \u001b[90m// Content should be visible\u001b[39m\n \u001b[90m 174 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 175 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 176 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 177 |\u001b[39m\n \u001b[90m 178 |\u001b[39m   test(\u001b[32m\"should not show infinite loading spinner\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 175
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 173 |\u001b[39m     \u001b[90m// Content should be visible\u001b[39m\n \u001b[90m 174 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 175 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 176 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 177 |\u001b[39m\n \u001b[90m 178 |\u001b[39m   test(\u001b[32m\"should not show infinite loading spinner\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:175:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:01.950Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-should-show-content-after-loading-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-should-show-content-after-loading-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 175
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-d6b1b1ffb897aa7b4be2",
+              "file": "global-ux.spec.ts",
+              "line": 167,
+              "column": 7
+            },
+            {
+              "title": "should not show infinite loading spinner",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 14257,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:187:31",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 31,
+                          "line": 187
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 185 |\u001b[39m     \u001b[90m// Main content should be visible (not just a spinner)\u001b[39m\n \u001b[90m 186 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 187 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 188 |\u001b[39m\n \u001b[90m 189 |\u001b[39m     \u001b[90m// Verify there's actual content\u001b[39m\n \u001b[90m 190 |\u001b[39m     \u001b[36mconst\u001b[39m content \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m mainContent\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 31,
+                            "line": 187
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('main')\u001b[22m\n\n\n\u001b[0m \u001b[90m 185 |\u001b[39m     \u001b[90m// Main content should be visible (not just a spinner)\u001b[39m\n \u001b[90m 186 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 187 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 188 |\u001b[39m\n \u001b[90m 189 |\u001b[39m     \u001b[90m// Verify there's actual content\u001b[39m\n \u001b[90m 190 |\u001b[39m     \u001b[36mconst\u001b[39m content \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m mainContent\u001b[33m.\u001b[39mtextContent()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:187:31\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:21.373Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-s-db491-ow-infinite-loading-spinner-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Loading-States-s-db491-ow-infinite-loading-spinner-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 31,
+                        "line": 187
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-a478fee2ab307e33773b",
+              "file": "global-ux.spec.ts",
+              "line": 178,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Error Handling",
+          "file": "global-ux.spec.ts",
+          "line": 195,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should handle 404 pages gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4111,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:54:34.183Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-90ed8d24b9c1508678ef",
+              "file": "global-ux.spec.ts",
+              "line": 196,
+              "column": 7
+            },
+            {
+              "title": "should handle invalid dashboard routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2681,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:54:38.525Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-29973d6a5b608a87d8e8",
+              "file": "global-ux.spec.ts",
+              "line": 205,
+              "column": 7
+            },
+            {
+              "title": "should handle 404 pages gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3334,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:37.330Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-d6dd2df2bc9f1394ea43",
+              "file": "global-ux.spec.ts",
+              "line": 196,
+              "column": 7
+            },
+            {
+              "title": "should handle invalid dashboard routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3063,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:40.889Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-58b65e485fee94955ad0",
+              "file": "global-ux.spec.ts",
+              "line": 205,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Settings Pages",
+          "file": "global-ux.spec.ts",
+          "line": 215,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load settings page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5644,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:54:41.243Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-9bdcc0314700cc5b9d76",
+              "file": "global-ux.spec.ts",
+              "line": 216,
+              "column": 7
+            },
+            {
+              "title": "should load settings page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4205,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:43.995Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-f7a58f38bf13e3dd07c4",
+              "file": "global-ux.spec.ts",
+              "line": 216,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Onboarding Flow",
+          "file": "global-ux.spec.ts",
+          "line": 226,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load onboarding page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 20811,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:234:39",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 39,
+                          "line": 234
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 232 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/sign-in/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main, body\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 236 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 39,
+                            "line": 234
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 232 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/sign-in/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main, body\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 236 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:234:39\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:54:46.919Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Onboarding-Flow-should-load-onboarding-page-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Onboarding-Flow-should-load-onboarding-page-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 39,
+                        "line": 234
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-9d5c951ef25802738a0f",
+              "file": "global-ux.spec.ts",
+              "line": 227,
+              "column": 7
+            },
+            {
+              "title": "should load onboarding page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17230,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:234:39",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 39,
+                          "line": 234
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 232 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/sign-in/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main, body\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 236 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 39,
+                            "line": 234
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('main, body').first()\nExpected: visible\nReceived: hidden\nTimeout:  15000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for locator('main, body').first()\u001b[22m\n\u001b[2m    19 × locator resolved to <body>…</body>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 232 |\u001b[39m     \u001b[36mawait\u001b[39m expect(page)\u001b[33m.\u001b[39mnot\u001b[33m.\u001b[39mtoHaveURL(\u001b[35m/sign-in/\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m     \u001b[36mconst\u001b[39m mainContent \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"main, body\"\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m     \u001b[36mawait\u001b[39m expect(mainContent\u001b[33m.\u001b[39mfirst())\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 236 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:234:39\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:57:48.234Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Onboarding-Flow-should-load-onboarding-page-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Onboarding-Flow-should-load-onboarding-page-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 39,
+                        "line": 234
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-4b657b9b961e1ef10da1",
+              "file": "global-ux.spec.ts",
+              "line": 227,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Accessibility",
+          "file": "global-ux.spec.ts",
+          "line": 238,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should have proper heading structure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1992,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:246:26",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 26,
+                          "line": 246
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 244 |\u001b[39m     \u001b[36mconst\u001b[39m headings \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"h1, h2, h3, h4, h5, h6\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 245 |\u001b[39m     \u001b[36mconst\u001b[39m headingCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m headings\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 246 |\u001b[39m     expect(headingCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 247 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 248 |\u001b[39m\n \u001b[90m 249 |\u001b[39m   test(\u001b[32m\"should have proper link text\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 26,
+                            "line": 246
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n\u001b[0m \u001b[90m 244 |\u001b[39m     \u001b[36mconst\u001b[39m headings \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"h1, h2, h3, h4, h5, h6\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 245 |\u001b[39m     \u001b[36mconst\u001b[39m headingCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m headings\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 246 |\u001b[39m     expect(headingCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 247 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 248 |\u001b[39m\n \u001b[90m 249 |\u001b[39m   test(\u001b[32m\"should have proper link text\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:246:26\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:09.229Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Accessibility-should-have-proper-heading-structure-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Accessibility-should-have-proper-heading-structure-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 26,
+                        "line": 246
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-b595cc7926d919bae220",
+              "file": "global-ux.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "should have proper link text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1847,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:12.947Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-67b6ac7c8d623bd07ece",
+              "file": "global-ux.spec.ts",
+              "line": 249,
+              "column": 7
+            },
+            {
+              "title": "should have proper button accessibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1831,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:15.029Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-b9551b2204913ef5ce7b",
+              "file": "global-ux.spec.ts",
+              "line": 266,
+              "column": 7
+            },
+            {
+              "title": "should have proper heading structure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2338,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:246:26",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 26,
+                          "line": 246
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 244 |\u001b[39m     \u001b[36mconst\u001b[39m headings \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"h1, h2, h3, h4, h5, h6\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 245 |\u001b[39m     \u001b[36mconst\u001b[39m headingCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m headings\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 246 |\u001b[39m     expect(headingCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 247 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 248 |\u001b[39m\n \u001b[90m 249 |\u001b[39m   test(\u001b[32m\"should have proper link text\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 26,
+                            "line": 246
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n\u001b[0m \u001b[90m 244 |\u001b[39m     \u001b[36mconst\u001b[39m headings \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m\"h1, h2, h3, h4, h5, h6\"\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 245 |\u001b[39m     \u001b[36mconst\u001b[39m headingCount \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m headings\u001b[33m.\u001b[39mcount()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 246 |\u001b[39m     expect(headingCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 247 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 248 |\u001b[39m\n \u001b[90m 249 |\u001b[39m   test(\u001b[32m\"should have proper link text\"\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:246:26\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:58:06.975Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Accessibility-should-have-proper-heading-structure-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Accessibility-should-have-proper-heading-structure-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 26,
+                        "line": 246
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-d0560250336b33050b47",
+              "file": "global-ux.spec.ts",
+              "line": 239,
+              "column": 7
+            },
+            {
+              "title": "should have proper link text",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2458,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:58:10.954Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-0c947f4d02a9ed296471",
+              "file": "global-ux.spec.ts",
+              "line": 249,
+              "column": 7
+            },
+            {
+              "title": "should have proper button accessibility",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2200,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:58:13.636Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-cf2501a3c64df62e6033",
+              "file": "global-ux.spec.ts",
+              "line": 266,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Performance",
+          "file": "global-ux.spec.ts",
+          "line": 290,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should load dashboard within reasonable time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1732,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:16.895Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-e86465f5e3557b05628a",
+              "file": "global-ux.spec.ts",
+              "line": 291,
+              "column": 7
+            },
+            {
+              "title": "should not have console errors on page load",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1876,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:326:35",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 35,
+                          "line": 326
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 324 |\u001b[39m\n \u001b[90m 325 |\u001b[39m     \u001b[90m// Should have no critical errors\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 326 |\u001b[39m     expect(criticalErrors\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 327 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 328 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 329 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 35,
+                            "line": 326
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m\n\n\u001b[0m \u001b[90m 324 |\u001b[39m\n \u001b[90m 325 |\u001b[39m     \u001b[90m// Should have no critical errors\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 326 |\u001b[39m     expect(criticalErrors\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 327 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 328 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 329 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:326:35\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:55:18.657Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Performance-shou-e6c7d-console-errors-on-page-load-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Performance-shou-e6c7d-console-errors-on-page-load-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 35,
+                        "line": 326
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-f1e9f7ca15cda9a73bb7",
+              "file": "global-ux.spec.ts",
+              "line": 303,
+              "column": 7
+            },
+            {
+              "title": "should load dashboard within reasonable time",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:58:15.872Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-fdb905302eb72c73594b",
+              "file": "global-ux.spec.ts",
+              "line": 291,
+              "column": 7
+            },
+            {
+              "title": "should not have console errors on page load",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile-chrome",
+                  "projectName": "mobile-chrome",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2255,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m\n    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:326:35",
+                        "location": {
+                          "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                          "column": 35,
+                          "line": 326
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 324 |\u001b[39m\n \u001b[90m 325 |\u001b[39m     \u001b[90m// Should have no critical errors\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 326 |\u001b[39m     expect(criticalErrors\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 327 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 328 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 329 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                            "column": 35,
+                            "line": 326
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m14\u001b[39m\n\n\u001b[0m \u001b[90m 324 |\u001b[39m\n \u001b[90m 325 |\u001b[39m     \u001b[90m// Should have no critical errors\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 326 |\u001b[39m     expect(criticalErrors\u001b[33m.\u001b[39mlength)\u001b[33m.\u001b[39mtoBe(\u001b[35m0\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 327 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 328 |\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 329 |\u001b[39m\u001b[0m\n\u001b[2m    at /opt/epic-ai/apps/web/e2e/global-ux.spec.ts:326:35\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-19T01:58:17.980Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Performance-shou-e6c7d-console-errors-on-page-load-mobile-chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/opt/epic-ai/apps/web/playwright-results/global-ux-Performance-shou-e6c7d-console-errors-on-page-load-mobile-chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/opt/epic-ai/apps/web/e2e/global-ux.spec.ts",
+                        "column": 35,
+                        "line": 326
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "7e327f7198d4b6451e5c-33cd30b1a1b83181e76b",
+              "file": "global-ux.spec.ts",
+              "line": 303,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-19T01:51:45.934Z",
+    "duration": 394647.357,
+    "expected": 20,
+    "skipped": 0,
+    "unexpected": 20,
+    "flaky": 0
+  }
+}

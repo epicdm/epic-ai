@@ -40,6 +40,7 @@ import {
   TRIGGER_LABELS as HUMANIZER_TRIGGERS,
 } from "@/lib/services/cross-channel/step-humanizer";
 import { ChannelType } from "@epic-ai/database";
+import { AIConfidence } from "@/components/ui/ai-confidence";
 
 interface Automation {
   id: string;
@@ -147,6 +148,115 @@ const getStatusIcon = (status: string | null) => {
       return null;
   }
 };
+
+// Helper function to determine recommended workflow templates
+function getRecommendedWorkflows(params: {
+  connectedChannels?: string[];
+  industry?: string;
+  hasVoiceCapability?: boolean;
+}): {
+  templateId: string;
+  confidence: number;
+  reason: string;
+}[] {
+  const recommendations: { templateId: string; confidence: number; reason: string }[] = [];
+  const { connectedChannels = [], industry = "", hasVoiceCapability = false } = params;
+
+  const hasEmail = connectedChannels.includes("email");
+  const hasSocial = connectedChannels.some(ch => ["twitter", "linkedin", "facebook", "instagram"].includes(ch));
+  const isBtoB = industry.toLowerCase().includes("b2b") || industry.toLowerCase().includes("saas");
+  const isService = industry.toLowerCase().includes("service") || industry.toLowerCase().includes("consulting");
+  const isEvent = industry.toLowerCase().includes("event") || industry.toLowerCase().includes("conference");
+
+  // Lead Nurture Workflow - High confidence for B2B/SaaS with email+social
+  if (hasEmail && hasSocial && isBtoB) {
+    recommendations.push({
+      templateId: "lead-nurture",
+      confidence: 95,
+      reason: "Perfect for B2B lead nurturing with email and social touchpoints"
+    });
+  } else if (hasEmail && hasSocial) {
+    recommendations.push({
+      templateId: "lead-nurture",
+      confidence: 88,
+      reason: "Great multi-channel approach for warming up leads"
+    });
+  } else if (hasEmail || hasSocial) {
+    recommendations.push({
+      templateId: "lead-nurture",
+      confidence: 75,
+      reason: "Effective for nurturing leads with available channels"
+    });
+  }
+
+  // Customer Onboarding Workflow - High for service businesses with email
+  if (isService && hasEmail) {
+    recommendations.push({
+      templateId: "customer-onboarding",
+      confidence: 93,
+      reason: "Essential for service businesses to onboard clients smoothly"
+    });
+  } else if (hasEmail) {
+    recommendations.push({
+      templateId: "customer-onboarding",
+      confidence: 85,
+      reason: "Reduces churn with automated welcome sequence"
+    });
+  }
+
+  // Re-engagement Workflow - Medium confidence for all (useful but not primary)
+  if (hasEmail && hasSocial) {
+    recommendations.push({
+      templateId: "re-engagement",
+      confidence: 82,
+      reason: "Win back inactive customers across multiple channels"
+    });
+  } else if (hasEmail || hasSocial) {
+    recommendations.push({
+      templateId: "re-engagement",
+      confidence: 70,
+      reason: "Helps reactivate dormant leads and customers"
+    });
+  }
+
+  // Event Promotion Workflow - High if events/webinars mentioned
+  if (isEvent && (hasEmail || hasSocial)) {
+    recommendations.push({
+      templateId: "event-promotion",
+      confidence: 94,
+      reason: "Optimized for driving event registrations and attendance"
+    });
+  } else if (hasEmail && hasSocial) {
+    recommendations.push({
+      templateId: "event-promotion",
+      confidence: 78,
+      reason: "Great for webinars, launches, or special promotions"
+    });
+  }
+
+  // Sales Outreach Workflow - High for B2B with voice capability
+  if (isBtoB && hasVoiceCapability && (hasEmail || hasSocial)) {
+    recommendations.push({
+      templateId: "sales-outreach",
+      confidence: 92,
+      reason: "Multi-touch B2B outreach with voice calls drives conversions"
+    });
+  } else if (hasVoiceCapability && hasEmail) {
+    recommendations.push({
+      templateId: "sales-outreach",
+      confidence: 85,
+      reason: "Voice + email combo increases response rates significantly"
+    });
+  } else if (isBtoB && (hasEmail || hasSocial)) {
+    recommendations.push({
+      templateId: "sales-outreach",
+      confidence: 76,
+      reason: "Effective B2B outreach even without voice capability"
+    });
+  }
+
+  return recommendations;
+}
 
 export function AutomationsDashboard() {
   const [automations, setAutomations] = useState<Automation[]>([]);
@@ -454,9 +564,26 @@ export function AutomationsDashboard() {
                             <Target className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">
-                              {template.name}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-white">
+                                {template.name}
+                              </h4>
+                              {/* AI Confidence Indicator */}
+                              {(() => {
+                                const recommendations = getRecommendedWorkflows({
+                                  connectedChannels: [], // TODO: Pass actual connected channels when available
+                                  industry: "", // TODO: Pass actual industry from Brand Brain
+                                  hasVoiceCapability: false, // TODO: Check for voice capability
+                                });
+                                const recommendation = recommendations.find(r => r.templateId === template.id);
+                                return recommendation ? (
+                                  <AIConfidence
+                                    score={recommendation.confidence}
+                                    variant="dots"
+                                  />
+                                ) : null;
+                              })()}
+                            </div>
                             <p className="text-sm text-gray-500 mt-0.5">
                               {template.description}
                             </p>

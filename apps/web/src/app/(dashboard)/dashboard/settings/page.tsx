@@ -1,6 +1,6 @@
 import { getAuthWithBypass } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserOrganization, needsOnboarding } from "@/lib/sync-user";
+import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { SettingsContent } from "@/components/settings/settings-content";
 
@@ -11,18 +11,10 @@ export default async function SettingsPage() {
     redirect("/sign-in");
   }
 
-  // Check if user needs onboarding (skip for UAT bypass)
-  if (!isUATBypass) {
-    const needs = await needsOnboarding();
-    if (needs) {
-      redirect("/onboarding");
-    }
-  }
-
   const organization = await getUserOrganization();
 
   if (!organization) {
-    redirect("/onboarding");
+    throw new Error("Organization not found - please contact support");
   }
 
   // Get organization's brands - wrapped in try-catch for resilience

@@ -38,6 +38,8 @@ import {
   type ChannelId,
   type ChannelPriority,
 } from "@/lib/brand-brain/industry-channels";
+import { AIBadge } from "@/components/ui/ai-badge";
+import { AIConfidence } from "@/components/ui/ai-confidence";
 
 export interface Channel {
   id: "social" | "voice" | "email" | "chat";
@@ -123,85 +125,204 @@ const DEFAULT_CHANNELS: Channel[] = [
 export function ChannelSelector({
   selectedChannels,
   onChannelsChange,
-  onComplete,
-  showContinueButton = true,
-  brandName,
-  mode = "onboarding",
-  industryId,
-  autoSelectRecommended = true,
+  industry,
+  multiple = true,
+  showRecommendations = true,
+  className,
 }: ChannelSelectorProps) {
-  const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
-  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  const [selected, setSelected] = useState<string[]>(selectedChannels || []);
 
-  // Auto-select high-priority channels when industry is provided
+  // Auto-select high-priority channels on mount
   useEffect(() => {
-    if (industryId && autoSelectRecommended && !hasAutoSelected && selectedChannels.length === 0) {
-      const highPriorityChannels = getHighPriorityChannels(industryId);
-      // Only auto-select available channels
-      const availableHighPriority = highPriorityChannels.filter((channelId) => {
-        const channel = DEFAULT_CHANNELS.find((c) => c.id === channelId);
-        return channel?.status === "available";
-      });
-      if (availableHighPriority.length > 0) {
-        onChannelsChange(availableHighPriority);
+    if (
+      showRecommendations &&
+      industry &&
+      (!selectedChannels || selectedChannels.length === 0)
+    ) {
+      const highPriorityChannels = getHighPriorityChannels(industry);
+      const highPriorityIds = highPriorityChannels.map((c) => c.id);
+
+      if (highPriorityIds.length > 0) {
+        setSelected(highPriorityIds);
+        onChannelsChange(highPriorityIds);
       }
-      setHasAutoSelected(true);
     }
-  }, [industryId, autoSelectRecommended, hasAutoSelected, selectedChannels.length, onChannelsChange]);
+  }, [industry, selectedChannels, showRecommendations, onChannelsChange]);
 
-  // Get recommendation info for a channel
-  const getRecommendation = useCallback(
-    (channelId: string) => {
-      if (!industryId) return null;
-      return getChannelRecommendation(industryId, channelId as ChannelId);
-    },
-    [industryId]
-  );
+  const getRecommendation = (
+    channelId: ChannelId
+  ): { priority: ChannelPriority; reason: string } | null => {
+    if (!showRecommendations || !industry) return null;
+    return getChannelRecommendation(channelId, industry);
+  };
 
-  // Get priority badge color
-  const getPriorityColor = (priority: ChannelPriority): "success" | "warning" | "default" => {
+  const handleChannelToggle = (channelId: string) => {
+    if (!multiple) {
+      // Single selection mode
+      const newSelected = [channelId];
+      setSelected(newSelected);
+      onChannelsChange(newSelected);
+    } else {
+      // Multiple selection mode
+      const newSelected = selected.includes(channelId)
+        ? selected.filter((id) => id !== channelId)
+        : [...selected, channelId];
+      setSelected(newSelected);
+      onChannelsChange(newSelected);
+    }
+  };
+
+  const selectAll = () => {
+    const allIds = SOCIAL_CHANNELS.map((c) => c.id);
+    setSelected(allIds);
+    onChannelsChange(allIds);
+  };
+
+  const deselectAll = () => {
+    setSelected([]);
+    onChannelsChange([]);
+  };
+
+  const isChannelSelected = (channelId: string) =>
+    selected.includes(channelId);
+
+  // Map priority to confidence score
+  const getConfidenceScore = (priority: ChannelPriority): number => {
     switch (priority) {
       case "high":
-        return "success";
+        return 92;
       case "medium":
-        return "warning";
+        return 78;
       case "low":
-        return "default";
+        return 65;
     }
   };
 
-  const toggleChannel = (channelId: string) => {
-    const channel = DEFAULT_CHANNELS.find((c) => c.id === channelId);
-    if (channel?.status !== "available") return;
+  return (
+    <div className={cn("space-y-4", className)}>
+      {/* Header with bulk actions */}
+      {multiple && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Select the platforms where you want to publish content
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="bordered" onPress={selectAll}>
+              Select All
+            </Button>
+            <Button size="sm" variant="bordered" onPress={deselectAll}>
+              Deselect All
+            </Button>
+          </div>
+        </div>
+      )}
 
-    if (selectedChannels.includes(channelId)) {
-      onChannelsChange(selectedChannels.filter((id) => id !== channelId));
-    } else {
-      onChannelsChange([...selectedChannels, channelId]);
-    }
-  };
+      {/* Channel Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {SOCIAL_CHANNELS.map((channel) => {
+          const isSelected = isChannelSelected(channel.id);
+          const recommendation = getRecommendation(channel.id as ChannelId);
+          const Icon = channel.icon;
 
-  const getStatusChip = (status: Channel["status"]) => {
-    switch (status) {
-      case "available":
-        return (
-          <Chip size="sm" color="success" variant="flat">
-            Available
-          </Chip>
-        );
-      case "beta":
-        return (
-          <Chip size="sm" color="warning" variant="flat">
-            Beta
-          </Chip>
-        );
-      case "coming_soon":
-        return (
-          <Chip size="sm" color="default" variant="flat">
-            Coming Soon
-          </Chip>
-        );
-    }
+          return (
+            <Card
+              key={channel.id}
+              isPressable
+              isHoverable
+              className={cn(
+                "transition-all cursor-pointer",
+                isSelected
+                  ? "border-2 border-brand-500 bg-brand-50 dark:bg-brand-900/20"
+                  : "border border-gray-200 dark:border-gray-700 hover:border-brand-300"
+              )}
+              onPress={() => handleChannelToggle(channel.id)}
+            >
+              <CardBody className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  {/* Channel Icon & Info */}
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                        channel.color
+                      )}
+                    >
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                          {channel.name}
+                        </h4>
+                        {/* Add confidence dots inline */}
+                        {recommendation && (
+                          <AIConfidence
+                            score={getConfidenceScore(recommendation.priority)}
+                            variant="dots"
+                          />
+                        )}
+                        {/* Visual indicator for high-priority (keep star) */}
+                        {recommendation?.priority === "high" && (
+                          <Star className="w-4 h-4 text-green-600 dark:text-green-400 fill-green-600 dark:fill-green-400" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {channel.description}
+                      </p>
+                      
+                      {/* AI Recommendation Badge */}
+                      {recommendation && (
+                        <div className="mt-2">
+                          {recommendation.priority === "high" && (
+                            <AIBadge 
+                              type="recommended" 
+                              reason={recommendation.reason}
+                              confidence={getConfidenceScore(recommendation.priority)}
+                              size="sm"
+                            />
+                          )}
+                          {recommendation.priority === "medium" && (
+                            <AIBadge 
+                              type="suggestion" 
+                              reason={recommendation.reason}
+                              confidence={getConfidenceScore(recommendation.priority)}
+                              size="sm"
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selection Indicator */}
+                  <div className="flex-shrink-0">
+                    <Switch
+                      isSelected={isSelected}
+                      size="sm"
+                      color="success"
+                      aria-label={`Toggle ${channel.name}`}
+                    />
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      {multiple && selected.length > 0 && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <span>
+            {selected.length} {selected.length === 1 ? "channel" : "channels"}{" "}
+            selected
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
   };
 
   return (

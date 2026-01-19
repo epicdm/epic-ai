@@ -20,6 +20,7 @@ import {
 } from "@heroui/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Users,
   Plus,
@@ -27,6 +28,7 @@ import {
   TrendingUp,
   DollarSign,
   UserPlus,
+  Magnet,
 } from "lucide-react";
 
 interface Lead {
@@ -270,28 +272,46 @@ export function LeadsDashboard() {
           <Spinner size="lg" />
         </div>
       ) : leads.length === 0 ? (
-        <Card>
-          <CardBody className="py-16 text-center">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="w-8 h-8 text-gray-400" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {search || statusFilter !== "all" || sourceFilter !== "all"
-                ? "No leads match your filters"
-                : "No leads yet"}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {search || statusFilter !== "all" || sourceFilter !== "all"
-                ? "Try adjusting your search or filters"
-                : "Add your first lead to get started"}
-            </p>
-            {!search && statusFilter === "all" && sourceFilter === "all" && (
-              <Button as={Link} href="/dashboard/leads/new" color="primary">
-                Add Lead
-              </Button>
-            )}
-          </CardBody>
-        </Card>
+        search || statusFilter !== "all" || sourceFilter !== "all" ? (
+          <Card>
+            <CardBody className="py-16 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No leads match your filters
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Try adjusting your search or filters
+              </p>
+            </CardBody>
+          </Card>
+        ) : (
+          <EmptyState
+            icon={<Magnet className="w-full h-full" />}
+            title="No Leads Yet - Let's Change That"
+            description="Connect your forms, chatbots, or voice agents to start capturing leads automatically."
+            features={[
+              "Website contact forms",
+              "Facebook Lead Ads",
+              "Voice AI conversations",
+              "Landing page signups",
+            ]}
+            actions={[
+              {
+                label: "Add Lead Manually",
+                variant: "primary",
+                onClick: () => window.location.href = "/dashboard/leads/new",
+              },
+              {
+                label: "Learn More",
+                variant: "secondary",
+                onClick: () => window.location.href = "/dashboard/settings",
+              },
+            ]}
+            variant="card"
+          />
+        )
       ) : (
         <Card>
           <CardBody className="p-0">

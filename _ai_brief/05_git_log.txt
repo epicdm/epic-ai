@@ -1,0 +1,15 @@
+c335009 fix: reorder onboarding gate conditional to prevent unnecessary DB queries
+f9941e8 fix: resolve OAuth redirect loop for existing users
+646ec98 feat: complete routing architecture consolidation with type-safe navigation
+832eb15 fix(automations): fix enum case mismatch causing automation creation to fail
+bea9fae fix: resolve all TypeScript compilation errors across codebase
+ec6c9c1 feat: complete cross-channel integration with journeys, insights, and onboarding
+b90c169 feat: implement "One Brain, Many Voices" cross-channel architecture
+609fcfc fix(voice): update flows API schema to accept null values for description and agentId
+f1d5e8c fix(voice): update routing API schema to accept null values
+ce1f531 fix(voice): fix HeroUI Select sync issue with Set and disallowEmptySelection
+2ed08e1 debug: add console logging for routing rule creation payload
+7813f60 debug: add console logs to diagnose Select component state issue
+5caaae4 fix(voice): fix stale closure in routing rules form state updates
+c75bfc0 fix(voice): fix HeroUI Select onChange to onSelectionChange in routing rules
+8cae8c3 fix(voice): use internal organization auth pattern for groups and routing APIs
