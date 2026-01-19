@@ -562,7 +562,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
       )}
 
       {/* Learning Loop - Show for users with active flywheel */}
-      {onboarding?.isComplete && data.brand.id && (
+      {onboarding?.isComplete && data?.brand?.id && (
         <LearningLoopCard brandId={data.brand.id} compact />
       )}
 
@@ -943,14 +943,14 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
             <Spinner size="lg" />
           </div>
         }>
-          {isHealthy ? (
+          {isHealthy && data?.brand?.id ? (
             <>
               <FlywheelHealth brandId={data.brand.id} />
               <AnalyticsDashboard brandId={data.brand.id} />
             </>
           ) : (
             <div className="text-center py-8 text-danger-500">
-              API service unavailable
+              {!data?.brand?.id ? "No brand data available" : "API service unavailable"}
             </div>
           )}
         </Suspense>
