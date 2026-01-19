@@ -14,6 +14,8 @@ export const metadata = {
   description: "Streamlined wizard for guided setup",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function GuidedSetupPage() {
   const { userId } = await getAuth();
 
