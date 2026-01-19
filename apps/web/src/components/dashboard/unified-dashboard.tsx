@@ -370,8 +370,6 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
 
   const onboarding = data ? getOnboardingStatus(data) : null;
 
-  const { featureGates, isFeatureUnlocked } = useFeatureGates();
-
   const [isMounted, setIsMounted] = useState(false);
   const [isHealthy, setIsHealthy] = useState(true);
 
