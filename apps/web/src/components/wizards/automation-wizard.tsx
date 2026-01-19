@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
 import { Button, Card, CardBody, Select, SelectItem, Textarea } from "@heroui/react";
-import { getWorkflowTemplate } from "@/lib/services/cross-channel/workflow-templates";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { AIBadge, AIConfidenceDots } from "@/components/ui/ai-badge";
@@ -62,8 +61,11 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
     ];
 
     const handlePreview = async (templateId: string) => {
-      const template = await getWorkflowTemplate(templateId);
-      if (template) setPreviewTemplate(template);
+      // TODO: Call API to get template preview
+      // const response = await fetch(`/api/automations/templates/${templateId}`);
+      // const template = await response.json();
+      // if (template) setPreviewTemplate(template);
+      console.log('Preview template:', templateId);
     };
     
     return (

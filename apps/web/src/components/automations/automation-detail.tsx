@@ -44,13 +44,11 @@ import {
   Heart,
 } from "lucide-react";
 import {
-  humanizeStep,
   TRIGGER_LABELS,
   ACTION_LABELS,
   getWorkflowSummary,
   getEstimatedDuration,
-} from "@/lib/services/cross-channel/step-humanizer";
-import { ChannelType } from "@epic-ai/database";
+} from "@/lib/workflow-labels";
 
 // Channel configuration for visual display
 const CHANNEL_CONFIG: Record<

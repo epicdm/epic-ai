@@ -35,11 +35,10 @@ import {
   Target,
 } from "lucide-react";
 import {
-  humanizeWorkflow,
+  CHANNEL_LABELS,
   getEstimatedDuration,
   TRIGGER_LABELS as HUMANIZER_TRIGGERS,
-} from "@/lib/services/cross-channel/step-humanizer";
-import { ChannelType } from "@epic-ai/database";
+} from "@/lib/workflow-labels";
 import { AIConfidence } from "@/components/ui/ai-confidence";
 
 interface Automation {
