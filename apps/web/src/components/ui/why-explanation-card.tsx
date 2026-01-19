@@ -39,7 +39,7 @@ export function WhyExplanationCard({
         
         <p className="text-sm">{briefExplanation}</p>
         
-        <Collapse isOpen={isExpanded}>
+        {isExpanded && (
           <div className="mt-3 space-y-3">
             {detailedExplanation && (
               <p className="text-sm text-muted-foreground">{detailedExplanation}</p>
@@ -56,7 +56,7 @@ export function WhyExplanationCard({
               </div>
             )}
           </div>
-        </Collapse>
+        )}
       </CardBody>
     </Card>
   );
