@@ -12,6 +12,39 @@ interface FeatureGate {
   unlockedAt?: Date;
 }
 
+const DEFAULT_FEATURES = [
+  {
+    id: "content_generator",
+    name: "AI Content Generator",
+    description: "Create posts optimized for each platform",
+    unlockConditions: { type: "wizard", value: "onboarding" }
+  },
+  {
+    id: "workflows",
+    name: "Cross-Channel Workflows",
+    description: "Automate content across platforms",
+    unlockConditions: { type: "event_count", value: 3 }
+  },
+  {
+    id: "advanced_analytics",
+    name: "Advanced Analytics",
+    description: "Measure performance and insights",
+    unlockConditions: { type: "wizard", value: "analytics" }
+  },
+  {
+    id: "voice_agents",
+    name: "AI Voice Agents",
+    description: "Automated phone calls with AI",
+    unlockConditions: { type: "wizard", value: "voice_setup" }
+  },
+  {
+    id: "brand_brain",
+    name: "Brand Brain",
+    description: "Centralized brand context and tone",
+    unlockConditions: { type: "wizard", value: "brand_setup" }
+  }
+];
+
 export async function GET(req: Request) {
   const { userId } = getAuth(req);
   
@@ -23,13 +56,21 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [allFeatures, userFeatures] = await Promise.all([
+    let [allFeatures, userFeatures] = await Promise.all([
       prisma.feature.findMany(),
       prisma.userFeature.findMany({
         where: { userId },
         include: { feature: true }
       })
     ]);
+
+    if (allFeatures.length === 0) {
+      await prisma.feature.createMany({
+        data: DEFAULT_FEATURES,
+        skipDuplicates: true
+      });
+      allFeatures = await prisma.feature.findMany();
+    }
 
     const unlockedById = new Map(
       userFeatures.map(uf => [uf.featureId, uf.unlockedAt] as const)
