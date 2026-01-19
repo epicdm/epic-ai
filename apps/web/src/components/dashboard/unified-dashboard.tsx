@@ -373,16 +373,10 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
   const { featureGates, isFeatureUnlocked } = useFeatureGates();
 
   const [isMounted, setIsMounted] = useState(false);
-  const [isHealthy, setIsHealthy] = useState(false);
+  const [isHealthy, setIsHealthy] = useState(true);
 
   useEffect(() => {
-    console.log('Mounting UnifiedDashboard');
     setIsMounted(true);
-    
-    checkApiHealth().then(healthy => {
-      console.log('API Health:', healthy);
-      setIsHealthy(healthy);
-    });
   }, []);
 
   const [isVisible, setIsVisible] = useState(false);
