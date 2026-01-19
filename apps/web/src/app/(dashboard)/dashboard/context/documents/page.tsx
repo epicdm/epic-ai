@@ -4,6 +4,8 @@ import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { ContextDocumentsPage } from "@/components/context/context-documents-page";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Documents | Context Engine | Epic AI",
 };

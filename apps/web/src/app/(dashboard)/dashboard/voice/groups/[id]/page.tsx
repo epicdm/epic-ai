@@ -68,6 +68,8 @@ const ROUTING_STRATEGIES = [
   { value: "RANDOM", label: "Random", description: "Randomly select an available agent" },
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default function EditGroupPage({
   params,
 }: {

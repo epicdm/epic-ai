@@ -9,6 +9,8 @@ import { prisma } from "@epic-ai/database";
 import { UnderstandWizard } from "@/components/flywheel/wizards/understand-wizard";
 import type { UnderstandWizardData } from "@/lib/flywheel/types";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Understand - Build Your Brand Brain | Epic AI",
   description: "Define your brand voice, audiences, and content strategy",

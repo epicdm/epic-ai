@@ -22,6 +22,8 @@ interface ApprovalData {
   rejectedToday: number;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function ContentApprovalPage() {
   const [data, setData] = useState<ApprovalData | null>(null);
   const [loading, setLoading] = useState(true);

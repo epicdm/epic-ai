@@ -32,6 +32,8 @@ interface BrandBrain {
   pillars: Pillar[];
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function BrandStrategyPage() {
   const [brandBrain, setBrandBrain] = useState<BrandBrain | null>(null);
   const [loading, setLoading] = useState(true);

@@ -5,6 +5,8 @@ import { prisma } from "@epic-ai/database";
 import { BrandBrainPage } from "@/components/brand/brand-brain-page";
 import { BrandOverview } from "@/components/brand/brand-overview";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Brand Brain | Epic AI",
 };

@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { AutopilotSettings } from "@/components/social/autopilot-settings";
 
+export const dynamic = 'force-dynamic';
+
 export default function SettingsRoute() {
   return (
     <Suspense

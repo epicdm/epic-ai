@@ -89,6 +89,8 @@ const FALLBACK_ACTIONS = [
   { value: "queue", label: "Keep in Queue" },
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default function EditRoutingRulePage({
   params,
 }: {

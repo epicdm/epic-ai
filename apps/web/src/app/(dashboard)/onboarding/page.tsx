@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getAuthWithBypass } from "@/lib/auth";
 import { UnifiedOnboardingWizard } from "@/components/onboarding/unified-onboarding-wizard";
 
+export const dynamic = 'force-dynamic';
+
 export default async function OnboardingPage() {
   const { userId, isUATBypass } = await getAuthWithBypass();
 

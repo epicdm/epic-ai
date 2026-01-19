@@ -1,5 +1,7 @@
 import { WebhooksPage } from "@/components/settings/webhooks-page";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Webhooks | Settings",
 };

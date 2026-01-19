@@ -10,6 +10,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { AIBrandSetup } from "@/components/brand/ai-brand-setup";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "AI Social Setup | Epic AI",
   description: "Let AI learn your brand voice from your social media posts",

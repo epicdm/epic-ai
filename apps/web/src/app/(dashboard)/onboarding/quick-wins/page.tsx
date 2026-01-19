@@ -5,6 +5,8 @@ import { prisma } from "@epic-ai/database";
 
 type SetupPath = "social_first" | "voice_first" | "hybrid" | "guided";
 
+export const dynamic = 'force-dynamic';
+
 export default async function QuickWinsPage({
   searchParams,
 }: {

@@ -11,6 +11,8 @@ import { prisma } from "@epic-ai/database";
 import { MicIcon, Phone, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Voice Setup | Epic AI",
   description: "Configure your AI voice agents and phone system",

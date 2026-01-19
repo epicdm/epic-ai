@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { PublishingSettings } from "@/components/publishing/PublishingSettings";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Publishing Settings | Epic AI",
   description: "Configure your publishing schedules and automation",

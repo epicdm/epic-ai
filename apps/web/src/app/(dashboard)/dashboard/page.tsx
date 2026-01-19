@@ -12,6 +12,8 @@ const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
   process.env.UAT_AUTH_BYPASS === "true";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Dashboard | Epic AI",
   description: "Your AI-powered marketing command center",

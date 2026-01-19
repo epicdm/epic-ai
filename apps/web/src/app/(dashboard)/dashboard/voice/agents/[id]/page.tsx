@@ -8,6 +8,8 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function AgentDetailPage({ params }: PageProps) {
   const { userId } = await getAuth();
 

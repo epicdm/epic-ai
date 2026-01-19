@@ -3,6 +3,8 @@ import { getAuth } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { DistributeWizard } from "@/components/flywheel/wizards/distribute-wizard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Publishing Engine Setup | Epic AI",
   description: "Connect your social accounts and set up your publishing schedule",

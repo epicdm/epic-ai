@@ -8,6 +8,8 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@epic-ai/database';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Analytics | Epic AI',
   description: 'Track your social media performance and discover AI-powered insights',

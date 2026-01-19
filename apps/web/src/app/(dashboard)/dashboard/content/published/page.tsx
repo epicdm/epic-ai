@@ -30,6 +30,8 @@ interface PublishedData {
   avgEngagement: number;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function PublishedContentPage() {
   const [data, setData] = useState<PublishedData | null>(null);
   const [loading, setLoading] = useState(true);

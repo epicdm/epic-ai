@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { BirdEyeWizard } from "@/components/flywheel/shared/birdeye-wizard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "AI Setup - Configure Your Flywheel | Epic AI",
   description: "Let AI configure your entire marketing flywheel in one go",

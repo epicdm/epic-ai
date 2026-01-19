@@ -2,6 +2,8 @@ import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AutomationDetail } from "@/components/automations/automation-detail";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AutomationDetailPage({
   params,
 }: {

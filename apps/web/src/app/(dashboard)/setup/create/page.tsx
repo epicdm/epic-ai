@@ -3,6 +3,8 @@ import { getAuth } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { CreateWizard } from "@/components/flywheel/wizards/create-wizard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Content Factory Setup | Epic AI",
   description: "Set up your Content Factory - templates, content types, and AI settings",

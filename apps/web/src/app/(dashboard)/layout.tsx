@@ -10,6 +10,9 @@ const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
   process.env.UAT_AUTH_BYPASS === "true";
 
+// Force dynamic rendering for the entire dashboard layout
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

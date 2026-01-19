@@ -3,6 +3,8 @@ import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { AIContentWizard } from "@/components/content/ai-content-wizard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Create Content | Epic AI",
 };

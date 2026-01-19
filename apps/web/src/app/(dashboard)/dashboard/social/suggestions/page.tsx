@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { SuggestionsPage } from "@/components/social/suggestions-page";
 
+export const dynamic = 'force-dynamic';
+
 export default function SuggestionsRoute() {
   return (
     <Suspense

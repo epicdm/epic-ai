@@ -1,5 +1,7 @@
 import { CampaignDetailPage } from "@/components/ads/campaign-detail-page";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Campaign | Ads",
 };

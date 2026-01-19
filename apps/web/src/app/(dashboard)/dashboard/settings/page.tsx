@@ -4,6 +4,8 @@ import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { SettingsContent } from "@/components/settings/settings-content";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   const { userId, isUATBypass } = await getAuthWithBypass();
 

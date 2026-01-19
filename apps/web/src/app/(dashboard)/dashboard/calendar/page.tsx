@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { ContentCalendar } from "@/components/calendar/ContentCalendar";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Content Calendar | Epic AI",
   description: "View and manage your scheduled content",

@@ -8,6 +8,8 @@ interface PageProps {
   searchParams: Promise<{ review?: string; step?: string }>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function LearnSetupPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const isReviewMode = params.review === "true";

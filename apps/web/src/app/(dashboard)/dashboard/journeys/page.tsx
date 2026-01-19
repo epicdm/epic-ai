@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
 import { JourneysDashboard } from "@/components/journeys/journeys-dashboard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Customer Journeys | Epic AI",
   description: "Visualize cross-channel customer journeys and touchpoints",

@@ -6,6 +6,8 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function FlowDetailPage({ params }: Props) {
   const { userId } = await getAuth();
 

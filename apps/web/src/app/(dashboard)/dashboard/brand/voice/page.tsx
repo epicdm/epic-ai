@@ -19,6 +19,8 @@ interface BrandBrain {
   mustMention: string[];
 }
 
+export const dynamic = 'force-dynamic';
+
 export default function BrandVoicePage() {
   const [brandBrain, setBrandBrain] = useState<BrandBrain | null>(null);
   const [loading, setLoading] = useState(true);

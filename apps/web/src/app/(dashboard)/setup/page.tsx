@@ -19,6 +19,8 @@ import {
 import type { FlywheelState, FlywheelPhase, PhaseState } from "@/lib/flywheel/types";
 import { SetupDashboard } from "./setup-dashboard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Setup | Epic AI",
   description: "Set up your AI marketing flywheel",

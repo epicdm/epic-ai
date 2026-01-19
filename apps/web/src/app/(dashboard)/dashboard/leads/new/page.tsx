@@ -4,6 +4,8 @@ import { getUserOrganization } from "@/lib/sync-user";
 import { prisma } from "@epic-ai/database";
 import { LeadForm } from "@/components/leads/lead-form";
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewLeadPage() {
   const { userId } = await getAuth();
 
