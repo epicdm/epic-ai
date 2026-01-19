@@ -12,6 +12,9 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import { HelpProvider } from "@/context/help-context";
 import { Suspense } from "react";
 
+// Force dynamic rendering to prevent prerender issues with tenant/brand context
+export const dynamic = "force-dynamic";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
