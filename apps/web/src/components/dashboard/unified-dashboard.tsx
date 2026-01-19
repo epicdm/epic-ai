@@ -403,7 +403,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">
-            {data.brandBrain.companyName
+            {data?.brandBrain?.companyName
               ? `Welcome back, ${data.brandBrain.companyName}`
               : "Welcome to Epic AI"}
           </h1>
@@ -447,32 +447,32 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                 <div className="relative">
                   <div
                     className={`w-20 h-20 rounded-full border-4 ${
-                      data.flywheel.status === "optimal"
+                      data?.flywheel?.status === "optimal"
                         ? "border-success"
-                        : data.flywheel.status === "accelerating"
+                        : data?.flywheel?.status === "accelerating"
                           ? "border-secondary"
-                          : data.flywheel.status === "spinning"
+                          : data?.flywheel?.status === "spinning"
                             ? "border-primary"
                             : "border-default-300"
                     } flex items-center justify-center`}
                   >
                     <Zap
-                      className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
+                      className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data?.flywheel?.status || 'inactive']}`}
                     />
                   </div>
-                  {data.flywheel.status !== "inactive" && (
+                  {data?.flywheel?.status !== "inactive" && (
                     <div className="absolute -top-1 -right-1">
                       <span className="relative flex h-4 w-4">
                         <span
                           className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                            data.flywheel.status === "optimal"
+                            data?.flywheel?.status === "optimal"
                               ? "bg-success"
                               : "bg-primary"
                           } opacity-75`}
                         ></span>
                         <span
                           className={`relative inline-flex rounded-full h-4 w-4 ${
-                            data.flywheel.status === "optimal"
+                            data?.flywheel?.status === "optimal"
                               ? "bg-success"
                               : "bg-primary"
                           }`}
@@ -483,27 +483,27 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold capitalize">
-                    Flywheel: {data.flywheel.status}
+                    Flywheel: {data?.flywheel?.status}
                   </h2>
                   <Progress
-                    value={data.flywheel.score}
+                    value={data?.flywheel?.score || 0}
                     className="w-48 mt-2"
                     color={
-                      data.flywheel.score >= 90
+                      (data?.flywheel?.score || 0) >= 90
                         ? "success"
-                        : data.flywheel.score >= 60
+                        : (data?.flywheel?.score || 0) >= 60
                           ? "primary"
                           : "warning"
                     }
                   />
                   <p className="text-sm text-default-500 mt-1">
-                    System Health: {data.flywheel.score}%
+                    System Health: {data?.flywheel?.score || 0}%
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                {data.flywheel.components.map((comp, i) => (
+                {(data?.flywheel?.components || []).map((comp, i) => (
                   <Tooltip key={i} content={comp.name}>
                     <div
                       className={`w-3 h-3 rounded-full ${
@@ -530,13 +530,13 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                     System Health
                   </p>
                   <p className="text-xs text-default-400">
-                    {data.flywheel.components.filter(c => c.active).length} of {data.flywheel.components.length} components active
+                    {(data?.flywheel?.components || []).filter(c => c.active).length} of {(data?.flywheel?.components || []).length} components active
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex gap-1">
-                  {data.flywheel.components.map((comp, i) => (
+                  {(data?.flywheel?.components || []).map((comp, i) => (
                     <Tooltip key={i} content={comp.name}>
                       <div
                         className={`w-2 h-2 rounded-full ${
@@ -547,7 +547,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
                   ))}
                 </div>
                 <Chip size="sm" color="default" variant="flat">
-                  {data.flywheel.score}%
+                  {data?.flywheel?.score || 0}%
                 </Chip>
               </div>
             </div>
@@ -561,8 +561,8 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
       )}
 
       {/* Next Steps Guidance - Show when flywheel is not fully active */}
-      {data.flywheel.score < 100 && (() => {
-        const inactiveComponents = data.flywheel.components.filter(c => !c.active);
+      {data?.flywheel?.score < 100 && (() => {
+        const inactiveComponents = data?.flywheel?.components?.filter(c => !c.active) || [];
         const needsContent = inactiveComponents.some(c => c.name === "Published Content");
         const needsAccounts = inactiveComponents.some(c => c.name === "Social Accounts");
         const needsAnalytics = inactiveComponents.some(c => c.name === "Analytics Active");
@@ -571,7 +571,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
         // Determine the primary next action
         let nextStep: { title: string; description: string; action: string; href: string; icon: React.ReactNode } | null = null;
 
-        if (needsAccounts && data.accounts.total === 0) {
+        if (needsAccounts && (data?.accounts?.total || 0) === 0) {
           nextStep = {
             title: "Connect a Social Account",
             description: "Link your social profiles to start publishing content",
@@ -703,7 +703,7 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
             <div>
               <p className="font-medium">Brand Brain</p>
               <p className="text-xs text-default-500">
-                {data.brandBrain.learningCount} learnings
+                {data?.brandBrain?.learningCount || 0} learnings
               </p>
             </div>
           </CardBody>
@@ -1094,9 +1094,9 @@ export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashb
           </Button>
         </CardHeader>
         <CardBody>
-          {data.accounts.list.length > 0 ? (
+          {(data?.accounts?.list || []).length > 0 ? (
             <div className="flex flex-wrap gap-4">
-              {data.accounts.list.map((account) => {
+              {(data?.accounts?.list || []).map((account) => {
                 const Icon = PLATFORM_ICONS[account.platform];
                 return (
                   <div
