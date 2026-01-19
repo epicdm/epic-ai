@@ -1,8 +1,7 @@
 "use client";
 
 import { Sparkles, HelpCircle } from "lucide-react";
-import { Tooltip } from "@heroui/tooltip";
-import { Badge } from "@heroui/badge";
+import { Tooltip, Badge } from "@heroui/react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { WhyExplanationModal } from "@/components/ui/why-explanation-modal";
