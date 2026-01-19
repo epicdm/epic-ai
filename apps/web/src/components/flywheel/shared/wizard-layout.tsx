@@ -47,11 +47,12 @@ export function WizardLayout({
   celebrationType = "minimal",
 }: WizardLayoutProps) {
   const router = useRouter();
+  const { celebrate } = useCelebration();
   const [isSaving, setIsSaving] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [history, setHistory] = useState<Array<{step: number, data: any}>>([]);
-  const [showPreview, setShowPreview] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   
   // Auto-save effect
   useEffect(() => {
