@@ -18,14 +18,14 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+// Force dynamic rendering for entire app - prevents prerender errors with auth/DB
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Epic AI - AI Marketing Platform",
   description:
     "Social media management and voice AI agents in one platform. From first impression to closed deal — all automated.",
 };
-
-// Force dynamic rendering for entire app - prevents prerender errors with auth/DB
-export const dynamic = 'force-dynamic';
 
 export default function RootLayout({
   children,
