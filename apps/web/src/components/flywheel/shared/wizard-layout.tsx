@@ -196,3 +196,21 @@ export function WizardLayout({
     </div>
   );
 }
+
+// Helper components for step layout
+export function WizardStepContainer({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-6">{children}</div>;
+}
+
+export function WizardStepHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-2xl font-bold">{title}</h2>
+      {description && <p className="text-muted-foreground">{description}</p>}
+    </div>
+  );
+}
+
+export function WizardStepContent({ children }: { children: React.ReactNode }) {
+  return <div className="mt-6">{children}</div>;
+}
