@@ -7,8 +7,12 @@ import { useAnalytics } from "@/hooks/use-analytics";
 
 type TimeRange = "7d" | "30d" | "90d";
 
-export function AnalyticsDashboard({ brandId }: { brandId: string }) {
+export function AnalyticsDashboard({ brandId }: { brandId?: string }) {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  
+  if (!brandId) {
+    return <div className="text-center py-12 text-default-500">No brand data available</div>;
+  }
   
   return (
     <div className="space-y-6 min-h-[500px]">

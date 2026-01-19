@@ -4,8 +4,12 @@ import { Card, CardBody, Progress, Tooltip } from "@heroui/react";
 import { useFlywheelStatus } from "@/hooks/use-flywheel-status";
 import type { FlywheelStatus } from "@/lib/database/types";
 
-export function FlywheelHealth({ brandId }: { brandId: string }) {
-  const { data: status } = useFlywheelStatus(brandId);
+export function FlywheelHealth({ brandId }: { brandId?: string }) {
+  const { data: status } = useFlywheelStatus(brandId!);
+  
+  if (!brandId) {
+    return <div className="text-center py-12 text-default-500">No brand data available</div>;
+  }
   
   const { phases = {}, overallHealth = 0 } = status || {};
   
