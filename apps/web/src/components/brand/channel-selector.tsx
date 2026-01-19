@@ -323,8 +323,8 @@ export function ChannelSelector({
     </div>
   );
 }
-  };
 
+export function ChannelSelectorWrapper() {
   return (
     <div className="space-y-6">
       {/* Header */}
