@@ -97,13 +97,13 @@ export function WizardLayout({
   }, [isLoading, isCompleting, onSave, onComplete, celebrationType]);
 
   // Render preview mode
-  if (showPreview && showPreview) {
+  if (showPreview && isPreviewMode) {
     return (
       <div className="max-w-3xl mx-auto p-6">
         <h2 className="text-2xl font-bold mb-4">Preview Before Completing</h2>
         {children}
         <div className="flex gap-4 mt-6">
-          <Button onClick={() => setShowPreview(false)}>Back to Edit</Button>
+          <Button onClick={() => setIsPreviewMode(false)}>Back to Edit</Button>
           <Button onClick={handleComplete} isLoading={isCompleting}>
             Confirm & Complete
           </Button>
@@ -164,14 +164,14 @@ export function WizardLayout({
         </div>
 
         <div className="flex gap-4">
-          {!currentStep === 0 && (
-            <Button variant="outline" onClick={() => onStepChange(currentStep - 1)} disabled={isLoading}>
+          {currentStep !== 0 && (
+            <Button variant="bordered" onClick={() => onStepChange(currentStep - 1)} disabled={isLoading}>
               <ChevronLeft className="w-5 h-5 mr-2" /> Back
             </Button>
           )}
           
-          {showPreview && !currentStep === steps.length - 1 && (
-            <Button variant="outline" onClick={() => setShowPreview(true)} disabled={!canProceed || isLoading}>
+          {showPreview && currentStep !== steps.length - 1 && (
+            <Button variant="bordered" onClick={() => setIsPreviewMode(true)} disabled={!canProceed || isLoading}>
               <Eye className="w-5 h-5 mr-2" /> Preview
             </Button>
           )}
