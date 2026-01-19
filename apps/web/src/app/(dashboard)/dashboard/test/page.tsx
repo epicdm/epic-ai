@@ -1,13 +1,15 @@
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { FlywheelTestPage } from "@/components/test/flywheel-test-page";
+import { TestPage } from "@/components/test/test-page";
 
-export default async function TestPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
   const { userId } = await getAuth();
 
   if (!userId) {
     redirect("/sign-in");
   }
 
-  return <FlywheelTestPage />;
+  return <TestPage />;
 }
