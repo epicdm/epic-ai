@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint --config ../../eslint.config.mjs .",
     "postinstall": "prisma generate --schema=../../packages/database/prisma/schema.prisma",
     "test": "playwright test",
     "test:e2e": "playwright test",

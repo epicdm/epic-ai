@@ -21,6 +21,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "eslint": "^9.39.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
   }
