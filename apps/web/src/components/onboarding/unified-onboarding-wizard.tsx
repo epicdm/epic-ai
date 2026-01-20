@@ -77,7 +77,13 @@ import { AIBadge } from "@/components/ui/ai-badge";
 import { AIConfidence } from "@/components/ui/ai-confidence";
 import { useSmartNudges } from "@/hooks/use-smart-nudges";
 import { SmartNudge } from "@/components/ui/smart-nudge";
-import { agentTypeConfigs, type AgentTypeId } from "@/lib/voice/agent-types";
+import {
+  AGENT_WIZARD_STEPS,
+  agentTypeRegistry,
+  getAgentTypeConfig,
+  type AgentTypeId,
+  type WizardStepId,
+} from "@/lib/agents/agent-registry";
 
 // Types
 type UserGoal = "content" | "voice" | "campaigns" | "explore";
@@ -149,9 +155,9 @@ const agentTypeIconMap: Record<AgentTypeId, React.ReactNode> = {
   survey: <MessageCircle className="w-6 h-6" />,
 };
 
-const agentTypeOptions: AgentTypeOption[] = agentTypeConfigs.map((config) => ({
+const agentTypeOptions: AgentTypeOption[] = agentTypeRegistry.map((config) => ({
   id: config.id,
-  title: config.title,
+  title: config.name,
   description: config.description,
   icon: agentTypeIconMap[config.id],
   requiredTools: config.requiredTools,
@@ -371,14 +377,13 @@ function getRecommendedAgentTypes(input: {
 }
 
 // Wizard steps
-const wizardSteps: WizardStep[] = [
-  { id: "brand_kit", title: "Brand Kit", description: "Capture your brand" },
-  { id: "agent_type", title: "Agent Type", description: "Top 3 recommendations" },
-  { id: "agent_setup", title: "Agent Setup", description: "AI defaults + tools" },
-  { id: "channels", title: "Channels", description: "Enable your channels" },
-  { id: "path", title: "Setup Path", description: "Choose your journey" },
-  { id: "ready", title: "Ready", description: "Let's go!" },
-];
+const wizardSteps: WizardStep[] = AGENT_WIZARD_STEPS.map((step) => ({
+  id: step.id,
+  title: step.title,
+  description: step.description,
+}));
+
+const wizardStepOrder = AGENT_WIZARD_STEPS.map((step) => step.id);
 
 const nudgeConfigs: NudgeConfig[] = [
   {
@@ -503,139 +508,171 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
         showStepIndicator
         className="w-full max-w-xl"
       >
-        {/* Step 1: Brand Kit */}
-        <BusinessInfoStep
-          selectedGoal={selectedGoal}
-          selectedTemplate={selectedTemplate}
-          onTemplateSelect={setSelectedTemplate}
-          onSetupComplete={(orgId, bId) => {
-            setOrganizationId(orgId);
-            setBrandId(bId);
-          }}
-          onAccountsConnected={setConnectedAccounts}
-        />
+        {wizardStepOrder.map((stepId) => {
+          const stepIndex = wizardStepOrder.indexOf(stepId);
 
-        {/* Step 2: Agent Type Selection */}
-        <AgentTypeStep
-          userName={userName}
-          selectedAgentType={selectedAgentType}
-          brandTemplateId={selectedTemplate?.id}
-          connectedAccounts={connectedAccounts}
-          onAgentTypeSelect={(agentType) => {
-            const config = agentTypeConfigs.find((c) => c.id === agentType);
-            setSelectedAgentType(agentType);
-            setSelectedGoal("voice");
-            setSelectedPath("voice_first");
-            setSelectedAgentTemplateId(config?.templateId || null);
-            setEnabledTools(config?.requiredTools || []);
-            setSelectedChannels(config?.requiredChannels || ["voice"]);
-          }}
-        />
+          if (stepId === "brand_kit") {
+            return (
+              <BusinessInfoStep
+                key={stepId}
+                stepIndex={stepIndex}
+                selectedGoal={selectedGoal}
+                selectedTemplate={selectedTemplate}
+                onTemplateSelect={setSelectedTemplate}
+                onSetupComplete={(orgId, bId) => {
+                  setOrganizationId(orgId);
+                  setBrandId(bId);
+                }}
+                onAccountsConnected={setConnectedAccounts}
+              />
+            );
+          }
 
-        {/* Step 3: Agent Setup */}
-        <AgentSetupStep
-          stepIndex={2}
-          brandId={brandId}
-          selectedAgentType={selectedAgentType}
-          selectedAgentTemplateId={selectedAgentTemplateId}
-          agentName={agentName}
-          onAgentNameChange={setAgentName}
-          createdAgentId={createdAgentId}
-          agentSkipped={agentSkipped}
-          isCreating={agentCreating}
-          isProvisioning={agentProvisioning}
-          error={agentCreationError}
-          autoConfig={autoConfig}
-          autoConfigLoading={autoConfigLoading}
-          autoConfigError={autoConfigError}
-          onCreateAgent={async (name) => {
-            if (!brandId || !selectedAgentTemplateId) return;
-            setAgentCreating(true);
-            setAgentCreationError(null);
-            try {
-              const res = await fetch("/api/voice/templates", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  templateId: selectedAgentTemplateId,
-                  name,
-                  brandId,
-                  customizations: autoConfig
-                    ? {
-                        systemPrompt: autoConfig.systemPrompt,
-                        greetingMessage: autoConfig.greeting,
-                        voiceId: autoConfig.suggestedVoice,
-                        temperature: autoConfig.temperature,
-                      }
-                    : undefined,
-                }),
-              });
-              if (!res.ok) {
-                const payload = await res.json();
-                throw new Error(payload.error || "Failed to create agent");
-              }
-              const payload = await res.json();
-              setCreatedAgentId(payload.agent?.id || null);
-              setAgentSkipped(false);
-            } catch (err) {
-              setAgentCreationError(err instanceof Error ? err.message : "Failed to create agent");
-            } finally {
-              setAgentCreating(false);
-            }
-          }}
-          onProvisionPhone={async () => {
-            if (!createdAgentId) return;
-            setAgentProvisioning(true);
-            setAgentCreationError(null);
-            try {
-              const res = await fetch(`/api/voice/agents/${createdAgentId}/provision-phone`, {
-                method: "POST",
-              });
-              if (!res.ok) {
-                const payload = await res.json();
-                throw new Error(payload.error || "Phone provisioning failed");
-              }
-            } catch (err) {
-              setAgentCreationError(err instanceof Error ? err.message : "Phone provisioning failed");
-            } finally {
-              setAgentProvisioning(false);
-            }
-          }}
-          onSkipAgent={() => {
-            setAgentSkipped(true);
-            setAgentCreationError(null);
-          }}
-          onLoadAutoConfig={handleLoadAutoConfig}
-        />
+          if (stepId === "agent_type") {
+            return (
+              <AgentTypeStep
+                key={stepId}
+                stepIndex={stepIndex}
+                userName={userName}
+                selectedAgentType={selectedAgentType}
+                brandTemplateId={selectedTemplate?.id}
+                connectedAccounts={connectedAccounts}
+                onAgentTypeSelect={(agentType) => {
+                  const config = getAgentTypeConfig(agentType);
+                  setSelectedAgentType(agentType);
+                  setSelectedGoal("voice");
+                  setSelectedPath("voice_first");
+                  setSelectedAgentTemplateId(config?.templateId || null);
+                  setEnabledTools(config?.requiredTools || []);
+                  setSelectedChannels(config?.requiredChannels || ["voice"]);
+                }}
+              />
+            );
+          }
 
-        {/* Step 3: Channel Selection - "One Brain, Many Voices" */}
-        <ChannelSelectionStep
-          stepIndex={3}
-          selectedChannels={selectedChannels}
-          onChannelsChange={setSelectedChannels}
-          brandName={selectedTemplate?.name}
-          industryId={selectedTemplate?.id}
-          lockedChannels={selectedAgentType ? selectedChannels : undefined}
-          lockedTools={selectedAgentType ? enabledTools : undefined}
-        />
+          if (stepId === "agent_setup") {
+            return (
+              <AgentSetupStep
+                key={stepId}
+                stepIndex={stepIndex}
+                brandId={brandId}
+                selectedAgentType={selectedAgentType}
+                selectedAgentTemplateId={selectedAgentTemplateId}
+                agentName={agentName}
+                onAgentNameChange={setAgentName}
+                createdAgentId={createdAgentId}
+                agentSkipped={agentSkipped}
+                isCreating={agentCreating}
+                isProvisioning={agentProvisioning}
+                error={agentCreationError}
+                autoConfig={autoConfig}
+                autoConfigLoading={autoConfigLoading}
+                autoConfigError={autoConfigError}
+                onCreateAgent={async (name) => {
+                  if (!brandId || !selectedAgentTemplateId) return;
+                  setAgentCreating(true);
+                  setAgentCreationError(null);
+                  try {
+                    const res = await fetch("/api/voice/templates", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        templateId: selectedAgentTemplateId,
+                        name,
+                        brandId,
+                        customizations: autoConfig
+                          ? {
+                              systemPrompt: autoConfig.systemPrompt,
+                              greetingMessage: autoConfig.greeting,
+                              voiceId: autoConfig.suggestedVoice,
+                              temperature: autoConfig.temperature,
+                            }
+                          : undefined,
+                      }),
+                    });
+                    if (!res.ok) {
+                      const payload = await res.json();
+                      throw new Error(payload.error || "Failed to create agent");
+                    }
+                    const payload = await res.json();
+                    setCreatedAgentId(payload.agent?.id || null);
+                    setAgentSkipped(false);
+                  } catch (err) {
+                    setAgentCreationError(err instanceof Error ? err.message : "Failed to create agent");
+                  } finally {
+                    setAgentCreating(false);
+                  }
+                }}
+                onProvisionPhone={async () => {
+                  if (!createdAgentId) return;
+                  setAgentProvisioning(true);
+                  setAgentCreationError(null);
+                  try {
+                    const res = await fetch(`/api/voice/agents/${createdAgentId}/provision-phone`, {
+                      method: "POST",
+                    });
+                    if (!res.ok) {
+                      const payload = await res.json();
+                      throw new Error(payload.error || "Phone provisioning failed");
+                    }
+                  } catch (err) {
+                    setAgentCreationError(err instanceof Error ? err.message : "Phone provisioning failed");
+                  } finally {
+                    setAgentProvisioning(false);
+                  }
+                }}
+                onSkipAgent={() => {
+                  setAgentSkipped(true);
+                  setAgentCreationError(null);
+                }}
+                onLoadAutoConfig={handleLoadAutoConfig}
+              />
+            );
+          }
 
-        {/* Step 4: Path Selection - Channel-centric */}
-        <PathSelectionStep
-          stepIndex={4}
-          selectedPath={selectedPath}
-          onPathSelect={setSelectedPath}
-          connectedAccounts={connectedAccounts}
-          selectedChannels={selectedChannels}
-          lockedPath={selectedAgentType ? "voice_first" : null}
-        />
+          if (stepId === "channels") {
+            return (
+              <ChannelSelectionStep
+                key={stepId}
+                stepIndex={stepIndex}
+                selectedChannels={selectedChannels}
+                onChannelsChange={setSelectedChannels}
+                brandName={selectedTemplate?.name}
+                industryId={selectedTemplate?.id}
+                lockedChannels={selectedAgentType ? selectedChannels : undefined}
+                lockedTools={selectedAgentType ? enabledTools : undefined}
+              />
+            );
+          }
 
-        {/* Step 5: Ready */}
-        <ReadyStep
-          stepIndex={5}
-          selectedPath={selectedPath}
-          selectedGoal={selectedGoal}
-          selectedAgentType={selectedAgentType}
-        />
+          if (stepId === "path") {
+            return (
+              <PathSelectionStep
+                key={stepId}
+                stepIndex={stepIndex}
+                selectedPath={selectedPath}
+                onPathSelect={setSelectedPath}
+                connectedAccounts={connectedAccounts}
+                selectedChannels={selectedChannels}
+                lockedPath={selectedAgentType ? "voice_first" : null}
+              />
+            );
+          }
+
+          if (stepId === "ready") {
+            return (
+              <ReadyStep
+                key={stepId}
+                stepIndex={stepIndex}
+                selectedPath={selectedPath}
+                selectedGoal={selectedGoal}
+                selectedAgentType={selectedAgentType}
+              />
+            );
+          }
+
+          return null;
+        })}
       </Wizard>
     </div>
   );
@@ -643,6 +680,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
 
 // Step 1: Agent Type
 interface AgentTypeStepProps {
+  stepIndex: number;
   userName: string;
   selectedAgentType: AgentTypeId | null;
   brandTemplateId?: string;
@@ -651,6 +689,7 @@ interface AgentTypeStepProps {
 }
 
 function AgentTypeStep({
+  stepIndex,
   userName,
   selectedAgentType,
   brandTemplateId,
@@ -672,7 +711,7 @@ function AgentTypeStep({
   };
 
   return (
-    <WizardStepContainer stepIndex={1} disableNext={!selectedAgentType}>
+    <WizardStepContainer stepIndex={stepIndex} disableNext={!selectedAgentType}>
       <WizardStepHeader
         icon={<span className="text-3xl">🧭</span>}
         title={`Welcome, ${userName}!`}
@@ -764,6 +803,7 @@ function AgentTypeStep({
 
 // Step 2: Business Info
 interface BusinessInfoStepProps {
+  stepIndex: number;
   selectedGoal: UserGoal | null;
   selectedTemplate: BrandTemplate | null;
   onTemplateSelect: (template: BrandTemplate) => void;
@@ -772,6 +812,7 @@ interface BusinessInfoStepProps {
 }
 
 function BusinessInfoStep({
+  stepIndex,
   selectedGoal,
   selectedTemplate,
   onTemplateSelect,
@@ -1113,7 +1154,7 @@ function BusinessInfoStep({
   // Template selection view
   if (!showForm) {
     return (
-      <WizardStepContainer stepIndex={0} disableNext>
+      <WizardStepContainer stepIndex={stepIndex} disableNext>
         <WizardStepHeader
           icon={<BuildingIcon className="w-8 h-8 text-primary" />}
           title="Build Your Brand Kit"
@@ -1383,7 +1424,7 @@ function BusinessInfoStep({
 
   // Form view
   return (
-    <WizardStepContainer stepIndex={0} onNext={handleSubmit}>
+    <WizardStepContainer stepIndex={stepIndex} onNext={handleSubmit}>
       <WizardStepHeader
         icon={<BuildingIcon className="w-8 h-8 text-primary" />}
         title="Build Your Brand Kit"
@@ -1663,7 +1704,7 @@ function AgentSetupStep({
   onLoadAutoConfig,
 }: AgentSetupStepProps) {
   const { setData } = useWizard();
-  const agentConfig = agentTypeConfigs.find((config) => config.id === selectedAgentType);
+  const agentConfig = selectedAgentType ? getAgentTypeConfig(selectedAgentType) : undefined;
 
   useEffect(() => {
     if (brandId) {
