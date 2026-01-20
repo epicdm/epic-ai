@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Input,
+  Textarea,
   Card,
   CardBody,
   ScrollShadow,
@@ -300,6 +301,7 @@ const businessInfoSchema = z.object({
   organizationName: z.string().min(2, "Organization name must be at least 2 characters"),
   brandName: z.string().min(2, "Brand name must be at least 2 characters"),
   website: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  brandNotes: z.string().max(4000, "Brand notes should be under 4000 characters").optional().or(z.literal("")),
 });
 
 type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
@@ -341,10 +343,37 @@ function getRecommendedTemplatesForGoal(goal: UserGoal | null): {
   return recommendations[goal] || [];
 }
 
+function getRecommendedAgentTypes(input: {
+  templateId?: string;
+  connectedAccounts?: string[];
+}): AgentTypeId[] {
+  const picks: AgentTypeId[] = [];
+  const templateId = input.templateId || "";
+  const connectedAccounts = input.connectedAccounts || [];
+
+  const isHealthcare =
+    templateId.includes("healthcare") || templateId.includes("dental");
+  const isHospitality =
+    templateId.includes("restaurant") || templateId.includes("hospitality");
+  const isServiceBusiness =
+    templateId.includes("professional-services") ||
+    templateId.includes("real-estate") ||
+    templateId.includes("fitness");
+
+  if (isHealthcare) picks.push("dental_intake");
+  if (isHospitality || isServiceBusiness) picks.push("receptionist");
+  if (connectedAccounts.includes("facebook") || connectedAccounts.includes("instagram")) {
+    picks.push("sales");
+  }
+  picks.push("sales", "receptionist", "survey");
+
+  return Array.from(new Set(picks)).slice(0, 3);
+}
+
 // Wizard steps
 const wizardSteps: WizardStep[] = [
-  { id: "agent_type", title: "Agent Type", description: "Pick your AI agent" },
-  { id: "business", title: "Business", description: "Your workspace info" },
+  { id: "brand_kit", title: "Brand Kit", description: "Capture your brand" },
+  { id: "agent_type", title: "Agent Type", description: "Top 3 recommendations" },
   { id: "agent_setup", title: "Agent Setup", description: "AI defaults + tools" },
   { id: "channels", title: "Channels", description: "Enable your channels" },
   { id: "path", title: "Setup Path", description: "Choose your journey" },
@@ -474,22 +503,7 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
         showStepIndicator
         className="w-full max-w-xl"
       >
-        {/* Step 1: Agent Type Selection */}
-        <AgentTypeStep
-          userName={userName}
-          selectedAgentType={selectedAgentType}
-          onAgentTypeSelect={(agentType) => {
-            const config = agentTypeConfigs.find((c) => c.id === agentType);
-            setSelectedAgentType(agentType);
-            setSelectedGoal("voice");
-            setSelectedPath("voice_first");
-            setSelectedAgentTemplateId(config?.templateId || null);
-            setEnabledTools(config?.requiredTools || []);
-            setSelectedChannels(config?.requiredChannels || ["voice"]);
-          }}
-        />
-
-        {/* Step 2: Business Info */}
+        {/* Step 1: Brand Kit */}
         <BusinessInfoStep
           selectedGoal={selectedGoal}
           selectedTemplate={selectedTemplate}
@@ -499,6 +513,23 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
             setBrandId(bId);
           }}
           onAccountsConnected={setConnectedAccounts}
+        />
+
+        {/* Step 2: Agent Type Selection */}
+        <AgentTypeStep
+          userName={userName}
+          selectedAgentType={selectedAgentType}
+          brandTemplateId={selectedTemplate?.id}
+          connectedAccounts={connectedAccounts}
+          onAgentTypeSelect={(agentType) => {
+            const config = agentTypeConfigs.find((c) => c.id === agentType);
+            setSelectedAgentType(agentType);
+            setSelectedGoal("voice");
+            setSelectedPath("voice_first");
+            setSelectedAgentTemplateId(config?.templateId || null);
+            setEnabledTools(config?.requiredTools || []);
+            setSelectedChannels(config?.requiredChannels || ["voice"]);
+          }}
         />
 
         {/* Step 3: Agent Setup */}
@@ -614,11 +645,25 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
 interface AgentTypeStepProps {
   userName: string;
   selectedAgentType: AgentTypeId | null;
+  brandTemplateId?: string;
+  connectedAccounts?: string[];
   onAgentTypeSelect: (agentType: AgentTypeId) => void;
 }
 
-function AgentTypeStep({ userName, selectedAgentType, onAgentTypeSelect }: AgentTypeStepProps) {
+function AgentTypeStep({
+  userName,
+  selectedAgentType,
+  brandTemplateId,
+  connectedAccounts,
+  onAgentTypeSelect,
+}: AgentTypeStepProps) {
   const { setData } = useWizard();
+  const recommendedIds = getRecommendedAgentTypes({
+    templateId: brandTemplateId,
+    connectedAccounts,
+  });
+  const recommendedOptions = agentTypeOptions.filter((option) => recommendedIds.includes(option.id));
+  const otherOptions = agentTypeOptions.filter((option) => !recommendedIds.includes(option.id));
 
   const handleAgentTypeSelect = (agentType: AgentTypeId) => {
     onAgentTypeSelect(agentType);
@@ -627,47 +672,90 @@ function AgentTypeStep({ userName, selectedAgentType, onAgentTypeSelect }: Agent
   };
 
   return (
-    <WizardStepContainer stepIndex={0} disableNext={!selectedAgentType}>
+    <WizardStepContainer stepIndex={1} disableNext={!selectedAgentType}>
       <WizardStepHeader
         icon={<span className="text-3xl">🧭</span>}
         title={`Welcome, ${userName}!`}
-        description="What type of AI voice agent do you want to launch?"
+        description="Here are the top 3 agent types recommended for your brand."
       />
 
       <WizardStepContent>
-        <div className="grid gap-3">
-          {agentTypeOptions.map((option) => (
-            <Card
-              key={option.id}
-              isPressable
-              isHoverable
-              className={`transition-all ${
-                selectedAgentType === option.id
-                  ? "border-2 border-primary bg-primary/5"
-                  : "border-2 border-transparent"
-              }`}
-              onPress={() => handleAgentTypeSelect(option.id)}
-            >
-              <CardBody className="flex flex-row items-center gap-4 p-4">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center ${
+        <div className="space-y-6">
+          <div className="grid gap-3">
+            {recommendedOptions.map((option) => (
+              <Card
+                key={option.id}
+                isPressable
+                isHoverable
+                className={`transition-all ${
+                  selectedAgentType === option.id
+                    ? "border-2 border-primary bg-primary/5"
+                    : "border-2 border-transparent"
+                }`}
+                onPress={() => handleAgentTypeSelect(option.id)}
+              >
+                <CardBody className="flex flex-row items-center gap-4 p-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      selectedAgentType === option.id
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    {option.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 dark:text-white">{option.title}</p>
+                      <Chip size="sm" color="primary" variant="flat">Recommended</Chip>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{option.description}</p>
+                  </div>
+                  {selectedAgentType === option.id && (
+                    <CheckCircleIcon className="w-6 h-6 text-primary" />
+                  )}
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Browse all agent types</p>
+            <div className="grid gap-3">
+              {otherOptions.map((option) => (
+                <Card
+                  key={option.id}
+                  isPressable
+                  isHoverable
+                  className={`transition-all ${
                     selectedAgentType === option.id
-                      ? "bg-primary text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      ? "border-2 border-primary bg-primary/5"
+                      : "border-2 border-transparent"
                   }`}
+                  onPress={() => handleAgentTypeSelect(option.id)}
                 >
-                  {option.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 dark:text-white">{option.title}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{option.description}</p>
-                </div>
-                {selectedAgentType === option.id && (
-                  <CheckCircleIcon className="w-6 h-6 text-primary" />
-                )}
-              </CardBody>
-            </Card>
-          ))}
+                  <CardBody className="flex flex-row items-center gap-4 p-4">
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        selectedAgentType === option.id
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {option.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900 dark:text-white">{option.title}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{option.description}</p>
+                    </div>
+                    {selectedAgentType === option.id && (
+                      <CheckCircleIcon className="w-6 h-6 text-primary" />
+                    )}
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </WizardStepContent>
     </WizardStepContainer>
@@ -711,6 +799,7 @@ function BusinessInfoStep({
       organizationName: "",
       brandName: "",
       website: "",
+      brandNotes: "",
     },
   });
 
@@ -875,6 +964,45 @@ function BusinessInfoStep({
     setPreviewTemplate(null);
   };
 
+  const createContextSources = async (brandId: string, data: BusinessInfoFormData) => {
+    const sources: Array<{ type: string; name: string; config: Record<string, unknown> }> = [];
+
+    if (data.website) {
+      sources.push({
+        type: "WEBSITE",
+        name: "Website",
+        config: { url: data.website },
+      });
+    }
+
+    if (data.brandNotes) {
+      sources.push({
+        type: "MANUAL_NOTE",
+        name: "Brand Notes",
+        config: { title: "Brand Notes", content: data.brandNotes },
+      });
+    }
+
+    if (sources.length === 0) return;
+
+    for (const source of sources) {
+      try {
+        await fetch("/api/context/sources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            brandId,
+            type: source.type,
+            name: source.name,
+            config: source.config,
+          }),
+        });
+      } catch (error) {
+        console.warn("Failed to add context source:", error);
+      }
+    }
+  };
+
   const handleSubmit = async (): Promise<boolean> => {
     const isValid = await form.trigger();
     if (!isValid) return false;
@@ -908,6 +1036,7 @@ function BusinessInfoStep({
         // Continue anyway - names are just cosmetic updates
       }
 
+      await createContextSources(pendingBrandId, data);
       setData("websiteUrl", data.website);
       return true;
     }
@@ -970,6 +1099,7 @@ function BusinessInfoStep({
       setData("brandId", brand.id);
       setData("websiteUrl", data.website);
       onSetupComplete(org.id, brand.id);
+      await createContextSources(brand.id, data);
 
       return true;
     } catch (error) {
@@ -983,11 +1113,11 @@ function BusinessInfoStep({
   // Template selection view
   if (!showForm) {
     return (
-      <WizardStepContainer stepIndex={1} disableNext>
+      <WizardStepContainer stepIndex={0} disableNext>
         <WizardStepHeader
           icon={<BuildingIcon className="w-8 h-8 text-primary" />}
-          title="Set Up Your Business"
-          description="Connect Facebook for instant setup, or choose a template"
+          title="Build Your Brand Kit"
+          description="Connect Facebook, add a website, or upload notes to train your AI"
         />
 
         <WizardStepContent>
@@ -1253,10 +1383,10 @@ function BusinessInfoStep({
 
   // Form view
   return (
-    <WizardStepContainer stepIndex={1} onNext={handleSubmit}>
+    <WizardStepContainer stepIndex={0} onNext={handleSubmit}>
       <WizardStepHeader
         icon={<BuildingIcon className="w-8 h-8 text-primary" />}
-        title="Set Up Your Workspace"
+        title="Build Your Brand Kit"
         description={selectedTemplate ? `Using ${selectedTemplate.name} template` : "Tell us about your business"}
       />
 
@@ -1306,6 +1436,16 @@ function BusinessInfoStep({
           isInvalid={!!form.formState.errors.website}
           errorMessage={form.formState.errors.website?.message}
           description="If provided, AI can analyze your website for faster setup"
+        />
+
+        <Textarea
+          label="Brand Notes or Docs (Optional)"
+          placeholder="Paste key details, offers, or a short brand brief..."
+          minRows={4}
+          {...form.register("brandNotes")}
+          isInvalid={!!form.formState.errors.brandNotes}
+          errorMessage={form.formState.errors.brandNotes?.message}
+          description="We’ll use this to enrich your Brand Brain and tailor the agent recommendations."
         />
 
         {/* Social Connection Option */}
