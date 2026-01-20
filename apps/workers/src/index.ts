@@ -216,7 +216,6 @@ function stopStatsMonitoring(): void {
  * - image-generator: concurrency 5, lockDuration 3min (API intensive)
  * - content-publisher: concurrency 30, lockDuration 2min (I/O bound)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function contentGenerationRouter(job: any): Promise<unknown> {
   const jobType = job.data?.type || job.data?.jobType;
 
@@ -243,7 +242,6 @@ async function contentGenerationRouter(job: any): Promise<unknown> {
  * - rss-syncer: concurrency 30, lockDuration 2min (I/O bound)
  * - document-processor: concurrency 10, lockDuration 5min (CPU intensive)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function contextScrapingRouter(job: any): Promise<unknown> {
   const jobType = job.data?.type || job.data?.jobType;
 
@@ -269,7 +267,6 @@ async function contextScrapingRouter(job: any): Promise<unknown> {
  * - analytics-collector: concurrency 60, lockDuration 3min (API calls with wait)
  * - token-refresher: concurrency 20, lockDuration 2min (OAuth refresh)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function analyticsSyncRouter(job: any): Promise<unknown> {
   const jobType = job.data?.type || job.data?.jobType;
 
@@ -296,7 +293,6 @@ async function analyticsSyncRouter(job: any): Promise<unknown> {
  */
 function createWorker(
   queueName: QueueName,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   processor: (job: any) => Promise<unknown>
 ): Worker {
   const workerOptions = getWorkerOptions(queueName);

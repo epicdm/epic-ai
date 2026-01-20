@@ -111,7 +111,6 @@ export async function POST(request: NextRequest) {
 
 async function generateUnderstandConfig(
   inputs: Record<string, string>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   existingBrand?: any
 ): Promise<Partial<UnderstandWizardData>> {
   const { websiteUrl, industry } = inputs;
@@ -229,7 +228,6 @@ Only respond with valid JSON.`;
 
 async function generateCreateConfig(
   inputs: Record<string, string>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   brandBrain?: any
 ): Promise<Partial<CreateWizardData>> {
   const { contentFocus } = inputs;
@@ -277,7 +275,6 @@ async function generateCreateConfig(
 
 async function generateDistributeConfig(
   inputs: Record<string, string>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   socialAccounts: any[]
 ): Promise<Partial<DistributeWizardData>> {
   const { timezone, postingGoal } = inputs;

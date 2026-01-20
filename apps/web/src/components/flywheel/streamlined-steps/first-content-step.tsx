@@ -67,7 +67,6 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
     if (generatedPosts.length === 0) {
       handleGenerate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -292,7 +292,6 @@ async function fetchFacebookPageData(
  * Calculate confidence score based on data richness and source quality
  */
 function calculateConfidence(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   phaseData: any,
   context: {
     hasWebsite: boolean;
@@ -338,7 +337,6 @@ async function generateFullConfiguration(
   websiteUrl: string,
   htmlContent: string,
   industry?: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   socialAccounts?: any[],
   dataSource: "website" | "facebook" | "both" = "website",
   facebookData?: FacebookPageData | null
