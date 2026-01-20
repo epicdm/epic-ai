@@ -5,6 +5,7 @@ import { Button } from "@heroui/react";
 import {
   BoltIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
   PhoneIcon,
   RocketLaunchIcon,
   SparklesIcon,
@@ -162,6 +163,17 @@ export function LandingHero() {
           </div>
         </nav>
         <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-10 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-white/90">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-300/70" />
+              <span>1,284 calls handled today</span>
+            </div>
+            <span className="hidden h-4 w-px bg-white/40 sm:inline-block" />
+            <div className="flex items-center gap-2">
+              <UserGroupIcon className="h-4 w-4 text-white/90" />
+              <span>2,847+ businesses using Epic AI</span>
+            </div>
+          </div>
           <div className="flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm text-white">
             <SparklesIcon className="h-4 w-4 text-yellow-200" />
             Built by AI • Powered by Voice • Trusted by 1000s
@@ -212,6 +224,9 @@ export function LandingHero() {
                 <p className="text-xs text-purple-200">{entry.time}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-10 flex items-center justify-center text-white/70">
+            <ChevronDownIcon className="h-6 w-6" />
           </div>
         </div>
       </section>
