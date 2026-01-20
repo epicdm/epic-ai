@@ -200,7 +200,7 @@ export function LandingHero() {
             </Button>
             <Button
               as={Link}
-              href="#demo"
+              href="/demo"
               size="lg"
               variant="bordered"
               className="border-white/40 text-white"
