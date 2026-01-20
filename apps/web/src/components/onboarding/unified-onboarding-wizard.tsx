@@ -568,32 +568,53 @@ export function UnifiedOnboardingWizard({ userName, userEmail }: UnifiedOnboardi
                 autoConfig={autoConfig}
                 autoConfigLoading={autoConfigLoading}
                 autoConfigError={autoConfigError}
-                onCreateAgent={async (name) => {
-                  if (!brandId || !selectedAgentTemplateId) return;
-                  setAgentCreating(true);
-                  setAgentCreationError(null);
-                  try {
-                    const res = await fetch("/api/voice/templates", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        templateId: selectedAgentTemplateId,
-                        name,
-                        brandId,
-                        customizations: autoConfig
-                          ? {
-                              systemPrompt: autoConfig.systemPrompt,
-                              greetingMessage: autoConfig.greeting,
-                              voiceId: autoConfig.suggestedVoice,
-                              temperature: autoConfig.temperature,
-                            }
-                          : undefined,
-                      }),
-                    });
-                    if (!res.ok) {
-                      const payload = await res.json();
-                      throw new Error(payload.error || "Failed to create agent");
-                    }
+          onCreateAgent={async (name) => {
+            if (!brandId || !selectedAgentTemplateId) return;
+            setAgentCreating(true);
+            setAgentCreationError(null);
+            try {
+              const trimmedName = name.trim();
+              if (!trimmedName) {
+                throw new Error("Agent name is required");
+              }
+
+              const resolvedCustomizations = autoConfig
+                ? {
+                    ...(typeof autoConfig.systemPrompt === "string"
+                      ? { systemPrompt: autoConfig.systemPrompt }
+                      : {}),
+                    ...(typeof autoConfig.greeting === "string"
+                      ? { greetingMessage: autoConfig.greeting }
+                      : {}),
+                    ...(typeof autoConfig.suggestedVoice === "string"
+                      ? { voiceId: autoConfig.suggestedVoice }
+                      : {}),
+                    ...(typeof autoConfig.temperature === "number"
+                      ? { temperature: autoConfig.temperature }
+                      : {}),
+                  }
+                : {};
+              const customizations =
+                Object.keys(resolvedCustomizations).length > 0
+                  ? resolvedCustomizations
+                  : undefined;
+
+              const res = await fetch("/api/voice/templates", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  templateId: selectedAgentTemplateId,
+                  name: trimmedName,
+                  brandId,
+                  customizations,
+                }),
+              });
+              if (!res.ok) {
+                const payload = await res.json();
+                const detail =
+                  payload.details?.[0]?.message || payload.details?.message;
+                throw new Error(detail || payload.error || "Failed to create agent");
+              }
                     const payload = await res.json();
                     setCreatedAgentId(payload.agent?.id || null);
                     setAgentSkipped(false);
