@@ -5,6 +5,10 @@ import { z } from "zod";
 
 const completeSchema = z.object({
   goal: z.enum(["content", "voice", "campaigns", "explore"]).optional(),
+  agentType: z.string().optional(),
+  agentTemplateId: z.string().optional(),
+  enabledTools: z.array(z.string()).optional(),
+  enabledChannels: z.array(z.string()).optional(),
   isDemoMode: z.boolean().optional(),
 });
 
@@ -22,11 +26,19 @@ export async function POST(request: NextRequest) {
     // Parse request body
     let goal: string | undefined;
     let isDemoMode = false;
+    let agentType: string | undefined;
+    let agentTemplateId: string | undefined;
+    let enabledTools: string[] = [];
+    let enabledChannels: string[] = [];
 
     try {
       const body = await request.json();
       const validated = completeSchema.parse(body);
       goal = validated.goal;
+      agentType = validated.agentType;
+      agentTemplateId = validated.agentTemplateId;
+      enabledTools = validated.enabledTools || [];
+      enabledChannels = validated.enabledChannels || [];
       isDemoMode = validated.isDemoMode || false;
     } catch {
       // Body is optional for backwards compatibility
@@ -58,6 +70,10 @@ export async function POST(request: NextRequest) {
         userId,
         hasSeenWelcome: true,
         hasChosenGoal: goal,
+        agentType,
+        agentTemplateId,
+        enabledTools,
+        enabledChannels,
         hasCreatedBrand: membership.organization.brands.length > 0,
         hasSeenDashboardTour: true,
         isDemoMode,
@@ -67,6 +83,10 @@ export async function POST(request: NextRequest) {
       },
       update: {
         hasSeenDashboardTour: true,
+        agentType,
+        agentTemplateId,
+        enabledTools,
+        enabledChannels,
         completionPercentage: 100,
         onboardingCompletedAt: new Date(),
         lastActiveAt: new Date(),

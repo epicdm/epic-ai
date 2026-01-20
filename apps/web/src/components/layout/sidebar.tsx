@@ -65,6 +65,8 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [enabledTools, setEnabledTools] = useState<string[] | null>(null);
+  const [toolsLoaded, setToolsLoaded] = useState(false);
 
   // Auto-expand parent when child is active
   useEffect(() => {
@@ -76,6 +78,35 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       }
     });
   }, [pathname]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadToolAccess = async () => {
+      try {
+        const res = await fetch("/api/onboarding/progress");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted) {
+          setEnabledTools(Array.isArray(data.enabledTools) ? data.enabledTools : null);
+          setToolsLoaded(true);
+        }
+      } catch {
+        if (isMounted) setToolsLoaded(true);
+      }
+    };
+    loadToolAccess();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filterByTools = (items: RouteConfig[]) => {
+    if (!toolsLoaded || !enabledTools || enabledTools.length === 0) return items;
+    return items.filter((item) => {
+      if (!item.tools || item.tools.length === 0) return true;
+      return item.tools.some((tool) => enabledTools.includes(tool));
+    });
+  };
 
   const toggleExpanded = (href: string) => {
     setExpandedItems((prev) =>
@@ -168,6 +199,15 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     );
   };
 
+  const filteredSections = navigationSections
+    .map((section) => ({
+      ...section,
+      items: filterByTools(section.items),
+    }))
+    .filter((section) => section.items.length > 0);
+
+  const filteredBottomNavigation = filterByTools(bottomNavigation);
+
   return (
     <aside
       className={cn(
@@ -197,7 +237,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       {/* Navigation */}
       <div className="flex flex-col h-[calc(100vh-4rem)] py-4">
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-          {navigationSections.map((section, sectionIndex) => (
+          {filteredSections.map((section, sectionIndex) => (
             <div key={section.title || sectionIndex}>
               {/* Section Header */}
               {section.title && !collapsed && (
@@ -225,7 +265,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* Bottom Navigation */}
         <div className="px-3 space-y-1 border-t border-gray-200 dark:border-gray-800 pt-4">
-          {bottomNavigation.map(renderNavItem)}
+          {filteredBottomNavigation.map(renderNavItem)}
         </div>
 
         {/* Collapse Toggle */}

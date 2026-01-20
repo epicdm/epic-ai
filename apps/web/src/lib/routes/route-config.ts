@@ -44,6 +44,8 @@ export interface RouteConfig {
   };
   /** Badge label (e.g., "Dev", "Beta") */
   badge?: string;
+  /** Tool gating (hide if tool not enabled) */
+  tools?: string[];
   /** Hide from navigation */
   hidden?: boolean;
   /** Is this the default child route? */
@@ -102,6 +104,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/brand",
     icon: Brain,
     section: "understand",
+    tools: ["brand"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -134,6 +137,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/context",
     icon: Database,
     section: "understand",
+    tools: ["context"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -168,6 +172,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/content",
     icon: FileText,
     section: "create",
+    tools: ["content"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -207,6 +212,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/calendar",
     icon: Calendar,
     section: "create",
+    tools: ["calendar"],
     auth: { required: true, onboardingRequired: true },
   },
 
@@ -217,6 +223,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/social",
     icon: Share2,
     section: "distribute",
+    tools: ["social"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -256,6 +263,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/voice",
     icon: MicIcon,
     section: "distribute",
+    tools: ["voice"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -288,6 +296,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/ads",
     icon: Megaphone,
     section: "distribute",
+    tools: ["ads"],
     auth: { required: true, onboardingRequired: true },
     children: [
       {
@@ -322,6 +331,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/analytics",
     icon: BarChart3,
     section: "learn",
+    tools: ["analytics"],
     auth: { required: true, onboardingRequired: true },
   },
   {
@@ -330,6 +340,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/leads",
     icon: Users,
     section: "learn",
+    tools: ["leads"],
     auth: { required: true, onboardingRequired: true },
   },
 
@@ -340,6 +351,7 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/dashboard/automations",
     icon: Zap,
     section: "automate",
+    tools: ["automations"],
     auth: { required: true, onboardingRequired: true },
   },
   {
