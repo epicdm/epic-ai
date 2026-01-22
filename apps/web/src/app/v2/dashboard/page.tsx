@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { UnifiedDashboard } from "@/components/dashboard/unified-dashboard";
+import { V2HeaderControls } from "@/app/v2/_components/v2-header-controls";
 import { V2Sidebar } from "@/app/v2/_components/v2-sidebar";
 
 // Development UAT bypass - allows testing without auth in development mode
@@ -56,22 +57,7 @@ export default async function V2DashboardPage() {
               <div className="text-xl font-semibold text-default-900">Dashboard</div>
               <div className="text-sm text-default-500">Sales Voice Agent</div>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
-              >
-                <Calendar className="h-4 w-4" />
-                Go Live
-              </button>
-              <button
-                type="button"
-                className="h-10 w-10 rounded-xl border border-default-200 text-default-500"
-                aria-label="Notifications"
-              >
-                <Activity className="mx-auto h-4 w-4" />
-              </button>
-            </div>
+            <V2HeaderControls />
           </header>
 
           <div className="px-6 py-6">

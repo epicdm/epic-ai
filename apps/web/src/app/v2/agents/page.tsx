@@ -12,6 +12,7 @@ import {
   Search,
   Shield,
 } from "lucide-react";
+import { V2HeaderControls } from "@/app/v2/_components/v2-header-controls";
 import { V2Sidebar } from "@/app/v2/_components/v2-sidebar";
 import { VoiceDashboardSection } from "@/app/v2/agents/voice-dashboard-section";
 
@@ -73,14 +74,7 @@ export default async function V2AgentsPage() {
                   className="h-11 w-full rounded-xl border border-default-200 bg-default-50 pl-11 pr-4 text-sm text-default-600 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
                 />
               </div>
-              <button
-                type="button"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-default-200 text-default-600"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-              </button>
+              <V2HeaderControls showGoLive={false} />
             </div>
           </header>
 
