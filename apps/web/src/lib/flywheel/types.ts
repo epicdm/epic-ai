@@ -5,8 +5,8 @@
  * UNDERSTAND → CREATE → DISTRIBUTE → LEARN → AUTOMATE
  */
 
-// Re-export the Prisma PhaseStatus enum as a type only (client-safe)
-export type { PhaseStatus } from "@epic-ai/database";
+// Re-export the Prisma PhaseStatus enum for convenience
+export { PhaseStatus } from "@epic-ai/database";
 
 /**
  * The 5 phases of the Epic AI flywheel

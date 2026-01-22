@@ -1,1 +1,1 @@
-export type * from "@epic-ai/database";
+export { prisma } from "@epic-ai/database";

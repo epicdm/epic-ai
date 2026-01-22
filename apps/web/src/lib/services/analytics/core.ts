@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/database/server";
+import { prisma } from "@/lib/database";
 
 type MetricType = 
   | 'impressions' 

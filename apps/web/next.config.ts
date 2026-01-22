@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     "next-themes",
     "posthog-js",
   ],
-  serverExternalPackages: ["@prisma/client"],
   productionBrowserSourceMaps: true,
   experimental: {
     serverActions: {

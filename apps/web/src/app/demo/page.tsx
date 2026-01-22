@@ -6,7 +6,6 @@ import {
   PhoneIcon,
   SparklesIcon,
 } from "@heroicons/react/24/solid";
-import { getPublicHref } from "@/lib/routes/public";
 
 const phoneDemoBenefits = [
   {
@@ -105,7 +104,7 @@ export default function DemoExperiencePage() {
               ))}
             </ul>
             <Link
-              href={getPublicHref("/sign-up?demo=phone")}
+              href="/sign-up?demo=phone"
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-purple-600"
             >
               Get a call from Sarah
@@ -134,7 +133,7 @@ export default function DemoExperiencePage() {
               ))}
             </ul>
             <Link
-              href={getPublicHref("/sign-up?demo=web")}
+              href="/sign-up?demo=web"
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-600"
             >
               Start web demo

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@heroui/react";
-import { getPublicHref } from "@/lib/routes/public";
 import {
   BoltIcon,
   CheckCircleIcon,
@@ -155,20 +154,10 @@ export function LandingHero() {
         <nav className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <span className="text-2xl font-bold text-white">Epic AI</span>
           <div className="flex items-center gap-3">
-            <Button
-              as={Link}
-              href={getPublicHref("/sign-in")}
-              variant="light"
-              className="text-white"
-            >
+            <Button as={Link} href="/sign-in" variant="light" className="text-white">
               Sign In
             </Button>
-            <Button
-              as={Link}
-              href={getPublicHref("/sign-up")}
-              color="primary"
-              className="bg-white text-purple-700"
-            >
+            <Button as={Link} href="/sign-up" color="primary" className="bg-white text-purple-700">
               Get Started
             </Button>
           </div>
@@ -203,7 +192,7 @@ export function LandingHero() {
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Button
               as={Link}
-              href={getPublicHref("/sign-up")}
+              href="/sign-up"
               size="lg"
               className="bg-white text-purple-700 shadow-xl"
             >
@@ -211,7 +200,7 @@ export function LandingHero() {
             </Button>
             <Button
               as={Link}
-              href={getPublicHref("/demo")}
+              href="/demo"
               size="lg"
               variant="bordered"
               className="border-white/40 text-white"
@@ -325,13 +314,7 @@ export function LandingHero() {
             </div>
           ))}
         </div>
-        <Button
-          as={Link}
-          href={getPublicHref("/sign-up")}
-          color="primary"
-          size="lg"
-          className="mt-10"
-        >
+        <Button as={Link} href="/sign-up" color="primary" size="lg" className="mt-10">
           Try in 60 Seconds
         </Button>
       </section>
@@ -390,7 +373,7 @@ export function LandingHero() {
               </ul>
               <Button
                 as={Link}
-                href={getPublicHref("/sign-up")}
+                href="/sign-up"
                 color="primary"
                 className={`mt-6 w-full ${
                   plan.highlighted ? "bg-white text-purple-700" : ""
@@ -410,20 +393,10 @@ export function LandingHero() {
             Start in minutes. Talk to our AI sales agent and see the difference.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Button
-              as={Link}
-              href={getPublicHref("/sign-up")}
-              color="primary"
-              className="bg-white text-purple-700"
-            >
+            <Button as={Link} href="/sign-up" color="primary" className="bg-white text-purple-700">
               Talk to AI Agent
             </Button>
-            <Button
-              as={Link}
-              href={getPublicHref("/sign-up")}
-              variant="bordered"
-              className="border-white/40 text-white"
-            >
+            <Button as={Link} href="/sign-up" variant="bordered" className="border-white/40 text-white">
               Get Started Free
             </Button>
           </div>

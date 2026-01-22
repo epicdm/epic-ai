@@ -1,4 +1,5 @@
-import type { BrandBrain, BrandAudience, VoiceTone, EmojiFrequency } from "@prisma/client";
+import type { BrandBrain, BrandAudience } from "@prisma/client";
+import { VoiceTone, EmojiFrequency } from "@prisma/client";
 
 type BrandVoiceTone = 'professional' | 'friendly' | 'witty' | 'authoritative';
 type BrandEmojiUsage = 'none' | 'minimal' | 'moderate' | 'heavy';
@@ -24,7 +25,7 @@ export type FlywheelStatus = {
   phases: Record<string, {
     percent: number;
     status: 'healthy' | 'degraded' | 'blocked';
-    lastUpdated: string;
+    lastUpdated: Date;
   }>;
   overallHealth: number;
 };
