@@ -5,7 +5,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UnifiedDashboard } from "@/components/dashboard/unified-dashboard";
+import { DashboardContent } from "@/app/(dashboard)/dashboard/dashboard-content";
 
 // Development UAT bypass - allows testing without auth in development mode
 const isUATBypassEnabled =
@@ -38,9 +38,5 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // Check if flywheel was just activated
   const flywheelJustActivated = params.flywheel === "activated";
 
-  return (
-    <div className="p-6">
-      <UnifiedDashboard flywheelJustActivated={flywheelJustActivated} />
-    </div>
-  );
+  return <DashboardContent flywheelJustActivated={flywheelJustActivated} />;
 }

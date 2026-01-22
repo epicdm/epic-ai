@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 
 export const runtime = "nodejs";
 
@@ -27,10 +28,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ unlocks });
   } catch (error) {
     console.error("Failed to get user unlocks:", error);
-    return NextResponse.json(
-      { error: "Failed to load unlock data" },
-      { status: 500 }
-    );
+    if (error instanceof PrismaClientKnownRequestError) {
+      return NextResponse.json({ unlocks: [] });
+    }
+    return NextResponse.json({ unlocks: [] });
   }
 }
 
@@ -64,9 +65,9 @@ export async function POST(req: Request) {
     return NextResponse.json(unlock);
   } catch (error) {
     console.error("Failed to update unlock status:", error);
-    return NextResponse.json(
-      { error: "Failed to update unlock" },
-      { status: 500 }
-    );
+    if (error instanceof PrismaClientKnownRequestError) {
+      return NextResponse.json({ error: "Failed to update unlock" }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Failed to update unlock" }, { status: 500 });
   }
 }

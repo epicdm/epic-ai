@@ -359,7 +359,7 @@ export async function GET() {
         return NextResponse.json({ agents: agentsWithBrand });
       }
 
-      return NextResponse.json({ error: "No organization" }, { status: 404 });
+      return NextResponse.json({ agents: [], message: "No organization" });
     }
 
     // Query agents directly by organizationId with all required relations
@@ -433,7 +433,7 @@ export async function POST(request: NextRequest) {
         org = userWithMemberships.memberships[0].organization;
         console.log("[agents POST] Using fallback org:", org.id, org.name);
       } else {
-        return NextResponse.json({ error: "No organization" }, { status: 404 });
+        return NextResponse.json({ agents: [], message: "No organization" });
       }
     }
 
