@@ -5,6 +5,11 @@ import { ROUTE_CONFIG, getFlatRoutes } from "@/lib/routes/route-config";
 // Build public routes list from route config
 const publicRoutes = [
   "/",
+  "/v2",
+  "/v2/sign-in(.*)",
+  "/v2/sign-up(.*)",
+  "/v2/demo",
+  "/v2/help",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
@@ -28,12 +33,32 @@ const isPublicRoute = createRouteMatcher(publicRoutes);
 const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
   process.env.UAT_AUTH_BYPASS === "true";
+const useV2Ui = process.env.NEXT_PUBLIC_UI_VERSION === "v2";
+const v2Redirects = [
+  { from: "/", to: "/v2" },
+  { from: "/sign-in", to: "/v2/sign-in" },
+  { from: "/sign-up", to: "/v2/sign-up" },
+  { from: "/demo", to: "/v2/demo" },
+  { from: "/help", to: "/v2/help" },
+  { from: "/dashboard", to: "/v2/dashboard" },
+];
 
 /**
  * Helper to check for and apply route redirects for backward compatibility
  * Redirects old query-based navigation to new nested routes
  */
 function handleRouteRedirects(pathname: string, searchParams: URLSearchParams, requestUrl: string): NextResponse | null {
+  if (useV2Ui && !pathname.startsWith("/v2")) {
+    for (const redirect of v2Redirects) {
+      if (pathname === redirect.from || pathname.startsWith(`${redirect.from}/`)) {
+        const nextPath = `${redirect.to}${pathname.slice(redirect.from.length)}`;
+        const url = new URL(nextPath, requestUrl);
+        url.search = searchParams.toString();
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   // Redirect old context query tabs to nested routes
   if (pathname === "/dashboard/context" && searchParams.has("tab")) {
     const tab = searchParams.get("tab");

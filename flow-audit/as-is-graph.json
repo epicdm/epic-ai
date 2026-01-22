@@ -1,0 +1,4755 @@
+{
+  "base": "https://staging.leads.epic.dm",
+  "nodes": [
+    {
+      "url": "/",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "200",
+      "auth_gated": false,
+      "crawl": "public",
+      "discovered_from": "/",
+      "visibility": "public"
+    },
+    {
+      "url": "/dashboard",
+      "title": "Dashboard | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/ads",
+      "title": "Ads | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/ads",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/ads/accounts",
+      "title": "Ad Accounts | Ads",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/ads/accounts",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/ads/create",
+      "title": "Create Campaign | Ads",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/ads/create",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/analytics",
+      "title": "Analytics | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/analytics",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/automations",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/automations",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/brand",
+      "title": "Brand Brain | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/brand",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/brand/strategy",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/brand/strategy",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/brand/voice",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/brand/voice",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/calendar",
+      "title": "Content Calendar | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/calendar",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/content",
+      "title": "Content Factory | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/content",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/content/approval",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/content/approval",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/content/generate",
+      "title": "Create Content | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/content/generate",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/content/published",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/content/published",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/context",
+      "title": "Context Engine | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/context",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/context/documents",
+      "title": "Documents | Context Engine | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/context/documents",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/context/search",
+      "title": "Search | Context Engine | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/context/search",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/leads",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/leads",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/leads/new",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/leads/new",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/settings",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/settings",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/settings/publishing",
+      "title": "Publishing Settings | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/settings/publishing",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/settings/usage",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/settings/usage",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/social",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/social",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/social/accounts",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/social/accounts",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/social/settings",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/social/settings",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/social/suggestions",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/social/suggestions",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/test",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/test",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/agents/new",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/agents/new",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/calls",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/calls",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/flows",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/flows",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/groups",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/groups",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/knowledge-bases",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/knowledge-bases",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/numbers",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/numbers",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/routing",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/routing",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/templates",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/templates",
+      "visibility": "auth"
+    },
+    {
+      "url": "/dashboard/voice/test",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/dashboard/voice/test",
+      "visibility": "auth"
+    },
+    {
+      "url": "/docs/setup",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/docs/setup",
+      "visibility": "auth"
+    },
+    {
+      "url": "/help",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/help",
+      "visibility": "auth"
+    },
+    {
+      "url": "/onboarding",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/onboarding",
+      "visibility": "auth"
+    },
+    {
+      "url": "/setup",
+      "title": "Setup | Epic AI",
+      "status": "307",
+      "auth_gated": false,
+      "crawl": "auth",
+      "discovered_from": "/setup",
+      "visibility": "auth"
+    },
+    {
+      "url": "/sign-in",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "200",
+      "auth_gated": true,
+      "crawl": "public",
+      "discovered_from": "/setup",
+      "visibility": "auth"
+    },
+    {
+      "url": "/sign-up",
+      "title": "Epic AI - AI Marketing Platform",
+      "status": "200",
+      "auth_gated": false,
+      "crawl": "public",
+      "discovered_from": "/sign-up",
+      "visibility": "public"
+    }
+  ],
+  "edges": [
+    {
+      "source": "/",
+      "target": "/"
+    },
+    {
+      "source": "/",
+      "target": "/sign-in"
+    },
+    {
+      "source": "/",
+      "target": "/sign-up"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/ads/accounts",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/ads/create",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/ads",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/automations",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/brand",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/brand/strategy",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/brand/voice",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/calendar",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/content/approval",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/content/generate",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/content",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/content/published",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/context/documents"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/context/search"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/context/documents"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/context/search"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/context/documents",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/context",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/context/documents"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/context/search"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/context/search",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/leads/new"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/leads",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/leads/new"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/leads/new",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/settings",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/settings/publishing",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/settings/usage"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/settings/usage",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/social/accounts",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/social",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/social/settings",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/social/suggestions",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/test",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/voice/agents/new"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/agents/new",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/calls",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/settings/usage"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/agents/new"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/flows"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/groups"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/knowledge-bases"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/routing"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/templates"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/dashboard/voice/test"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/voice/flows"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/flows",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/voice/groups"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/groups",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/voice/knowledge-bases"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/knowledge-bases",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/numbers",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/voice/groups"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/dashboard/voice/routing"
+    },
+    {
+      "source": "/dashboard/voice/routing",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/dashboard/voice/templates"
+    },
+    {
+      "source": "/dashboard/voice/templates",
+      "target": "/help"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/settings/usage"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/dashboard/voice/test"
+    },
+    {
+      "source": "/dashboard/voice/test",
+      "target": "/help"
+    },
+    {
+      "source": "/docs/setup",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/help"
+    },
+    {
+      "source": "/onboarding",
+      "target": "/onboarding"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/ads"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/ads/accounts"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/ads/create"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/analytics"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/automations"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/brand"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/brand/strategy"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/brand/voice"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/calendar"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/content"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/content/approval"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/content/generate"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/content/published"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/context"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/leads"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/settings"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/settings/publishing"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/social"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/social/accounts"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/social/settings"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/social/suggestions"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/test"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/voice"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/voice/calls"
+    },
+    {
+      "source": "/setup",
+      "target": "/dashboard/voice/numbers"
+    },
+    {
+      "source": "/setup",
+      "target": "/docs/setup"
+    },
+    {
+      "source": "/setup",
+      "target": "/help"
+    },
+    {
+      "source": "/setup",
+      "target": "/setup"
+    },
+    {
+      "source": "/sign-in",
+      "target": "/"
+    },
+    {
+      "source": "/sign-up",
+      "target": "/"
+    }
+  ]
+}
