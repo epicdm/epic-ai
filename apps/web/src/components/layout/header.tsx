@@ -3,7 +3,7 @@
 import { UserButton } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Bell, Moon, Sun, Search } from "lucide-react";
+import { Bell, Moon, Sun, Search, Zap } from "lucide-react";
 import { MobileNav } from "./mobile-nav";
 import { Breadcrumbs } from "./breadcrumbs";
 
@@ -21,7 +21,7 @@ export function Header({ organizationName }: HeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+    <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left Side */}
         <div className="flex items-center gap-4">
@@ -30,43 +30,56 @@ export function Header({ organizationName }: HeaderProps) {
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Search (Desktop) */}
-          <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <button className="hidden md:flex items-center gap-2 px-4 py-2 text-sm text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors">
             <Search className="w-4 h-4" />
             <span>Search...</span>
-            <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 rounded">
+            <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 rounded-md font-mono">
               ⌘K
             </kbd>
+          </button>
+
+          {/* Go Live Button */}
+          <button
+            type="button"
+            className="hidden sm:inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#9810fa_0%,#155dfc_100%)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-200"
+          >
+            <Zap className="w-4 h-4" />
+            Go Live
           </button>
 
           {/* Theme Toggle */}
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Toggle theme"
             >
               {theme === "dark" ? (
-                <Sun className="w-5 h-5" />
+                <Sun className="w-4 h-4" />
               ) : (
-                <Moon className="w-5 h-5" />
+                <Moon className="w-4 h-4" />
               )}
             </button>
           )}
 
           {/* Notifications */}
-          <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
+          <button
+            className="relative p-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4 h-4" />
             {/* Notification badge */}
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-800" />
           </button>
 
           {/* Divider */}
-          <div className="hidden md:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+          <div className="hidden md:block w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
 
           {/* Org Name (Desktop) */}
           {organizationName && (
-            <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400">
+            <span className="hidden md:block text-sm font-medium text-slate-600 dark:text-slate-400">
               {organizationName}
             </span>
           )}
@@ -77,7 +90,7 @@ export function Header({ organizationName }: HeaderProps) {
               afterSignOutUrl="/"
               appearance={{
                 elements: {
-                  avatarBox: "w-8 h-8",
+                  avatarBox: "w-9 h-9 rounded-xl",
                 },
               }}
             />

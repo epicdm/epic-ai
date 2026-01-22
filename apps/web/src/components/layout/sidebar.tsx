@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft,
   ChevronRight,
+  Rocket,
   Sparkles,
 } from "lucide-react";
 import { ROUTE_CONFIG, getRoutesBySection, type RouteConfig } from "@/lib/routes/route-config";
@@ -64,9 +66,20 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useUser();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [enabledTools, setEnabledTools] = useState<string[] | null>(null);
   const [toolsLoaded, setToolsLoaded] = useState(false);
+
+  // User display info
+  const userName = user?.fullName || user?.firstName || "User";
+  const userEmail = user?.primaryEmailAddress?.emailAddress || "";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   // Auto-expand parent when child is active
   useEffect(() => {
@@ -138,10 +151,10 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             }
           }}
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
             active
-              ? "bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400"
-              : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800",
+              ? "bg-[linear-gradient(135deg,#9810fa_0%,#155dfc_100%)] text-white shadow-lg shadow-purple-500/25"
+              : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/50",
             collapsed && "justify-center px-2"
           )}
         >
@@ -150,9 +163,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               className={cn(
                 "flex-shrink-0",
                 collapsed ? "w-6 h-6" : "w-5 h-5",
-                active
-                  ? "text-brand-600 dark:text-brand-400"
-                  : "text-gray-500 dark:text-gray-500"
+                active ? "text-white" : "text-slate-500 dark:text-slate-500"
               )}
             />
           )}
@@ -160,14 +171,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             <>
               <span className="flex-1">{item.name}</span>
               {item.badge && (
-                <span className="px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
+                <span
+                  className={cn(
+                    "px-2 py-0.5 text-xs font-semibold rounded-full",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                  )}
+                >
                   {item.badge}
                 </span>
               )}
               {hasChildren && (
                 <ChevronRight
                   className={cn(
-                    "w-4 h-4 transition-transform",
+                    "w-4 h-4 transition-transform duration-200",
                     expanded && "rotate-90"
                   )}
                 />
@@ -178,16 +196,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* Children */}
         {hasChildren && expanded && !collapsed && (
-          <div className="ml-4 mt-1 space-y-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+          <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
             {item.children!.map((child) => (
               <Link
                 key={child.href}
                 href={child.href}
                 className={cn(
-                  "block px-3 py-2 rounded-lg text-sm transition-colors",
+                  "block px-3 py-2 rounded-xl text-sm transition-all duration-200",
                   pathname === child.href
-                    ? "text-brand-700 dark:text-brand-400 font-medium"
-                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                    ? "text-purple-700 dark:text-purple-400 font-medium bg-purple-50 dark:bg-purple-900/20"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/50"
                 )}
               >
                 {child.name}
@@ -211,45 +229,54 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          "flex items-center h-16 border-b border-gray-200 dark:border-gray-800",
+          "flex items-center justify-between h-16 border-b border-slate-200 dark:border-slate-800",
           collapsed ? "justify-center px-2" : "px-4"
         )}
       >
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-[linear-gradient(135deg,#9810fa_0%,#155dfc_100%)] rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <Rocket className="w-5 h-5 text-white" />
           </div>
           {!collapsed && (
-            <span className="font-bold text-xl bg-gradient-to-r from-brand-500 to-brand-700 bg-clip-text text-transparent">
+            <span className="font-bold text-xl text-slate-900 dark:text-white">
               Epic AI
             </span>
           )}
         </Link>
+        {!collapsed && (
+          <button
+            onClick={() => onCollapsedChange(!collapsed)}
+            className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+            aria-label="Collapse sidebar"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <div className="flex flex-col h-[calc(100vh-4rem)] py-4">
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {filteredSections.map((section, sectionIndex) => (
             <div key={section.title || sectionIndex}>
               {/* Section Header */}
               {section.title && !collapsed && (
-                <div className="pt-4 pb-2 first:pt-0">
+                <div className="pt-5 pb-2 first:pt-0">
                   <div className="flex items-center gap-2 px-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                       {section.title}
                     </span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700" />
+                    <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700" />
                   </div>
                   {section.subtitle && (
-                    <span className="px-2 text-[10px] text-gray-400 dark:text-gray-600">
+                    <span className="px-2 text-[10px] text-slate-400 dark:text-slate-600">
                       {section.subtitle}
                     </span>
                   )}
@@ -264,29 +291,61 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="px-3 space-y-1 border-t border-gray-200 dark:border-gray-800 pt-4">
+        <div className="px-3 space-y-1 border-t border-slate-200 dark:border-slate-800 pt-4">
           {filteredBottomNavigation.map(renderNavItem)}
         </div>
 
-        {/* Collapse Toggle */}
-        <div className="px-3 pt-4">
-          <button
-            onClick={() => onCollapsedChange(!collapsed)}
-            className={cn(
-              "flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-              collapsed && "justify-center"
-            )}
-          >
-            {collapsed ? (
+        {/* User Profile Card */}
+        {!collapsed && (
+          <div className="px-3 pt-4 pb-2">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-3 bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ad46ff_0%,#2b7fff_100%)] text-sm font-semibold text-white shadow-lg shadow-purple-500/25">
+                {userInitials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                  {userName}
+                </div>
+                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  {userEmail}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade CTA */}
+        {!collapsed && (
+          <div className="px-3 pb-4">
+            <div className="rounded-2xl bg-[linear-gradient(145deg,#9810fa_0%,#155dfc_100%)] p-4 text-white shadow-lg shadow-purple-500/25">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Sparkles className="h-4 w-4" />
+                Upgrade to Pro
+              </div>
+              <p className="mt-2 text-xs text-white/80">
+                Unlock unlimited agents and advanced features.
+              </p>
+              <Link
+                href="/dashboard/settings/billing"
+                className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-xl bg-white text-xs font-semibold text-purple-700 hover:bg-white/90 transition-colors"
+              >
+                Upgrade Now
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Collapse Toggle (when collapsed) */}
+        {collapsed && (
+          <div className="px-3 py-4">
+            <button
+              onClick={() => onCollapsedChange(!collapsed)}
+              className="flex items-center justify-center w-full px-3 py-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
               <ChevronRight className="w-5 h-5" />
-            ) : (
-              <>
-                <ChevronLeft className="w-5 h-5" />
-                <span>Collapse</span>
-              </>
-            )}
-          </button>
-        </div>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
