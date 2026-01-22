@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/database";
+import { prisma } from "@/lib/database/server";
 import type { BrandVoice } from "@/lib/database/types";
 import { convertVoiceTone, convertEmojiUsage } from "@/lib/database/types";
 

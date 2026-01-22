@@ -1,0 +1,19 @@
+flowchart TD
+  U((User)) --> HOME["/ (Public)"]
+  HOME --> SIGNIN["/sign-in"]
+  HOME --> SIGNUP["/sign-up"]
+  SIGNIN --> DASH["/dashboard"]
+  SIGNUP --> DASH
+  DASH --> ONBOARD["/onboarding (canonical)"]
+  ONBOARD --> QW["/onboarding/quick-wins"]
+  ONBOARD --> DASH
+  DASH --> SETUP["/setup (optional deep links)"]
+  DASH --> CONTENT["/dashboard/content"]
+  DASH --> LEADS["/dashboard/leads"]
+  DASH --> ADS["/dashboard/ads"]
+  DASH --> VOICE["/dashboard/voice"]
+  DASH --> SOCIAL["/dashboard/social"]
+  DASH --> AUTOMATIONS["/dashboard/automations"]
+  DASH --> BRAND["/dashboard/brand"]
+  DASH --> ANALYTICS["/dashboard/analytics"]
+  DASH --> SETTINGS["/dashboard/settings"]

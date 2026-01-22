@@ -1,0 +1,212 @@
+3:apps/web/src/hooks/use-typed-router.ts:13: * router.push("/dashboard/content"); // ✅ Valid
+6:apps/web/src/components/leads/leads-dashboard.tsx:158:            href="/dashboard/leads/new"
+7:apps/web/src/app/help/page.tsx:26:            href={userId ? "/dashboard" : "/"}
+8:apps/web/src/app/help/page.tsx:56:                  href="https://docs.epic.dm"
+9:apps/web/src/app/help/page.tsx:82:                  href="https://youtube.com/@epiccommunications"
+10:apps/web/src/app/help/page.tsx:108:                  href="https://community.epic.dm"
+11:apps/web/src/app/help/page.tsx:203:                  href="mailto:support@epic.dm"
+12:apps/web/src/app/help/page.tsx:250:              href="https://epic.dm/blog"
+13:apps/web/src/app/help/page.tsx:260:              href="https://epic.dm/changelog"
+14:apps/web/src/app/help/page.tsx:270:              href="https://status.epic.dm"
+15:apps/web/src/components/leads/lead-detail.tsx:198:      router.push("/dashboard/leads");
+16:apps/web/src/components/leads/lead-detail.tsx:217:          <Button as={Link} href="/dashboard/leads" className="mt-4">
+17:apps/web/src/components/leads/lead-detail.tsx:234:              href="/dashboard/leads"
+18:apps/web/src/components/leads/lead-detail.tsx:242:              href={`/dashboard/leads/${leadId}/edit`}
+21:apps/web/src/components/wizards/content-batch-wizard.tsx:131:      router.push(`/dashboard/content`);
+23:apps/web/src/components/leads/lead-form.tsx:112:      router.push(`/dashboard/leads/${lead.id}`);
+24:apps/web/src/components/leads/lead-form.tsx:128:            href="/dashboard/leads"
+25:apps/web/src/components/leads/lead-form.tsx:288:          <Button as={Link} href="/dashboard/leads" variant="bordered">
+26:apps/web/src/components/wizards/journey-builder-wizard.tsx:117:      router.push(`/dashboard/journeys`);
+27:apps/web/src/app/not-found.tsx:11:        href="/dashboard" 
+28:apps/web/src/components/content/content-factory-page.tsx:292:            <Link href="/dashboard/content/generate">
+29:apps/web/src/components/wizards/automation-wizard.tsx:192:      router.push(`/dashboard/automations`);
+30:apps/web/src/components/wizards/ad-campaign-wizard.tsx:201:      router.push(`/dashboard/ads`);
+31:apps/web/src/components/content/content-empty-state.tsx:174:                <Link href="/dashboard/content/generate">
+32:apps/web/src/components/content/content-empty-state.tsx:189:                    Tip: <Link href="/dashboard/social/accounts" className="underline font-medium">
+34:apps/web/src/components/onboarding/unified-onboarding-wizard.tsx:379:        router.push("/dashboard");
+35:apps/web/src/components/onboarding/unified-onboarding-wizard.tsx:384:        router.push("/setup");
+36:apps/web/src/components/ads/campaign-detail-page.tsx:161:      router.push("/dashboard/ads");
+37:apps/web/src/components/ads/campaign-detail-page.tsx:179:        <Link href="/dashboard/ads">
+38:apps/web/src/components/ads/campaign-detail-page.tsx:198:            <Link href="/dashboard/ads">
+39:apps/web/src/components/content/content-generate-page.tsx:211:        router.push("/dashboard/content");
+40:apps/web/src/components/dashboard/unified-dashboard.tsx:379:            <Button variant="bordered" onPress={() => router.push("/onboarding")}>
+41:apps/web/src/components/dashboard/unified-dashboard.tsx:623:                  onPress={() => router.push(nextStep!.href)}
+42:apps/web/src/components/dashboard/unified-dashboard.tsx:642:          quickAction={() => router.push("/dashboard/content")}
+43:apps/web/src/components/dashboard/unified-dashboard.tsx:651:          quickAction={() => router.push("/dashboard/automations")}
+44:apps/web/src/components/dashboard/unified-dashboard.tsx:658:        <Card isPressable onPress={() => router.push("/dashboard/content")}>
+45:apps/web/src/components/dashboard/unified-dashboard.tsx:670:        <Card isPressable onPress={() => router.push("/dashboard/calendar")}>
+46:apps/web/src/components/dashboard/unified-dashboard.tsx:684:        <Card isPressable onPress={() => router.push("/dashboard/leads")}>
+47:apps/web/src/components/dashboard/unified-dashboard.tsx:696:        <Card isPressable onPress={() => router.push("/dashboard/brand")}>
+48:apps/web/src/components/dashboard/unified-dashboard.tsx:710:        <Card isPressable onPress={() => router.push("/dashboard/voice")}>
+49:apps/web/src/components/dashboard/unified-dashboard.tsx:738:              onPress={() => router.push("/dashboard/analytics")}
+50:apps/web/src/components/dashboard/unified-dashboard.tsx:780:              onPress={() => router.push("/dashboard/ads")}
+51:apps/web/src/components/dashboard/unified-dashboard.tsx:820:              onPress={() => router.push("/dashboard/leads")}
+52:apps/web/src/components/dashboard/unified-dashboard.tsx:858:              onPress={() => router.push("/dashboard/voice")}
+53:apps/web/src/components/dashboard/unified-dashboard.tsx:896:              onPress={() => router.push("/dashboard/journeys")}
+54:apps/web/src/components/dashboard/unified-dashboard.tsx:997:                  onPress={() => router.push("/dashboard/content/create")}
+55:apps/web/src/components/dashboard/unified-dashboard.tsx:1089:            onPress={() => router.push("/dashboard/social/accounts")}
+56:apps/web/src/components/dashboard/unified-dashboard.tsx:1135:                onPress={() => router.push("/dashboard/social/accounts")}
+57:apps/web/src/components/dashboard/unified-dashboard.tsx:1161:                onPress={() => router.push("/dashboard/content")}
+58:apps/web/src/components/dashboard/unified-dashboard.tsx:1249:                    router.push("/dashboard/content");
+59:apps/web/src/components/content/content-queue-page.tsx:178:            <Link href="/dashboard/content/calendar">
+60:apps/web/src/components/content/content-queue-page.tsx:183:            <Link href="/dashboard/content/generate">
+61:apps/web/src/components/content/content-queue-page.tsx:242:              <Link href="/dashboard/content/generate">
+62:apps/web/src/components/onboarding/onboarding-wizard.tsx:121:      router.push("/dashboard");
+63:apps/web/src/components/dashboard/onboarding-content.tsx:31:              href="/dashboard/setup"
+64:apps/web/src/components/dashboard/onboarding-content.tsx:41:              href="/dashboard"
+65:apps/web/src/components/ads/create-campaign-page.tsx:122:        router.push(`/dashboard/ads/campaigns/${data.campaign.id}`);
+66:apps/web/src/components/onboarding/quick-wins-wizard.tsx:78:      router.push(redirectMap[path]);
+67:apps/web/src/components/onboarding/quick-wins-wizard.tsx:83:      router.push("/dashboard");
+68:apps/web/src/components/onboarding/quick-wins-wizard.tsx:105:            <Button color="primary" onPress={() => router.push("/dashboard")} className="mt-4">
+69:apps/web/src/components/content/ai-content-wizard.tsx:404:        router.push("/dashboard/content");
+70:apps/web/src/components/content/ai-content-wizard.tsx:619:                      onPress={() => router.push("/dashboard/social/accounts")}
+71:apps/web/src/components/dashboard/dashboard-content.tsx:135:          <Link key={stat.name} href={stat.href}>
+72:apps/web/src/components/dashboard/dashboard-content.tsx:173:            <Link key={action.name} href={action.href}>
+73:apps/web/src/components/dashboard/dashboard-content.tsx:203:            <Link href="/dashboard/brand">
+74:apps/web/src/components/dashboard/dashboard-content.tsx:247:                href="/dashboard/brand"
+75:apps/web/src/components/dashboard/dashboard-content.tsx:255:                href="/dashboard/brand/context"
+76:apps/web/src/components/dashboard/dashboard-content.tsx:264:                href="/dashboard/social/accounts"
+77:apps/web/src/components/dashboard/dashboard-content.tsx:273:                href="/dashboard/content/generate"
+78:apps/web/src/components/ads/ads-dashboard.tsx:139:          <Link href="/dashboard/ads/create">
+79:apps/web/src/components/ads/ads-dashboard.tsx:254:            <Link href="/dashboard/ads/accounts">
+80:apps/web/src/components/ads/ads-dashboard.tsx:269:              <Link href="/dashboard/ads/create">
+81:apps/web/src/components/ads/ads-dashboard.tsx:280:                  href={`/dashboard/ads/campaigns/${campaign.id}`}
+82:apps/web/src/components/ads/ads-dashboard.tsx:344:        <Link href="/dashboard/ads/create">
+83:apps/web/src/components/ads/ads-dashboard.tsx:353:        <Link href="/dashboard/ads/create">
+84:apps/web/src/components/ads/ads-dashboard.tsx:362:        <Link href="/dashboard/ads/accounts">
+88:apps/web/src/components/dashboard/learning-loop-card.tsx:183:            onPress={() => router.push("/dashboard/content/generate")}
+89:apps/web/src/components/dashboard/learning-loop-card.tsx:227:              onPress={() => router.push("/dashboard/brand")}
+90:apps/web/src/components/dashboard/learning-loop-card.tsx:365:          onPress={() => router.push("/dashboard/brand")}
+91:apps/web/src/components/setup/setup-header.tsx:34:    router.push("/setup/ai");
+92:apps/web/src/components/setup/setup-header.tsx:39:    router.push(`/setup?mode=${newMode}`);
+93:apps/web/src/components/voice/agent-wizard.tsx:183:      router.push("/dashboard/voice");
+94:apps/web/src/components/voice/agent-wizard.tsx:205:          href="/dashboard/voice"
+95:apps/web/src/components/landing/hero.tsx:16:            <Button as={Link} href="/sign-in" variant="light">
+96:apps/web/src/components/landing/hero.tsx:19:            <Button as={Link} href="/sign-up" color="primary">
+97:apps/web/src/components/landing/hero.tsx:42:            <Button as={Link} href="/sign-up" color="primary" size="lg">
+102:apps/web/src/components/voice/voice-templates.tsx:99:    router.push(`/dashboard/voice/agents/new?template=${template.id}`);
+103:apps/web/src/components/voice/voice-templates.tsx:110:            href="/dashboard/voice"
+104:apps/web/src/components/voice/flow-manager.tsx:134:      router.push(`/dashboard/voice/flows/${data.flow.id}`);
+105:apps/web/src/components/voice/flow-manager.tsx:269:                          router.push(`/dashboard/voice/flows/${flow.id}`)
+106:apps/web/src/components/voice/flow-manager.tsx:337:                      router.push(`/dashboard/voice/flows/${flow.id}`)
+107:apps/web/src/components/setup/mode-switcher.tsx:32:        onPress={() => router.push("/setup/ai")}
+108:apps/web/src/components/setup/mode-switcher.tsx:42:        onPress={() => router.push("/setup?mode=guided")}
+109:apps/web/src/components/setup/mode-switcher.tsx:52:        onPress={() => router.push("/setup")}
+110:apps/web/src/components/dashboard/onboarding-checklist.tsx:133:                onClick={() => !step.isComplete && router.push(step.href)}
+113:apps/web/src/components/voice/agent-knowledge-bases-editor.tsx:299:                  href="/dashboard/voice/knowledge-bases"
+115:apps/web/src/components/voice/flow-editor-page.tsx:68:          router.push("/dashboard/voice/flows");
+116:apps/web/src/components/voice/flow-editor-page.tsx:192:          <Link href="/dashboard/voice">Voice</Link>
+117:apps/web/src/components/voice/flow-editor-page.tsx:195:          <Link href="/dashboard/voice/flows">Flows</Link>
+118:apps/web/src/components/voice/flow-editor-page.tsx:242:            onPress={() => router.push("/dashboard/voice/flows")}
+119:apps/web/src/components/dashboard/flywheel-setup-guide.tsx:280:                <Link href={currentStep.href}>
+120:apps/web/src/components/dashboard/flywheel-setup-guide.tsx:407:                    <Link href={step.href}>
+121:apps/web/src/components/voice/agent-form.tsx:257:      router.push("/dashboard/voice");
+122:apps/web/src/components/voice/agent-form.tsx:304:      router.push("/dashboard/voice");
+123:apps/web/src/components/voice/agent-form.tsx:407:            href="/dashboard/voice"
+124:apps/web/src/components/voice/agent-form.tsx:525:                href="/dashboard/voice/numbers"
+125:apps/web/src/components/voice/agent-form.tsx:852:                  <Link href="/dashboard/settings/usage" className="underline hover:no-underline">
+126:apps/web/src/components/voice/agent-form.tsx:879:              href="/dashboard/voice"
+127:apps/web/src/components/empty-states/empty-state-voice.tsx:38:              href="/dashboard/voice/agents/new"
+128:apps/web/src/components/empty-states/empty-state-voice.tsx:46:              href="/dashboard/voice/phone-numbers"
+129:apps/web/src/components/voice/test-console.tsx:452:                href="/dashboard/settings/usage"
+130:apps/web/src/components/automations/automations-dashboard.tsx:519:                        href={`/dashboard/automations/${automation.id}`}
+131:apps/web/src/components/automations/automations-dashboard.tsx:691:                          href={`/dashboard/automations/new?template=${template.id}`}
+132:apps/web/src/components/automations/automations-dashboard.tsx:720:                      href="/dashboard/automations/new"
+133:apps/web/src/components/voice/voice-dashboard.tsx:206:            href="/dashboard/voice/agents/new"
+134:apps/web/src/components/voice/voice-dashboard.tsx:332:              href="/dashboard/settings/usage"
+135:apps/web/src/components/voice/voice-dashboard.tsx:447:                <Link href={`/dashboard/voice/agents/${agent.id}`}>
+136:apps/web/src/components/voice/voice-dashboard.tsx:495:        <Link href="/dashboard/voice/calls">
+137:apps/web/src/components/voice/voice-dashboard.tsx:509:        <Link href="/dashboard/voice/numbers">
+138:apps/web/src/components/voice/voice-dashboard.tsx:523:        <Link href="/dashboard/voice/knowledge-bases">
+139:apps/web/src/components/voice/voice-dashboard.tsx:537:        <Link href="/dashboard/voice/flows">
+140:apps/web/src/components/voice/voice-dashboard.tsx:551:        <Link href="/dashboard/voice/groups">
+141:apps/web/src/components/voice/voice-dashboard.tsx:565:        <Link href="/dashboard/voice/routing">
+142:apps/web/src/components/voice/voice-dashboard.tsx:579:        <Link href="/dashboard/voice/test">
+143:apps/web/src/components/empty-states/empty-state-social.tsx:39:              href="/dashboard/social/accounts"
+144:apps/web/src/components/empty-states/empty-state-social.tsx:47:              href="/dashboard/content/generate"
+145:apps/web/src/components/automations/automation-detail.tsx:319:        router.push("/dashboard/automations");
+146:apps/web/src/components/automations/automation-detail.tsx:353:              href="/dashboard/automations"
+148:apps/web/src/components/social/suggestions-page.tsx:267:            href="/dashboard/social/settings"
+149:apps/web/src/components/social/suggestions-page.tsx:286:              href="/dashboard/social/settings"
+150:apps/web/src/components/brand/brand-overview.tsx:156:              href="/dashboard/brand/context"
+151:apps/web/src/components/brand/brand-overview.tsx:162:              href="/dashboard/brand/voice"
+152:apps/web/src/components/brand/brand-overview.tsx:168:              href="/dashboard/brand/strategy"
+153:apps/web/src/components/brand/brand-overview.tsx:176:        <Link href="/dashboard/brand/context">
+154:apps/web/src/components/brand/brand-overview.tsx:192:        <Link href="/dashboard/content">
+155:apps/web/src/components/brand/brand-overview.tsx:208:        <Link href="/dashboard/content/generate">
+156:apps/web/src/components/brand/brand-overview.tsx:235:              <Link href="/dashboard/brand/voice">
+157:apps/web/src/components/brand/brand-overview.tsx:263:                  <Link href="/dashboard/brand/voice" className="text-brand-500 hover:underline">
+158:apps/web/src/components/brand/brand-overview.tsx:278:              <Link href="/dashboard/brand/strategy">
+159:apps/web/src/components/brand/brand-overview.tsx:317:                  <Link href="/dashboard/brand/strategy" className="text-brand-500 hover:underline">
+160:apps/web/src/components/brand/brand-overview.tsx:335:            <Link href="/dashboard/brand/context">
+163:apps/web/src/components/brand/wizard/brand-setup-wizard.tsx:215:      router.push(`/dashboard/brand?id=${createdBrandId}`);
+164:apps/web/src/components/brand/wizard/brand-setup-wizard.tsx:217:      router.push("/dashboard");
+165:apps/web/src/components/social/social-dashboard.tsx:354:            <Button color="primary" size="lg" as="a" href="/dashboard/brand">
+166:apps/web/src/components/brand/ai-brand-setup.tsx:559:              onPress={() => router.push("/dashboard/brand")}
+168:apps/web/src/components/social/social-accounts-page.tsx:275:            <Link href="/dashboard/social" className="hover:text-gray-700">
+172:apps/web/src/components/layout/sidebar.tsx:185:        <Link href="/dashboard" className="flex items-center gap-2">
+173:apps/web/src/components/layout/dashboard-header.tsx:39:            <Link href="/dashboard" className="flex items-center gap-2">
+174:apps/web/src/components/layout/dashboard-header.tsx:60:                href={link.href}
+175:apps/web/src/components/flywheel/phase-hub/phase-hub.tsx:25:    router.push(`/setup/${phase.toLowerCase()}`);
+176:apps/web/src/components/flywheel/phase-hub/phase-hub.tsx:50:          onPress={() => router.push("/dashboard")}
+177:apps/web/src/components/flywheel/phase-hub/phase-hub.tsx:81:                onPress={() => router.push("/setup/ai-setup")}
+178:apps/web/src/components/social/post-composer.tsx:188:          <Link href="/dashboard/social" className="hover:text-gray-700">
+179:apps/web/src/components/social/post-composer.tsx:214:            <Button as={Link} href="/dashboard/brand" color="primary">
+180:apps/web/src/components/social/post-composer.tsx:231:            <Button as={Link} href="/dashboard/social" color="primary">
+181:apps/web/src/components/social/post-composer.tsx:441:                  href="/dashboard/social"
+182:apps/web/src/components/social/post-composer.tsx:491:                    href="/dashboard/brand"
+183:apps/web/src/components/social/autopilot-settings.tsx:182:          href="/dashboard/social/suggestions"
+184:apps/web/src/components/layout/breadcrumbs.tsx:25:        href="/dashboard"
+186:apps/web/src/components/empty-states/empty-state-leads.tsx:38:              href="/dashboard/social"
+187:apps/web/src/components/empty-states/empty-state-leads.tsx:46:              href="/dashboard/voice"
+190:apps/web/src/components/layout/mobile-nav.tsx:322:            href="/dashboard"
+191:apps/web/src/components/layout/mobile-nav.tsx:378:            href="/help"
+192:apps/web/src/components/flywheel/shared/birdeye-wizard.tsx:314:    router.push("/setup?mode=guided&ai-draft=true");
+193:apps/web/src/components/flywheel/shared/birdeye-wizard.tsx:321:      router.push("/dashboard");
+194:apps/web/src/components/flywheel/shared/birdeye-wizard.tsx:326:    router.push("/setup");
+195:apps/web/src/components/flywheel/shared/birdeye-wizard.tsx:1485:                    router.push("/setup");
+196:apps/web/src/components/ui/typed-link.tsx:11: * <TypedLink href="/dashboard/content">Content</TypedLink>
+199:apps/web/src/components/flywheel/wizards/distribute-wizard/distribute-wizard.tsx:97:      router.push("/setup");
+200:apps/web/src/components/flywheel/streamlined-steps/review-activate-step.tsx:280:      router.push("/dashboard?flywheel=activated");
+201:apps/web/src/components/flywheel/streamlined-flywheel-wizard.tsx:384:      router.push("/dashboard?setup=complete");
+202:apps/web/src/components/flywheel/streamlined-flywheel-wizard.tsx:393:    router.push("/setup");
+203:apps/web/src/components/flywheel/streamlined-flywheel-wizard.tsx:476:          href="/dashboard"
+204:apps/web/src/components/flywheel/streamlined-flywheel-wizard.tsx:484:          href="/setup"
+205:apps/web/src/components/flywheel/shared/flywheel-progress-card.tsx:32:      router.push(`/setup/${nextPhase.toLowerCase()}`);
+206:apps/web/src/components/flywheel/shared/flywheel-progress-card.tsx:34:      router.push("/setup");
+207:apps/web/src/components/flywheel/shared/flywheel-progress-card.tsx:61:                onPress={() => router.push("/setup")}
+208:apps/web/src/components/flywheel/shared/flywheel-progress-card.tsx:119:              onPress={() => router.push("/setup")}
+209:apps/web/src/components/flywheel/wizards/automate-wizard/automate-wizard.tsx:151:      router.push("/dashboard?flywheel=activated");
+210:apps/web/src/components/flywheel/wizards/understand-wizard/understand-wizard.tsx:103:      router.push("/setup");
+212:apps/web/src/components/flywheel/wizards/learn-wizard/learn-wizard.tsx:96:      router.push("/setup");
+213:apps/web/src/app/(dashboard)/dashboard/voice/routing/[id]/page.tsx:241:      router.push("/dashboard/voice/routing");
+214:apps/web/src/app/(dashboard)/dashboard/voice/routing/[id]/page.tsx:289:          <Link href="/dashboard/voice/routing">
+215:apps/web/src/app/(dashboard)/dashboard/voice/routing/[id]/page.tsx:304:              href="/dashboard/voice/routing"
+216:apps/web/src/app/(dashboard)/dashboard/voice/routing/[id]/page.tsx:401:                    <Link href="/dashboard/voice/groups" className="text-primary">
+217:apps/web/src/components/ui/command-palette.tsx:29:      action: () => router.push("/dashboard"),
+221:apps/web/src/app/(dashboard)/dashboard/voice/routing/page.tsx:310:          <Link href="/dashboard/voice/groups">
+222:apps/web/src/app/(dashboard)/dashboard/voice/routing/page.tsx:346:                          href={`/dashboard/voice/routing/${rule.id}`}
+223:apps/web/src/app/(dashboard)/dashboard/voice/routing/page.tsx:404:                            href={`/dashboard/voice/routing/${rule.id}`}
+225:apps/web/src/components/flywheel/wizards/create-wizard/create-wizard.tsx:78:      router.push("/setup");
+226:apps/web/src/app/(dashboard)/dashboard/voice/groups/[id]/page.tsx:190:      router.push("/dashboard/voice/groups");
+227:apps/web/src/app/(dashboard)/dashboard/voice/groups/[id]/page.tsx:242:          <Link href="/dashboard/voice/groups">
+228:apps/web/src/app/(dashboard)/dashboard/voice/groups/[id]/page.tsx:260:              href="/dashboard/voice/groups"
+229:apps/web/src/app/(dashboard)/dashboard/voice/groups/[id]/page.tsx:459:          <Link href="/dashboard/voice/routing">
+230:apps/web/src/app/(dashboard)/dashboard/voice/groups/page.tsx:259:                        href={`/dashboard/voice/groups/${group.id}`}
+231:apps/web/src/app/(dashboard)/dashboard/voice/groups/page.tsx:324:                        href={`/dashboard/voice/groups/${group.id}`}
+242:apps/web/src/app/(dashboard)/dashboard/settings/usage/client.tsx:30:            href="/dashboard/settings"
+243:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:90:      router.push(`/setup/${nextPhase.toLowerCase()}`);
+244:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:101:      router.push("/dashboard");
+245:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:109:      router.push(`/setup?mode=guided&phase=${phaseId}`);
+246:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:111:      router.push(`/setup/${phaseId.toLowerCase()}`);
+247:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:117:      router.push(`/setup?mode=guided&phase=${phaseId}&step=${state.currentStep}`);
+248:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:119:      router.push(`/setup/${phaseId.toLowerCase()}?step=${state.currentStep}`);
+249:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:125:      router.push(`/setup?mode=guided&phase=${phaseId}&review=true`);
+250:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:127:      router.push(`/setup/${phaseId.toLowerCase()}?review=true`);
+251:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:178:                  onPress={() => router.push("/setup/ai")}
+252:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:301:                    onPress={() => router.push("/setup/ai")}
+253:apps/web/src/app/(dashboard)/setup/setup-dashboard.tsx:309:                    href="/docs/setup"
+254:apps/web/src/app/(dashboard)/dashboard/content/published/page.tsx:199:                        href={item.publishedUrl}
+255:apps/web/src/app/(dashboard)/setup/voice/page.tsx:114:              href="/dashboard/voice"
+256:apps/web/src/app/(dashboard)/setup/voice/page.tsx:121:              href="/dashboard"
+257:apps/web/src/app/(dashboard)/setup/ai-social/page.tsx:138:              href="/dashboard/social"

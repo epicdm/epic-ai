@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useDemo } from "@/lib/demo";
 import { DemoIndicator } from "@/components/demo";
+import { getPublicHref } from "@/lib/routes/public";
 import {
   Menu,
   X,
@@ -375,7 +376,7 @@ export function MobileNav() {
         {/* Help & Support */}
         <div className="flex-shrink-0 px-3 pb-4 space-y-2">
           <Link
-            href="/help"
+            href={getPublicHref("/help")}
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
           >
