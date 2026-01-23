@@ -3,7 +3,7 @@
  * Main command center with unified dashboard
  */
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "@/app/(dashboard)/dashboard/dashboard-content";
 
@@ -32,11 +32,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     redirect("/sign-in");
   }
 
+  // Fetch user details for personalization
+  const user = await currentUser();
+  const userName = user?.firstName || "there";
+
   // Note: Onboarding gate is now handled at the layout level
   // If user reaches this page, they have completed onboarding
 
   // Check if flywheel was just activated
   const flywheelJustActivated = params.flywheel === "activated";
 
-  return <DashboardContent flywheelJustActivated={flywheelJustActivated} />;
+  return <DashboardContent flywheelJustActivated={flywheelJustActivated} userName={userName} />;
 }
