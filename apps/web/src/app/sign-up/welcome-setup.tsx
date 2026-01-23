@@ -28,19 +28,19 @@ export default function WelcomeSetupScreen({
 }: WelcomeSetupScreenProps) {
   return (
     <div className="min-h-screen bg-[linear-gradient(132deg,_#faf5ff_0%,_#eff6ff_100%)] text-slate-900">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 pb-14 pt-16 text-white">
+      <div className="bg-gradient-to-r from-[#9810fa] to-[#155dfc] px-6 pb-14 pt-12 text-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
-            <Sparkles className="h-8 w-8" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+            <Sparkles className="h-10 w-10" />
           </div>
           <h1 className="mt-6 text-4xl font-semibold sm:text-5xl">
             Welcome to Epic AI, {name}! 🎉
           </h1>
-          <p className="mt-3 text-lg text-purple-100">
+          <p className="mt-4 text-xl text-purple-100">
             You just experienced the future of sales automation.
           </p>
-          <p className="mt-1 text-base text-purple-200">
-            Now let's build your own AI sales agent in the next 60 seconds.
+          <p className="mt-2 text-lg text-purple-200/80">
+            Now let&apos;s build your own AI sales agent in the next 60 seconds.
           </p>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function WelcomeSetupScreen({
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <Link
             href={getPublicHref("/sign-up/welcome/clone")}
-            className="group relative rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-[0_20px_40px_-20px_rgba(15,23,42,0.2)] transition hover:-translate-y-1"
+            className="group relative rounded-2xl border-4 border-[#ad46ff] bg-[#faf5ff] p-6 shadow-[0_20px_40px_-20px_rgba(168,85,247,0.4)] transition hover:-translate-y-1"
           >
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow">
               ⚡ RECOMMENDED
@@ -236,19 +236,22 @@ export default function WelcomeSetupScreen({
           </Link>
         </div>
 
-        {cta ? (
-          <div className="mt-8 rounded-2xl bg-white p-8 text-center shadow-[0_20px_40px_-20px_rgba(15,23,42,0.2)]">
-            <h3 className="text-2xl font-semibold text-slate-900">{cta.title}</h3>
-            <p className="mt-3 text-sm text-slate-600">{cta.description}</p>
-            <Link
-              href={cta.buttonHref}
-              className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,_#ad46ff_0%,_#155dfc_100%)] px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-18px_rgba(79,70,229,0.8)]"
-            >
-              {cta.buttonLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : null}
+        <div className="mt-8 rounded-2xl bg-white p-8 text-center shadow-[0_20px_40px_-20px_rgba(15,23,42,0.2)]">
+          <h3 className="text-2xl font-semibold text-slate-900">
+            {cta?.title || "Perfect! Let's clone Sarah for your business"}
+          </h3>
+          <p className="mt-3 text-sm text-slate-600">
+            {cta?.description ||
+              "Get Sarah's exact qualification workflow running for your company in under 60 seconds."}
+          </p>
+          <Link
+            href={cta?.buttonHref || getPublicHref("/sign-up/welcome/clone")}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,_#ad46ff_0%,_#155dfc_100%)] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_-18px_rgba(79,70,229,0.8)] transition hover:shadow-[0_16px_40px_-12px_rgba(79,70,229,0.6)]"
+          >
+            {cta?.buttonLabel || "Clone Sarah Now"}
+            <ArrowRight className="h-5 w-5" />
+          </Link>
+        </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
           <span className="inline-flex items-center gap-2">
