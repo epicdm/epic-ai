@@ -24,3 +24,6 @@ export { tokenRefresherProcessor } from './token-refresher';
 export { documentProcessor } from './document-processor';
 export { contentPublisherProcessor } from './content-publisher';
 export { imageGeneratorProcessor } from './image-generator';
+
+// Agent OS processors
+export * from './agent-os';

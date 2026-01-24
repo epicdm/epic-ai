@@ -12,6 +12,9 @@ import { redis } from '../lib/redis';
 import { QueueName, JobType, JobTypeToQueue } from '../types/payloads';
 import { defaultJobOptions, getJobOptionsForType } from './options';
 
+// Agent OS queue registration
+import './agent-os';
+
 /**
  * Content Generation Queue
  *
