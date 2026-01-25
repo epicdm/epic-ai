@@ -285,6 +285,7 @@ export function NextStepPanel({ agentId, onDidAction }: Props) {
   });
 
   const [busyActionId, setBusyActionId] = React.useState<string | null>(null);
+  const [autoFillBusy, setAutoFillBusy] = React.useState(false);
 
   const form = useForm<Record<string, unknown>>({ defaultValues: {} });
   const { register, handleSubmit, setValue, watch, reset } = form;
@@ -341,6 +342,36 @@ export function NextStepPanel({ agentId, onDidAction }: Props) {
       alert(message);
     } finally {
       setBusyActionId(null);
+    }
+  }
+
+  // Auto-fill current step
+  async function doAutoFill() {
+    setAutoFillBusy(true);
+    try {
+      const res = await fetch(`/api/agent-os/agents/${agentId}/auto-fill-next-step`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxSeconds: 12 }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Auto-fill failed (${res.status}): ${text || "Unknown error"}`);
+      }
+
+      await load();
+
+      if (onDidAction) {
+        await onDidAction();
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Auto-fill failed";
+      console.error("Auto-fill failed:", e);
+      // TODO: Replace with toast notification
+      alert(message);
+    } finally {
+      setAutoFillBusy(false);
     }
   }
 
@@ -486,9 +517,19 @@ export function NextStepPanel({ agentId, onDidAction }: Props) {
             ))}
           </div>
           {data.ui.show_autofill && (
-            <div className="text-xs text-gray-500">
-              Tip: Auto-fill is safe — it stops when user input is required.
-            </div>
+            <>
+              <button
+                className="rounded border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-700 disabled:opacity-50 hover:bg-blue-100"
+                disabled={!!busyActionId || autoFillBusy}
+                onClick={() => void doAutoFill()}
+                title="Auto-fill this module with sensible defaults"
+              >
+                {autoFillBusy ? "Auto-filling…" : "Auto-fill Module"}
+              </button>
+              <div className="text-xs text-gray-500">
+                Tip: Auto-fill is safe — it stops when user input is required.
+              </div>
+            </>
           )}
         </div>
       )}
