@@ -70,44 +70,30 @@ export async function runAgentTurn(input: AgentTurnInput): Promise<AgentTurnResu
 
     // 5. Make brain decision
     const decision = await brainDecide({
-      brainConfig: agent.brain_config,
-      userInput: input.userInput,
+      agent,
       context,
-      flowState: currentFlowState,
-      availableTools: getAvailableTools(agent.tool_config),
+      sessionId: input.sessionId,
+      previousMessage: input.messages?.[input.messages.length - 1]?.message,
     });
 
-    // 6. Retrieve relevant knowledge
-    const knowledge = await retrieveKnowledge({
-      knowledgeConfig: agent.knowledge_config,
-      userInput: input.userInput,
-      context,
-    });
+    // 6. Check if escalation requested
+    const flowState = decision.result?.escalate
+      ? { ...currentFlowState, shouldEscalate: true }
+      : currentFlowState;
 
-    // 7. Update flow state
-    const flowState = updateFlow({
-      flowConfig: agent.flow_config,
-      decision,
-      context,
-      currentFlowState,
-    });
-
-    // 7a. Check if current node is a handoff node - if so, execute it and return
-    const currentNode = agent.flow_config.nodes.find(
-      (n) => n.id === flowState.currentNode
-    );
-
-    if (currentNode?.type === "handoff") {
-      // Extract handoff configuration from node
-      const handoffConfig = (currentNode as any).config ?? {};
-      const handoffNode = {
-        id: currentNode.id,
-        type: "handoff" as const,
-        target: handoffConfig.target || {
-          context: process.env.HANDOFF_DEFAULT_TARGET || "sales_queue",
-          exten: "1",
-          priority: 1,
-        },
+    if (flowState.shouldEscalate && decision.result?.handoff) {
+      // Escalation path: prepare handoff
+      const handoffConfig = decision.result.handoff;
+      const handoffNode: HandoffNode = {
+        id: handoffConfig.handoff_target_id || "auto-escalate",
+        type: "handoff",
+        target: handoffConfig.explicit_target
+          ? {
+              context: handoffConfig.explicit_target.context,
+              exten: handoffConfig.explicit_target.exten || "1",
+              priority: handoffConfig.explicit_target.priority || 1,
+            }
+          : undefined,
         message: handoffConfig.message,
         reason: decision.reasoning || "Escalation requested",
       };
@@ -120,6 +106,7 @@ export async function runAgentTurn(input: AgentTurnInput): Promise<AgentTurnResu
           agentId: input.agentId,
         },
         writeSessionEvent,
+        governance: agent.governance_config,
       });
 
       // Return escalation result - handoff has already executed
@@ -145,84 +132,6 @@ export async function runAgentTurn(input: AgentTurnInput): Promise<AgentTurnResu
       context,
       knowledge,
       flowState,
-      toolResult,
-      decision,
-      userInput: input.userInput,
-    });
-
-    // 10. Apply token limits
-    // Max tokens is determined by the retrieval settings context window or a default
-    const maxTokens = agent.knowledge_config?.context_window?.max_knowledge_tokens ?? 8000;
-    const limitedPrompt = truncatePromptIfNeeded(prompt, maxTokens);
-
-    // 11. Call LLM
-    const llmResponse = await callLLM(limitedPrompt, {
-      timeout: 30000, // Default timeout
-      maxRetries: 3,
-    });
-
-    // 12. Apply personality to response
-    const personalizedResponse = applyPersonality({
-      personalityConfig: agent.personality_config,
-      rawContent: llmResponse.content,
-      context: {
-        isFirstTurn: context.turnNumber === 0,
-        isClosing: flowState.isExit || decision.action === "end",
-      },
-    });
-
-    // 13. Format for channel
-    const channelMaxLength = getChannelMaxLength(input.channel);
-    const finalResponse = formatForChannel(
-      personalizedResponse,
-      input.channel,
-      channelMaxLength
-    );
-
-    // 14. Save memory
-    await saveMemory({
-      memoryConfig: agent.memory_config,
-      sessionId: input.sessionId,
-      agentId: input.agentId,
-      userInput: input.userInput,
-      agentResponse: finalResponse,
-      entities: context.entities,
-      turnNumber: context.turnNumber,
-    });
-
-    // 15. Record learning signals
-    const responseTimeMs = Date.now() - startTime;
-    await recordLearning({
-      learningConfig: agent.learning_config,
-      agentId: input.agentId,
-      sessionId: input.sessionId,
-      decision,
-      toolResult,
-      flowState,
-      userInput: input.userInput,
-      agentResponse: finalResponse,
-      responseTimeMs,
-    });
-
-    // 16. Track economics
-    await trackTurnEconomics(agent, llmResponse, responseTimeMs);
-
-    // 17. Build result
-    return buildSuccessResult({
-      response: finalResponse,
-      decision,
-      flowState,
-      knowledge,
-      toolResult,
-      llmResponse,
-      prompt: limitedPrompt,
-      startTime,
-    });
-
-  } catch (error) {
-    return buildErrorResult(error, Date.now() - startTime);
-  }
-}
 
 // ============================================================================
 // Config Loading
