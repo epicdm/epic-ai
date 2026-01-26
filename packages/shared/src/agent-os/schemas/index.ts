@@ -315,6 +315,26 @@ export const ContentModerationSchema = z.object({
   action: z.enum(["block", "warn", "log"]).default("block"),
 });
 
+export const HandoffTargetSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1).max(80),
+  description: z.string().max(200).optional(),
+  // Asterisk dialplan jump target
+  context: z.string().min(1),
+  exten: z.string().min(1).default("1"),
+  priority: z.number().int().min(1).default(1),
+  // Optional routing metadata (future)
+  enabled: z.boolean().default(true),
+  tags: z.array(z.string()).default([]),
+});
+
+export const HandoffConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  default_handoff_target_id: z.string().min(1).optional(),
+  handoff_targets: z.array(HandoffTargetSchema).default([]),
+});
+
+export const
 export const GovernanceConfigSchema = z.object({
   /**
    * Template key persisted in governance_config.
@@ -327,7 +347,9 @@ export const GovernanceConfigSchema = z.object({
   escalation_paths: z.array(EscalationPathSchema).default([]),
   pii_handling: PIIHandlingSchema.default({}),
   content_moderation: ContentModerationSchema.default({}),
-});
+  // Handoff configuration for call transfers to human agents
+  handoff: HandoffConfigSchema.default({}),
+});;
 
 // ============================================
 // ECONOMICS CONFIG SCHEMA
@@ -524,52 +546,17 @@ export const CreateSimulationRequestSchema = z.object({
 // RESPONSE ENVELOPE SCHEMAS
 // ============================================
 
-/**
- * Gap item schema - identifies missing or incomplete configuration
- */
-export const GapItemSchema = z.object({
-  gap_type: z.enum([
-    "missing_required",
-    "missing_recommended",
-    "missing_config",
-    "missing_data",
-    "missing_profile",
-    "missing_pricing",
-    "missing_hours",
-    "missing_service_area",
-    "missing_contact",
-    "incomplete",
-    "invalid",
-    "missing_context",
-    "no_compliance",
-    "no_knowledge",
-    "no_tools",
-    "no_learning",
-    "no_escalation",
-  ]),
-  field_path: z.string().min(1),
-  severity: z.enum(["low", "medium", "high"]),
-  impact: z.string().min(1),
-  recommended_fix: z.string().min(1),
-  question_to_user: z.string().optional(),
-  suggestions: z.array(z.string()).optional(),
-});;
+// Import and re-export common schemas (extracted to avoid circular imports)
+import {
+  GapItemSchema as _GapItemSchema,
+  WarningItemSchema as _WarningItemSchema,
+  ConfidenceMapSchema as _ConfidenceMapSchema,
+} from "./common";
 
-/**
- * Warning item schema - non-blocking issues or suggestions
- */
-export const WarningItemSchema = z.object({
-  code: z.string().min(1),
-  message: z.string().min(1),
-  severity: z.enum(["info", "warning", "error"]),
-  field_path: z.string().optional(),
-  suggestion: z.string().optional(),
-});
-
-/**
- * Confidence map schema - confidence scores for configuration sections
- */
-export const ConfidenceMapSchema = z.record(z.string(), z.number().min(0).max(1));
+// Re-export for consumers
+export const GapItemSchema = _GapItemSchema;
+export const WarningItemSchema = _WarningItemSchema;
+export const ConfidenceMapSchema = _ConfidenceMapSchema;
 
 /**
  * API error schema
@@ -1083,3 +1070,9 @@ export * from "./next-step";
 // ============================================
 
 export * from "./auto-fill-next-step";
+
+// ============================================
+// QUESTION FORMAT V1 SCHEMAS
+// ============================================
+
+export * from "./questions";
