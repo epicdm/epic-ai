@@ -63,7 +63,7 @@ services:
       CLERK_SECRET_KEY: sk_test_LV2QYhp1Uj3MIy8GRdkS7QfCxrOq18KPZPPIaaDIcr
 
       # App URLs
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3002
 
       # OpenAI (optional)
       OPENAI_API_KEY: sk_test_dummy
@@ -78,7 +78,7 @@ services:
       - /app/node_modules
       - /app/apps/web/.next
     ports:
-      - "3000:3000"
+      - "3002:3000"
     depends_on:
       postgres:
         condition: service_healthy
