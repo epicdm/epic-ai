@@ -30,6 +30,7 @@ import {
   EconomicsConfigSchemaStrict,
   FlowConfigSchemaStrict,
 } from '@epic-ai/shared';
+import { normalizeGapFieldPaths } from './normalizeGapFieldPaths';
 
 // ============================================================================
 // Types
@@ -406,12 +407,17 @@ export async function buildWizardSnapshotFromAgentId(
     return parsed.success ? parsed.data : w;
   });
 
+  // Normalize gap field_paths to be module-prefixed (makes Answer-to-PATCH reliable)
+  const { gaps: normalizedGaps, warnings: normWarnings } = normalizeGapFieldPaths(
+    validatedGaps as GapItem[]
+  );
+
   return {
     ok: true,
     data: snapParsed.success ? snapParsed.data : snapshot,
     confidence: validatedConfidence.success ? validatedConfidence.data : confidence,
-    gaps: validatedGaps as GapItem[],
-    warnings: validatedWarnings as WarningItem[],
+    gaps: normalizedGaps,
+    warnings: [...(validatedWarnings as WarningItem[]), ...normWarnings],
     agentId: agent.id,
     companyId: agent.companyProfileId,
     deploymentState: mapStatusToDeploymentState(agent.status),

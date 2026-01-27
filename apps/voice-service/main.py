@@ -26,8 +26,64 @@ CORS(app)
 from livekit_manager import livekit_manager
 from agent_creator import agent_creator
 
+# Import telephony routes (DTMF-first v1)
+try:
+    from routes.telephony_inbound import telephony_bp
+    TELEPHONY_ROUTES_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Telephony routes not available: {e}")
+    TELEPHONY_ROUTES_AVAILABLE = False
+    telephony_bp = None
+
+# Import route-to-agent adapter (v1 runtime adapter)
+try:
+    from routes.route_to_agent import route_to_agent_bp
+    ROUTE_TO_AGENT_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Route-to-agent adapter not available: {e}")
+    ROUTE_TO_AGENT_AVAILABLE = False
+    route_to_agent_bp = None
+
+# Import route-to-agent guard adapter (v1 guard-based)
+try:
+    from routes.route_to_agent_guard import route_to_agent_guard_bp
+    ROUTE_TO_AGENT_GUARD_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Route-to-agent guard adapter not available: {e}")
+    ROUTE_TO_AGENT_GUARD_AVAILABLE = False
+    route_to_agent_guard_bp = None
+
+# Import agent session runtime (v1 DTMF + TTS session loop)
+try:
+    from routes.agent_session import agent_session_bp
+    AGENT_SESSION_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Agent session runtime not available: {e}")
+    AGENT_SESSION_AVAILABLE = False
+    agent_session_bp = None
+
 # Register blueprints
 app.register_blueprint(livekit_manager)
+
+# Register telephony routes if available
+if TELEPHONY_ROUTES_AVAILABLE and telephony_bp:
+    app.register_blueprint(telephony_bp)
+    logger.info("Telephony inbound routes registered at /telephony/*")
+
+# Register route-to-agent adapter if available
+if ROUTE_TO_AGENT_AVAILABLE and route_to_agent_bp:
+    app.register_blueprint(route_to_agent_bp)
+    logger.info("Route-to-agent adapter registered at /telephony/route_to_agent, /telephony/continue")
+
+# Register route-to-agent guard adapter if available
+if ROUTE_TO_AGENT_GUARD_AVAILABLE and route_to_agent_guard_bp:
+    app.register_blueprint(route_to_agent_guard_bp)
+    logger.info("Route-to-agent guard adapter registered at /telephony/route_to_agent (guard-based)")
+
+# Register agent session runtime if available
+if AGENT_SESSION_AVAILABLE and agent_session_bp:
+    app.register_blueprint(agent_session_bp)
+    logger.info("Agent session runtime registered at /telephony/session/*")
 
 # ============================================
 # Health & Status Endpoints
@@ -2441,6 +2497,78 @@ def end_test_call(call_id):
         logger.error(f"Error ending test call {call_id}: {e}")
         return jsonify({
             "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ============================================
+# Transfer Tool Endpoint (AMI Redirect v1)
+# ============================================
+
+from ami_client import AsteriskAMI
+
+ami = AsteriskAMI()
+
+@app.route('/telephony/transfer', methods=['POST'])
+def transfer_call():
+    """
+    Redirect an Asterisk channel to a new dialplan location via AMI.
+
+    Request body:
+    {
+        "channel": "PJSIP/alice-00000001",
+        "context": "sales_queue",
+        "exten": "1",
+        "priority": 1,
+        "extra_channel": "PJSIP/bob-00000002"  // optional
+    }
+
+    Response:
+    {
+        "ok": true,
+        "data": {
+            "ok": bool,
+            "response": str,
+            "duration_ms": int
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+
+        channel = data.get('channel', '')
+        context = data.get('context', '')
+        exten = data.get('exten', '')
+        priority = data.get('priority', 1)
+        extra_channel = data.get('extra_channel')
+
+        if not channel or not context or not exten:
+            return jsonify({
+                "ok": False,
+                "error": "channel, context, and exten are required"
+            }), 400
+
+        result = ami.redirect(
+            channel=channel,
+            context=context,
+            exten=exten,
+            priority=priority,
+            extra_channel=extra_channel
+        )
+
+        if not result["ok"]:
+            return jsonify({
+                "ok": False,
+                "error": "AMI Redirect failed",
+                "details": result
+            }), 502
+
+        return jsonify({"ok": True, "data": result}), 200
+
+    except Exception as e:
+        logger.error(f"transfer_call error: {e}")
+        return jsonify({
+            "ok": False,
             "error": str(e)
         }), 500
 

@@ -1,0 +1,36 @@
+{
+  "selected_template": {
+    "agent_type": "appointment_setter",
+    "match_score": 92,
+    "match_level": "excellent",
+    "reasons": [
+      "B2C service business with in-home visits",
+      "High-ticket product requiring consultation",
+      "Local service area suggests appointment-based model"
+    ]
+  },
+  "alternatives": [
+    {
+      "agent_type": "sales_qualifier",
+      "match_score": 78,
+      "match_level": "good",
+      "reasons": ["Could qualify leads before handoff"]
+    },
+    {
+      "agent_type": "lead_capture",
+      "match_score": 65,
+      "match_level": "moderate",
+      "reasons": ["Basic lead collection"]
+    }
+  ],
+  "gaps": [],
+  "evidence": [
+    {
+      "field_path": "selected_template.agent_type",
+      "source": "template_recommendation_engine",
+      "reasoning": "Solar installation requires site visits, best handled by appointment setter",
+      "source_phase": "template"
+    }
+  ],
+  "confidence": 0.92
+}

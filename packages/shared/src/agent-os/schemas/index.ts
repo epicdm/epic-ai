@@ -328,13 +328,35 @@ export const HandoffTargetSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
+export const HandoffReasonRuleSchema = z.object({
+  reason: z.string().min(1),
+  target_id: z.string().min(1),
+  when: z
+    .object({
+      channel: z.array(z.enum(["VOICE", "CHAT", "SMS", "EMAIL"])).optional(),
+      tags_any: z.array(z.string()).optional(),
+      tags_all: z.array(z.string()).optional(),
+      min_severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+    })
+    .strict()
+    .optional(),
+  priority: z.number().int().min(0).max(100).default(50),
+  enabled: z.boolean().default(true),
+});
+
+export const HandoffPolicySchema = z.object({
+  enabled: z.boolean().default(true),
+  reason_rules: z.array(HandoffReasonRuleSchema).default([]),
+  fallback_target_id: z.string().min(1).optional(),
+});
+
 export const HandoffConfigSchema = z.object({
   enabled: z.boolean().default(true),
   default_handoff_target_id: z.string().min(1).optional(),
   handoff_targets: z.array(HandoffTargetSchema).default([]),
-});
+  policy: HandoffPolicySchema.default({}),
+});;
 
-export const
 export const GovernanceConfigSchema = z.object({
   /**
    * Template key persisted in governance_config.
@@ -349,7 +371,7 @@ export const GovernanceConfigSchema = z.object({
   content_moderation: ContentModerationSchema.default({}),
   // Handoff configuration for call transfers to human agents
   handoff: HandoffConfigSchema.default({}),
-});;
+});
 
 // ============================================
 // ECONOMICS CONFIG SCHEMA
@@ -421,7 +443,7 @@ export const FlowNodeSchema = z.object({
   instructions: z.string(),
   required_fields: z.array(z.string()).optional(),
   max_turns: z.number().int().positive().optional(),
-});
+}).passthrough(); // Allow node-type-specific fields (e.g., targetSource, escalationReason for HANDOFF)
 
 export const FlowEdgeConditionSchema = z.object({
   intent: z.string().optional(),

@@ -12,7 +12,7 @@
  */
 
 import { z } from "zod";
-import { GapItemSchema, WarningItemSchema, ConfidenceMapSchema } from "./index";
+import { GapItemSchema, WarningItemSchema, ConfidenceMapSchema } from "./common";
 
 // ============================================
 // WIZARD STEP KEY

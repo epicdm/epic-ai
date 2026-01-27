@@ -153,6 +153,13 @@ PREEMPTIVE_GENERATION = {features.get('preemptiveGeneration', True)}
 RESUME_FALSE_INTERRUPTION = {features.get('resumeFalseInterruption', True)}
 TRANSCRIPTION_ENABLED = {features.get('transcriptionEnabled', True)}
 
+# Runtime Integration
+# Set USE_RUNTIME_LLM=True to use Epic AI Agent Runtime instead of direct OpenAI
+USE_RUNTIME_LLM = os.getenv("USE_RUNTIME_LLM", "{str(features.get('useRuntime', False))}").lower() == "true"
+AGENT_ID = "{config.get('agentId', '')}"
+RUNTIME_API_URL = os.getenv("RUNTIME_API_URL", "http://localhost:3000/api/runtime/voice")
+VOICE_RUNTIME_API_KEY = os.getenv("VOICE_RUNTIME_API_KEY", "")
+
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 '''
@@ -232,6 +239,24 @@ from livekit.agents.voice import MetricsCollectedEvent
 from livekit.agents import metrics
 from livekit.plugins import {imports_str}{extra_imports}
 
+# Optional: Epic AI Runtime LLM for full agent capabilities
+try:
+    from runtime_llm import RuntimeLLM
+    RUNTIME_LLM_AVAILABLE = True
+except ImportError:
+    RUNTIME_LLM_AVAILABLE = False
+    RuntimeLLM = None
+
+# Optional: Inbound Call Guard for fail-closed safety
+try:
+    from inbound_guard import InboundCallGuard
+    from call_actions import play_tts_and_end_call
+    INBOUND_GUARD_AVAILABLE = True
+except ImportError:
+    INBOUND_GUARD_AVAILABLE = False
+    InboundCallGuard = None
+    play_tts_and_end_call = None
+
 from config import (
     AGENT_NAME,
     LLM_MODEL,
@@ -243,6 +268,10 @@ from config import (
     PREEMPTIVE_GENERATION,
     RESUME_FALSE_INTERRUPTION,
     TRANSCRIPTION_ENABLED,
+    USE_RUNTIME_LLM,
+    AGENT_ID,
+    RUNTIME_API_URL,
+    VOICE_RUNTIME_API_KEY,
 )
 
 logger = logging.getLogger(__name__)
@@ -267,6 +296,22 @@ class {class_name}(Agent):
         self.session.generate_reply()
 
 
+def create_llm_instance(room_name: str, caller_phone: str = None, caller_name: str = None):
+    """Create LLM instance - uses RuntimeLLM if enabled, otherwise OpenAI"""
+    if USE_RUNTIME_LLM and RUNTIME_LLM_AVAILABLE and AGENT_ID:
+        logger.info(f"Using RuntimeLLM for agent {{AGENT_ID}}")
+        return RuntimeLLM(
+            agent_id=AGENT_ID,
+            call_id=room_name,
+            caller_phone=caller_phone,
+            caller_name=caller_name,
+            runtime_url=RUNTIME_API_URL,
+            api_key=VOICE_RUNTIME_API_KEY,
+        )
+    logger.info(f"Using OpenAI LLM: {{LLM_MODEL}}")
+    return openai.LLM(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
+
+
 async def entrypoint(ctx: JobContext):
     """Main entrypoint for the agent worker"""
     ctx.log_context_fields = {{
@@ -277,10 +322,28 @@ async def entrypoint(ctx: JobContext):
     logger.info(f"Starting agent: {{AGENT_NAME}}")
     logger.info(f"Using TTS provider: {{TTS_PROVIDER}}")
 
+    # Wait for participant to extract caller info
+    await ctx.connect(auto_subscribe=True)
+    participant = await ctx.wait_for_participant()
+    caller_phone = participant.attributes.get("sip.callerNumber")
+    caller_name = participant.attributes.get("sip.callerName")
+    dialed_number = participant.attributes.get("sip.calledNumber")
+
+    # Inbound Call Guard - fail-closed safety gate
+    if INBOUND_GUARD_AVAILABLE and dialed_number:
+        guard = InboundCallGuard()
+        result = guard.check(dialed_number)
+        if not result.ok:
+            logger.warning(f"InboundGuard BLOCKED call to {{dialed_number}}: {{result.gaps}}")
+            fallback_text = guard.get_fallback_text(result)
+            await play_tts_and_end_call(ctx, fallback_text)
+            return
+        logger.info(f"InboundGuard ALLOWED call to {{dialed_number}} -> agent={{result.agent_id}}")
+
     # Create agent session with configured TTS provider
     session = AgentSession(
         vad=silero.VAD.load() if VAD_ENABLED else None,
-        llm=openai.LLM(model=LLM_MODEL, temperature=LLM_TEMPERATURE),
+        llm=create_llm_instance(ctx.room.name, caller_phone, caller_name),
         stt=deepgram.STT(model=STT_MODEL, language="multi"),
         tts={tts_init},
         preemptive_generation=PREEMPTIVE_GENERATION,

@@ -13,7 +13,7 @@ import { QueueName, JobType, JobTypeToQueue } from '../types/payloads';
 import { defaultJobOptions, getJobOptionsForType } from './options';
 
 // Agent OS queue registration
-import './agent-os';
+import { agentOsQueue } from './agent-os';
 
 /**
  * Content Generation Queue
@@ -58,6 +58,7 @@ export const queues: Record<QueueName, Queue> = {
   [QueueName.CONTENT_GENERATION]: contentGenerationQueue,
   [QueueName.CONTEXT_SCRAPING]: contextScrapingQueue,
   [QueueName.ANALYTICS_SYNC]: analyticsSyncQueue,
+  [QueueName.AGENT_OS]: agentOsQueue,
 };
 
 /**
@@ -117,6 +118,7 @@ export async function closeAllQueues(): Promise<void> {
     contentGenerationQueue.close(),
     contextScrapingQueue.close(),
     analyticsSyncQueue.close(),
+    agentOsQueue.close(),
   ]);
 }
 
@@ -173,3 +175,6 @@ async function getQueueHealth(queue: Queue) {
 }
 
 export { QueueName };
+
+// Callback Queue (separate from main queue system)
+export * from "./callback";

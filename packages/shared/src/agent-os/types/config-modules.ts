@@ -378,6 +378,37 @@ export interface HandoffTarget {
   tags: string[];
 }
 
+export interface HandoffReasonRule {
+  /** Escalation reason code (e.g., "billing_issue", "technical_issue") */
+  reason: string;
+  /** Target ID to route to when this reason matches */
+  target_id: string;
+  /** Optional matching constraints */
+  when?: {
+    /** Channel filter (VOICE, CHAT, SMS, EMAIL) */
+    channel?: ("VOICE" | "CHAT" | "SMS" | "EMAIL")[];
+    /** Handoff if target has ANY of these tags */
+    tags_any?: string[];
+    /** Handoff if target has ALL of these tags */
+    tags_all?: string[];
+    /** Minimum severity threshold (low, medium, high, critical) */
+    min_severity?: "low" | "medium" | "high" | "critical";
+  };
+  /** Priority 0-100 (higher = checked first) */
+  priority: number;
+  /** Whether this rule is active */
+  enabled: boolean;
+}
+
+export interface HandoffPolicy {
+  /** Whether policy-based routing is enabled */
+  enabled: boolean;
+  /** Reason → Target rules, checked by priority */
+  reason_rules: HandoffReasonRule[];
+  /** Fallback target if no rule matches */
+  fallback_target_id?: string;
+}
+
 export interface HandoffConfig {
   /** Whether handoff is enabled */
   enabled: boolean;
@@ -385,6 +416,8 @@ export interface HandoffConfig {
   default_handoff_target_id?: string;
   /** Available handoff targets */
   handoff_targets: HandoffTarget[];
+  /** Policy-based reason → target routing */
+  policy?: HandoffPolicy;
 }
 
 export interface GovernanceConfig {

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shopify Store Setup - Onboarding Form</title>
+<style>
+  :root {
+    --coral: #ff6f91; /* coral/pink */
+    --dark-blue: #0d3b66; /* dark blue */
+    --light-bg: #f8f9fa;
+    --text-color: #333;
+  }
+  body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: var(--light-bg);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    display: flex;
+    height: 8px;
+    background: #e0e0e0;
+  }
+  .progress-step {
+    flex: 1;
+    background: var(--dark-blue);
+    transition: width 0.3s ease;
+  }
+  .form-step {
+    display: none;
+    padding: 1.5rem;
+  }
+  .form-step.active {
+    display: block;
+  }
+  h2 {
+    margin-top: 0;
+    color: var(--dark-blue);
+    font-size: 1.25rem;
+  }
+  label {
+    display: block;
+    margin-top: 0.75rem;
+    font-weight: 600;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.25rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .checkbox-group, .radio-group {
+    margin-top: 0.5rem;
+  }
+  .checkbox-group label,
+  .radio-group label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+  .checkbox-group input,
+  .radio-group input {
+    margin-right: 0.5rem;
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+  }
+  button {
+    background: var(--coral);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover {
+    background: var(--dark-blue);
+  }
+  .success-screen {
+    text-align: center;
+    padding: 2rem;
+  }
+  @media (max-width: 480px) {
+    .buttons {
+      flex-direction: column;
+    }
+    .buttons button {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="progress-bar">
+    <div class="progress-step" id="progress" style="width: 20%;"></div>
+  </div>
+  <form id="onboardingForm">
+    <!-- Step 1 -->
+    <div class="form-step active" data-step="1">
+      <h2>Step 1 - Your Info</h2>
+      <label for="name">Name *</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="email">Email *</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="phone">Phone/WhatsApp</label>
+      <input type="tel" id="phone" name="phone" />
+    </div>
+    <!-- Step 2 -->
+    <div class="form-step" data-step="2">
+      <h2>Step 2 - Your Brand</h2>
+      <label for="storeName">Store name *</label>
+      <input type="text" id="storeName" name="storeName" required />
+
+      <label for="tagline">Tagline</label>
+      <input type="text" id="tagline" name="tagline" />
+
+      <label for="brandColors">Brand colors</label>
+      <input type="text" id="brandColors" name="brandColors" placeholder="e.g., #ff6f91, #0d3b66" />
+
+      <div class="radio-group">
+        <span>Do you have a logo?</span>
+        <label><input type="radio" name="hasLogo" value="yes" required /> Yes</label>
+        <label><input type="radio" name="hasLogo" value="no" /> No</label>
+      </div>
+    </div>
+    <!-- Step 3 -->
+    <div class="form-step" data-step="3">
+      <h2>Step 3 - Products</h2>
+      <label for="productCount">How many products?</label>
+      <input type="number" id="productCount" name="productCount" min="0" />
+
+      <div class="checkbox-group">
+        <span>Categories</span>
+        <label><input type="checkbox" name="categories" value="Wigs" /> Wigs</label>
+        <label><input type="checkbox" name="categories" value="Extensions" /> Extensions</label>
+        <label><input type="checkbox" name="categories" value="Bundles" /> Bundles</label>
+        <label><input type="checkbox" name="categories" value="Hair Care" /> Hair Care</label>
+        <label><input type="checkbox" name="categories" value="Accessories" /> Accessories</label>
+        <label><input type="checkbox" name="categories" value="Tools" /> Tools</label>
+      </div>
+
+      <div class="radio-group">
+        <span>How will you send product info?</span>
+        <label><input type="radio" name="productInfoMethod" value="Spreadsheet" required /> Spreadsheet</label>
+        <label><input type="radio" name="productInfoMethod" value="Google Drive" /> Google Drive</label>
+        <label><input type="radio" name="productInfoMethod" value="WhatsApp" /> WhatsApp</label>
+      </div>
+    </div>
+    <!-- Step 4 -->
+    <div class="form-step" data-step="4">
+      <h2>Step 4 - Shipping & Payments</h2>
+      <div class="radio-group">
+        <span>Shipping type</span>
+        <label><input type="radio" name="shippingType" value="Flat rate" required /> Flat rate</label>
+        <label><input type="radio" name="shippingType" value="Free over $X" /> Free over $X</label>
+        <label><input type="radio" name="shippingType" value="Free all orders" /> Free all orders</label>
+      </div>
+
+      <label for="shippingAmount">Shipping amount</label>
+      <input type="text" id="shippingAmount" name="shippingAmount" placeholder="e.g., $5 or $0" />
+
+      <label for="stripeEmail">Stripe email</label>
+      <input type="email" id="stripeEmail" name="stripeEmail" />
+
+      <label for="domainName">Domain name</label>
+      <input type="text" id="domainName" name="domainName" placeholder="yourstore.com" />
+    </div>
+    <!-- Step 5 -->
+    <div class="form-step" data-step="5">
+      <h2>Step 5 - Final Details</h2>
+      <label for="instagram">Instagram handle</label>
+      <input type="text" id="instagram" name="instagram" placeholder="@yourbrand" />
+
+      <label for="supportEmail">Support email</label>
+      <input type="email" id="supportEmail" name="supportEmail" />
+
+      <div class="checkbox-group">
+        <span>Pages wanted</span>
+        <label><input type="checkbox" name="pages" value="Home" /> Home</label>
+        <label><input type="checkbox" name="pages" value="Shop" /> Shop</label>
+        <label><input type="checkbox" name="pages" value="About" /> About</label>
+        <label><input type="checkbox" name="pages" value="Contact" /> Contact</label>
+        <label><input type="checkbox" name="pages" value="FAQ" /> FAQ</label>
+        <label><input type="checkbox" name="pages" value="Policies" /> Policies</label>
+      </div>
+
+      <label for="extra">Anything else?</label>
+      <textarea id="extra" name="extra"></textarea>
+    </div>
+    <!-- Navigation Buttons -->
+    <div class="buttons">
+      <button type="button" id="prevBtn" style="display:none;">Previous</button>
+      <button type="button" id="nextBtn">Next</button>
+    </div>
+  </form>
+  <!-- Success Screen (hidden initially) -->
+  <div class="success-screen" id="successScreen" style="display:none;">
+    <h2>✅ Success!</h2>
+    <p>Thank you for completing the onboarding form.</p>
+    <p>Please remember to send us your logo and product photos.</p>
+  </div>
+</div>
+<script>
+  const form = document.getElementById('onboardingForm');
+  const steps = Array.from(document.querySelectorAll('.form-step'));
+  const progress = document.getElementById('progress');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const successScreen = document.getElementById('successScreen');
+  let currentStep = 0;
+
+  function updateStep() {
+    steps.forEach((step, idx) => {
+      step.classList.toggle('active', idx === currentStep);
+    });
+    const progressPercent = ((currentStep) / (steps.length - 1)) * 100;
+    progress.style.width = progressPercent + '%';
+    prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-block';
+    nextBtn.textContent = currentStep === steps.length - 1 ? 'Submit' : 'Next';
+  }
+
+  function validateStep() {
+    const activeStep = steps[currentStep];
+    const inputs = Array.from(activeStep.querySelectorAll('input, textarea'));
+    for (const input of inputs) {
+      if (input.required && !input.value) {
+        input.reportValidity();
+        return false;
+      }
+      // For radio groups, ensure one is checked if required
+      if (input.type === 'radio' && input.required) {
+        const name = input.name;
+        const radios = activeStep.querySelectorAll(`input[name="${name}"]`);
+        const anyChecked = Array.from(radios).some(r => r.checked);
+        if (!anyChecked) {
+          radios[0].reportValidity();
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (!validateStep()) return;
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      updateStep();
+    } else {
+      // Submit
+      form.style.display = 'none';
+      successScreen.style.display = 'block';
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateStep();
+    }
+  });
+
+  // Initial render
+  updateStep();
+</script>
+</body>
+</html>

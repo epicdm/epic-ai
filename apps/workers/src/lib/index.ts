@@ -369,3 +369,81 @@ export {
   type NextStepExplainErrorResult,
   type BuildNextStepExplainResult,
 } from './next-step';
+
+// Gap Field Path Normalization v1
+export {
+  normalizeFieldPath,
+  normalizeGapFieldPaths,
+  type GapItem as NormalizeGapItem,
+  type WarningItem as NormalizeWarningItem,
+  type NormalizeResult,
+} from './normalizeGapFieldPaths';
+
+// Question Factory v1 (gap -> WizardQuestion)
+export {
+  createQuestionV1,
+  createTextQuestion,
+  createTextareaQuestion,
+  createNumberQuestion,
+  createToggleQuestion,
+  createSelectQuestion,
+  createMultiSelectQuestion,
+  createRadioQuestion,
+  gapToQuestion,
+  gapsToQuestions,
+  type CreateQuestionInput,
+  type GapToQuestionInput,
+} from './questions';
+
+// Auto-Fill Orchestrator v1
+export {
+  planAutoFillNextStepV1,
+  type AutoFillPlanResult,
+} from './auto-fill';
+
+// Flow Gap Detector v1
+export {
+  detectFlowGapsV1,
+  type FlowGapResult,
+} from './flow';
+
+// Tools Engine v1 - Sales Qualifier (specialized)
+export {
+  // Registry
+  SALES_QUALIFIER_TOOLS_V1,
+  toolKeyForStatus,
+  getToolRequirement,
+  getRequiredToolIds as getSalesQualifierRequiredToolIds,
+  getAllToolIds as getSalesQualifierAllToolIds,
+  // Engine
+  toolsEngineSalesQualifierV1,
+  buildSalesQualifierToolConfigV1,
+  checkIntegrationStatus,
+  // Types
+  type ToolId as SalesQualifierToolId,
+  type ToolChannel,
+  type ToolRequirement,
+  type ToolsEngineResult as SalesQualifierToolsEngineResult,
+  type ToolsEngineParams as SalesQualifierToolsEngineParams,
+  type IntegrationStatus,
+} from './tools';
+
+// Launch Eligibility Engine v1
+export {
+  // Functions
+  evaluateAgentReadinessV1,
+  canLaunchAgentV1,
+  isForceBypassable,
+  getNonBypassableBlockers,
+  // Schemas
+  LaunchRequestSchema,
+  // Types
+  type LaunchTarget,
+  type ReadinessState,
+  type LaunchBlockerCode,
+  type LaunchBlocker,
+  type GapItem as LaunchGapItem,
+  type ReadinessEvaluation,
+  type LaunchEligibilityResult,
+  type LaunchRequest,
+} from './launch';

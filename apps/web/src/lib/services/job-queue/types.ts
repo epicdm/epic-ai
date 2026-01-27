@@ -27,6 +27,7 @@ export const JobType = {
   PUBLISH_CONTENT: 'PUBLISH_CONTENT',
   SYNC_ANALYTICS: 'SYNC_ANALYTICS',
   REFRESH_TOKEN: 'REFRESH_TOKEN',
+  ASSEMBLE_AGENT: 'ASSEMBLE_AGENT',
 } as const;
 
 export type JobType = (typeof JobType)[keyof typeof JobType];
@@ -65,6 +66,7 @@ export const QueueName = {
   CONTENT_GENERATION: 'content-generation',
   CONTEXT_SCRAPING: 'context-scraping',
   ANALYTICS_SYNC: 'analytics-sync',
+  AGENT_OS: 'agent-os',
 } as const;
 
 export type QueueName = (typeof QueueName)[keyof typeof QueueName];
@@ -81,6 +83,7 @@ export const JobTypeToQueue: Record<JobType, QueueName> = {
   [JobType.SYNC_ANALYTICS]: QueueName.ANALYTICS_SYNC,
   [JobType.PUBLISH_CONTENT]: QueueName.CONTENT_GENERATION,
   [JobType.REFRESH_TOKEN]: QueueName.ANALYTICS_SYNC,
+  [JobType.ASSEMBLE_AGENT]: QueueName.AGENT_OS,
 };
 
 // =============================================================================
@@ -148,6 +151,19 @@ export const ContentPublishingPayloadSchema = z.object({
   scheduledFor: z.string().datetime().optional(),
 });
 
+export const AssembleAgentPayloadSchema = z.object({
+  organizationId: z.string().cuid(),
+  agentId: z.string().cuid().optional(),
+  companyId: z.string().cuid().optional(),
+  websiteUrl: z.string().url().optional(),
+  userAnswers: z.record(z.unknown()).optional(),
+  desiredTemplateKey: z.string().optional(),
+  channels: z.array(z.enum(['VOICE', 'CHAT', 'SMS', 'EMAIL'])),
+  force: z.boolean().optional(),
+  name: z.string().optional(),
+  slug: z.string().optional(),
+});
+
 /**
  * Map of job types to their payload validation schemas
  */
@@ -160,6 +176,7 @@ export const PayloadSchemaMap: Record<JobType, z.ZodSchema> = {
   [JobType.PROCESS_DOCUMENT]: DocumentProcessingPayloadSchema,
   [JobType.GENERATE_IMAGE]: ImageGenerationPayloadSchema,
   [JobType.PUBLISH_CONTENT]: ContentPublishingPayloadSchema,
+  [JobType.ASSEMBLE_AGENT]: AssembleAgentPayloadSchema,
 };
 
 // =============================================================================
@@ -176,6 +193,7 @@ export const CreateJobRequestSchema = z.object({
     'PUBLISH_CONTENT',
     'SYNC_ANALYTICS',
     'REFRESH_TOKEN',
+    'ASSEMBLE_AGENT',
   ]),
   brandId: z.string().cuid().optional(),
   payload: z.record(z.unknown()),

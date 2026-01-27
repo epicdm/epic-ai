@@ -1,0 +1,48 @@
+{
+  "id": "test-company-solar-123",
+  "organizationId": "test-org-123",
+  "name": "SunBright Solar",
+  "website": "https://sunbrightsolar.example.com",
+  "industry": "solar",
+  "companySize": "smb",
+  "mission": "Making clean energy accessible to every homeowner",
+  "values": ["sustainability", "customer-first", "innovation"],
+  "description": "Residential solar panel installation and maintenance services",
+  "services": [
+    {
+      "name": "Solar Panel Installation",
+      "description": "Full residential solar installation service",
+      "category": "installation"
+    },
+    {
+      "name": "System Maintenance",
+      "description": "Annual maintenance and cleaning",
+      "category": "maintenance"
+    },
+    {
+      "name": "Battery Storage",
+      "description": "Home battery backup solutions",
+      "category": "storage"
+    }
+  ],
+  "products": [],
+  "contact": {
+    "email": "info@sunbrightsolar.example.com",
+    "phone": "(555) 123-4567"
+  },
+  "hoursOfOperation": null,
+  "serviceArea": "Phoenix Metro Area, AZ",
+  "pricing": null,
+  "targetAudience": "Homeowners looking to reduce energy costs",
+  "uniqueSellingPoints": [
+    "25-year warranty",
+    "Local team",
+    "Free consultation"
+  ],
+  "socialLinks": {
+    "facebook": "https://facebook.com/sunbrightsolar",
+    "instagram": "https://instagram.com/sunbrightsolar"
+  },
+  "createdAt": "2024-01-15T10:00:00Z",
+  "updatedAt": "2024-01-15T10:00:00Z"
+}

@@ -1,0 +1,256 @@
+{
+  "name": "Sales Qualifier v1 (DTMF)",
+  "description": "DTMF-driven sales qualification flow with Magnus CRM integration",
+  "version": "1.0.0",
+  "template": "sales_qualifier",
+  "start_node": "boot",
+  "nodes": {
+    "boot": {
+      "type": "tool",
+      "tool_key": "magnus.lookupCustomer",
+      "input": {
+        "phone": "{{session.caller | digits}}"
+      },
+      "save_output_as": "tool.magnus.customer",
+      "on_success": "welcome",
+      "on_error": "welcome"
+    },
+    "welcome": {
+      "type": "prompt",
+      "text": "Hi {{tool.magnus.customer.customer.name | default:\"there\"}}. Thanks for calling. Press 1 for Sales, 2 for Support.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "sales_intro",
+        "2": "support_redirect",
+        "timeout": "fallback"
+      }
+    },
+    "support_redirect": {
+      "type": "prompt",
+      "text": "Support is not fully enabled yet. Please press 1 to leave a message, or press 2 to return to Sales.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "support_record",
+        "2": "sales_intro",
+        "timeout": "fallback"
+      }
+    },
+    "support_record": {
+      "type": "record",
+      "text": "Please leave your message after the tone. Press pound when finished.",
+      "maxSeconds": 60,
+      "next": "log_call_support"
+    },
+    "sales_intro": {
+      "type": "prompt",
+      "save_dtmf_as": "q_intent",
+      "text": "Great. I'll ask three quick questions. First: are you looking to buy now? Press 1 for Yes, 2 for Just researching.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "q_budget",
+        "2": "q_budget",
+        "timeout": "fallback"
+      }
+    },
+    "q_budget": {
+      "type": "prompt",
+      "save_dtmf_as": "q_budget",
+      "text": "What budget range fits best? Press 1 under 500, 2 for 500 to 2000, 3 for over 2000.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "q_timeframe",
+        "2": "q_timeframe",
+        "3": "q_timeframe",
+        "timeout": "fallback"
+      }
+    },
+    "q_timeframe": {
+      "type": "prompt",
+      "save_dtmf_as": "q_timeframe",
+      "text": "How soon do you need this? Press 1 within 7 days, 2 within 30 days, 3 more than 30 days.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "q_location",
+        "2": "q_location",
+        "3": "q_location",
+        "timeout": "fallback"
+      }
+    },
+    "q_location": {
+      "type": "prompt",
+      "save_dtmf_as": "q_area",
+      "text": "Are you located in our service area? Press 1 for Yes, 2 for No, 3 for Not sure.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "qualify_decision",
+        "2": "qualify_decision",
+        "3": "qualify_decision",
+        "timeout": "fallback"
+      }
+    },
+    "qualify_decision": {
+      "type": "prompt",
+      "text": "Thanks. Choose a callback window. Press 1 for ASAP in 15 minutes. 2 for later today. 3 for tomorrow morning. 4 for tomorrow afternoon.",
+      "collect": "dtmf",
+      "save_dtmf_as": "callback_choice",
+      "timeout": 8,
+      "transitions": {
+        "1": "set_callback_asap",
+        "2": "set_callback_today",
+        "3": "set_callback_tomorrow_am",
+        "4": "set_callback_tomorrow_pm",
+        "timeout": "set_callback_today"
+      }
+    },
+    "set_callback_asap": {
+      "type": "set",
+      "set": {
+        "session.callback_window": "asap_15min",
+        "session.callback_label": "ASAP (within 15 minutes)"
+      },
+      "next": "create_lead_callback"
+    },
+    "set_callback_today": {
+      "type": "set",
+      "set": {
+        "session.callback_window": "today",
+        "session.callback_label": "Later today"
+      },
+      "next": "create_lead_callback"
+    },
+    "set_callback_tomorrow_am": {
+      "type": "set",
+      "set": {
+        "session.callback_window": "tomorrow_morning",
+        "session.callback_label": "Tomorrow morning"
+      },
+      "next": "create_lead_callback"
+    },
+    "set_callback_tomorrow_pm": {
+      "type": "set",
+      "set": {
+        "session.callback_window": "tomorrow_afternoon",
+        "session.callback_label": "Tomorrow afternoon"
+      },
+      "next": "create_lead_callback"
+    },
+    "create_lead_callback": {
+      "type": "tool",
+      "tool_key": "magnus.createLead",
+      "input": {
+        "phone": "{{session.caller | digits}}",
+        "source": "voice_sales_qualifier",
+        "notes": "DTMF sales qualifier: intent={{session.q_intent | default:\"na\"}}, budget={{session.q_budget | default:\"na\"}}, timeframe={{session.q_timeframe | default:\"na\"}}, area={{session.q_area | default:\"na\"}}. Callback={{session.callback_label | default:\"unspecified\"}} ({{session.callback_window | default:\"na\"}})."
+      },
+      "save_output_as": "tool.magnus.lead",
+      "on_success": "enqueue_callback",
+      "on_error": "confirm_callback"
+    },
+    "enqueue_callback": {
+      "type": "tool",
+      "tool_key": "callback.enqueue",
+      "input": {
+        "voiceAgentId": "{{session.voiceAgentId}}",
+        "sessionId": "{{session.sessionId}}",
+        "caller": "{{session.caller | digits}}",
+        "callbackTimeIso": "{{session.callback_time_iso}}",
+        "callbackWindow": "{{session.callback_window}}",
+        "callbackLabel": "{{session.callback_label}}",
+        "callId": "{{session.callId}}",
+        "did": "{{session.did | digits}}",
+        "leadId": "{{tool.magnus.lead.leadId}}",
+        "answers": {
+          "intent": "{{session.q_intent}}",
+          "budget": "{{session.q_budget}}",
+          "timeframe": "{{session.q_timeframe}}",
+          "area": "{{session.q_area}}"
+        }
+      },
+      "save_output_as": "tool.callback.job",
+      "on_success": "confirm_callback",
+      "on_error": "confirm_callback"
+    },
+    "create_lead_textlater": {
+      "type": "tool",
+      "tool_key": "magnus.createLead",
+      "input": {
+        "phone": "{{session.caller | digits}}",
+        "source": "voice_sales_qualifier",
+        "notes": "DTMF sales qualifier: intent={{session.q_intent | default:\"na\"}}, budget={{session.q_budget | default:\"na\"}}, timeframe={{session.q_timeframe | default:\"na\"}}, area={{session.q_area | default:\"na\"}}. Caller requested text link later."
+      },
+      "save_output_as": "tool.magnus.lead",
+      "on_success": "confirm_textlater",
+      "on_error": "confirm_textlater"
+    },
+    "confirm_callback": {
+      "type": "prompt",
+      "text": "Perfect. We will call you back {{session.callback_label | default:\"soon\"}}. Thank you!",
+      "next": "log_call_sales"
+    },
+    "confirm_textlater": {
+      "type": "prompt",
+      "text": "Got it. We'll send you a link soon. Thank you!",
+      "next": "log_call_sales"
+    },
+    "fallback": {
+      "type": "prompt",
+      "text": "Sorry, I didn't catch that. Please call again later. Goodbye.",
+      "next": "log_call_fallback"
+    },
+    "log_call_sales": {
+      "type": "tool",
+      "tool_key": "magnus.createCallLog",
+      "input": {
+        "phone": "{{session.caller | digits}}",
+        "did": "{{session.did | digits}}",
+        "voiceAgentId": "{{session.voiceAgentId}}",
+        "sessionId": "{{session.sessionId}}",
+        "callId": "{{session.callId}}",
+        "outcome": "sales_qualifier_complete",
+        "notes": "LeadId={{tool.magnus.lead.leadId | default:\"none\"}}; Callback={{session.callback_label | default:\"unspecified\"}} ({{session.callback_window | default:\"na\"}})"
+      },
+      "on_success": "end",
+      "on_error": "end"
+    },
+    "log_call_support": {
+      "type": "tool",
+      "tool_key": "magnus.createCallLog",
+      "input": {
+        "phone": "{{session.caller | digits}}",
+        "did": "{{session.did | digits}}",
+        "voiceAgentId": "{{session.voiceAgentId}}",
+        "sessionId": "{{session.sessionId}}",
+        "callId": "{{session.callId}}",
+        "outcome": "support_message_recorded",
+        "notes": "Recording={{session.last_recording_path | default:\"none\"}}"
+      },
+      "on_success": "end",
+      "on_error": "end"
+    },
+    "log_call_fallback": {
+      "type": "tool",
+      "tool_key": "magnus.createCallLog",
+      "input": {
+        "phone": "{{session.caller | digits}}",
+        "did": "{{session.did | digits}}",
+        "voiceAgentId": "{{session.voiceAgentId}}",
+        "sessionId": "{{session.sessionId}}",
+        "callId": "{{session.callId}}",
+        "outcome": "fallback_exit",
+        "notes": "No valid DTMF"
+      },
+      "on_success": "end",
+      "on_error": "end"
+    },
+    "end": {
+      "type": "end",
+      "text": "Goodbye."
+    }
+  }
+}

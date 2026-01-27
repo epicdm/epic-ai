@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { syncUser } from "@/lib/sync-user";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { prisma } from "@epic-ai/database";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import { Prisma } from "@prisma/client";
 
 // Development UAT bypass - allows testing without auth in development mode
 const isUATBypassEnabled =
@@ -47,7 +47,7 @@ export default async function DashboardLayout({
     });
   } catch (error) {
     console.error("Failed to load onboarding progress:", error);
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       onboardingProgress = {
         onboardingCompletedAt: new Date(),
         completionPercentage: 100,

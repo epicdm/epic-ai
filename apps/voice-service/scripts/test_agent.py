@@ -24,6 +24,26 @@ from livekit.agents import AgentSession, Agent, metrics
 from livekit.agents.voice import MetricsCollectedEvent
 from livekit.plugins import openai, silero, deepgram
 
+# Import Epic AI Runtime LLM (optional - falls back to OpenAI if not available)
+try:
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from runtime_llm import RuntimeLLM
+    RUNTIME_LLM_AVAILABLE = True
+except ImportError:
+    RUNTIME_LLM_AVAILABLE = False
+    RuntimeLLM = None
+
+# Import Inbound Call Guard (optional - for fail-closed safety)
+try:
+    from inbound_guard import InboundCallGuard
+    from call_actions import play_tts_and_end_call
+    INBOUND_GUARD_AVAILABLE = True
+except ImportError:
+    INBOUND_GUARD_AVAILABLE = False
+    InboundCallGuard = None
+    play_tts_and_end_call = None
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -234,14 +254,53 @@ def create_stt(config: Optional[Dict[str, Any]]):
     return openai.STT()
 
 
-def create_llm(config: Optional[Dict[str, Any]]):
-    """Create LLM instance based on agent config"""
+def create_llm(
+    config: Optional[Dict[str, Any]],
+    agent_id: Optional[str] = None,
+    call_id: Optional[str] = None,
+    caller_phone: Optional[str] = None,
+    caller_name: Optional[str] = None
+):
+    """
+    Create LLM instance based on agent config.
+
+    If use_runtime is enabled in config (or USE_RUNTIME_LLM env is set),
+    uses the Epic AI Runtime LLM which provides full agent capabilities.
+    Otherwise falls back to OpenAI.
+
+    Args:
+        config: Agent configuration dict
+        agent_id: Agent ID for runtime LLM
+        call_id: Call/room ID for runtime LLM
+        caller_phone: Caller phone number
+        caller_name: Caller name
+    """
+    # Check if runtime mode is enabled
+    use_runtime = os.environ.get("USE_RUNTIME_LLM", "false").lower() == "true"
+    if config:
+        use_runtime = config.get("use_runtime", use_runtime)
+
+    # Try to use Runtime LLM if enabled and available
+    if use_runtime and RUNTIME_LLM_AVAILABLE and agent_id:
+        logger.info(f"[LLM] Using RuntimeLLM for agent {agent_id}")
+        return RuntimeLLM(
+            agent_id=agent_id,
+            call_id=call_id,
+            caller_phone=caller_phone,
+            caller_name=caller_name,
+            runtime_url=os.environ.get("RUNTIME_API_URL"),
+            api_key=os.environ.get("VOICE_RUNTIME_API_KEY"),
+        )
+
+    # Fall back to OpenAI
     if not config:
+        logger.info("[LLM] Using OpenAI with default config")
         return openai.LLM(model="gpt-4o-mini")
 
     model = config.get("llm_model", "gpt-4o-mini")
     temperature = config.get("temperature", 0.7)
 
+    logger.info(f"[LLM] Using OpenAI with model={model}, temp={temperature}")
     return openai.LLM(
         model=model,
         temperature=temperature
@@ -307,11 +366,71 @@ async def entrypoint(ctx: agents.JobContext):
     else:
         logger.info("Using default agent configuration")
 
+    # Extract caller info from SIP attributes if available
+    caller_phone = participant.attributes.get("sip.callerNumber", None)
+    caller_name = participant.attributes.get("sip.callerName", None)
+    dialed_number = participant.attributes.get("sip.calledNumber", None)
+
+    # Inbound Call Guard - fail-closed safety gate (only for inbound calls)
+    if INBOUND_GUARD_AVAILABLE and not is_outbound and dialed_number:
+        guard = InboundCallGuard()
+        result = guard.check(dialed_number)
+        if not result.ok:
+            logger.warning(f"[InboundGuard] BLOCKED call to {dialed_number}: {result.gaps}")
+            fallback_text = guard.get_fallback_text(result)
+            await play_tts_and_end_call(ctx, fallback_text)
+            return
+        logger.info(f"[InboundGuard] ALLOWED call to {dialed_number} -> agent={result.agent_id}")
+
+    # ============================================================================
+    # OPTION 1: Route to Agent Runtime (USE_RUNTIME_ROUTING=true)
+    # ============================================================================
+    # If you want to route the call through the Epic AI Agent Runtime instead of
+    # using direct OpenAI/LiveKit agent, uncomment the following code:
+    #
+    # if os.environ.get("USE_RUNTIME_ROUTING", "false").lower() == "true":
+    #     from route_to_agent import RouteToAgentRuntimeAdapterV1
+    #     from livekit_call_ctx import LiveKitCallCtx
+    #
+    #     # Create session for TTS/STT only (no LLM)
+    #     session = AgentSession(
+    #         stt=create_stt(agent_config),
+    #         tts=create_tts(agent_config),
+    #         vad=vad,
+    #     )
+    #
+    #     await session.start(room=ctx.room, agent=Agent(instructions=""))
+    #
+    #     # Wrap session in CallCtx adapter
+    #     call_ctx = LiveKitCallCtx(session=session, participant=participant)
+    #
+    #     # Route to agent runtime
+    #     adapter = RouteToAgentRuntimeAdapterV1(
+    #         agent_id=agent_id if agent_id != "unknown" else "default",
+    #         call_ctx=call_ctx,
+    #         max_turns=int(os.getenv("EPIC_RUNTIME_MAX_TURNS", "100")),
+    #         turn_timeout=float(os.getenv("EPIC_RUNTIME_TURN_TIMEOUT", "30.0")),
+    #     )
+    #
+    #     # Run conversation loop
+    #     await adapter.run()
+    #     return
+    #
+    # ============================================================================
+    # OPTION 2: Standard LiveKit Agent (default)
+    # ============================================================================
+
     # Create the AgentSession with configured plugins and performance optimizations
     logger.info("Creating agent session with performance optimizations...")
     session = AgentSession(
         stt=create_stt(agent_config),
-        llm=create_llm(agent_config),
+        llm=create_llm(
+            agent_config,
+            agent_id=agent_id if agent_id != "unknown" else None,
+            call_id=ctx.room.name,
+            caller_phone=caller_phone,
+            caller_name=caller_name,
+        ),
         tts=create_tts(agent_config),
         vad=vad,
         # Performance optimizations

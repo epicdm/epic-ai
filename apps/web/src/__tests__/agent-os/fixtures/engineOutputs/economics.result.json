@@ -1,0 +1,42 @@
+{
+  "config": {
+    "token_budget_per_conversation": 4000,
+    "cost_per_channel": {
+      "VOICE": 0.15,
+      "CHAT": 0.02,
+      "SMS": 0.05,
+      "EMAIL": 0.01
+    },
+    "max_retries": 3,
+    "timeout_seconds": 30,
+    "priority": "balanced",
+    "model_selection": {
+      "default": "gpt-4o-mini",
+      "fallback": "gpt-3.5-turbo",
+      "complex_queries": "gpt-4o"
+    },
+    "rate_limits": {
+      "requests_per_minute": 60,
+      "tokens_per_minute": 100000
+    }
+  },
+  "gaps": [
+    {
+      "gap_type": "no_budget",
+      "field_path": "economics_config.monthly_budget_limit",
+      "severity": "low",
+      "impact": "No cost ceiling defined",
+      "recommended_fix": "Set a monthly budget limit",
+      "source_phase": "economics"
+    }
+  ],
+  "evidence": [
+    {
+      "field_path": "economics_config.token_budget",
+      "source": "economics_defaults_engine",
+      "reasoning": "Moderate complexity appointment flow",
+      "source_phase": "economics"
+    }
+  ],
+  "confidence": 0.9
+}

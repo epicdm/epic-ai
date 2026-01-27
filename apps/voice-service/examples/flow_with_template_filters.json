@@ -1,0 +1,196 @@
+{
+  "name": "Customer Greeting Flow with Template Filters",
+  "description": "Example flow demonstrating Template Runtime v1 filter usage",
+  "version": "1.0.0",
+  "start_node": "lookup_customer",
+  "nodes": {
+    "lookup_customer": {
+      "type": "tool",
+      "tool_key": "magnus.lookupCustomer",
+      "input": {
+        "phone": "{{session.caller}}"
+      },
+      "save_output_as": "tool.magnus.customer",
+      "on_success": "welcome_known",
+      "on_error": "welcome_unknown"
+    },
+    "welcome_known": {
+      "type": "prompt",
+      "text": "Hi {{tool.magnus.customer.customer.name | default:\"valued customer\" | upper}}! Your account status is {{tool.magnus.customer.customer.status | default:\"active\"}}. Press 1 for sales, 2 for support, or 9 to hear your details.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "sales_menu",
+        "2": "support_menu",
+        "9": "customer_details",
+        "timeout": "timeout_message"
+      }
+    },
+    "welcome_unknown": {
+      "type": "prompt",
+      "text": "Welcome to our service! Press 1 to become a new customer, 2 for general inquiries.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "create_lead",
+        "2": "general_info",
+        "timeout": "timeout_message"
+      }
+    },
+    "customer_details": {
+      "type": "prompt",
+      "text": "Your name is {{tool.magnus.customer.customer.name}}, email {{tool.magnus.customer.customer.email | lower}}, calling from {{session.caller | digits}}. Press star to return to menu.",
+      "collect": "dtmf",
+      "timeout": 10,
+      "transitions": {
+        "*": "welcome_known",
+        "timeout": "goodbye"
+      }
+    },
+    "create_lead": {
+      "type": "tool",
+      "tool_key": "magnus.createLead",
+      "input": {
+        "phone": "{{session.caller}}",
+        "source": "voice_agent",
+        "notes": "New customer inquiry. DTMF selection: {{session.last_dtmf | default:\"none\"}}"
+      },
+      "save_output_as": "tool.magnus.lead",
+      "on_success": "confirm_lead",
+      "on_error": "lead_error"
+    },
+    "confirm_lead": {
+      "type": "prompt",
+      "text": "Thank you! We've created your inquiry with ID {{tool.magnus.lead.leadId | default:\"pending\"}}. Someone will contact you at {{session.caller | digits}} soon. Press 1 to continue.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "general_info",
+        "timeout": "goodbye"
+      }
+    },
+    "lead_error": {
+      "type": "prompt",
+      "text": "Sorry, we couldn't process your request right now. Please try again later or press 0 for operator.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "0": "transfer_operator",
+        "timeout": "goodbye"
+      }
+    },
+    "sales_menu": {
+      "type": "prompt",
+      "text": "Sales menu. Press 1 for pricing, 2 for demos, or 0 to speak with a sales rep.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "pricing_info",
+        "2": "demo_info",
+        "0": "transfer_sales",
+        "timeout": "timeout_message"
+      }
+    },
+    "support_menu": {
+      "type": "prompt",
+      "text": "Support menu. Press 1 for technical support, 2 for billing, or 0 for operator.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "tech_support",
+        "2": "billing_support",
+        "0": "transfer_operator",
+        "timeout": "timeout_message"
+      }
+    },
+    "general_info": {
+      "type": "prompt",
+      "text": "For general information, visit our website or press star to return to the main menu.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "*": "welcome_unknown",
+        "timeout": "goodbye"
+      }
+    },
+    "pricing_info": {
+      "type": "prompt",
+      "text": "Our plans start at 49 dollars per month. Press star to return to sales menu.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "*": "sales_menu",
+        "timeout": "goodbye"
+      }
+    },
+    "demo_info": {
+      "type": "prompt",
+      "text": "To schedule a demo, press 1 now.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "1": "create_lead",
+        "timeout": "goodbye"
+      }
+    },
+    "tech_support": {
+      "type": "prompt",
+      "text": "For technical support, please hold while we transfer you.",
+      "next": "transfer_support"
+    },
+    "billing_support": {
+      "type": "prompt",
+      "text": "For billing inquiries, please hold while we transfer you.",
+      "next": "transfer_billing"
+    },
+    "transfer_sales": {
+      "type": "transfer",
+      "text": "Transferring to sales. Please hold.",
+      "destination": "+17675551111"
+    },
+    "transfer_support": {
+      "type": "transfer",
+      "text": "Transferring to technical support. Please hold.",
+      "destination": "+17675552222"
+    },
+    "transfer_billing": {
+      "type": "transfer",
+      "text": "Transferring to billing. Please hold.",
+      "destination": "+17675553333"
+    },
+    "transfer_operator": {
+      "type": "transfer",
+      "text": "Transferring to operator. Please hold.",
+      "destination": "+17675550000"
+    },
+    "timeout_message": {
+      "type": "prompt",
+      "text": "Sorry, we didn't receive your selection. Press star to return to the main menu or hang up to end the call.",
+      "collect": "dtmf",
+      "timeout": 7,
+      "transitions": {
+        "*": "welcome_known",
+        "timeout": "goodbye"
+      }
+    },
+    "goodbye": {
+      "type": "tool",
+      "tool_key": "magnus.createCallLog",
+      "input": {
+        "phone": "{{session.caller}}",
+        "did": "{{session.did}}",
+        "voiceAgentId": "{{session.voiceAgentId}}",
+        "sessionId": "{{session.sessionId}}",
+        "callId": "{{session.callId}}",
+        "outcome": "completed",
+        "notes": "Call completed. Last DTMF: {{session.last_dtmf | default:\"none\"}}"
+      },
+      "on_success": "end",
+      "on_error": "end"
+    },
+    "end": {
+      "type": "end",
+      "text": "Thank you for calling {{tool.magnus.customer.customer.name | default:\"us\"}}. Goodbye!"
+    }
+  }
+}

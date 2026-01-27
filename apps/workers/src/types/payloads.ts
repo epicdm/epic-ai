@@ -24,6 +24,8 @@ export const JobType = {
   PUBLISH_CONTENT: 'PUBLISH_CONTENT',
   SYNC_ANALYTICS: 'SYNC_ANALYTICS',
   REFRESH_TOKEN: 'REFRESH_TOKEN',
+  ENRICH_COMPANY: 'ENRICH_COMPANY',
+  ASSEMBLE_AGENT: 'ASSEMBLE_AGENT',
 } as const;
 
 export type JobType = (typeof JobType)[keyof typeof JobType];
@@ -231,6 +233,231 @@ export interface ContentPublishingResult {
 }
 
 // =============================================================================
+// Company Enrichment Job (Agent OS)
+// =============================================================================
+
+/**
+ * Manual answers schema - data that can't be scraped from website
+ */
+export const EnrichmentManualAnswersSchema = z.object({
+  hours_of_operation: z.string().max(500).optional(),
+  timezone: z.string().max(50).optional(),
+  service_area: z.string().max(500).optional(),
+  service_radius_miles: z.number().int().positive().optional(),
+  serves_nationwide: z.boolean().optional(),
+  pricing_model: z.enum(['fixed', 'hourly', 'subscription', 'custom', 'contact']).optional(),
+  price_range: z.string().max(200).optional(),
+  free_consultation: z.boolean().optional(),
+  preferred_contact_method: z.enum(['phone', 'email', 'form', 'chat']).optional(),
+  response_time_hours: z.number().int().positive().optional(),
+  unique_selling_points: z.array(z.string()).optional(),
+  target_audience_description: z.string().max(1000).optional(),
+});
+
+export type EnrichmentManualAnswers = z.infer<typeof EnrichmentManualAnswersSchema>;
+
+/**
+ * Company enrichment job payload
+ */
+export const CompanyEnrichmentPayloadSchema = z.object({
+  organizationId: z.string().cuid(),
+  userId: z.string().min(1),
+  websiteUrl: z.string().url(),
+  companyProfileId: z.string().cuid().optional(),
+  manualAnswers: EnrichmentManualAnswersSchema.optional(),
+  // Crawl options
+  maxPages: z.number().int().min(1).max(10).default(5),
+  skipLlmRefinement: z.boolean().default(false),
+});
+
+export type CompanyEnrichmentPayload = z.infer<typeof CompanyEnrichmentPayloadSchema>;
+
+/**
+ * Brand voice profile result
+ */
+export interface BrandVoiceResult {
+  tone: 'professional' | 'friendly' | 'enthusiastic' | 'empathetic' | 'authoritative' | 'casual' | 'warm' | 'formal';
+  formality: number; // 1-5
+  energy: 'calm' | 'moderate' | 'energetic';
+  vocabulary_style: 'simple' | 'moderate' | 'sophisticated';
+  uses_emojis: boolean;
+  uses_first_person: boolean;
+  sample_phrases: string[];
+  confidence: number;
+}
+
+/**
+ * Offering (product or service)
+ */
+export interface OfferingResult {
+  name: string;
+  description?: string;
+  category?: string;
+  is_service: boolean;
+}
+
+/**
+ * Audience persona
+ */
+export interface AudienceResult {
+  name: string;
+  description?: string;
+  pain_points?: string[];
+  goals?: string[];
+}
+
+/**
+ * Company enrichment result matching spec
+ */
+export interface CompanyEnrichmentResult {
+  // Company info
+  company: {
+    name?: string;
+    tagline?: string;
+    description?: string;
+    industry?: string;
+    sub_industry?: string;
+    founded_year?: number;
+    headquarters?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    social_links: {
+      linkedin?: string;
+      twitter?: string;
+      facebook?: string;
+      instagram?: string;
+      youtube?: string;
+    };
+    // Manual fields
+    hours_of_operation?: string;
+    service_area?: string;
+    pricing_model?: string;
+    price_range?: string;
+    // LLM-refined fields
+    business_model?: 'b2b' | 'b2c' | 'b2b2c' | 'marketplace' | 'saas' | 'consulting' | 'unknown';
+    sales_complexity?: 'simple' | 'moderate' | 'complex' | 'enterprise';
+    target_audience?: string;
+    value_proposition?: string;
+    competitive_differentiators?: string[];
+    service_category_tags?: string[];
+    recommended_agent_types?: Array<
+      | 'sales_qualifier'
+      | 'appointment_setter'
+      | 'customer_support'
+      | 'lead_capture'
+      | 'booking_assistant'
+      | 'faq_bot'
+      | 'onboarding_guide'
+      | 'product_recommender'
+    >;
+  };
+
+  // Products and services
+  offerings: OfferingResult[];
+
+  // Target audience personas
+  audience: AudienceResult[];
+
+  // Brand voice analysis
+  brand_voice: BrandVoiceResult;
+
+  // Recommended agent templates based on analysis
+  recommended_agent_templates: {
+    template_id: string;
+    match_score: number;
+    reasons: string[];
+  }[];
+
+  // Metadata
+  source_url: string;
+  pages_analyzed: number;
+  scraped_at: string;
+
+  // Gaps identified
+  gaps: {
+    gap_type: string;
+    field_path: string;
+    severity: 'low' | 'medium' | 'high';
+    impact: string;
+    recommended_fix: string;
+  }[];
+
+  // Confidence scores
+  confidence: Record<string, number>;
+
+  // Evidence trail
+  evidence: {
+    source_type: string;
+    source_url?: string;
+    field_path: string;
+    confidence: number;
+    reasoning?: string;
+  }[];
+
+  // Processing metadata
+  processing_time_ms: number;
+  llm_tokens_used?: number;
+}
+
+// =============================================================================
+// Agent Assembly Job (Agent OS)
+// =============================================================================
+
+/**
+ * Agent assembly job payload
+ * Runs the full 8-phase assembly orchestrator to create a configured agent
+ */
+export const AgentAssemblyPayloadSchema = z.object({
+  type: z.literal('ASSEMBLE_AGENT').optional(),
+  organizationId: z.string().cuid(),
+  userId: z.string().min(1).optional(), // Optional - may be set by API route
+  companyId: z.string().cuid().optional(),
+  websiteUrl: z.string().url().optional(),
+  userAnswers: z.record(z.unknown()).optional(),
+  desiredTemplateKey: z.string().optional(),
+  channels: z.array(z.enum(['VOICE', 'CHAT', 'SMS', 'EMAIL'])).optional(),
+  agentId: z.string().cuid().optional(),
+  force: z.boolean().optional().default(false),
+  // Agent metadata
+  name: z.string().optional(),
+  slug: z.string().optional(),
+});
+
+export type AgentAssemblyPayload = z.infer<typeof AgentAssemblyPayloadSchema>;
+
+/**
+ * Agent assembly result
+ */
+export interface AgentAssemblyResult {
+  agentId: string;
+  status: 'draft' | 'complete' | 'failed';
+  assembly_state: {
+    phase: string;
+    completed: string[];
+    error?: string;
+  };
+  confidence: {
+    overall: number;
+    by_phase: Record<string, number>;
+    by_dimension?: Record<string, number>;
+  };
+  gaps: {
+    gap_type: string;
+    field_path: string;
+    severity: 'low' | 'medium' | 'high';
+    impact: string;
+    recommended_fix: string;
+  }[];
+  warnings: {
+    code: string;
+    message: string;
+    severity: 'info' | 'warning' | 'error';
+  }[];
+  processing_time_ms: number;
+}
+
+// =============================================================================
 // Union Types for Generic Handling
 // =============================================================================
 
@@ -241,7 +468,9 @@ export type JobPayload =
   | TokenRefreshPayload
   | DocumentProcessingPayload
   | ImageGenerationPayload
-  | ContentPublishingPayload;
+  | ContentPublishingPayload
+  | CompanyEnrichmentPayload
+  | AgentAssemblyPayload;
 
 export type JobResult =
   | ContentGenerationResult
@@ -250,7 +479,9 @@ export type JobResult =
   | TokenRefreshResult
   | DocumentProcessingResult
   | ImageGenerationResult
-  | ContentPublishingResult;
+  | ContentPublishingResult
+  | CompanyEnrichmentResult
+  | AgentAssemblyResult;
 
 // =============================================================================
 // Payload Validator Map
@@ -265,6 +496,8 @@ export const PayloadSchemaMap: Record<JobType, z.ZodSchema> = {
   [JobType.PROCESS_DOCUMENT]: DocumentProcessingPayloadSchema,
   [JobType.GENERATE_IMAGE]: ImageGenerationPayloadSchema,
   [JobType.PUBLISH_CONTENT]: ContentPublishingPayloadSchema,
+  [JobType.ENRICH_COMPANY]: CompanyEnrichmentPayloadSchema,
+  [JobType.ASSEMBLE_AGENT]: AgentAssemblyPayloadSchema,
 };
 
 /**
@@ -326,6 +559,8 @@ export const CreateJobRequestSchema = z.object({
     'PUBLISH_CONTENT',
     'SYNC_ANALYTICS',
     'REFRESH_TOKEN',
+    'ENRICH_COMPANY',
+    'ASSEMBLE_AGENT',
   ]),
   brandId: z.string().cuid().optional(),
   payload: z.record(z.unknown()), // Validated per-type after
@@ -346,6 +581,7 @@ export const QueueName = {
   CONTENT_GENERATION: 'content-generation',
   CONTEXT_SCRAPING: 'context-scraping',
   ANALYTICS_SYNC: 'analytics-sync',
+  AGENT_OS: 'agent-os',
 } as const;
 
 export type QueueName = (typeof QueueName)[keyof typeof QueueName];
@@ -362,4 +598,6 @@ export const JobTypeToQueue: Record<JobType, QueueName> = {
   [JobType.SYNC_ANALYTICS]: QueueName.ANALYTICS_SYNC,
   [JobType.PUBLISH_CONTENT]: QueueName.CONTENT_GENERATION,
   [JobType.REFRESH_TOKEN]: QueueName.ANALYTICS_SYNC,
+  [JobType.ENRICH_COMPANY]: QueueName.AGENT_OS,
+  [JobType.ASSEMBLE_AGENT]: QueueName.AGENT_OS,
 };

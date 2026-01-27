@@ -1,0 +1,57 @@
+{
+  "config": {
+    "seed_facts": [
+      {
+        "category": "services",
+        "fact": "We offer residential solar panel installation with a 25-year warranty",
+        "confidence": 0.95
+      },
+      {
+        "category": "services",
+        "fact": "Free consultation and site assessment included",
+        "confidence": 0.9
+      },
+      {
+        "category": "coverage",
+        "fact": "We serve the entire Phoenix Metro Area",
+        "confidence": 0.85
+      },
+      {
+        "category": "process",
+        "fact": "Installation typically takes 1-2 days after permitting",
+        "confidence": 0.8
+      }
+    ],
+    "knowledge_gaps": [
+      {
+        "topic": "pricing",
+        "question": "What are your typical system costs?",
+        "importance": "high"
+      },
+      {
+        "topic": "financing",
+        "question": "Do you offer financing options?",
+        "importance": "high"
+      }
+    ]
+  },
+  "gaps": [
+    {
+      "gap_type": "no_knowledge",
+      "field_path": "knowledge.seed_facts.pricing",
+      "severity": "medium",
+      "impact": "Cannot answer pricing questions",
+      "recommended_fix": "Add pricing information to knowledge base",
+      "source_phase": "knowledge"
+    }
+  ],
+  "evidence": [
+    {
+      "field_path": "knowledge.seed_facts",
+      "source": "knowledge_seed_engine",
+      "reasoning": "Extracted from company profile and website",
+      "source_phase": "knowledge"
+    }
+  ],
+  "confidence": 0.75
+}

@@ -40,7 +40,7 @@ export {
   type KnowledgeAutoFillButtonProps,
 } from "./KnowledgeAutoFillButton";
 
-// Answer-to-PATCH helper
+// Answer-to-PATCH helper (v1 utility functions)
 export {
   answerToPatchV1,
   extractAnsweredFields,
@@ -53,5 +53,33 @@ export {
   type AgentOSModule,
   type PatchResult,
   type ApplyPatchesResult,
-  type AnswerToPatchResult,
+  type AnswerToPatchResult as AnswerToPatchV1Result,
 } from "./answer-to-patch.v1";
+
+// Next-Step hook and banner (guided wizard experience)
+export {
+  useNextStep,
+  type NextStepKey,
+  type GapItem,
+  type NextStepQuestion,
+  type NextStepExplanation,
+  type Envelope,
+} from "./hooks/useNextStep";
+
+export { NextStepBanner, type NextStepBannerProps } from "./NextStepBanner";
+
+// Answer-to-PATCH v1 (inline question answering -> JSONB patch)
+export {
+  useAnswerToPatch,
+  type AnswerItem,
+  type PatchedModule,
+  type AnswerToPatchResult,
+  type AnswerToPatchResponse,
+  type UseAnswerToPatchReturn,
+} from "./hooks/useAnswerToPatch";
+
+export {
+  NextStepAnswerPanel,
+  type NextStepQuestion as AnswerPanelQuestion,
+  type NextStepAnswerPanelProps,
+} from "./NextStepAnswerPanel";

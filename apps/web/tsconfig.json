@@ -25,6 +25,27 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@epic-ai/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@epic-ai/database": [
+        "../../packages/database/src/index.ts"
+      ],
+      "@epic-ai/workers/processors": [
+        "../../apps/workers/src/processors/index.ts"
+      ],
+      "@epic-ai/workers/processors/agent-os": [
+        "../../apps/workers/src/processors/agent-os/index.ts"
+      ],
+      "@epic-ai/workers/types": [
+        "../../apps/workers/src/types/index.ts"
+      ],
+      "@epic-ai/workers/lib": [
+        "../../apps/workers/src/lib/index.ts"
+      ],
+      "@epic-ai/workers/*": [
+        "../../apps/workers/src/*/index.ts"
       ]
     }
   },

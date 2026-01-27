@@ -287,6 +287,11 @@ model Organization {
   // Workflow Automation Relations
   automations Automation[]
 
+  // Agent OS Relations
+  companyProfile  CompanyProfile?
+  agents          Agent[]
+  phoneRoutings   PhoneRouting[]
+
   @@map("organizations")
 }
 
@@ -1199,6 +1204,9 @@ model Lead {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Runtime session relations
+  sessions AgentSession[]
+
   @@index([brandId])
   @@index([organizationId])
   @@index([status])
@@ -1214,6 +1222,7 @@ enum LeadSource {
   ORGANIC_SOCIAL
   WEBSITE
   REFERRAL
+  VOICE_CALL
   // Legacy values (kept for migration)
   IMPORT
   WEBHOOK_META
@@ -1324,6 +1333,7 @@ model VoiceAgent {
   tools            AgentTool[]
   knowledgeBases   AgentKnowledgeBase[]
   conversationFlow ConversationFlow?
+  agent            Agent?               // Link to Agent OS agent
 
   @@index([organizationId])
   @@index([brandId])
@@ -1516,12 +1526,14 @@ model AgentRoutingRule {
 }
 
 enum RoutingStrategy {
+  DIRECT      // Route directly to a single agent
   ROUND_ROBIN // Distribute evenly across agents
-  LEAST_BUSY // Route to agent with fewest active calls
-  PRIORITY // Route to highest priority available agent
-  WEIGHTED // Random weighted distribution
+  LEAST_BUSY  // Route to agent with fewest active calls
+  PRIORITY    // Route to highest priority available agent
+  WEIGHTED    // Random weighted distribution
   SKILLS_BASED // Match required skills
-  RANDOM // Random selection
+  RANDOM      // Random selection
+  FALLBACK    // Try primary agent, then fallback
 }
 
 // ============================================
@@ -3263,3 +3275,616 @@ model WorkflowStepExecution {
   @@index([instanceId])
   @@map("workflow_step_executions")
 }
+
+// ============================================
+// AGENT OS: Company Profiles
+// ============================================
+
+model CompanyProfile {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+
+  // Core Identity
+  name          String
+  website       String?
+  industry      String?
+  companySize   String? @map("company_size") // startup, smb, mid-market, enterprise
+  founded       Int?
+  headquarters  String?
+
+  // Mission & Values
+  mission       String?  @db.Text
+  vision        String?  @db.Text
+  values        String[] @default([])
+  tagline       String?
+
+  // Business Context
+  products      Json     @default("[]") // [{name, description, category}]
+  services      Json     @default("[]")
+  targetMarkets String[] @default([]) @map("target_markets")
+  competitors   String[] @default([])
+
+  // Contact & Social
+  email         String?
+  phone         String?
+  socialLinks   Json     @default("{}") @map("social_links") // {linkedin, twitter, facebook, instagram}
+
+  // AI Enrichment Data
+  enrichedData  Json     @default("{}") @map("enriched_data") // Website scrape, social analysis results
+  enrichedAt    DateTime? @map("enriched_at")
+  confidence    Json     @default("{}") // Confidence scores per field
+
+  // Metadata
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agents        Agent[]
+
+  @@unique([organizationId])
+  @@map("company_profiles")
+}
+
+// ============================================
+// AGENT OS: Agent Templates
+// ============================================
+
+model AgentTemplate {
+  id          String @id @default(cuid())
+
+  // Template Identity
+  slug        String @unique
+  name        String
+  description String @db.Text
+  category    AgentTemplateCategory
+
+  // Template Metadata
+  useCases    String[] @default([]) @map("use_cases")
+  industries  String[] @default([])
+  channels    ChannelType[] @default([])
+  complexity  TemplateComplexity @default(INTERMEDIATE)
+
+  // Preset Configurations (defaults for new agents)
+  roleCardTemplate        Json @default("{}") @map("role_card_template")
+  brainConfigTemplate     Json @default("{}") @map("brain_config_template")
+  personalityTemplate     Json @default("{}") @map("personality_template")
+  toolConfigTemplate      Json @default("{}") @map("tool_config_template")
+  knowledgeConfigTemplate Json @default("{}") @map("knowledge_config_template")
+  memoryConfigTemplate    Json @default("{}") @map("memory_config_template")
+  learningConfigTemplate  Json @default("{}") @map("learning_config_template")
+  governanceTemplate      Json @default("{}") @map("governance_template")
+  economicsTemplate       Json @default("{}") @map("economics_template")
+
+  // Template metadata
+  popularity    Int       @default(0)
+  featured      Boolean   @default(false)
+  isSystemTemplate Boolean @default(false) @map("is_system_template")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  agents        Agent[]
+
+  @@index([category])
+  @@index([featured])
+  @@map("agent_templates")
+}
+
+enum AgentTemplateCategory {
+  SALES           // Sales outreach, demos, follow-ups
+  SUPPORT         // Customer support, helpdesk
+  SCHEDULING      // Appointment booking, calendar management
+  LEAD_GEN        // Lead qualification, inbound handling
+  ONBOARDING      // Customer onboarding, welcome calls
+  SURVEY          // Feedback collection, NPS surveys
+  COLLECTIONS     // Payment reminders, collections
+  NOTIFICATIONS   // Alerts, reminders, updates
+  CUSTOM          // User-defined templates
+}
+
+enum TemplateComplexity {
+  BEGINNER        // Simple, few tools, basic flows
+  INTERMEDIATE    // Moderate complexity, standard tools
+  ADVANCED        // Complex flows, many integrations
+  EXPERT          // Custom coding, specialized integrations
+}
+
+// ============================================
+// AGENT OS: Core Agent Model
+// ============================================
+
+model Agent {
+  id              String @id @default(cuid())
+  organizationId  String @map("organization_id")
+  companyProfileId String? @map("company_profile_id")
+  templateId      String? @map("template_id")
+
+  // Basic Info
+  name            String
+  slug            String
+  description     String? @db.Text
+  avatar          String? // URL to agent avatar image
+
+  // Status & Lifecycle
+  status          AgentStatus @default(DRAFT)
+  version         Int         @default(1)
+  publishedAt     DateTime?   @map("published_at")
+  archivedAt      DateTime?   @map("archived_at")
+
+  // ============================================
+  // THE 10 CONFIGURATION BLOBS (Agent OS Core)
+  // ============================================
+
+  // 1. Role Card - Who the agent is
+  // {name, title, company, mission, boundaries, escalation_rules}
+  roleCard        Json @default("{}") @map("role_card")
+
+  // 2. Brain Config - How the agent thinks
+  // {decision_policies, response_rules, context_handling, reasoning_strategy}
+  brainConfig     Json @default("{}") @map("brain_config")
+
+  // 3. Personality Config - How the agent communicates
+  // {voice_tone, formality, humor_level, empathy_level, pace, language_style}
+  personalityConfig Json @default("{}") @map("personality_config")
+
+  // 4. Tool Config - What the agent can do
+  // {enabled_tools: [{id, name, permissions, rate_limits}], tool_policies}
+  toolConfig      Json @default("{}") @map("tool_config")
+
+  // 5. Knowledge Config - What the agent knows
+  // {knowledge_bases: [id], retrieval_settings, context_window, sources}
+  knowledgeConfig Json @default("{}") @map("knowledge_config")
+
+  // 6. Memory Config - What the agent remembers
+  // {short_term: {window}, long_term: {enabled, summary_strategy}, episodic: {enabled}}
+  memoryConfig    Json @default("{}") @map("memory_config")
+
+  // 7. Learning Config - How the agent improves
+  // {learning_enabled, feedback_loops, safe_learning_boundaries, approval_required}
+  learningConfig  Json @default("{}") @map("learning_config")
+
+  // 8. Governance Config - Rules & Compliance
+  // {compliance_rules, risk_thresholds, audit_settings, escalation_paths, pii_handling}
+  governanceConfig Json @default("{}") @map("governance_config")
+
+  // 9. Economics Config - Cost & Usage
+  // {budget_limits, cost_tracking, usage_caps, billing_rules, tier_overrides}
+  economicsConfig Json @default("{}") @map("economics_config")
+
+  // 10. Flow Config - Conversation State Machine
+  // {version, templateKey, entry_node_id, exit_node_ids, nodes, edges, intents, tool_hooks, guardrails}
+  flowConfig      Json @default("{}") @map("flow_config")
+
+  // ============================================
+  // Confidence & Evidence Tracking
+  // ============================================
+
+  // AI confidence scores for each config blob
+  configConfidence Json @default("{}") @map("config_confidence")
+  // Known gaps requiring user input
+  configGaps       Json @default("[]") @map("config_gaps")
+  // Warnings or issues detected
+  configWarnings   Json @default("[]") @map("config_warnings")
+
+  // ============================================
+  // Channel Deployment
+  // ============================================
+
+  // Channels this agent is deployed to
+  channels        ChannelType[] @default([])
+  // Channel-specific overrides (optional)
+  channelOverrides Json @default("{}") @map("channel_overrides")
+
+  // Link to existing VoiceAgent if deployed to voice channel
+  voiceAgentId    String? @unique @map("voice_agent_id")
+
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  companyProfile  CompanyProfile? @relation(fields: [companyProfileId], references: [id], onDelete: SetNull)
+  template        AgentTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  voiceAgent      VoiceAgent?    @relation(fields: [voiceAgentId], references: [id], onDelete: SetNull)
+  simulations     AgentSimulation[]
+  wizardSessions  AgentWizardSession[]
+  phoneRoutings   PhoneRouting[]
+  fallbackRoutings PhoneRouting[] @relation("FallbackRouting")
+
+  // Runtime session & learning relations
+  sessions        AgentSession[]
+  entities        AgentEntity[]
+  learningEvents  AgentLearningEvent[]
+  feedback        AgentFeedback[]
+  improvements    AgentImprovement[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([status])
+  @@index([templateId])
+  @@map("agents")
+}
+
+enum AgentStatus {
+  DRAFT           // Being configured
+  TESTING         // In simulation/test mode
+  PENDING_REVIEW  // Awaiting approval (for governance)
+  PUBLISHED       // Live and active
+  PAUSED          // Temporarily disabled
+  ARCHIVED        // No longer in use
+}
+
+// ============================================
+// AGENT OS: Phone Routing (DID → Agent mapping)
+// ============================================
+
+model PhoneRouting {
+  id             String @id @default(cuid())
+  organizationId String @map("organization_id")
+  agentId        String @map("agent_id")
+
+  // Phone Number (E.164 format)
+  phoneNumber String @unique @map("phone_number")
+  countryCode String? @map("country_code")
+  areaCode    String? @map("area_code")
+
+  // Provider Integration
+  provider        String  @default("livekit") // livekit, twilio, etc.
+  providerTrunkId String? @map("provider_trunk_id")
+  providerRuleId  String? @map("provider_rule_id")
+
+  // Routing Config
+  routingStrategy RoutingStrategy @default(DIRECT) @map("routing_strategy")
+  fallbackAgentId String?         @map("fallback_agent_id")
+  fallbackPhone   String?         @map("fallback_phone")
+
+  // Status
+  status    String  @default("active") // active, inactive, pending
+  isActive  Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent         Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  fallbackAgent Agent?       @relation("FallbackRouting", fields: [fallbackAgentId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([phoneNumber])
+  @@index([agentId])
+  @@map("phone_routings")
+}
+
+// ============================================
+// AGENT OS: Agent Session (Runtime Conversations)
+// ============================================
+
+model AgentSession {
+  id             String @id @default(cuid())
+  agentId        String @map("agent_id")
+  leadId         String? @map("lead_id")
+
+  // Channel Info
+  channel        String // voice, chat, sms, email
+  status         String @default("active") // active, completed, transferred, abandoned
+
+  // Session Tracking
+  turnCount      Int    @default(0) @map("turn_count")
+  startedAt      DateTime @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  lastActivityAt DateTime @default(now()) @map("last_activity_at")
+
+  // Flow State
+  currentFlowNode String? @map("current_flow_node")
+  flowData        Json    @default("{}") @map("flow_data")
+
+  // Session Metadata
+  metadata       Json @default("{}") // callId, platform, etc.
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  agent    Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  lead     Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  messages AgentMessage[]
+
+  @@index([agentId])
+  @@index([leadId])
+  @@index([status])
+  @@map("agent_sessions")
+}
+
+model AgentMessage {
+  id        String @id @default(cuid())
+  sessionId String @map("session_id")
+
+  // Message Content
+  role      String // user, assistant, system, tool
+  content   String @db.Text
+
+  // Message Metadata
+  timestamp DateTime @default(now())
+  metadata  Json     @default("{}") // tokens, latency, model, etc.
+
+  // Relations
+  session AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("agent_messages")
+}
+
+model AgentEntity {
+  id        String @id @default(cuid())
+  sessionId String @map("session_id")
+  agentId   String @map("agent_id")
+
+  // Entity Info
+  entityType String @map("entity_type") // name, email, phone, date, etc.
+  entityKey  String @map("entity_key")
+  value      String
+  confidence Float  @default(1.0)
+
+  // Source
+  extractedFrom String? @map("extracted_from") // message ID or turn number
+  extractedAt   DateTime @default(now()) @map("extracted_at")
+
+  // Relations
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([agentId])
+  @@index([entityType])
+  @@map("agent_entities")
+}
+
+// ============================================
+// AGENT OS: Learning & Feedback
+// ============================================
+
+model AgentLearningEvent {
+  id        String @id @default(cuid())
+  agentId   String @map("agent_id")
+  sessionId String? @map("session_id")
+
+  // Event Info
+  eventType String @map("event_type") // conversation_outcome, tool_usage, etc.
+  signal    String // positive, negative, neutral
+  category  String? // escalation, completion, abandonment
+
+  // Event Data
+  data      Json @default("{}") // context, input, output, etc.
+  outcome   String? // success, failure, partial
+
+  // Learning
+  learningValue Float  @default(0) @map("learning_value")
+  processed     Boolean @default(false)
+  appliedAt     DateTime? @map("applied_at")
+
+  // Timestamps
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([eventType])
+  @@index([processed])
+  @@map("agent_learning_events")
+}
+
+model AgentFeedback {
+  id        String @id @default(cuid())
+  agentId   String @map("agent_id")
+  sessionId String? @map("session_id")
+
+  // Feedback
+  rating     Int?    // 1-5
+  sentiment  String? // positive, negative, neutral
+  comment    String? @db.Text
+  categories String[] @default([])
+
+  // Source
+  source    String @default("user") // user, operator, automated
+  submittedBy String? @map("submitted_by")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([rating])
+  @@map("agent_feedback")
+}
+
+model AgentImprovement {
+  id       String @id @default(cuid())
+  agentId  String @map("agent_id")
+
+  // Improvement Details
+  improvementType String @map("improvement_type") // prompt, flow, knowledge, etc.
+  targetConfig    String @map("target_config") // which config blob
+  description     String @db.Text
+
+  // Changes
+  previousValue Json? @map("previous_value")
+  newValue      Json? @map("new_value")
+  changeReason  String? @map("change_reason") @db.Text
+
+  // Status
+  status        String @default("proposed") // proposed, approved, applied, rejected
+  confidence    Float  @default(0.5)
+
+  // Approval
+  approvedBy    String? @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  appliedAt     DateTime? @map("applied_at")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([status])
+  @@map("agent_improvements")
+}
+
+// ============================================
+// AGENT OS: Agent Wizard Session
+// ============================================
+
+model AgentWizardSession {
+  id              String @id @default(cuid())
+  agentId         String @map("agent_id")
+  userId          String @map("user_id")
+
+  // Wizard Progress
+  currentStep     Int    @default(0) @map("current_step")
+  completedSteps  Int[]  @default([]) @map("completed_steps")
+  stepData        Json   @default("{}") @map("step_data") // Per-step temporary data
+
+  // Session State
+  status          WizardSessionStatus @default(IN_PROGRESS)
+  startedAt       DateTime @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  abandonedAt     DateTime? @map("abandoned_at")
+
+  // Timestamps
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  agent           Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([userId])
+  @@map("agent_wizard_sessions")
+}
+
+enum WizardSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// ============================================
+// AGENT OS: Agent Simulations (Test Harness)
+// ============================================
+
+model AgentSimulation {
+  id              String @id @default(cuid())
+  agentId         String @map("agent_id")
+  organizationId  String @map("organization_id")
+
+  // Simulation Config
+  name            String
+  scenario        String  @db.Text // Test scenario description
+  testInputs      Json    @default("[]") @map("test_inputs") // Array of test messages/calls
+
+  // Results
+  status          SimulationStatus @default(PENDING)
+  results         Json    @default("{}") // {responses, metrics, issues}
+  score           Float?  // 0-100 quality score
+  issues          Json    @default("[]") // [{type, severity, description}]
+
+  // Governance Check Results
+  riskFlags       Json    @default("[]") @map("risk_flags")
+  complianceCheck Json    @default("{}") @map("compliance_check")
+
+  // Timestamps
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  agent           Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([organizationId])
+  @@map("agent_simulations")
+}
+
+enum SimulationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ============================================
+// AGENT OS: Jobs (BullMQ Integration)
+// ============================================
+
+model AgentJob {
+  id              String @id @default(cuid())
+  organizationId  String @map("organization_id")
+  agentId         String? @map("agent_id")
+
+  // Job Type & Payload
+  jobType         AgentJobType @map("job_type")
+  payload         Json    @default("{}")
+  priority        Int     @default(0)
+
+  // Status Tracking
+  status          JobStatus @default(PENDING)
+  progress        Int       @default(0) // 0-100
+  attempts        Int       @default(0)
+  maxAttempts     Int       @default(3) @map("max_attempts")
+
+  // Results
+  result          Json?
+  error           String?   @db.Text
+
+  // BullMQ Integration
+  bullmqJobId     String?   @map("bullmq_job_id")
+  queueName       String?   @map("queue_name")
+
+  // Timestamps
+  scheduledFor    DateTime? @map("scheduled_for")
+  startedAt       DateTime? @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  failedAt        DateTime? @map("failed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([jobType])
+  @@index([status])
+  @@map("agent_jobs")
+}
+
+enum AgentJobType {
+  // Company Profile Jobs
+  ENRICH_COMPANY      // Scrape website, analyze social
+
+  // Agent Configuration Jobs
+  GENERATE_ROLE_CARD
+  GENERATE_BRAIN_CONFIG
+  GENERATE_PERSONALITY
+  PROCESS_KNOWLEDGE
+
+  // Simulation Jobs
+  RUN_SIMULATION
+  VALIDATE_GOVERNANCE
+
+  // Learning Jobs
+  PROCESS_FEEDBACK
+  UPDATE_MEMORY
+  PROPOSE_IMPROVEMENTS
+}
+
+// Note: Uses existing JobStatus enum (PENDING, RUNNING, COMPLETED, FAILED, CANCELLED)

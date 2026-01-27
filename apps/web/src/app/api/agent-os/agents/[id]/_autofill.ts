@@ -150,7 +150,7 @@ function buildGovernanceWithTemplateKeySalesQualifierV1(): Record<string, unknow
  * - Messaging (SMS/Email) for follow-ups
  * - Human handoff for escalation
  */
-function buildSalesQualifierToolsV1(): ToolConfig {
+export function buildSalesQualifierToolsV1(): ToolConfig {
   return {
     enabled_tools: [
       {
@@ -255,7 +255,7 @@ function buildSalesQualifierToolsV1(): ToolConfig {
  * - Lead scoring & routing
  * - Demo booking or nurture path
  */
-function buildSalesQualifierFlowV1(): FlowConfig {
+export function buildSalesQualifierFlowV1(): FlowConfig {
   const nodes: FlowNode[] = [
     {
       id: "greet",

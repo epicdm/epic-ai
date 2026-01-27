@@ -52,6 +52,7 @@ type FlowNodeType =
   | "INTENT"
   | "TOOL_CALL"
   | "TRANSFER"
+  | "HANDOFF"
   | "WAIT"
   | "SET_VARIABLE"
   | "END";
@@ -123,6 +124,7 @@ const nodeTypeConfig: Record<
   INTENT: { icon: "🎯", color: "#ec4899", label: "Intent" },
   TOOL_CALL: { icon: "🔧", color: "#06b6d4", label: "Tool Call" },
   TRANSFER: { icon: "📞", color: "#ef4444", label: "Transfer" },
+  HANDOFF: { icon: "🔄", color: "#ef4444", label: "Handoff" },
   WAIT: { icon: "⏳", color: "#6b7280", label: "Wait" },
   SET_VARIABLE: { icon: "📝", color: "#10b981", label: "Set Variable" },
   END: { icon: "🏁", color: "#dc2626", label: "End" },
@@ -378,7 +380,7 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
         data: {
           label: config.label,
           type,
-          content: type === "MESSAGE" ? "Enter your message here..." : undefined,
+          content: type === "MESSAGE" ? "Enter your message here..." : type === "HANDOFF" ? "Please hold while I connect you to a human..." : undefined,
           config: {},
         },
       };
@@ -914,6 +916,100 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
                 </>
               )}
 
+              {editingNode?.data.type === "HANDOFF" && (
+                <>
+                  <Select
+                    label="Target Source"
+                    selectedKeys={
+                      nodeConfig.targetSource
+                        ? [nodeConfig.targetSource as string]
+                        : ["default"]
+                    }
+                    onSelectionChange={(keys) => {
+                      const source = Array.from(keys)[0] as string;
+                      setNodeConfig({
+                        ...nodeConfig,
+                        targetSource: source,
+                        // Clear explicit target fields when switching to default
+                        ...(source === "default" ? {
+                          targetContext: undefined,
+                          targetExten: undefined,
+                          targetPriority: undefined,
+                        } : {}),
+                      });
+                    }}
+                    description="Use governance default or specify an explicit target"
+                  >
+                    <SelectItem key="default">Use Governance Default</SelectItem>
+                    <SelectItem key="explicit">Explicit Target</SelectItem>
+                  </Select>
+
+                  {nodeConfig.targetSource === "explicit" && (
+                    <>
+                      <Input
+                        label="Context"
+                        value={(nodeConfig.targetContext as string) || ""}
+                        onValueChange={(v) =>
+                          setNodeConfig({ ...nodeConfig, targetContext: v })
+                        }
+                        placeholder="sales_queue"
+                        description="Dialplan context name"
+                      />
+
+                      <Input
+                        label="Extension"
+                        value={(nodeConfig.targetExten as string) || ""}
+                        onValueChange={(v) =>
+                          setNodeConfig({ ...nodeConfig, targetExten: v })
+                        }
+                        placeholder="1"
+                        description="Extension number within the context"
+                      />
+
+                      <Input
+                        label="Priority"
+                        type="number"
+                        min={1}
+                        value={String(nodeConfig.targetPriority || 1)}
+                        onValueChange={(v) =>
+                          setNodeConfig({
+                            ...nodeConfig,
+                            targetPriority: parseInt(v) || 1,
+                          })
+                        }
+                        description="Priority level for the dialplan"
+                      />
+                    </>
+                  )}
+
+                  {nodeConfig.targetSource === "default" && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+                      <div className="font-medium mb-1">Using Governance Default</div>
+                      <div>Configure default handoff targets in agent governance settings.</div>
+                    </div>
+                  )}
+
+                  <Textarea
+                    label="Pre-Transfer Message"
+                    value={nodeContent}
+                    onValueChange={setNodeContent}
+                    minRows={2}
+                    placeholder="Please hold while I connect you to a human..."
+                    description="Message to speak before handoff (optional)"
+                  />
+
+                  <Input
+                    label="Escalation Reason"
+                    value={(nodeConfig.escalationReason as string) || ""}
+                    onValueChange={(v) =>
+                      setNodeConfig({ ...nodeConfig, escalationReason: v })
+                    }
+                    placeholder="User requested human agent"
+                    description="Reason for escalation (tracked in session)"
+                  />
+                </>
+              )}
+
               {editingNode?.data.type === "WAIT" && (
                 <Input
                   label="Duration (seconds)"
@@ -992,6 +1088,7 @@ function getNodeDescription(type: FlowNodeType): string {
     INTENT: "Branch based on detected intent",
     TOOL_CALL: "Execute a function/tool",
     TRANSFER: "Transfer to human or another agent",
+    HANDOFF: "Escalate to human via handoff target",
     WAIT: "Pause for a duration",
     SET_VARIABLE: "Set a conversation variable",
     END: "End the conversation",

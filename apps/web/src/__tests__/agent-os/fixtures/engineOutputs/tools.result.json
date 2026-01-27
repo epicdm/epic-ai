@@ -1,0 +1,41 @@
+{
+  "essential_tools": [
+    {
+      "id": "calendar_booking",
+      "reason": "Required for appointment scheduling"
+    },
+    {
+      "id": "crm_lookup",
+      "reason": "Check existing customer records"
+    }
+  ],
+  "recommended_tools": [
+    {
+      "id": "address_validation",
+      "reason": "Verify service area coverage"
+    },
+    {
+      "id": "sms_notification",
+      "reason": "Send appointment confirmations"
+    }
+  ],
+  "optional_tools": [
+    {
+      "id": "email_sender",
+      "reason": "Follow-up communications"
+    }
+  ],
+  "disabled_tools": [
+    "payment_processing"
+  ],
+  "gaps": [],
+  "evidence": [
+    {
+      "field_path": "tool_config.essential",
+      "source": "tool_assignment_engine",
+      "reasoning": "Appointment setter template requires calendar integration",
+      "source_phase": "tools"
+    }
+  ],
+  "confidence": 0.88
+}

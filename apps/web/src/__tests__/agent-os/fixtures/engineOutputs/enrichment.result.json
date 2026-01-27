@@ -1,0 +1,48 @@
+{
+  "company_profile": {
+    "name": "SunBright Solar",
+    "industry": "solar",
+    "business_model": "b2c",
+    "services": [
+      {
+        "name": "Solar Panel Installation",
+        "description": "Full residential solar installation"
+      },
+      {
+        "name": "System Maintenance",
+        "description": "Annual maintenance"
+      }
+    ],
+    "service_area": "Phoenix Metro Area, AZ"
+  },
+  "brand_voice_profile": {
+    "detected_tone": "warm",
+    "formality_level": 3,
+    "uses_first_person": true
+  },
+  "gaps": [
+    {
+      "gap_type": "missing_pricing",
+      "field_path": "company_profile.pricing",
+      "severity": "medium",
+      "impact": "Agent cannot discuss pricing, may lose leads",
+      "recommended_fix": "Add pricing information or range",
+      "source_phase": "enrichment"
+    }
+  ],
+  "evidence": [
+    {
+      "field_path": "company_profile.name",
+      "source": "website_scrape",
+      "reasoning": "Extracted from page title and header",
+      "source_phase": "enrichment"
+    },
+    {
+      "field_path": "company_profile.industry",
+      "source": "website_scrape",
+      "reasoning": "Inferred from services and content",
+      "source_phase": "enrichment"
+    }
+  ],
+  "confidence": 0.82
+}

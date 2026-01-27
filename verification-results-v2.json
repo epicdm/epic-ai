@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-01-26T23:41:52.995443",
+  "duration_seconds": 120.485662,
+  "summary": {
+    "passed": 0,
+    "failed": 4,
+    "warnings": 12,
+    "total": 16
+  },
+  "checks": [
+    {
+      "status": "FAIL",
+      "name": "Asterisk AMI Port Not Accessible",
+      "details": "Cannot connect to voice000.epic.dm:5038",
+      "error": "Verify Asterisk is running and AMI is enabled",
+      "timestamp": "2026-01-26T23:39:52.753170"
+    },
+    {
+      "status": "FAIL",
+      "name": "voice-service Port Not Accessible",
+      "details": "Cannot connect to epic-voice-backend-ktipw.ondigitalocean.app:8000",
+      "error": "Verify voice-service is running on port 8000",
+      "timestamp": "2026-01-26T23:40:32.791078"
+    },
+    {
+      "status": "WARN",
+      "name": "Manager Configuration Requires Direct Access",
+      "details": "SSH access to voice000.epic.dm required to verify /etc/asterisk/manager.conf",
+      "timestamp": "2026-01-26T23:40:32.791160"
+    },
+    {
+      "status": "FAIL",
+      "name": "voice-service Health Endpoint",
+      "details": "Request timed out",
+      "error": "No response within 10s",
+      "timestamp": "2026-01-26T23:41:12.831296"
+    },
+    {
+      "status": "FAIL",
+      "name": "Transfer Endpoint",
+      "details": "Request timed out",
+      "error": "No response within 10s",
+      "timestamp": "2026-01-26T23:41:52.995243"
+    },
+    {
+      "status": "WARN",
+      "name": "Redis Session Validation",
+      "details": "Requires direct Redis access or active call session. Manual verification needed.",
+      "timestamp": "2026-01-26T23:41:52.995290"
+    },
+    {
+      "status": "WARN",
+      "name": "Expected Session Fields",
+      "details": "asterisk_channel (flat HSET field), asterisk_other_channel (optional), state, agentId",
+      "timestamp": "2026-01-26T23:41:52.995300"
+    },
+    {
+      "status": "WARN",
+      "name": "Flow Integration Test",
+      "details": "Requires live call session and active handoff. Must be executed during production traffic.",
+      "timestamp": "2026-01-26T23:41:52.995312"
+    },
+    {
+      "status": "WARN",
+      "name": "Failure Test: Missing asterisk_channel",
+      "details": "Requires: Session lacks asterisk_channel field",
+      "timestamp": "2026-01-26T23:41:52.995325"
+    },
+    {
+      "status": "WARN",
+      "name": "Failure Test: No handoff target",
+      "details": "Requires: Governance handoff disabled or misconfigured",
+      "timestamp": "2026-01-26T23:41:52.995343"
+    },
+    {
+      "status": "WARN",
+      "name": "Failure Test: Invalid channel",
+      "details": "Requires: Channel doesn't exist in Asterisk",
+      "timestamp": "2026-01-26T23:41:52.995351"
+    },
+    {
+      "status": "WARN",
+      "name": "Failure Test: Max attempts exceeded",
+      "details": "Requires: escalation_attempt_count >= 3",
+      "timestamp": "2026-01-26T23:41:52.995358"
+    },
+    {
+      "status": "WARN",
+      "name": "Safety Lock: Max Handoff Attempts (3 max)",
+      "details": "Code-level verification required. Check transfer-tool-verification.md",
+      "timestamp": "2026-01-26T23:41:52.995371"
+    },
+    {
+      "status": "WARN",
+      "name": "Safety Lock: Already Escalated Check",
+      "details": "Code-level verification required. Check transfer-tool-verification.md",
+      "timestamp": "2026-01-26T23:41:52.995379"
+    },
+    {
+      "status": "WARN",
+      "name": "Safety Lock: Agent Eligibility Gate",
+      "details": "Code-level verification required. Check transfer-tool-verification.md",
+      "timestamp": "2026-01-26T23:41:52.995385"
+    },
+    {
+      "status": "WARN",
+      "name": "Safety Lock: Target Validation Gate",
+      "details": "Code-level verification required. Check transfer-tool-verification.md",
+      "timestamp": "2026-01-26T23:41:52.995396"
+    }
+  ]
+}

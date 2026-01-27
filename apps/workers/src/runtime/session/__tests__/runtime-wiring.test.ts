@@ -169,15 +169,15 @@ describe("SessionStateMiddleware", () => {
 
     it("should block handler in ESCALATING with non-strict mode", async () => {
       const middleware = createSessionStateMiddleware({ enforceStrict: false });
-      const handler = jest.fn();
+      const handler = jest.fn().mockResolvedValue(undefined);
 
       const result = await middleware.withAiLoopGate("ESCALATING", handler);
 
       expect(handler).not.toHaveBeenCalled();
       expect("blocked" in result).toBe(true);
       if ("blocked" in result) {
-        expect(result.blocked).toBe(true);
-        expect(result.reason).toContain("ESCALATING");
+        expect((result as { blocked: true; reason: string }).blocked).toBe(true);
+        expect((result as { blocked: true; reason: string }).reason).toContain("ESCALATING");
       }
     });
 
@@ -211,7 +211,7 @@ describe("SessionStateMiddleware", () => {
 
     it("should block handler in INIT state", async () => {
       const middleware = createSessionStateMiddleware({ enforceStrict: false });
-      const handler = jest.fn();
+      const handler = jest.fn().mockResolvedValue(undefined);
 
       const result = await middleware.withHandoffGate("INIT", handler);
 
@@ -221,7 +221,7 @@ describe("SessionStateMiddleware", () => {
 
     it("should block handler in ESCALATING state", async () => {
       const middleware = createSessionStateMiddleware({ enforceStrict: false });
-      const handler = jest.fn();
+      const handler = jest.fn().mockResolvedValue(undefined);
 
       const result = await middleware.withHandoffGate("ESCALATING", handler);
 
@@ -261,7 +261,7 @@ describe("SessionStateMiddleware", () => {
 
     it("should block input processing in ESCALATING", async () => {
       const middleware = createSessionStateMiddleware({ enforceStrict: false });
-      const handler = jest.fn();
+      const handler = jest.fn().mockResolvedValue(undefined);
 
       const result = await middleware.withInputGate("ESCALATING", handler);
 
@@ -332,11 +332,11 @@ describe("SessionStateMiddleware", () => {
     it("non-strict mode should return blocked result", async () => {
       const middleware = createSessionStateMiddleware({ enforceStrict: false });
 
-      const result = await middleware.withAiLoopGate("ENDING", jest.fn());
+      const result = await middleware.withAiLoopGate("ENDING", jest.fn().mockResolvedValue(undefined));
 
       expect("blocked" in result).toBe(true);
       if ("blocked" in result) {
-        expect(result.blocked).toBe(true);
+        expect((result as { blocked: true; reason: string }).blocked).toBe(true);
       }
     });
   });
@@ -606,7 +606,7 @@ describe("Integration scenarios", () => {
     // Step 2: Handoff requested from ACTIVE
     result = await middleware.withHandoffGate("ACTIVE", async () => ({
       handoff: "success",
-    }));
+    })) as any;
     expect("blocked" in result).toBe(false);
 
     // Step 3: AI loop blocked in ESCALATING
@@ -618,7 +618,7 @@ describe("Integration scenarios", () => {
     // Step 4: Handoff blocked in ESCALATING (already in progress)
     result = await middleware.withHandoffGate("ESCALATING", async () => ({
       handoff: "another",
-    }));
+    })) as any;
     expect("blocked" in result).toBe(true);
 
     // Step 5: AI loop still blocked in ESCALATED
@@ -630,7 +630,7 @@ describe("Integration scenarios", () => {
     // Step 6: Input blocked in ESCALATED
     result = await middleware.withInputGate("ESCALATED", async () => ({
       input: "user input",
-    }));
+    })) as any;
     expect("blocked" in result).toBe(true);
   });
 
@@ -649,7 +649,7 @@ describe("Integration scenarios", () => {
     expect(middleware.checkTermination("ENDING")).toBe(true);
 
     // Step 4: AI loop blocked in ENDING
-    const result = await middleware.withAiLoopGate("ENDING", jest.fn());
+    const result = await middleware.withAiLoopGate("ENDING", jest.fn().mockResolvedValue(undefined));
     expect("blocked" in result).toBe(true);
   });
 
@@ -671,7 +671,7 @@ describe("Integration scenarios", () => {
     expect("blocked" in result).toBe(true);
 
     // Handoff blocked in FAILED
-    result = await middleware.withHandoffGate("FAILED", async () => ({}));
+    result = await middleware.withHandoffGate("FAILED", async () => ({})) as any;
     expect("blocked" in result).toBe(true);
   });
 });

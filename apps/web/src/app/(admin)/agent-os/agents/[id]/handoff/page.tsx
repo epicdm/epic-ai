@@ -1,4 +1,5 @@
 import { HandoffTargetPicker } from "../ui/HandoffTargetPicker";
+import { HandoffReasonPolicyEditor } from "../ui/HandoffReasonPolicyEditor";
 
 export const metadata = {
   title: "Handoff Settings",
@@ -22,6 +23,7 @@ export default async function AgentHandoffPage({
       </div>
 
       <HandoffTargetPicker agentId={id} />
+      <HandoffReasonPolicyEditor agentId={id} />
     </div>
   );
 }

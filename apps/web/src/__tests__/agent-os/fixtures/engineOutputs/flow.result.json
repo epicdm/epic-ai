@@ -1,0 +1,65 @@
+{
+  "flow": {
+    "flow_id": "solar-appointment-v1",
+    "template_type": "appointment_setter",
+    "version": "1.0",
+    "entry_node": "greeting",
+    "nodes": [
+      {
+        "id": "greeting",
+        "type": "message",
+        "content": "Hi! Thanks for your interest in solar. I'd love to help you schedule a free consultation."
+      },
+      {
+        "id": "qualify_homeowner",
+        "type": "question",
+        "content": "Are you the homeowner, or would I be speaking with someone else about this decision?"
+      },
+      {
+        "id": "collect_address",
+        "type": "question",
+        "content": "What's the address of the property you're considering for solar?"
+      },
+      {
+        "id": "schedule",
+        "type": "action",
+        "tool": "calendar_booking",
+        "content": "Let me find some available times for your consultation."
+      },
+      {
+        "id": "confirm",
+        "type": "message",
+        "content": "You're all set! We'll see you at {{appointment_time}}."
+      }
+    ],
+    "edges": [
+      { "from": "greeting", "to": "qualify_homeowner" },
+      { "from": "qualify_homeowner", "to": "collect_address", "condition": "is_homeowner" },
+      { "from": "collect_address", "to": "schedule" },
+      { "from": "schedule", "to": "confirm" }
+    ],
+    "objection_handlers": [
+      {
+        "trigger": "not ready",
+        "response": "No problem! Would you like me to send you some information to review first?"
+      }
+    ],
+    "success_outcomes": ["appointment_booked", "info_sent"],
+    "failure_outcomes": ["not_homeowner", "out_of_area"],
+    "metadata": {
+      "estimated_turns": { "min": 4, "max": 8 },
+      "complexity_level": "moderate",
+      "requires_qualification": true
+    }
+  },
+  "gaps": [],
+  "evidence": [
+    {
+      "field_path": "flows.entry_node",
+      "source": "conversation_flow_engine",
+      "reasoning": "Standard appointment flow starting with greeting",
+      "source_phase": "flow"
+    }
+  ],
+  "confidence": 0.85
+}

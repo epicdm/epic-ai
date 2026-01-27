@@ -16,6 +16,7 @@ import { redis, closeRedisConnection, createRedisConnection } from './lib';
 import { QueueName } from './types/payloads';
 import { getWorkerOptions } from './queues/options';
 import { getQueuesHealth } from './queues';
+import { CALLBACK_QUEUE_NAME } from './queues/callback';
 import { logger } from './lib/logger';
 import type { JobData } from './processors/base';
 import {
@@ -27,7 +28,13 @@ import {
   documentProcessor,
   contentPublisherProcessor,
   imageGeneratorProcessor,
+  processCompanyEnrichmentJob,
+  processAgentAssemblyJob,
 } from './processors';
+import { callbackRequestedProcessor } from './processors/callbackRequested';
+import { callbackRetryProcessor } from './processors/callbackRetry';
+import { startAmiEventListener as startOldAmiEventListener } from './lib/ami-events';
+import { startAmiEventListener } from './runtime/ami-event-listener';
 import { JobType } from './types/payloads';
 import { startHealthServer, recordJobProcessed } from './health';
 
@@ -281,6 +288,52 @@ async function analyticsSyncRouter(job: any): Promise<unknown> {
   }
 }
 
+/**
+ * Agent OS queue router
+ * Routes jobs to the appropriate processor based on job type
+ * Handles ENRICH_COMPANY, ASSEMBLE_AGENT, and future Agent OS job types
+ *
+ * Processor concurrency/lockDuration recommendations:
+ * - company-enrichment: concurrency 5, lockDuration 10min (web scraping + AI intensive)
+ * - agent-assembly: concurrency 3, lockDuration 15min (8-phase AI pipeline)
+ */
+async function agentOsRouter(job: any): Promise<unknown> {
+  const jobType = job.data?.type || job.data?.jobType;
+
+  switch (jobType) {
+    case JobType.ENRICH_COMPANY:
+      return processCompanyEnrichmentJob(job.data);
+    case JobType.ASSEMBLE_AGENT:
+      return processAgentAssemblyJob(job.data);
+    default:
+      logger.warn(COMPONENT, `Unknown Agent OS job type: ${jobType}`);
+      throw new Error(`Unknown job type: ${jobType}`);
+  }
+}
+
+/**
+ * Callback queue router
+ * Routes jobs to the appropriate processor based on job name
+ * Handles callback.requested and callback.retry jobs for voice callbacks
+ *
+ * Processor concurrency/lockDuration recommendations:
+ * - callback-requested: concurrency 10, lockDuration 5min (outbound call triggering)
+ * - callback-retry: concurrency 10, lockDuration 5min (retry outbound call)
+ */
+async function callbackRouter(job: any): Promise<unknown> {
+  const jobName = job.name;
+
+  switch (jobName) {
+    case "callback.requested":
+      return callbackRequestedProcessor(job);
+    case "callback.retry":
+      return callbackRetryProcessor(job);
+    default:
+      logger.warn(COMPONENT, `Unknown callback job name: ${jobName}`);
+      throw new Error(`Unknown job name: ${jobName}`);
+  }
+}
+
 // =============================================================================
 // Worker Factory
 // =============================================================================
@@ -459,16 +512,55 @@ async function main(): Promise<void> {
     );
     workers.push(analyticsWorker);
 
+    const agentOsWorker = createWorker(
+      QueueName.AGENT_OS,
+      agentOsRouter
+    );
+    workers.push(agentOsWorker);
+
+    const callbackWorker = createWorker(
+      CALLBACK_QUEUE_NAME,
+      callbackRouter
+    );
+    workers.push(callbackWorker);
+
     logger.info(COMPONENT, 'All workers initialized', {
       queues: [
         QueueName.CONTENT_GENERATION,
         QueueName.CONTEXT_SCRAPING,
         QueueName.ANALYTICS_SYNC,
+        QueueName.AGENT_OS,
+        CALLBACK_QUEUE_NAME,
       ],
     });
 
     // T053: Start stats monitoring (logs queue metrics every 60s)
     startStatsMonitoring();
+
+    // Start AMI event listener v1 for full call lifecycle tracking
+    // Tracks: VarSet (correlation), BridgeEnter/DialEnd (answered), Hangup (final)
+    // Writes to same Redis hash: callback:job:<jobId>
+    try {
+      startAmiEventListener();
+      logger.info(COMPONENT, 'AMI event listener v1 started (VarSet/Bridge/Hangup)');
+    } catch (error) {
+      logger.error(COMPONENT, 'Failed to start AMI event listener v1', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Start callback worker (originate-callback jobs)
+    // This creates a dedicated BullMQ worker that consumes originate-callback jobs
+    // and triggers AMI Originate commands to Asterisk
+    try {
+      const { createCallbackWorker } = await import('./queues/callback');
+      createCallbackWorker();
+      logger.info(COMPONENT, 'Callback worker started (originate-callback)');
+    } catch (error) {
+      logger.error(COMPONENT, 'Failed to start callback worker', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     // Register shutdown handlers
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));

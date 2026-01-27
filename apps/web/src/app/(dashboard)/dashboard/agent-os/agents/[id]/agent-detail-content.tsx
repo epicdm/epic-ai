@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import { KnowledgeAutoFillButton } from "@/components/agent-os";
+import { KnowledgeAutoFillButton, NextStepBanner, type NextStepKey } from "@/components/agent-os";
 
 interface Agent {
   id: string;
@@ -283,6 +283,32 @@ export function AgentDetailContent({ agentId }: AgentDetailContentProps) {
           {success}
         </div>
       )}
+
+      {/* Next Step Banner - AI-guided wizard experience */}
+      <NextStepBanner
+        agentId={agentId}
+        onAfterAutoFill={loadAgent}
+        onGoToStep={(step: NextStepKey) => {
+          // Map step keys to tab keys
+          const stepToTab: Record<string, string> = {
+            company: "overview",
+            template: "overview",
+            tools: "tools",
+            flow: "overview",
+            knowledge: "knowledge",
+            brain: "brain",
+            personality: "personality",
+            memory: "overview",
+            learning: "overview",
+            governance: "governance",
+            economics: "overview",
+            review: "overview",
+          };
+          const tabKey = stepToTab[step] || "overview";
+          setActiveTab(tabKey);
+        }}
+        defaultExpanded={false}
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">

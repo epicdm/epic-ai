@@ -1,0 +1,16 @@
+{
+  "detected_tone": "warm",
+  "formality_level": 3,
+  "uses_first_person": true,
+  "uses_technical_jargon": false,
+  "uses_emojis": false,
+  "sentence_complexity": "moderate",
+  "call_to_action_style": "friendly invitation",
+  "sample_phrases": [
+    "We're here to help you save",
+    "Let's find the right solution for your home",
+    "Our team is ready when you are"
+  ],
+  "avoided_words": ["hassle", "complicated", "expensive"],
+  "detection_confidence": 0.85
+}

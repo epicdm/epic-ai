@@ -1,0 +1,43 @@
+{
+  "config": {
+    "compliance_mode": "standard",
+    "forbidden_phrases": [
+      "I guarantee",
+      "I promise",
+      "100% guaranteed",
+      "absolutely certain",
+      "no risk",
+      "you must",
+      "sign now"
+    ],
+    "disallowed_topics": [
+      "competitor pricing",
+      "political opinions",
+      "religious topics"
+    ],
+    "escalation_triggers": [
+      "speak to a human",
+      "get me a manager",
+      "emergency",
+      "complaint",
+      "lawyer"
+    ],
+    "pii_handling": "moderate",
+    "safe_claim_phrases": [
+      "Based on our experience",
+      "Typically",
+      "In most cases",
+      "Many customers find"
+    ]
+  },
+  "gaps": [],
+  "evidence": [
+    {
+      "field_path": "governance.compliance_mode",
+      "source": "governance_defaults_engine",
+      "reasoning": "Standard compliance for B2C service business",
+      "source_phase": "governance"
+    }
+  ],
+  "confidence": 0.95
+}

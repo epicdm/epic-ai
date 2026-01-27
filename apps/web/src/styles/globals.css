@@ -66,3 +66,25 @@ body {
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
+
+/* Focus Anchor - Deep-linking highlight for wizard fields */
+.focus-anchor {
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  border-radius: 0.5rem;
+  outline: none;
+}
+
+.focus-anchor.focus-highlight {
+  box-shadow: 0 0 0 2px theme('colors.primary.DEFAULT', #3b82f6);
+  background-color: rgba(59, 130, 246, 0.05);
+  animation: focus-pulse 1s ease-in-out 2;
+}
+
+.dark .focus-anchor.focus-highlight {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+@keyframes focus-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px theme('colors.primary.DEFAULT', #3b82f6); }
+  50% { box-shadow: 0 0 0 4px theme('colors.primary.DEFAULT', #3b82f6); }
+}

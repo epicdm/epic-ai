@@ -63,6 +63,7 @@ export const lockDurations: Record<QueueName, number> = {
   [QueueName.CONTENT_GENERATION]: 300_000, // 5 minutes
   [QueueName.CONTEXT_SCRAPING]: 120_000, // 2 minutes
   [QueueName.ANALYTICS_SYNC]: 180_000, // 3 minutes
+  [QueueName.AGENT_OS]: 600_000, // 10 minutes (enrichment can take longer)
 };
 
 /**
@@ -72,6 +73,7 @@ export const stalledIntervals: Record<QueueName, number> = {
   [QueueName.CONTENT_GENERATION]: 30_000, // 30 seconds
   [QueueName.CONTEXT_SCRAPING]: 15_000, // 15 seconds
   [QueueName.ANALYTICS_SYNC]: 20_000, // 20 seconds
+  [QueueName.AGENT_OS]: 60_000, // 60 seconds (longer running jobs)
 };
 
 /**
@@ -82,6 +84,7 @@ export const concurrencyLimits: Record<QueueName, number> = {
   [QueueName.CONTENT_GENERATION]: 10, // CPU/API intensive
   [QueueName.CONTEXT_SCRAPING]: 30, // I/O bound
   [QueueName.ANALYTICS_SYNC]: 60, // API calls with wait time
+  [QueueName.AGENT_OS]: 5, // Heavy processing (web scraping + AI)
 };
 
 /**
@@ -133,6 +136,10 @@ export function getDefaultPriorityForType(jobType: JobType): number {
     // Low priority - background
     case JobType.PROCESS_DOCUMENT:
       return JobPriority.LOW;
+
+    // Normal priority - Agent OS jobs
+    case JobType.ENRICH_COMPANY:
+      return JobPriority.NORMAL;
 
     default:
       return JobPriority.NORMAL;

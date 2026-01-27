@@ -27,3 +27,7 @@ export { imageGeneratorProcessor } from './image-generator';
 
 // Agent OS processors
 export * from './agent-os';
+
+// Callback processors
+export { callbackRequestedProcessor } from './callbackRequested';
+export { callbackRetryProcessor } from './callbackRetry';
