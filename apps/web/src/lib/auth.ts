@@ -4,7 +4,7 @@ import { prisma } from "@epic-ai/database";
 // Development UAT bypass - allows testing without auth in development mode
 const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
-  process.env.UAT_AUTH_BYPASS === "true";
+  process.env.E2E_UAT_BYPASS === "true";
 
 // UAT test user ID (consistent ID for testing)
 const UAT_TEST_USER_ID = "uat_test_user_001";

@@ -4,7 +4,7 @@ import { prisma } from "@epic-ai/database";
 // UAT bypass support
 const isUATBypassEnabled =
   process.env.NODE_ENV === "development" &&
-  process.env.UAT_AUTH_BYPASS === "true";
+  process.env.E2E_UAT_BYPASS === "true";
 
 const UAT_TEST_USER_ID = "uat_test_user_001";
 

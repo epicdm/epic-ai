@@ -10,9 +10,9 @@ services:
     image: postgres:16-alpine
     container_name: epic-ai-postgres-dev
     environment:
-      POSTGRES_DB: epic_dev
+      POSTGRES_DB: epic_ai
       POSTGRES_USER: epic
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-epicpassword}
     volumes:
       - postgres_dev:/var/lib/postgresql/data
     ports:
@@ -51,14 +51,14 @@ services:
     container_name: epic-ai-web-dev
     environment:
       # Database
-      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-devpassword}@postgres:5432/epic_dev
+      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-epicpassword}@postgres:5432/epic_ai
 
       # Redis
       REDIS_URL: redis://redis:6379
 
       # Development
       NODE_ENV: development
-      UAT_AUTH_BYPASS: "true"
+      E2E_UAT_BYPASS: "true"
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_bmF0aXZlLWd1cHB5LTM4LmNsZXJrLmFjY291bnRzLmRldiQ
       CLERK_SECRET_KEY: sk_test_LV2QYhp1Uj3MIy8GRdkS7QfCxrOq18KPZPPIaaDIcr
 
@@ -101,7 +101,7 @@ services:
     container_name: epic-ai-workers-dev
     environment:
       # Database
-      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-devpassword}@postgres:5432/epic_dev
+      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-epicpassword}@postgres:5432/epic_ai
 
       # Redis
       REDIS_URL: redis://redis:6379
