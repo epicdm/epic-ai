@@ -1,0 +1,40 @@
+# Epic AI - Background Workers Development
+# Supports hot-reload with volume mounts
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@9.0.0 --activate
+
+# Copy monorepo files (with turbo config)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+# Copy packages and apps BEFORE install so pnpm sees all workspace dependencies
+COPY packages ./packages
+COPY apps ./apps
+
+# Install dependencies (now that all workspaces are copied)
+RUN pnpm install --frozen-lockfile
+
+# Build workers TypeScript
+RUN pnpm -F @epic-ai/workers build
+
+# Expose health check port
+EXPOSE 3001
+
+# Set NODE_ENV
+ENV NODE_ENV=development
+
+# Set NODE_PATH to hoisted modules for module resolution
+ENV NODE_PATH=/app/node_modules
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+
+# Start workers with pre-built dist files (hoisted dotenv available via NODE_PATH)
+WORKDIR /app/apps/workers
+CMD ["sh", "-c", "exec node dist/index.js"]

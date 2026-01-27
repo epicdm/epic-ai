@@ -1,0 +1,172 @@
+# Epic AI - Development Environment
+# All services in containers with hot-reload support
+# Run with: docker compose -f docker-compose.dev.yml up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: epic-ai-postgres-dev
+    environment:
+      POSTGRES_DB: epic_dev
+      POSTGRES_USER: epic
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+    volumes:
+      - postgres_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U epic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - epic-network
+
+  # Redis Cache & Job Queue
+  redis:
+    image: redis:7-alpine
+    container_name: epic-ai-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - epic-network
+
+  # Web Frontend (Next.js) - with hot reload
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web.dev
+    container_name: epic-ai-web-dev
+    environment:
+      # Database
+      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-devpassword}@postgres:5432/epic_dev
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Development
+      NODE_ENV: development
+      UAT_AUTH_BYPASS: "true"
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_bmF0aXZlLWd1cHB5LTM4LmNsZXJrLmFjY291bnRzLmRldiQ
+      CLERK_SECRET_KEY: sk_test_LV2QYhp1Uj3MIy8GRdkS7QfCxrOq18KPZPPIaaDIcr
+
+      # App URLs
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      # OpenAI (optional)
+      OPENAI_API_KEY: sk_test_dummy
+
+      # Voice service
+      VOICE_SERVICE_URL: http://localhost:8000
+    volumes:
+      # Mount source code for hot-reload
+      - ./apps/web/src:/app/apps/web/src
+      - ./packages:/app/packages
+      # Keep node_modules in container to avoid conflicts
+      - /app/node_modules
+      - /app/apps/web/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - epic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Background Workers (BullMQ) - with hot reload
+  workers:
+    build:
+      context: .
+      dockerfile: Dockerfile.workers.dev
+    container_name: epic-ai-workers-dev
+    environment:
+      # Database
+      DATABASE_URL: postgresql://epic:${DB_PASSWORD:-devpassword}@postgres:5432/epic_dev
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Development
+      NODE_ENV: development
+
+      # OpenAI (optional)
+      OPENAI_API_KEY: sk_test_dummy
+
+      # Queue configuration
+      BULLMQ_PREFIX: epic
+      CALLBACK_QUEUE_NAME: telephony-callback
+
+      # Health check port
+      HEALTH_PORT: "3001"
+    volumes:
+      # Mount source code for hot-reload
+      - ./apps/workers/src:/app/apps/workers/src
+      - ./packages:/app/packages
+      # Keep node_modules in container
+      - /app/node_modules
+      - /app/apps/workers/dist
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - epic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # nginx Reverse Proxy (optional - use localhost:3000 directly if you prefer)
+  nginx:
+    image: nginx:alpine
+    container_name: epic-ai-nginx-dev
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+      - workers
+    restart: unless-stopped
+    networks:
+      - epic-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_dev:
+    driver: local
+  redis_dev:
+    driver: local
+
+networks:
+  epic-network:
+    driver: bridge
