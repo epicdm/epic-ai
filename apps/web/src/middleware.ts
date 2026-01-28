@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse, NextRequest, NextFetchEvent } from "next/server";
 import { getFlatRoutes } from "@/lib/routes/route-config";
 
 // Build public routes list from route config
@@ -53,7 +53,7 @@ function handleRouteRedirects(pathname: string, searchParams: URLSearchParams, r
 }
 
 // Middleware export with Clerk integration
-export default async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname, searchParams } = new URL(request.url);
 
   // Check for route redirects (backward compatibility) - run before auth
@@ -81,7 +81,7 @@ export default async function middleware(request: NextRequest) {
         unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
       });
     }
-  })(request);
+  })(request, event);
 }
 
 export const config = {

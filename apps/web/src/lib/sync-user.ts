@@ -2,9 +2,11 @@ import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 
 // UAT bypass support
-const isUATBypassEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.E2E_UAT_BYPASS === "true";
+// Evaluated at request time (not build time) to support runtime env var changes
+// Matches the pattern in auth.ts - no NODE_ENV restriction so it works on staging/Vercel
+function isUATBypassEnabled() {
+  return process.env.E2E_UAT_BYPASS === "true";
+}
 
 const UAT_TEST_USER_ID = "uat_test_user_001";
 
@@ -19,7 +21,7 @@ export async function syncUser() {
     const clerkUser = await currentUser();
 
     // UAT bypass: return test user if no clerk user
-    if (!clerkUser && isUATBypassEnabled) {
+    if (!clerkUser && isUATBypassEnabled()) {
       const uatUser = await prisma.user.findUnique({
         where: { id: UAT_TEST_USER_ID },
         include: {
