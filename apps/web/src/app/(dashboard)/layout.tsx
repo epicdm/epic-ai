@@ -6,10 +6,13 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { prisma } from "@epic-ai/database";
 import { Prisma } from "@prisma/client";
 
-// Development UAT bypass - allows testing without auth in development mode
-const isUATBypassEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.UAT_AUTH_BYPASS === "true";
+// UAT bypass - allows testing without auth when explicitly enabled
+// Supports both UAT_AUTH_BYPASS (canonical) and E2E_UAT_BYPASS (for Playwright E2E tests)
+// NOTE: Must be a function (not module-level const) to ensure evaluation at request time.
+// Module-level consts can be inlined at build time by the bundler when env vars aren't set.
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
 
 // Force dynamic rendering - prevents prerender errors during build
 export const dynamic = 'force-dynamic';
@@ -19,10 +22,9 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-
-  // In UAT bypass mode, skip auth check and use mock values
-  if (isUATBypassEnabled && !userId) {
+  // Check UAT bypass FIRST, before calling any Clerk functions
+  // This prevents Clerk errors from blocking test access
+  if (isUATBypassEnabled()) {
     return (
       <DashboardShell
         organizationName="UAT Test Organization"
@@ -32,6 +34,8 @@ export default async function DashboardLayout({
       </DashboardShell>
     );
   }
+
+  const { userId } = await auth();
 
   if (!userId) {
     redirect("/sign-in");

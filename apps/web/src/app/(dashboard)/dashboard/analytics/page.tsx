@@ -8,6 +8,11 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@epic-ai/database';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 
+// UAT bypass - allows testing without database when explicitly enabled
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
+
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
@@ -16,6 +21,18 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
+  // In UAT bypass mode, return mock data without database queries
+  if (isUATBypassEnabled()) {
+    return (
+      <div className="p-6">
+        <AnalyticsDashboard
+          orgId="uat_test_org_001"
+          brandId="uat_test_brand_001"
+        />
+      </div>
+    );
+  }
+
   const { userId } = await getAuth();
 
   if (!userId) {

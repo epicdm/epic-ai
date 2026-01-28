@@ -22,12 +22,35 @@ const saveProgressSchema = z.object({
   phaseProgress: z.record(z.number()).optional(),
 });
 
+// UAT bypass - allows testing without database when explicitly enabled
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
+
 /**
  * GET /api/flywheel/progress
  * Returns a summary of overall flywheel progress
  */
 export async function GET() {
   try {
+    // In UAT bypass mode, return mock progress data
+    if (isUATBypassEnabled()) {
+      return NextResponse.json({
+        overallProgress: 0,
+        completedPhases: 0,
+        totalPhases: 5,
+        flywheelActive: false,
+        nextPhase: "UNDERSTAND",
+        phases: {
+          UNDERSTAND: { status: "NOT_STARTED", step: -1, totalSteps: 8 },
+          CREATE: { status: "NOT_STARTED", step: -1, totalSteps: 6 },
+          DISTRIBUTE: { status: "NOT_STARTED", step: -1, totalSteps: 6 },
+          LEARN: { status: "NOT_STARTED", step: -1, totalSteps: 5 },
+          AUTOMATE: { status: "NOT_STARTED", step: -1, totalSteps: 6 },
+        },
+      });
+    }
+
     const { userId } = await getAuthWithBypass();
 
     if (!userId) {

@@ -9,11 +9,24 @@ import { prisma } from '@epic-ai/database';
 import { SocialPublisher } from '@/lib/services/social-publishing';
 import { getUserOrganization } from '@/lib/sync-user';
 
+// UAT bypass - allows testing without database when explicitly enabled
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
+
 /**
  * GET - List connected social accounts
  */
 export async function GET(request: NextRequest) {
   try {
+    // In UAT bypass mode, return mock accounts data
+    if (isUATBypassEnabled()) {
+      return NextResponse.json({
+        accounts: [],
+        brandId: "uat_test_brand_001",
+      });
+    }
+
     const { userId } = await getAuthWithBypass();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

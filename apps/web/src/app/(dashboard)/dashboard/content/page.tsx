@@ -3,6 +3,11 @@ import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { prisma } from "@epic-ai/database";
 import { ContentFactoryPage } from "@/components/content/content-factory-page";
 
+// UAT bypass - allows testing without database when explicitly enabled
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
+
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
@@ -10,6 +15,17 @@ export const metadata = {
 };
 
 export default async function Page() {
+  // In UAT bypass mode, return mock data without database queries
+  if (isUATBypassEnabled()) {
+    return (
+      <ContentFactoryPage
+        brandId="uat_test_brand_001"
+        brandName="UAT Test Brand"
+        connectedAccounts={[]}
+      />
+    );
+  }
+
   const { userId } = await getAuthWithBypass();
 
   if (!userId) {

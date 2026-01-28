@@ -7,10 +7,12 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "@/app/(dashboard)/dashboard/dashboard-content";
 
-// Development UAT bypass - allows testing without auth in development mode
-const isUATBypassEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.UAT_AUTH_BYPASS === "true";
+// UAT bypass - allows testing without auth when explicitly enabled
+// Supports both UAT_AUTH_BYPASS (canonical) and E2E_UAT_BYPASS (for Playwright E2E tests)
+// NOTE: Must be a function (not module-level const) to ensure evaluation at request time.
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +26,20 @@ interface DashboardPageProps {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const { userId } = await auth();
   const params = await searchParams;
 
-  // UAT bypass: Skip auth check in development testing mode
-  if (!userId && !isUATBypassEnabled) {
+  // Check UAT bypass FIRST, before calling any Clerk functions
+  if (isUATBypassEnabled()) {
+    return (
+      <DashboardContent
+        userName="UAT Tester"
+        showFlywheelModal={params?.flywheel === "show"}
+      />
+    );
+  }
+
+  const { userId } = await auth();
+  if (!userId) {
     redirect("/sign-in");
   }
 

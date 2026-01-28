@@ -48,7 +48,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await getAuthWithBypass();
+    const { userId, isUATBypass } = await getAuthWithBypass();
 
     if (!userId) {
       return NextResponse.json(
@@ -58,10 +58,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Get Clerk user data for sync
-    const clerkUser = await currentUser();
+    let clerkUser = await currentUser();
+
+    // If in UAT bypass mode and Clerk user is null, try to get from database
+    if (!clerkUser && isUATBypass) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (dbUser) {
+        // Construct a Clerk-like user object from database data
+        clerkUser = {
+          id: dbUser.id,
+          emailAddresses: dbUser.email ? [{ emailAddress: dbUser.email }] : [],
+          firstName: dbUser.firstName,
+          lastName: dbUser.lastName,
+          imageUrl: dbUser.imageUrl,
+        } as any;
+      }
+    }
+
     if (!clerkUser) {
       return NextResponse.json(
-        { error: "Could not retrieve user data from Clerk" },
+        { error: "Could not retrieve user data from Clerk or database" },
         { status: 500 }
       );
     }
