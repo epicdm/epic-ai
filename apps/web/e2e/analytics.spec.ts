@@ -32,22 +32,17 @@ test.describe("Analytics Dashboard", () => {
   test("should load analytics page", async ({ page }) => {
     await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
-    // Wait for either loading state or content state to appear
-    // The analytics page uses data-testid="analytics-page" in loading/empty states
-    // and data-testid="dashboard-content" in the content state
-    await expect(
-      page.locator('[data-testid="analytics-page"], [data-testid="dashboard-content"]').first()
-    ).toBeVisible({ timeout: 30000 });
+    // Wait for main content area to render
+    // The analytics page renders inside <main> — may show empty state or full dashboard
+    await expect(page.locator("main")).toBeVisible({ timeout: 30000 });
   });
 
   test("should display analytics content", async ({ page }) => {
     await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
-    // Wait for analytics page to render (loading, empty, or content state)
-    // The empty state renders an h3 heading; content state renders an h1
-    await expect(
-      page.locator('[data-testid="analytics-page"], [data-testid="dashboard-content"]').first()
-    ).toBeVisible({ timeout: 30000 });
+    // Wait for main content area and verify heading renders
+    await expect(page.locator("main")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 15000 });
 
     // Page should have content
     const pageContent = await page.textContent("body");

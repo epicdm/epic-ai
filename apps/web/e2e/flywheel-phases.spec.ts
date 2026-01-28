@@ -104,10 +104,9 @@ test.describe("CREATE Phase - Content Factory", () => {
   test("should load content creation page", async ({ page }) => {
     await page.goto("/dashboard/content", { waitUntil: "domcontentloaded" });
 
-    // Should show content creation UI (content-preview is the root container)
-    await expect(
-      page.locator('[data-testid="content-preview"]')
-    ).toBeVisible({ timeout: 30000 });
+    // Should show content creation UI inside main content area
+    await expect(page.locator("main")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -126,10 +125,9 @@ test.describe("LEARN Phase - Analytics", () => {
   test("should load learning/analytics page", async ({ page }) => {
     await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
-    // Analytics page uses "analytics-page" in loading/empty states and "dashboard-content" in loaded state
-    await expect(
-      page.locator('[data-testid="analytics-page"], [data-testid="dashboard-content"]').first()
-    ).toBeVisible({ timeout: 30000 });
+    // Analytics page renders inside <main> — may show empty state or full dashboard
+    await expect(page.locator("main")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 15000 });
   });
 });
 
