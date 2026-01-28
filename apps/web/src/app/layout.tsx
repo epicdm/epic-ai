@@ -56,9 +56,19 @@ export default function RootLayout({
     </html>
   );
 
-  // In E2E mode, skip ClerkProvider (server-side auth bypass handles auth)
+  // In E2E mode, use ClerkProvider with `dynamic` prop so it does NOT require
+  // clerkMiddleware headers during SSR. Middleware skips clerkMiddleware to avoid
+  // Clerk's dev-browser redirect on custom domains.
   if (isE2EMode) {
-    return content;
+    return (
+      <ClerkProvider
+        dynamic
+        signInFallbackRedirectUrl="/dashboard"
+        signUpFallbackRedirectUrl="/sign-up/welcome"
+      >
+        {content}
+      </ClerkProvider>
+    );
   }
 
   return (

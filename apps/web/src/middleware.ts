@@ -63,8 +63,9 @@ export default async function middleware(request: NextRequest, event: NextFetchE
   }
 
   // UAT/E2E bypass: Skip Clerk middleware entirely to avoid dev-browser redirects
-  // on custom domains. Root layout skips ClerkProvider, and auth.ts/sync-user.ts
-  // handle the missing Clerk context with try-catch.
+  // on custom domains. Root layout uses ClerkProvider with `dynamic` prop (no
+  // middleware dependency), and auth.ts/sync-user.ts handle the missing Clerk
+  // context with try-catch.
   if (isUATBypassEnabledAtRequest()) {
     return NextResponse.next();
   }
