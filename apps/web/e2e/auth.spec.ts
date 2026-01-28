@@ -30,7 +30,7 @@ test.describe("Authentication", () => {
       ]);
 
       // Navigate to dashboard
-      await page.goto("/dashboard");
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
       // Should not be redirected to sign-in
       await expect(page).not.toHaveURL(/sign-in/);
@@ -57,15 +57,15 @@ test.describe("Authentication", () => {
       ]);
 
       // Navigate to dashboard
-      await page.goto("/dashboard");
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
       await expect(page.locator("main")).toBeVisible({ timeout: 15000 });
 
       // Navigate to settings
-      await page.goto("/dashboard/settings");
+      await page.goto("/dashboard/settings", { waitUntil: "domcontentloaded" });
       await expect(page).not.toHaveURL(/sign-in/);
 
       // Navigate to content
-      await page.goto("/dashboard/content");
+      await page.goto("/dashboard/content", { waitUntil: "domcontentloaded" });
       await expect(page).not.toHaveURL(/sign-in/);
     });
   });
@@ -76,8 +76,8 @@ test.describe("Authentication", () => {
       await page.context().clearCookies();
 
       // Try to access protected route
-      await page.goto("/dashboard");
-      await page.waitForLoadState("networkidle");
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
 
       // In dev/UAT mode, may not redirect - just verify page loads
       // In production, this would redirect to sign-in
@@ -90,8 +90,8 @@ test.describe("Authentication", () => {
       await page.context().clearCookies();
 
       // Try to access setup
-      await page.goto("/setup");
-      await page.waitForLoadState("networkidle");
+      await page.goto("/setup", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
 
       // In dev/UAT mode, may not redirect - just verify page loads
       const url = page.url();
@@ -103,8 +103,8 @@ test.describe("Authentication", () => {
       await page.context().clearCookies();
 
       // Try to access voice
-      await page.goto("/dashboard/voice");
-      await page.waitForLoadState("networkidle");
+      await page.goto("/dashboard/voice", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
 
       // In dev/UAT mode, may not redirect - just verify page loads
       const url = page.url();

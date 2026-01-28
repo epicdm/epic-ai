@@ -31,8 +31,8 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("Voice Dashboard", () => {
   test("should load voice dashboard page", async ({ page }) => {
-    await page.goto("/dashboard/voice");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show voice UI
     const mainContent = page.locator("main");
@@ -40,8 +40,8 @@ test.describe("Voice Dashboard", () => {
   });
 
   test("should display voice dashboard content", async ({ page }) => {
-    await page.goto("/dashboard/voice");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Page should have content
     const pageContent = await page.textContent("body");
@@ -51,8 +51,8 @@ test.describe("Voice Dashboard", () => {
 
 test.describe("Voice Agents", () => {
   test("should load agents list page", async ({ page }) => {
-    await page.goto("/dashboard/voice/agents");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice/agents", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show agents list
     const mainContent = page.locator("main");
@@ -60,8 +60,8 @@ test.describe("Voice Agents", () => {
   });
 
   test("should load new agent creation page", async ({ page }) => {
-    await page.goto("/dashboard/voice/agents/new");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice/agents/new", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show agent creation form
     const mainContent = page.locator("main");
@@ -93,8 +93,8 @@ test.describe("Voice Agents", () => {
 
 test.describe("Voice Calls", () => {
   test("should load calls log page", async ({ page }) => {
-    await page.goto("/dashboard/voice/calls");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice/calls", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show calls list
     const mainContent = page.locator("main");
@@ -126,8 +126,8 @@ test.describe("Voice Calls", () => {
 
 test.describe("Phone Numbers", () => {
   test("should load phone numbers page", async ({ page }) => {
-    await page.goto("/dashboard/voice/numbers");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice/numbers", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show numbers list
     const mainContent = page.locator("main");
@@ -172,8 +172,8 @@ test.describe("Voice Personas", () => {
 
 test.describe("Voice Test Demo", () => {
   test("should load voice test page", async ({ page }) => {
-    await page.goto("/dashboard/voice/test");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/voice/test", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show test interface
     const mainContent = page.locator("main");
@@ -207,8 +207,8 @@ test.describe("Voice Campaigns", () => {
 
 test.describe("Brand Voice Settings", () => {
   test("should load brand voice page", async ({ page }) => {
-    await page.goto("/dashboard/brand/voice");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/brand/voice", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show brand voice settings
     const mainContent = page.locator("main");

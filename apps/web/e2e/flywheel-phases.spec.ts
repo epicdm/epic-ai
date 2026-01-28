@@ -31,8 +31,8 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("Flywheel Phase Navigation", () => {
   test("should display setup hub page", async ({ page }) => {
-    await page.goto("/setup");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show the setup page or redirect to a phase
     const url = page.url();
@@ -40,40 +40,40 @@ test.describe("Flywheel Phase Navigation", () => {
   });
 
   test("should navigate to UNDERSTAND phase", async ({ page }) => {
-    await page.goto("/setup/understand");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/understand", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on understand page or show wizard
     await expect(page).toHaveURL(/understand|setup/);
   });
 
   test("should navigate to CREATE phase", async ({ page }) => {
-    await page.goto("/setup/create");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/create", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on create page
     await expect(page).toHaveURL(/create|setup/);
   });
 
   test("should navigate to DISTRIBUTE phase", async ({ page }) => {
-    await page.goto("/setup/distribute");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/distribute", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on distribute page
     await expect(page).toHaveURL(/distribute|setup/);
   });
 
   test("should navigate to LEARN phase", async ({ page }) => {
-    await page.goto("/setup/learn");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/learn", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on learn page
     await expect(page).toHaveURL(/learn|setup/);
   });
 
   test("should navigate to AUTOMATE phase", async ({ page }) => {
-    await page.goto("/setup/automate");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/automate", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on automate page
     await expect(page).toHaveURL(/automate|setup/);
@@ -82,8 +82,8 @@ test.describe("Flywheel Phase Navigation", () => {
 
 test.describe("UNDERSTAND Phase - Bird's Eye Wizard", () => {
   test("should load Bird's Eye wizard", async ({ page }) => {
-    await page.goto("/setup/understand");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/understand", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Look for wizard content or phase indicators
     const wizardContent = page.locator('[data-testid="birds-eye-wizard"], .wizard, main');
@@ -91,8 +91,8 @@ test.describe("UNDERSTAND Phase - Bird's Eye Wizard", () => {
   });
 
   test("should show analysis options", async ({ page }) => {
-    await page.goto("/setup/understand");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/understand", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // The page should contain text about analysis or understanding brand
     const pageContent = await page.textContent("body");
@@ -102,7 +102,7 @@ test.describe("UNDERSTAND Phase - Bird's Eye Wizard", () => {
 
 test.describe("CREATE Phase - Content Factory", () => {
   test("should load content creation page", async ({ page }) => {
-    await page.goto("/dashboard/content");
+    await page.goto("/dashboard/content", { waitUntil: "domcontentloaded" });
 
     // Should show content creation UI (content-preview is the root container)
     await expect(
@@ -113,8 +113,8 @@ test.describe("CREATE Phase - Content Factory", () => {
 
 test.describe("DISTRIBUTE Phase - Social Publishing", () => {
   test("should load distribution page", async ({ page }) => {
-    await page.goto("/setup/distribute");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/distribute", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show social distribution UI
     const mainContent = page.locator("main");
@@ -124,7 +124,7 @@ test.describe("DISTRIBUTE Phase - Social Publishing", () => {
 
 test.describe("LEARN Phase - Analytics", () => {
   test("should load learning/analytics page", async ({ page }) => {
-    await page.goto("/dashboard/analytics");
+    await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
     // Analytics page uses "analytics-page" in loading/empty states and "dashboard-content" in loaded state
     await expect(
@@ -135,8 +135,8 @@ test.describe("LEARN Phase - Analytics", () => {
 
 test.describe("AUTOMATE Phase - Autopilot", () => {
   test("should load automation page", async ({ page }) => {
-    await page.goto("/setup/automate");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/setup/automate", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show automation UI
     const mainContent = page.locator("main");

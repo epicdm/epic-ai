@@ -8,6 +8,7 @@
  */
 
 import { test as base, expect, Page, BrowserContext } from "@playwright/test";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { TEST_IDS } from "../utils/seed";
 
 // Custom fixture types
@@ -47,6 +48,8 @@ export const test = base.extend<TestFixtures>({
   // Authenticated page
   authenticatedPage: async ({ authenticatedContext }, use) => {
     const page = await authenticatedContext.newPage();
+    // Set up Clerk testing token for authentication
+    await setupClerkTestingToken({ page });
     await use(page);
   },
 });
@@ -58,9 +61,11 @@ export { TEST_IDS };
 
 /**
  * Helper: Wait for page to be fully loaded
+ * Uses domcontentloaded instead of networkidle because ClerkProvider's
+ * dynamic mode keeps persistent network connections to Clerk's servers,
+ * preventing networkidle from being reached.
  */
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState("networkidle");
   await page.waitForLoadState("domcontentloaded");
 }
 
@@ -68,7 +73,7 @@ export async function waitForPageLoad(page: Page) {
  * Helper: Navigate to dashboard and wait for load
  */
 export async function navigateToDashboard(page: Page) {
-  await page.goto("/dashboard");
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await waitForPageLoad(page);
   // Wait for main content to appear
   await page.waitForSelector('[data-testid="dashboard-content"], .dashboard-content, main', {
@@ -81,7 +86,7 @@ export async function navigateToDashboard(page: Page) {
  */
 export async function navigateToSetup(page: Page, phase?: string) {
   const url = phase ? `/setup/${phase}` : "/setup";
-  await page.goto(url);
+  await page.goto(url, { waitUntil: "domcontentloaded" });
   await waitForPageLoad(page);
 }
 
@@ -89,7 +94,7 @@ export async function navigateToSetup(page: Page, phase?: string) {
  * Helper: Navigate to onboarding
  */
 export async function navigateToOnboarding(page: Page) {
-  await page.goto("/onboarding");
+  await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
   await waitForPageLoad(page);
 }
 
@@ -98,7 +103,7 @@ export async function navigateToOnboarding(page: Page) {
  */
 export async function clickAndWait(page: Page, selector: string) {
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle" }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
     page.click(selector),
   ]);
 }
@@ -124,9 +129,12 @@ export async function takeDebugScreenshot(page: Page, name: string) {
 
 /**
  * Helper: Mock Clerk auth for testing
- * This sets up bypass cookies that the app can check
+ * This sets up bypass cookies that the app can check and the Clerk testing token
  */
 export async function setupMockAuth(page: Page) {
+  // Set up Clerk testing token (required by @clerk/testing)
+  await setupClerkTestingToken({ page });
+
   // Set the UAT bypass cookie that the app checks
   await page.context().addCookies([
     {

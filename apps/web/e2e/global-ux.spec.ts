@@ -32,8 +32,8 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("Navigation", () => {
   test("should render main navigation on dashboard", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Get viewport size to determine if mobile
     const viewportSize = page.viewportSize();
@@ -57,22 +57,22 @@ test.describe("Navigation", () => {
   });
 
   test("should navigate between dashboard sections", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Navigate to different sections
     const sections = ["/dashboard/brand", "/dashboard/content", "/dashboard/analytics"];
 
     for (const section of sections) {
-      await page.goto(section);
-      await page.waitForLoadState("networkidle");
+      await page.goto(section, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
       await expect(page).toHaveURL(new RegExp(section.replace("/", "\\/")));
     }
   });
 
   test("should have working internal links", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Find any internal link and verify it's clickable
     const internalLinks = page.locator('a[href^="/"]');
@@ -86,8 +86,8 @@ test.describe("Responsive Design", () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Main content should still be visible
     const mainContent = page.locator("main");
@@ -98,8 +98,8 @@ test.describe("Responsive Design", () => {
     // Set tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Main content should be visible
     const mainContent = page.locator("main");
@@ -110,8 +110,8 @@ test.describe("Responsive Design", () => {
     // Set desktop viewport
     await page.setViewportSize({ width: 1920, height: 1080 });
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Main content should be visible
     const mainContent = page.locator("main");
@@ -122,8 +122,8 @@ test.describe("Responsive Design", () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Look for hamburger menu or mobile menu toggle
     const mobileMenuToggle = page.locator(
@@ -138,8 +138,8 @@ test.describe("Responsive Design", () => {
 
 test.describe("Theme Toggle", () => {
   test("should load with default theme", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Page should have html element with or without theme class
     const html = page.locator("html");
@@ -147,8 +147,8 @@ test.describe("Theme Toggle", () => {
   });
 
   test("should have theme-related elements", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Look for dark mode toggle or theme switcher
     const themeToggle = page.locator(
@@ -165,10 +165,10 @@ test.describe("Theme Toggle", () => {
 
 test.describe("Loading States", () => {
   test("should show content after loading", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
 
     // Wait for network to settle
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     // Content should be visible
     const mainContent = page.locator("main");
@@ -176,8 +176,8 @@ test.describe("Loading States", () => {
   });
 
   test("should not show infinite loading spinner", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Wait a bit more for any lazy-loaded content
     await page.waitForTimeout(2000);
@@ -194,8 +194,8 @@ test.describe("Loading States", () => {
 
 test.describe("Error Handling", () => {
   test("should handle 404 pages gracefully", async ({ page }) => {
-    await page.goto("/this-page-does-not-exist-12345");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/this-page-does-not-exist-12345", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show some content (404 page or redirect)
     const body = page.locator("body");
@@ -203,8 +203,8 @@ test.describe("Error Handling", () => {
   });
 
   test("should handle invalid dashboard routes", async ({ page }) => {
-    await page.goto("/dashboard/invalid-section-xyz");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/invalid-section-xyz", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show some content (404 or redirect)
     const body = page.locator("body");
@@ -214,8 +214,8 @@ test.describe("Error Handling", () => {
 
 test.describe("Settings Pages", () => {
   test("should load settings page", async ({ page }) => {
-    await page.goto("/dashboard/settings");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/settings", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show settings or redirect
     const mainContent = page.locator("main, body");
@@ -225,8 +225,8 @@ test.describe("Settings Pages", () => {
 
 test.describe("Onboarding Flow", () => {
   test("should load onboarding page", async ({ page }) => {
-    await page.goto("/onboarding");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/onboarding", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show onboarding or redirect
     await expect(page).not.toHaveURL(/sign-in/);
@@ -237,8 +237,8 @@ test.describe("Onboarding Flow", () => {
 
 test.describe("Accessibility", () => {
   test("should have proper heading structure", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should have at least one heading
     const headings = page.locator("h1, h2, h3, h4, h5, h6");
@@ -247,8 +247,8 @@ test.describe("Accessibility", () => {
   });
 
   test("should have proper link text", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Check that links have accessible text
     const links = page.locator("a");
@@ -264,8 +264,8 @@ test.describe("Accessibility", () => {
   });
 
   test("should have proper button accessibility", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Check that buttons are accessible
     const buttons = page.locator("button");
@@ -291,8 +291,8 @@ test.describe("Performance", () => {
   test("should load dashboard within reasonable time", async ({ page }) => {
     const startTime = Date.now();
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     const loadTime = Date.now() - startTime;
 
@@ -309,8 +309,8 @@ test.describe("Performance", () => {
       }
     });
 
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Filter out known acceptable errors (like failed API calls in test mode)
     const criticalErrors = errors.filter(

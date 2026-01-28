@@ -30,9 +30,9 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("Analytics Dashboard", () => {
   test("should load analytics page", async ({ page }) => {
-    await page.goto("/dashboard/analytics");
+    await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
-    // Wait for either loading state or content state to appear (no networkidle)
+    // Wait for either loading state or content state to appear
     // The analytics page uses data-testid="analytics-page" in loading/empty states
     // and data-testid="dashboard-content" in the content state
     await expect(
@@ -41,7 +41,7 @@ test.describe("Analytics Dashboard", () => {
   });
 
   test("should display analytics content", async ({ page }) => {
-    await page.goto("/dashboard/analytics");
+    await page.goto("/dashboard/analytics", { waitUntil: "domcontentloaded" });
 
     // Wait for analytics page to render (loading, empty, or content state)
     // The empty state renders an h3 heading; content state renders an h1
@@ -87,7 +87,7 @@ test.describe("Analytics API", () => {
 
 test.describe("Dashboard Metrics", () => {
   test("should verify dashboard functionality", async ({ page }) => {
-    await page.goto('/dashboard');
+    await page.goto('/dashboard', { waitUntil: "domcontentloaded" });
 
     // Verify core elements exist
     await expect(page.locator('[data-testid="dashboard-content"]')).toBeVisible({ timeout: 30000 });
@@ -121,7 +121,7 @@ test.describe("Dashboard Metrics", () => {
 
 test.describe("Brand Analytics", () => {
   test("should load brand dashboard", async ({ page }) => {
-    await page.goto("/dashboard/brand");
+    await page.goto("/dashboard/brand", { waitUntil: "domcontentloaded" });
 
     // Wait for main content area to render (deterministic check, no networkidle)
     // Brand page may show setup wizard, brain config, or error boundary

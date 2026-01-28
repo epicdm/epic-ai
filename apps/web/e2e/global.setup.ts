@@ -2,11 +2,13 @@
  * Global Setup for E2E Tests
  *
  * Runs before all tests to:
- * 1. Seed the database with test data
- * 2. Set up authenticated session
+ * 1. Set up Clerk testing environment using @clerk/testing
+ * 2. Seed the database with test data
+ * 3. Set up authenticated session
  */
 
 import { chromium, FullConfig } from "@playwright/test";
+import { clerkSetup } from "@clerk/testing/playwright";
 import { seedTestDatabase, TEST_IDS } from "./utils/seed";
 import * as fs from "fs";
 import * as path from "path";
@@ -14,13 +16,19 @@ import * as path from "path";
 async function globalSetup(config: FullConfig) {
   console.log("[Global Setup] Starting E2E test setup...");
 
+  // 1. Set up Clerk testing environment
+  // This initializes the Clerk testing client and bypasses authentication
+  console.log("[Global Setup] Setting up Clerk test environment...");
+  await clerkSetup();
+  console.log("[Global Setup] Clerk test environment configured");
+
   // Ensure auth directory exists
   const authDir = path.join(__dirname, "..", "playwright", ".auth");
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
   }
 
-  // 1. Seed the database
+  // 2. Seed the database
   console.log("[Global Setup] Seeding database...");
   try {
     await seedTestDatabase();
@@ -30,7 +38,7 @@ async function globalSetup(config: FullConfig) {
     throw error;
   }
 
-  // 2. Set up authenticated session
+  // 3. Set up authenticated session
   console.log("[Global Setup] Setting up authenticated session...");
   const browser = await chromium.launch();
   const context = await browser.newContext();
@@ -40,7 +48,7 @@ async function globalSetup(config: FullConfig) {
     // Get base URL from config
     const baseURL = config.projects[0]?.use?.baseURL || "http://localhost:3000";
 
-    // Set UAT bypass cookies for testing without Clerk
+    // Set UAT bypass cookies for testing without Clerk auth validation
     await context.addCookies([
       {
         name: "uat_bypass",
@@ -57,12 +65,10 @@ async function globalSetup(config: FullConfig) {
     ]);
 
     // Navigate to verify the session works
-    await page.goto(`${baseURL}/dashboard`);
+    await page.goto(`${baseURL}/dashboard`, { waitUntil: "domcontentloaded" });
 
-    // Wait for page to load (with timeout)
-    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {
-      console.log("[Global Setup] Page didn't reach networkidle, continuing...");
-    });
+    // Wait for page to load
+    await page.waitForLoadState("domcontentloaded");
 
     // Take a screenshot for debugging
     await page.screenshot({

@@ -31,8 +31,8 @@ test.beforeEach(async ({ page }) => {
 
 test.describe("Social Dashboard", () => {
   test("should load social dashboard page", async ({ page }) => {
-    await page.goto("/dashboard/social");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show main content
     const mainContent = page.locator("main");
@@ -40,8 +40,8 @@ test.describe("Social Dashboard", () => {
   });
 
   test("should display social accounts section", async ({ page }) => {
-    await page.goto("/dashboard/social/accounts");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social/accounts", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should be on accounts page
     await expect(page).toHaveURL(/accounts|social/);
@@ -52,8 +52,8 @@ test.describe("Social Dashboard", () => {
 
 test.describe("Social Account Connection", () => {
   test("should load accounts management page", async ({ page }) => {
-    await page.goto("/dashboard/social/accounts");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social/accounts", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show accounts UI
     const mainContent = page.locator("main");
@@ -90,8 +90,8 @@ test.describe("Social Account Connection", () => {
 
 test.describe("Content Creation", () => {
   test("should load content creation page", async ({ page }) => {
-    await page.goto("/dashboard/social/create");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social/create", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show content creation UI
     const mainContent = page.locator("main");
@@ -99,8 +99,8 @@ test.describe("Content Creation", () => {
   });
 
   test("should load content generation page", async ({ page }) => {
-    await page.goto("/dashboard/content/generate");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/content/generate", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show generation UI
     const mainContent = page.locator("main");
@@ -108,8 +108,8 @@ test.describe("Content Creation", () => {
   });
 
   test("should load content approval queue", async ({ page }) => {
-    await page.goto("/dashboard/content/approval");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/content/approval", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show approval queue
     const mainContent = page.locator("main");
@@ -117,8 +117,8 @@ test.describe("Content Creation", () => {
   });
 
   test("should load published content page", async ({ page }) => {
-    await page.goto("/dashboard/content/published");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/content/published", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show published content
     const mainContent = page.locator("main");
@@ -158,8 +158,8 @@ test.describe("AI Content Generation API", () => {
 
 test.describe("Social Suggestions", () => {
   test("should load suggestions page", async ({ page }) => {
-    await page.goto("/dashboard/social/suggestions");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social/suggestions", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show suggestions UI
     const mainContent = page.locator("main");
@@ -169,8 +169,8 @@ test.describe("Social Suggestions", () => {
 
 test.describe("Social Settings", () => {
   test("should load social settings page", async ({ page }) => {
-    await page.goto("/dashboard/social/settings");
-    await page.waitForLoadState("networkidle");
+    await page.goto("/dashboard/social/settings", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
 
     // Should show settings UI
     const mainContent = page.locator("main");
