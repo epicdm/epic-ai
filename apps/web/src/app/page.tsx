@@ -1,11 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LandingHero } from "@/components/landing/hero";
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const { userId } = await auth();
+  const { userId } = await getAuth();
 
   // If already signed in, redirect to dashboard
   if (userId) {

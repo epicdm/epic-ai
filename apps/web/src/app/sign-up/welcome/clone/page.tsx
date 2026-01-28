@@ -10,15 +10,21 @@ import {
 import { getPublicHref } from "@/lib/routes/public";
 
 export default async function WelcomeClonePage() {
-  const user = await currentUser();
-  const name =
-    user?.firstName
-      ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-      : user?.fullName ||
-        user?.username ||
-        user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
-        "there";
-  const email = user?.primaryEmailAddress?.emailAddress || "";
+  let name = "there";
+  let email = "";
+  try {
+    const user = await currentUser();
+    name =
+      user?.firstName
+        ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+        : user?.fullName ||
+          user?.username ||
+          user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
+          "there";
+    email = user?.primaryEmailAddress?.emailAddress || "";
+  } catch {
+    // In UAT bypass mode, currentUser() may throw because clerkMiddleware was skipped
+  }
 
   return (
     <div className="min-h-screen bg-[linear-gradient(138deg,_#faf5ff_0%,_#eff6ff_100%)] px-6 py-12 text-slate-900">
