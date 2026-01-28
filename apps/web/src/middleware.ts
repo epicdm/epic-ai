@@ -62,19 +62,20 @@ export default async function middleware(request: NextRequest) {
     return redirect;
   }
 
-  // UAT/E2E bypass: Skip Clerk middleware entirely when test mode is enabled
-  // This must happen BEFORE clerkMiddleware() is called, otherwise Clerk
-  // still enforces auth checks even if the callback returns undefined
-  if (isUATBypassEnabledAtRequest()) {
-    return NextResponse.next();
-  }
-
-  // Normal flow: use Clerk middleware for auth protection
+  // Always use Clerk middleware to set up auth context (required for auth() calls in pages)
+  // But conditionally skip auth protection when UAT bypass is enabled
   const { clerkMiddleware, createRouteMatcher } = await import("@clerk/nextjs/server");
   const isPublicRouteMatcher = createRouteMatcher(publicRoutes);
+  const uatBypassEnabled = isUATBypassEnabledAtRequest();
 
   return clerkMiddleware(async (auth, request) => {
-    // Protect routes based on auth requirements
+    // UAT/E2E bypass: Skip auth protection but still set up Clerk context
+    // This allows auth() calls in pages to work (returning null userId)
+    if (uatBypassEnabled) {
+      return;
+    }
+
+    // Normal flow: Protect routes based on auth requirements
     if (!isPublicRouteMatcher(request)) {
       await auth.protect({
         unauthenticatedUrl: new URL("/sign-in", request.url).toString(),

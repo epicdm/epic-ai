@@ -86,15 +86,28 @@ export default defineConfig({
     },
   ],
 
-  // Run local dev server before tests if not already running
-  webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: true, // Always reuse existing server
-    timeout: 120000,
-    stdout: "pipe",
-    stderr: "pipe",
-  },
+  // Run development server before tests (only when testing locally)
+  // When PLAYWRIGHT_BASE_URL is set to a remote URL, skip starting local server
+  webServer: process.env.PLAYWRIGHT_BASE_URL?.startsWith("http://localhost")
+    || !process.env.PLAYWRIGHT_BASE_URL
+    ? {
+        command: "pnpm dev",
+        port: 3000,
+        reuseExistingServer: !process.env.CI, // Reuse existing server in local dev
+        timeout: 120000, // 2 minutes for dev server startup
+        // Pass environment variables to the spawned process
+        // E2E_UAT_BYPASS bypasses authentication checks server-side
+        // NEXT_PUBLIC_ prefix makes it available to client-side code
+        // CLERK_SIGN_IN_FALLBACK_REDIRECT_URL helps Clerk initialization in test mode
+        env: {
+          ...process.env,
+          E2E_UAT_BYPASS: "true",
+          NEXT_PUBLIC_E2E_UAT_BYPASS: "true",
+          CLERK_TESTING: "true",
+          CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: "/dashboard",
+        },
+      }
+    : undefined,
 
   // Output folder for test artifacts
   outputDir: "playwright-results",
