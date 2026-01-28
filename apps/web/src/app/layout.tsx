@@ -31,29 +31,42 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Skip Clerk initialization in E2E test mode (auth is bypassed server-side)
+  // Check both NEXT_PUBLIC_ (client) and server-side env vars for reliability
+  const isE2EMode = process.env.NEXT_PUBLIC_E2E_UAT_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+
+  const content = (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
+        <Providers>
+          <FeatureUnlockProvider>
+            <NudgeProvider>
+              <CelebrationProvider>
+                <HelpProvider>
+                  {children}
+                </HelpProvider>
+              </CelebrationProvider>
+            </NudgeProvider>
+          </FeatureUnlockProvider>
+        </Providers>
+      </body>
+    </html>
+  );
+
+  // In E2E mode, skip ClerkProvider (server-side auth bypass handles auth)
+  if (isE2EMode) {
+    return content;
+  }
+
   return (
     <ClerkProvider
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/sign-up/welcome"
     >
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </head>
-        <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
-          <Providers>
-            <FeatureUnlockProvider>
-              <NudgeProvider>
-                <CelebrationProvider>
-                  <HelpProvider>
-                    {children}
-                  </HelpProvider>
-                </CelebrationProvider>
-              </NudgeProvider>
-            </FeatureUnlockProvider>
-          </Providers>
-        </body>
-      </html>
+      {content}
     </ClerkProvider>
   );
 }

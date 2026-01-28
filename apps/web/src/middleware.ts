@@ -62,42 +62,24 @@ export default async function middleware(request: NextRequest, event: NextFetchE
     return redirect;
   }
 
-  // Always use Clerk middleware to set up auth context (required for ClerkProvider initialState)
+  // UAT/E2E bypass: Skip Clerk middleware entirely to avoid dev-browser redirects
+  // on custom domains. Root layout skips ClerkProvider, and auth.ts/sync-user.ts
+  // handle the missing Clerk context with try-catch.
+  if (isUATBypassEnabledAtRequest()) {
+    return NextResponse.next();
+  }
+
+  // Normal flow: Use Clerk middleware for auth
   const { clerkMiddleware, createRouteMatcher } = await import("@clerk/nextjs/server");
   const isPublicRouteMatcher = createRouteMatcher(publicRoutes);
-  const uatBypassEnabled = isUATBypassEnabledAtRequest();
 
-  const clerkResponse = await clerkMiddleware(async (auth, request) => {
-    // UAT/E2E bypass: Skip auth protection but let Clerk set up context
-    if (uatBypassEnabled) {
-      return;
-    }
-
-    // Normal flow: Protect routes based on auth requirements
+  return clerkMiddleware(async (auth, request) => {
     if (!isPublicRouteMatcher(request)) {
       await auth.protect({
         unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
       });
     }
   })(request, event);
-
-  // In UAT bypass mode, Clerk's dev-browser check may redirect to sign-in on custom domains.
-  // Override the redirect while preserving Clerk's auth context headers.
-  if (uatBypassEnabled && clerkResponse && clerkResponse.status === 307) {
-    const location = clerkResponse.headers.get("location");
-    if (location?.includes("/sign-in")) {
-      const bypassResponse = NextResponse.next();
-      // Copy Clerk headers to preserve auth context
-      clerkResponse.headers.forEach((value, key) => {
-        bypassResponse.headers.set(key, value);
-      });
-      // Remove the redirect location
-      bypassResponse.headers.delete("location");
-      return bypassResponse;
-    }
-  }
-
-  return clerkResponse;
 }
 
 export const config = {
