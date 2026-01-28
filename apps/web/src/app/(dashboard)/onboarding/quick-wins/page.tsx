@@ -5,6 +5,10 @@ import { prisma } from "@epic-ai/database";
 
 type SetupPath = "social_first" | "voice_first" | "hybrid" | "guided";
 
+function isUATBypassEnabled() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function QuickWinsPage({
@@ -12,7 +16,14 @@ export default async function QuickWinsPage({
 }: {
   searchParams: { path?: string };
 }) {
-  const { userId } = await auth();
+  // Check UAT bypass FIRST, before calling any Clerk functions
+  let userId: string | null = null;
+  if (isUATBypassEnabled()) {
+    userId = "test_user_uat_001";
+  } else {
+    const authResult = await auth();
+    userId = authResult.userId;
+  }
 
   if (!userId) {
     redirect("/sign-in");

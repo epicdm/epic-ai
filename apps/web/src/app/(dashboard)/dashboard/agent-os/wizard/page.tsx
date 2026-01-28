@@ -9,9 +9,13 @@ function isUATBypassEnabled() {
 export const dynamic = "force-dynamic";
 
 export default async function AgentOSWizardPage() {
-  const { userId } = await auth();
+  // Check UAT bypass FIRST, before calling any Clerk functions
+  if (isUATBypassEnabled()) {
+    return <WizardContent />;
+  }
 
-  if (!userId && !isUATBypassEnabled()) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect("/sign-in");
   }
 

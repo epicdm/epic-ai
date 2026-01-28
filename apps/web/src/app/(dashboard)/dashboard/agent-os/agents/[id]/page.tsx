@@ -13,9 +13,14 @@ interface PageProps {
 }
 
 export default async function AgentDetailPage({ params }: PageProps) {
-  const { userId } = await auth();
+  // Check UAT bypass FIRST, before calling any Clerk functions
+  if (isUATBypassEnabled()) {
+    const { id } = await params;
+    return <AgentDetailContent agentId={id} />;
+  }
 
-  if (!userId && !isUATBypassEnabled()) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect("/sign-in");
   }
 
