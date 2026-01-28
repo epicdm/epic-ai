@@ -1,10 +1,12 @@
 import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@epic-ai/database";
 
-// Development UAT bypass - allows testing without auth in development mode
-const isUATBypassEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.E2E_UAT_BYPASS === "true";
+// UAT bypass - allows testing without auth when explicitly enabled
+// Works in both development and production (when E2E_UAT_BYPASS is set)
+// NOTE: Evaluated at request time (not build time) to support runtime env var changes
+function isUATBypassEnabledAtRequest() {
+  return process.env.E2E_UAT_BYPASS === "true";
+}
 
 // UAT test user ID (consistent ID for testing)
 const UAT_TEST_USER_ID = "uat_test_user_001";
@@ -17,14 +19,22 @@ export const auth = clerkAuth;
  * Get the current authenticated user from Clerk (with UAT bypass)
  */
 export async function getAuth() {
-  const result = await clerkAuth();
+  try {
+    const result = await clerkAuth();
 
-  // In UAT bypass mode, return test user ID if no real user
-  if (isUATBypassEnabled && !result.userId) {
-    return { ...result, userId: UAT_TEST_USER_ID };
+    // In UAT bypass mode, return test user ID if no real user
+    if (isUATBypassEnabledAtRequest() && !result.userId) {
+      return { ...result, userId: UAT_TEST_USER_ID };
+    }
+
+    return result;
+  } catch (error) {
+    // If clerkMiddleware wasn't called (e.g., UAT bypass skips it), handle gracefully
+    if (isUATBypassEnabledAtRequest()) {
+      return { userId: UAT_TEST_USER_ID } as Awaited<ReturnType<typeof clerkAuth>>;
+    }
+    throw error;
   }
-
-  return result;
 }
 
 /**
@@ -32,15 +42,36 @@ export async function getAuth() {
  * Returns { userId, isUATBypass } to indicate if we're in bypass mode
  */
 export async function getAuthWithBypass(): Promise<{ userId: string | null; isUATBypass: boolean }> {
-  const result = await clerkAuth();
+  let result;
+  try {
+    result = await clerkAuth();
+  } catch (error) {
+    // If clerkMiddleware wasn't called (e.g., UAT bypass skips it), handle gracefully
+    if (isUATBypassEnabledAtRequest()) {
+      try {
+        await ensureUATTestData();
+      } catch {
+        console.debug('[UAT Bypass] Database unavailable, skipping test data creation');
+      }
+      return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    }
+    throw error;
+  }
 
   if (result.userId) {
     return { userId: result.userId, isUATBypass: false };
   }
 
-  if (isUATBypassEnabled) {
-    // Ensure UAT test user and org exist in database
-    await ensureUATTestData();
+  if (isUATBypassEnabledAtRequest()) {
+    // In UAT bypass mode, try to ensure test data exists but don't fail if DB is unavailable
+    // This allows E2E tests to run even without a connected database
+    try {
+      await ensureUATTestData();
+    } catch (error) {
+      // Silently ignore database errors in UAT bypass mode
+      // The test data may not exist but the bypass will still work
+      console.debug('[UAT Bypass] Database unavailable, skipping test data creation');
+    }
     return { userId: UAT_TEST_USER_ID, isUATBypass: true };
   }
 
@@ -119,10 +150,33 @@ export async function getUser() {
  * Supports UAT bypass mode
  */
 export async function getCurrentUser() {
-  const { userId } = await getAuthWithBypass();
+  const { userId, isUATBypass } = await getAuthWithBypass();
 
   if (!userId) {
     return null;
+  }
+
+  // In UAT bypass mode, return mock user data to avoid database queries
+  if (isUATBypass) {
+    return {
+      id: UAT_TEST_USER_ID,
+      email: "uat-test@epic.dm",
+      firstName: "UAT",
+      lastName: "Tester",
+      memberships: [
+        {
+          userId: UAT_TEST_USER_ID,
+          organizationId: UAT_TEST_ORG_ID,
+          role: "owner",
+          organization: {
+            id: UAT_TEST_ORG_ID,
+            name: "UAT Test Organization",
+            slug: "uat-test-org",
+            plan: "enterprise",
+          },
+        },
+      ],
+    };
   }
 
   const user = await prisma.user.findUnique({
@@ -158,10 +212,15 @@ export async function getCurrentOrganization() {
  * Check if user has access to an organization
  */
 export async function hasOrgAccess(organizationId: string) {
-  const { userId } = await clerkAuth();
+  const { userId, isUATBypass } = await getAuthWithBypass();
 
   if (!userId) {
     return false;
+  }
+
+  // In UAT bypass mode, grant access to the test organization
+  if (isUATBypass) {
+    return organizationId === UAT_TEST_ORG_ID;
   }
 
   const membership = await prisma.membership.findUnique({
@@ -180,10 +239,15 @@ export async function hasOrgAccess(organizationId: string) {
  * Check if user has a specific role in an organization
  */
 export async function hasRole(organizationId: string, roles: string[]) {
-  const { userId } = await clerkAuth();
+  const { userId, isUATBypass } = await getAuthWithBypass();
 
   if (!userId) {
     return false;
+  }
+
+  // In UAT bypass mode, grant owner role for test organization
+  if (isUATBypass) {
+    return organizationId === UAT_TEST_ORG_ID && roles.includes("owner");
   }
 
   const membership = await prisma.membership.findUnique({

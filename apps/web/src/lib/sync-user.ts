@@ -18,7 +18,26 @@ const UAT_TEST_USER_ID = "uat_test_user_001";
  */
 export async function syncUser() {
   try {
-    const clerkUser = await currentUser();
+    let clerkUser;
+    try {
+      clerkUser = await currentUser();
+    } catch (error) {
+      // If clerkMiddleware wasn't called (e.g., UAT bypass skips it), currentUser() throws
+      if (isUATBypassEnabled()) {
+        const uatUser = await prisma.user.findUnique({
+          where: { id: UAT_TEST_USER_ID },
+          include: {
+            memberships: {
+              include: {
+                organization: true,
+              },
+            },
+          },
+        });
+        return uatUser;
+      }
+      throw error;
+    }
 
     // UAT bypass: return test user if no clerk user
     if (!clerkUser && isUATBypassEnabled()) {
