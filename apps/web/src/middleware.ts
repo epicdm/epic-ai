@@ -1,5 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getFlatRoutes } from "@/lib/routes/route-config";
 
 // Build public routes list from route config
@@ -12,6 +11,9 @@ const publicRoutes = [
   "/api/health",
   "/api/public(.*)",
   "/api/cron(.*)",
+  "/api/analytics(.*)",  // Analytics API - has its own auth checks
+  "/api/dashboard(.*)",  // Dashboard API - has its own auth checks
+  "/api/brand-brain(.*)",  // Brand Brain API - has its own auth checks
 ];
 
 // Add routes from config that don't require auth
@@ -22,12 +24,14 @@ configRoutes.forEach((route) => {
   }
 });
 
-const isPublicRoute = createRouteMatcher(publicRoutes);
 
-// Development UAT bypass - allows testing without auth in development mode
-const isUATBypassEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.UAT_AUTH_BYPASS === "true";
+// UAT bypass - allows testing without auth when explicitly enabled
+// Works in both development and production (when E2E_UAT_BYPASS is set)
+// Supports both UAT_AUTH_BYPASS (canonical) and E2E_UAT_BYPASS (for Playwright E2E tests)
+// NOTE: Evaluated at request time (not build time) to support runtime env var changes
+function isUATBypassEnabledAtRequest() {
+  return process.env.UAT_AUTH_BYPASS === "true" || process.env.E2E_UAT_BYPASS === "true";
+}
 
 /**
  * Helper to check for and apply route redirects for backward compatibility
@@ -48,30 +52,36 @@ function handleRouteRedirects(pathname: string, searchParams: URLSearchParams, r
   return null;
 }
 
-// Always use clerkMiddleware (required for auth() to work in components)
-// Auth requirements are now driven by the centralized route config
-export default clerkMiddleware(async (auth, request) => {
+// Middleware export with Clerk integration
+export default async function middleware(request: NextRequest) {
   const { pathname, searchParams } = new URL(request.url);
 
-  // Check for route redirects (backward compatibility)
+  // Check for route redirects (backward compatibility) - run before auth
   const redirect = handleRouteRedirects(pathname, searchParams, request.url);
   if (redirect) {
     return redirect;
   }
 
-  // In UAT bypass mode, don't protect any routes
-  if (isUATBypassEnabled) {
-    return;
+  // UAT/E2E bypass: Skip Clerk middleware entirely when test mode is enabled
+  // This must happen BEFORE clerkMiddleware() is called, otherwise Clerk
+  // still enforces auth checks even if the callback returns undefined
+  if (isUATBypassEnabledAtRequest()) {
+    return NextResponse.next();
   }
 
-  // Protect routes based on auth requirements from route config
-  // Note: Onboarding checks are handled at the layout level for better UX
-  if (!isPublicRoute(request)) {
-    await auth.protect({
-      unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
-    });
-  }
-});
+  // Normal flow: use Clerk middleware for auth protection
+  const { clerkMiddleware, createRouteMatcher } = await import("@clerk/nextjs/server");
+  const isPublicRouteMatcher = createRouteMatcher(publicRoutes);
+
+  return clerkMiddleware(async (auth, request) => {
+    // Protect routes based on auth requirements
+    if (!isPublicRouteMatcher(request)) {
+      await auth.protect({
+        unauthenticatedUrl: new URL("/sign-in", request.url).toString(),
+      });
+    }
+  })(request);
+}
 
 export const config = {
   matcher: [
