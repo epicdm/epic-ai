@@ -1,0 +1,55 @@
+# Epic AI - Background Workers (BullMQ)
+# Multi-stage build for production deployment
+
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy monorepo files
+COPY . .
+
+# Enable pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@9.0.0 --activate
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build database client
+RUN cd packages/database && pnpm build && cd ../..
+
+# Build workers
+RUN cd apps/workers && pnpm build && cd ../..
+
+# Stage 2: Runtime
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy built artifacts from builder
+COPY --from=builder /app/apps/workers/dist ./apps/workers/dist
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/packages ./packages
+
+# Enable pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@9.0.0 --activate
+
+# Install production dependencies only
+RUN pnpm install --prod --frozen-lockfile
+
+# Set NODE_ENV
+ENV NODE_ENV=production
+
+# Expose health check port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+
+# Start workers
+CMD ["node", "apps/workers/dist/index.js"]

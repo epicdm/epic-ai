@@ -13,6 +13,7 @@ import { prisma } from "@epic-ai/database";
 import { getUserOrganization } from "@/lib/sync-user";
 import type { ApiResponse, TemplateRecommendation, AgentTemplateInfo } from "@epic-ai/shared";
 import type { AgentTemplate, AgentTemplateCategory, ChannelType } from "@prisma/client";
+import { voiceAgentTemplates } from "@/lib/voice/templates";
 
 type TemplateListResponse = ApiResponse<AgentTemplateInfo[]>;
 type TemplateRecommendResponse = ApiResponse<TemplateRecommendation[]>;
@@ -79,15 +80,45 @@ export async function GET(request: NextRequest): Promise<NextResponse<TemplateLi
       ],
     });
 
-    const templateInfos: AgentTemplateInfo[] = templates.map(mapTemplateToInfo);
+    let templateInfos: AgentTemplateInfo[];
+
+    if (templates.length > 0) {
+      templateInfos = templates.map(mapTemplateToInfo);
+    } else {
+      // Fallback: serve hardcoded voice templates when DB has none
+      templateInfos = voiceAgentTemplates.map((vt) => ({
+        id: vt.id,
+        slug: vt.id,
+        name: vt.name,
+        description: vt.description,
+        category: mapVoiceCategory(vt.category),
+        useCases: vt.features,
+        industries: [],
+        channels: ["VOICE" as ChannelType],
+        complexity: vt.difficulty === "beginner"
+          ? ("BEGINNER" as const)
+          : vt.difficulty === "advanced"
+          ? ("ADVANCED" as const)
+          : ("INTERMEDIATE" as const),
+        popularity: 0,
+        featured: vt.difficulty === "beginner",
+      }));
+
+      // Apply client-side category filter if requested
+      if (category) {
+        templateInfos = templateInfos.filter(
+          (t) => t.category === category
+        );
+      }
+    }
 
     return NextResponse.json({
       data: templateInfos,
       confidence: {
-        templates: 1.0,
+        templates: templates.length > 0 ? 1.0 : 0.8,
       },
       gaps: [],
-      warnings: templates.length === 0 ? [{
+      warnings: templateInfos.length === 0 ? [{
         code: "NO_TEMPLATES",
         message: "No templates found matching filters",
         severity: "info" as const,
@@ -301,4 +332,21 @@ function calculateTemplateMatchScore(
   score = Math.min(Math.max(score, 0), 1);
 
   return { score, reasons };
+}
+
+/**
+ * Map voice template category string to AgentTemplateCategory enum value.
+ * Enum: SALES, SUPPORT, SCHEDULING, LEAD_GEN, ONBOARDING, SURVEY, COLLECTIONS, NOTIFICATIONS, CUSTOM
+ */
+function mapVoiceCategory(
+  cat: "sales" | "support" | "booking" | "survey" | "general"
+): AgentTemplateCategory {
+  const map: Record<string, AgentTemplateCategory> = {
+    sales: "SALES" as AgentTemplateCategory,
+    support: "SUPPORT" as AgentTemplateCategory,
+    booking: "SCHEDULING" as AgentTemplateCategory,
+    survey: "SURVEY" as AgentTemplateCategory,
+    general: "SUPPORT" as AgentTemplateCategory,
+  };
+  return map[cat] ?? ("CUSTOM" as AgentTemplateCategory);
 }

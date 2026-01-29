@@ -1,9 +1,12 @@
 import {
   LayoutDashboard,
+  Bot,
   Brain,
   Database,
   FileText,
   Calendar,
+  GitBranch,
+  Phone,
   Share2,
   MicIcon,
   Megaphone,
@@ -32,7 +35,7 @@ export interface RouteConfig {
   /** Child routes */
   children?: RouteConfig[];
   /** Flywheel section */
-  section?: "understand" | "create" | "distribute" | "learn" | "automate" | "settings";
+  section?: "build" | "understand" | "create" | "distribute" | "learn" | "automate" | "settings";
   /** Auth requirements */
   auth: {
     /** Requires authentication */
@@ -95,6 +98,86 @@ export const ROUTE_CONFIG: RouteConfig[] = [
     href: "/onboarding",
     auth: { required: true, onboardingRequired: false },
     hidden: true,
+  },
+
+  // BUILD section — Agents + Phone (new unified nav)
+  {
+    id: "agents",
+    name: "Agents",
+    href: "/dashboard/agents",
+    icon: Bot,
+    section: "build",
+    auth: { required: true, onboardingRequired: true },
+    children: [
+      {
+        id: "agents-list",
+        name: "All Agents",
+        href: "/dashboard/agents",
+        parent: "agents",
+        auth: { required: true, onboardingRequired: true },
+        isDefault: true,
+      },
+      {
+        id: "agents-new",
+        name: "Create Agent",
+        href: "/dashboard/agents/new",
+        parent: "agents",
+        auth: { required: true, onboardingRequired: true },
+      },
+      {
+        id: "agents-templates",
+        name: "Templates",
+        href: "/dashboard/agents/templates",
+        parent: "agents",
+        auth: { required: true, onboardingRequired: true },
+      },
+    ],
+  },
+  {
+    id: "phone",
+    name: "Phone",
+    href: "/dashboard/phone",
+    icon: Phone,
+    section: "build",
+    auth: { required: true, onboardingRequired: true },
+    children: [
+      {
+        id: "phone-overview",
+        name: "Overview",
+        href: "/dashboard/phone",
+        parent: "phone",
+        auth: { required: true, onboardingRequired: true },
+        isDefault: true,
+      },
+      {
+        id: "phone-calls",
+        name: "Calls",
+        href: "/dashboard/phone/calls",
+        parent: "phone",
+        auth: { required: true, onboardingRequired: true },
+      },
+      {
+        id: "phone-numbers",
+        name: "Numbers",
+        href: "/dashboard/phone/numbers",
+        parent: "phone",
+        auth: { required: true, onboardingRequired: true },
+      },
+      {
+        id: "phone-routing",
+        name: "Routing",
+        href: "/dashboard/phone/routing",
+        parent: "phone",
+        auth: { required: true, onboardingRequired: true },
+      },
+      {
+        id: "phone-flows",
+        name: "Flows",
+        href: "/dashboard/phone/flows",
+        parent: "phone",
+        auth: { required: true, onboardingRequired: true },
+      },
+    ],
   },
 
   // UNDERSTAND section
@@ -502,6 +585,14 @@ export function getBreadcrumbs(currentHref: string): RouteConfig[] {
  */
 export type RoutePath =
   | "/dashboard"
+  | "/dashboard/agents"
+  | "/dashboard/agents/new"
+  | "/dashboard/agents/templates"
+  | "/dashboard/phone"
+  | "/dashboard/phone/calls"
+  | "/dashboard/phone/numbers"
+  | "/dashboard/phone/routing"
+  | "/dashboard/phone/flows"
   | "/dashboard/brand"
   | "/dashboard/brand/voice"
   | "/dashboard/brand/strategy"
@@ -552,6 +643,16 @@ export type RoutePath =
  */
 export type RouteId =
   | "dashboard"
+  | "agents"
+  | "agents-list"
+  | "agents-new"
+  | "agents-templates"
+  | "phone"
+  | "phone-overview"
+  | "phone-calls"
+  | "phone-numbers"
+  | "phone-routing"
+  | "phone-flows"
   | "brand"
   | "brand-voice"
   | "brand-strategy"

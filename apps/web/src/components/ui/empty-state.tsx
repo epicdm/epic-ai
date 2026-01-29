@@ -3,11 +3,11 @@
 import { ReactNode } from "react";
 import { Button, Card, CardBody, Chip } from "@heroui/react";
 import {
-  PlusIcon,
-  ArrowRightIcon,
-  SparklesIcon,
-  PlayIcon,
-} from "@heroicons/react/24/outline";
+  Plus as PlusIcon,
+  ArrowRight as ArrowRightIcon,
+  Sparkles as SparklesIcon,
+  Play as PlayIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface EmptyStateAction {

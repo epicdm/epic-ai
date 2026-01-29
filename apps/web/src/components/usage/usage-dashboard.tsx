@@ -15,15 +15,15 @@ import {
   SelectItem,
 } from "@heroui/react";
 import {
-  ChartBarIcon,
-  PhoneIcon,
-  DocumentTextIcon,
-  SparklesIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  CalendarIcon,
-  CurrencyDollarIcon,
-} from "@heroicons/react/24/outline";
+  BarChart3 as ChartBarIcon,
+  Phone as PhoneIcon,
+  FileText as DocumentTextIcon,
+  Sparkles as SparklesIcon,
+  TrendingUp as ArrowTrendingUpIcon,
+  TrendingDown as ArrowTrendingDownIcon,
+  Calendar as CalendarIcon,
+  DollarSign as CurrencyDollarIcon,
+} from "lucide-react";
 import { CostSummary, UsageMeter, PRICING } from "@/components/ui/cost-estimator";
 import { cn } from "@/lib/utils";
 

@@ -1,8 +1,7 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { syncUser } from "@/lib/sync-user";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AppShell } from "@/components/layout/app-shell";
 import { prisma } from "@epic-ai/database";
 import { Prisma } from "@prisma/client";
 
@@ -25,14 +24,7 @@ export default async function DashboardLayout({
   // Check UAT bypass FIRST, before calling any Clerk functions
   // This prevents Clerk errors from blocking test access
   if (isUATBypassEnabled()) {
-    return (
-      <DashboardShell
-        organizationName="UAT Test Organization"
-        userName="UAT Tester"
-      >
-        {children}
-      </DashboardShell>
-    );
+    return <AppShell>{children}</AppShell>;
   }
 
   const { userId } = await auth();
@@ -135,36 +127,5 @@ export default async function DashboardLayout({
     console.error("Error in onboarding gate:", error);
   }
 
-  // Get user data in parallel - wrap in try/catch for resilience
-  let organizationName: string | undefined;
-  let userName: string | undefined;
-
-  try {
-    const [syncedUser, clerkUser] = await Promise.all([
-      syncUser(),
-      currentUser(),
-    ]);
-
-    // Get organization from synced user (already includes memberships)
-    if (syncedUser?.memberships?.[0]?.organization) {
-      organizationName = syncedUser.memberships[0].organization.name;
-    }
-
-    // Get user name from Clerk
-    if (clerkUser?.firstName) {
-      userName = clerkUser.firstName;
-    }
-  } catch (e) {
-    console.error("Error in dashboard layout:", e);
-    // Continue rendering with default values
-  }
-
-  return (
-    <DashboardShell
-      organizationName={organizationName}
-      userName={userName}
-    >
-      {children}
-    </DashboardShell>
-  );
+  return <AppShell>{children}</AppShell>;
 }

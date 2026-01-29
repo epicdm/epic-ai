@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Chip } from "@heroui/react";
-import { BeakerIcon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { FlaskConical as BeakerIcon, X as XMarkIcon, Sparkles as SparklesIcon } from "lucide-react";
 import { useDemo } from "@/lib/demo/demo-context";
 import { cn } from "@/lib/utils";
 

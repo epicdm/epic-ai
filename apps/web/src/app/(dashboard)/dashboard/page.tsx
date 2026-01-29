@@ -5,7 +5,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { DashboardContent } from "@/app/(dashboard)/dashboard/dashboard-content";
+import { NewDashboardContent } from "@/components/dashboard/new-dashboard-content";
 
 // UAT bypass - allows testing without auth when explicitly enabled
 // Supports both UAT_AUTH_BYPASS (canonical) and E2E_UAT_BYPASS (for Playwright E2E tests)
@@ -21,19 +21,13 @@ export const metadata = {
   description: "Your AI-powered marketing command center",
 };
 
-interface DashboardPageProps {
-  searchParams: Promise<{ flywheel?: string }>;
-}
-
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const params = await searchParams;
-
+export default async function DashboardPage() {
   // Check UAT bypass FIRST, before calling any Clerk functions
   if (isUATBypassEnabled()) {
     return (
-      <DashboardContent
-        userName="UAT Tester"
-        showFlywheelModal={params?.flywheel === "show"}
+      <NewDashboardContent
+        firstName="UAT Tester"
+        organizationName="UAT Organization"
       />
     );
   }
@@ -45,13 +39,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   // Fetch user details for personalization
   const user = await currentUser();
-  const userName = user?.firstName || "there";
+  const firstName = user?.firstName || null;
 
-  // Note: Onboarding gate is now handled at the layout level
-  // If user reaches this page, they have completed onboarding
-
-  // Check if flywheel was just activated
-  const flywheelJustActivated = params.flywheel === "activated";
-
-  return <DashboardContent flywheelJustActivated={flywheelJustActivated} userName={userName} />;
+  return <NewDashboardContent firstName={firstName} organizationName={null} />;
 }

@@ -146,49 +146,53 @@ export function AnalyticsDashboard({ orgId, brandId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
-      </div>
+      <section data-testid="analytics-page">
+        <div className="flex items-center justify-center h-96" data-testid="analytics-loading">
+          <Spinner size="lg" />
+        </div>
+      </section>
     );
   }
 
   // Show empty state if no posts published yet
   if (stats?.totalPosts === 0 && recentPosts.length === 0) {
     return (
-      <EmptyState
-        icon={<BarChart3 className="w-full h-full" />}
-        title="Analytics Will Appear Here"
-        description="Once you publish content, I'll show you what's working."
-        features={[
-          "📊 Engagement rates by platform",
-          "📈 Best posting times",
-          "🎯 Top performing content types",
-          "💡 AI-powered insights",
-        ]}
-        actions={[
-          {
-            label: "Publish Your First Post",
-            variant: "primary",
-            onClick: () => window.location.href = "/dashboard/content/generate",
-          },
-          {
-            label: "View Sample Report",
-            variant: "secondary",
-            onClick: () => {
-              // Show demo/sample report - could open a modal or documentation
-              window.open("/docs/analytics-sample", "_blank");
+      <section data-testid="analytics-page">
+        <EmptyState
+          icon={<BarChart3 className="w-full h-full" />}
+          title="Analytics Will Appear Here"
+          description="Once you publish content, I'll show you what's working."
+          features={[
+            "📊 Engagement rates by platform",
+            "📈 Best posting times",
+            "🎯 Top performing content types",
+            "💡 AI-powered insights",
+          ]}
+          actions={[
+            {
+              label: "Publish Your First Post",
+              variant: "primary",
+              onClick: () => window.location.href = "/dashboard/content/generate",
             },
-          },
-        ]}
-        variant="card"
-      />
+            {
+              label: "View Sample Report",
+              variant: "secondary",
+              onClick: () => {
+                // Show demo/sample report - could open a modal or documentation
+                window.open("/docs/analytics-sample", "_blank");
+              },
+            },
+          ]}
+          variant="card"
+        />
+      </section>
     );
   }
 
   const totalFollowers = accounts.reduce((sum, a) => sum + (a.followerCount || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <section data-testid="dashboard-content" className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -518,6 +522,6 @@ export function AnalyticsDashboard({ orgId, brandId }: Props) {
           )}
         </CardBody>
       </Card>
-    </div>
+    </section>
   );
 }

@@ -5,8 +5,7 @@
 
 import { getAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@epic-ai/database';
-import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { NewAnalyticsDashboard } from '@/components/analytics/new-analytics-dashboard';
 
 // UAT bypass - allows testing without database when explicitly enabled
 function isUATBypassEnabled() {
@@ -21,16 +20,9 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  // In UAT bypass mode, return mock data without database queries
+  // In UAT bypass mode, skip auth
   if (isUATBypassEnabled()) {
-    return (
-      <div className="p-6">
-        <AnalyticsDashboard
-          orgId="uat_test_org_001"
-          brandId="uat_test_brand_001"
-        />
-      </div>
-    );
+    return <NewAnalyticsDashboard />;
   }
 
   const { userId } = await getAuth();
@@ -39,26 +31,5 @@ export default async function AnalyticsPage() {
     redirect('/sign-in');
   }
 
-  // Get user's organization and brand
-  const membership = await prisma.membership.findFirst({
-    where: { userId },
-    include: { organization: true },
-  });
-
-  if (!membership) {
-    throw new Error("Organization membership not found - please contact support");
-  }
-
-  const brand = await prisma.brand.findFirst({
-    where: { organizationId: membership.organizationId },
-  });
-
-  return (
-    <div className="p-6">
-      <AnalyticsDashboard
-        orgId={membership.organizationId}
-        brandId={brand?.id}
-      />
-    </div>
-  );
+  return <NewAnalyticsDashboard />;
 }

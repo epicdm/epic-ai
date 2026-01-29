@@ -45,8 +45,21 @@ function PostHogPageView() {
 
 // User identification component
 function PostHogUserIdentifier() {
-  const { userId, isLoaded } = useAuth();
-  const { user } = useUser();
+  // In E2E test mode, ClerkProvider may not be available
+  let userId: string | null = null;
+  let isLoaded = true;
+  let user: any = null;
+
+  try {
+    const auth = useAuth();
+    const userInfo = useUser();
+    userId = auth.userId;
+    isLoaded = auth.isLoaded;
+    user = userInfo.user;
+  } catch {
+    // ClerkProvider not available (E2E test mode) - skip Clerk integration
+    return null;
+  }
 
   useEffect(() => {
     if (!POSTHOG_KEY || !isLoaded) return;

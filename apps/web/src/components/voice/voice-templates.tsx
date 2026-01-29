@@ -24,12 +24,12 @@ import {
   type VoiceAgentTemplate,
 } from "@/lib/voice/templates";
 import {
-  MagnifyingGlassIcon,
-  ClockIcon,
-  PhoneArrowDownLeftIcon,
-  PhoneArrowUpRightIcon,
-  ArrowsRightLeftIcon,
-} from "@heroicons/react/24/outline";
+  Search as MagnifyingGlassIcon,
+  Clock as ClockIcon,
+  PhoneIncoming as PhoneArrowDownLeftIcon,
+  PhoneOutgoing as PhoneArrowUpRightIcon,
+  ArrowLeftRight as ArrowsRightLeftIcon,
+} from "lucide-react";
 import { ArrowLeft, Sparkles, CheckCircle } from "lucide-react";
 import { AIBadge } from "@/components/ui/ai-badge";
 import { AIConfidence } from "@/components/ui/ai-confidence";

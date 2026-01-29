@@ -1,11 +1,11 @@
 import Link from "next/link";
 import {
-  ArrowRightIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
-  ComputerDesktopIcon,
-  PhoneIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/solid";
+  ArrowRight as ArrowRightIcon,
+  MessageCircle as ChatBubbleOvalLeftEllipsisIcon,
+  Monitor as ComputerDesktopIcon,
+  Phone as PhoneIcon,
+  Sparkles as SparklesIcon,
+} from "lucide-react";
 import { getPublicHref } from "@/lib/routes/public";
 
 const phoneDemoBenefits = [

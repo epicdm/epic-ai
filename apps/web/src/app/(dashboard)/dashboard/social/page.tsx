@@ -1,6 +1,6 @@
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { SocialDashboard } from "@/components/social/social-dashboard";
+import { NewSocialDashboard } from "@/components/social/new-social-dashboard";
 
 export const dynamic = 'force-dynamic';
 
@@ -11,5 +11,5 @@ export default async function SocialPage() {
     redirect("/sign-in");
   }
 
-  return <SocialDashboard />;
+  return <NewSocialDashboard />;
 }

@@ -14,13 +14,13 @@ import {
   Tooltip,
 } from "@heroui/react";
 import {
-  SparklesIcon,
-  XMarkIcon,
-  MinusIcon,
-  PaperAirplaneIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
+  Sparkles as SparklesIcon,
+  X as XMarkIcon,
+  Minus as MinusIcon,
+  Send as PaperAirplaneIcon,
+  MessageSquare as ChatBubbleLeftRightIcon,
+  RefreshCw as ArrowPathIcon,
+} from "lucide-react";
 import { useAssistant, AssistantMessage } from "./assistant-context";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";

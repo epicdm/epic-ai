@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Spinner, Button } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeft as ArrowLeftIcon } from "lucide-react";
 
 const UsageDashboard = dynamic(
   () => import("@/components/usage/usage-dashboard").then(mod => mod.UsageDashboard),

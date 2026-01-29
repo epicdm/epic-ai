@@ -1,7 +1,7 @@
 import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
-import { SettingsContent } from "@/components/settings/settings-content";
+import { NewSettingsContent } from "@/components/settings/new-settings-content";
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +64,7 @@ export default async function SettingsPage() {
     : null;
 
   return (
-    <SettingsContent
+    <NewSettingsContent
       organization={organizationData}
       brands={brandsData}
       subscription={subscriptionData}

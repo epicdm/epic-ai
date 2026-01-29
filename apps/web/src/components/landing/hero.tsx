@@ -4,14 +4,14 @@ import Link from "next/link";
 import { Button } from "@heroui/react";
 import { getPublicHref } from "@/lib/routes/public";
 import {
-  BoltIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  PhoneIcon,
-  RocketLaunchIcon,
-  SparklesIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/solid";
+  Zap as BoltIcon,
+  CheckCircle as CheckCircleIcon,
+  ChevronDown as ChevronDownIcon,
+  Phone as PhoneIcon,
+  Rocket as RocketLaunchIcon,
+  Sparkles as SparklesIcon,
+  Users as UserGroupIcon,
+} from "lucide-react";
 
 export function LandingHero() {
   const trustedLogos = [

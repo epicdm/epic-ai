@@ -7,6 +7,11 @@ import { Bell, Moon, Sun, Search, Zap } from "lucide-react";
 import { MobileNav } from "./mobile-nav";
 import { Breadcrumbs } from "./breadcrumbs";
 
+// Check for UAT bypass mode (client-side via NEXT_PUBLIC_ prefix)
+const isUATBypassEnabled =
+  process.env.NEXT_PUBLIC_E2E_UAT_BYPASS === "true" ||
+  process.env.NEXT_PUBLIC_UAT_AUTH_BYPASS === "true";
+
 interface HeaderProps {
   organizationName?: string;
   userName?: string;
@@ -86,14 +91,20 @@ export function Header({ organizationName }: HeaderProps) {
 
           {/* User */}
           <div suppressHydrationWarning>
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-9 h-9 rounded-xl",
-                },
-              }}
-            />
+            {isUATBypassEnabled ? (
+              <div className="w-9 h-9 rounded-xl bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">T</span>
+              </div>
+            ) : (
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-9 h-9 rounded-xl",
+                  },
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

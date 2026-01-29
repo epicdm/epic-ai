@@ -275,7 +275,7 @@ export function ContentFactoryPage({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-testid="content-preview">
       <PageHeader
         title="Content Factory"
         description={`AI-powered content generation for ${brandName}`}

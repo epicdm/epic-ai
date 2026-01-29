@@ -25,8 +25,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DemoIndicator } from "@/components/demo";
 import { useDemo } from "@/lib/demo";
 import { PricingTooltip, PRICING } from "@/components/ui/cost-estimator";
-import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3, Trash2, AlertTriangle, X } from "lucide-react";
-import { PhoneIcon, SparklesIcon, CurrencyDollarIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
+import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3, Trash2, AlertTriangle, X, Info } from "lucide-react";
 
 interface VoiceAgent {
   id: string;
@@ -302,7 +301,7 @@ export function VoiceDashboard() {
                       <p className="text-xs text-default-500">Includes STT, LLM, TTS & telephony</p>
                     </div>
                   }>
-                    <InformationCircleIcon className="w-4 h-4 text-amber-600 cursor-help" />
+                    <Info className="w-4 h-4 text-amber-600 cursor-help" />
                   </Tooltip>
                 </div>
                 <p className="text-xs md:text-sm text-amber-700 dark:text-amber-500">This Month</p>
@@ -332,7 +331,7 @@ export function VoiceDashboard() {
               href="/dashboard/settings/usage"
               size="sm"
               variant="flat"
-              endContent={<CurrencyDollarIcon className="w-4 h-4" />}
+              endContent={<DollarSign className="w-4 h-4" />}
             >
               View Usage
             </Button>
@@ -349,7 +348,7 @@ export function VoiceDashboard() {
         </Card>
       ) : agents.length === 0 ? (
         <EmptyState
-          icon={<PhoneIcon className="w-full h-full" />}
+          icon={<Phone className="w-full h-full" />}
           title="Create Your First Voice Agent"
           description="Voice agents can handle inbound and outbound calls, qualify leads, book appointments, and automate your sales and support workflows."
           features={["Outbound calls", "Inbound support", "Campaign automation", "Call analytics"]}

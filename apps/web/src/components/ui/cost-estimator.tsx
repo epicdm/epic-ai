@@ -16,12 +16,12 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import {
-  CurrencyDollarIcon,
-  InformationCircleIcon,
-  ChartBarIcon,
-  ClockIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+  DollarSign as CurrencyDollarIcon,
+  Info as InformationCircleIcon,
+  BarChart3 as ChartBarIcon,
+  Clock as ClockIcon,
+  Sparkles as SparklesIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Pricing constants (in USD)

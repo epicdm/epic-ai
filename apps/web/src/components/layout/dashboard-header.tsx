@@ -4,6 +4,11 @@ import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Check for UAT bypass mode (client-side via NEXT_PUBLIC_ prefix)
+const isUATBypassEnabled =
+  process.env.NEXT_PUBLIC_E2E_UAT_BYPASS === "true" ||
+  process.env.NEXT_PUBLIC_UAT_AUTH_BYPASS === "true";
+
 interface DashboardHeaderProps {
   organizationName?: string;
   userName?: string;
@@ -76,14 +81,20 @@ export function DashboardHeader({
                 {userName}
               </span>
             )}
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8",
-                },
-              }}
-            />
+            {isUATBypassEnabled ? (
+              <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">T</span>
+              </div>
+            ) : (
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8",
+                  },
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

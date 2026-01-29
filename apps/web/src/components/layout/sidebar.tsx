@@ -66,7 +66,17 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useUser();
+
+  // In E2E test mode, ClerkProvider may not be available
+  let user: any = null;
+  try {
+    const userInfo = useUser();
+    user = userInfo.user;
+  } catch {
+    // ClerkProvider not available (E2E test mode)
+    user = null;
+  }
+
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [enabledTools, setEnabledTools] = useState<string[] | null>(null);
   const [toolsLoaded, setToolsLoaded] = useState(false);

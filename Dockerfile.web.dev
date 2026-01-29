@@ -1,0 +1,37 @@
+# Epic AI - Web Frontend Development
+# Supports hot-reload with volume mounts
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@9.0.0 --activate
+
+# Copy monorepo files (package.json, pnpm-lock.yaml, turbo config)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+# Copy packages and apps BEFORE install so pnpm sees all workspace dependencies
+COPY packages ./packages
+COPY apps ./apps
+
+# Install dependencies (now that all workspaces are copied)
+RUN pnpm install --frozen-lockfile
+
+# Expose port
+EXPOSE 3000
+
+# Set NODE_ENV
+ENV NODE_ENV=development
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
+
+# Start web server in development mode
+WORKDIR /app/apps/web
+
+# Run Next.js directly to bypass pnpm/turbo orchestration
+# The next executable is hoisted in /app/node_modules
+CMD ["sh", "-c", "exec /app/node_modules/.bin/next dev"]
