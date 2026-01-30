@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, Progress, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Rocket, RefreshCw, ArrowRight, ArrowLeft, LayoutDashboard, Sparkles, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PhaseCard } from "./phase-card";
@@ -44,10 +45,10 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
       {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-2 text-sm">
         <Button
-          variant="light"
+          variant="ghost"
           size="sm"
-          startContent={<ArrowLeft className="w-4 h-4" />}
-          onPress={() => router.push("/dashboard")}
+          
+          onClick={() => router.push("/dashboard")}
           className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white -ml-2"
         >
           Back to Dashboard
@@ -57,7 +58,7 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
       {/* AI Quick Setup Banner */}
       {!allComplete && (
         <Card className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">
-          <CardBody className="p-5">
+          <CardContent className="p-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -73,17 +74,14 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
                 </div>
               </div>
               <Button
-                color="default"
-                variant="flat"
+                variant="secondary"
                 className="bg-white/20 text-white hover:bg-white/30 border-white/30"
-                startContent={<Sparkles className="w-4 h-4" />}
-                endContent={<ArrowRight className="w-4 h-4" />}
-                onPress={() => router.push("/setup/ai-setup")}
+                onClick={() => router.push("/setup/ai-setup")}
               >
                 AI Full Setup
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -101,22 +99,21 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
         <div className="flex items-center gap-3">
           {onRefresh && (
             <Button
-              variant="flat"
+              variant="secondary"
               size="sm"
-              startContent={<RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />}
-              onPress={handleRefresh}
-              isDisabled={isRefreshing}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
             >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
               Refresh
             </Button>
           )}
 
           {nextPhase && !allComplete && (
             <Button
-              color="primary"
               size="sm"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={() => handlePhaseSelect(nextPhase)}
+              
+              onClick={() => handlePhaseSelect(nextPhase)}
             >
               Continue: {PHASE_INFO[nextPhase].name}
             </Button>
@@ -126,7 +123,7 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
 
       {/* Overall Progress */}
       <Card className="bg-gradient-to-r from-brand-50 to-purple-50 dark:from-brand-950/30 dark:to-purple-950/30 border-brand-200 dark:border-brand-800">
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-brand-500 flex items-center justify-center">
@@ -154,14 +151,9 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
                     {flywheelState.overallProgress}%
                   </span>
                 </div>
-                <Progress
-                  size="md"
-                  value={flywheelState.overallProgress}
-                  classNames={{
-                    indicator: "bg-gradient-to-r from-brand-500 to-purple-500",
-                    track: "bg-white/50 dark:bg-gray-800/50",
-                  }}
-                />
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${flywheelState.overallProgress}%` }} />
+            </div>
               </div>
 
               {flywheelState.flywheelActive && (
@@ -177,7 +169,7 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
               )}
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Phase Cards */}
@@ -196,7 +188,7 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
       {/* Activation Message */}
       {allComplete && !flywheelState.flywheelActive && (
         <Card className="border-2 border-dashed border-green-500 bg-green-50 dark:bg-green-950/30">
-          <CardBody className="p-6 text-center">
+          <CardContent className="p-6 text-center">
             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-4">
               <Rocket className="w-8 h-8 text-white" />
             </div>
@@ -207,14 +199,14 @@ export function PhaseHub({ flywheelState, onRefresh }: PhaseHubProps) {
               Complete the final step in the Automate phase to activate your flywheel.
             </p>
             <Button
-              color="success"
+              variant="outline"
               size="lg"
-              endContent={<Rocket className="w-5 h-5" />}
-              onPress={() => handlePhaseSelect("AUTOMATE")}
+              
+              onClick={() => handlePhaseSelect("AUTOMATE")}
             >
               Activate Flywheel
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

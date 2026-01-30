@@ -1,12 +1,10 @@
 import type { Config } from "tailwindcss";
-import { heroui } from "@heroui/react";
+
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
-    // HeroUI theme content path kept during migration; remove when all HeroUI imports are gone
-    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -98,5 +96,5 @@ export default {
     },
   },
   darkMode: "class",
-  plugins: [tailwindcssAnimate, heroui()],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

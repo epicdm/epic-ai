@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Button,
-  Card,
-  CardBody,
-  RadioGroup,
-  Radio,
-  Slider,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Sparkles,
   Eye,
@@ -199,16 +194,15 @@ export function AutopilotSettingsStep({
             return (
               <Card
                 key={mode.id}
-                isPressable
-                className={`transition-all ${
+                className={`cursor-pointer transition-all ${
                   isSelected
                     ? "border-2 border-primary bg-primary/5"
                     : "border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                 }`}
-                onPress={() => setApprovalMode(mode.id)}
+                onClick={() => setApprovalMode(mode.id)}
               >
-                <CardBody className="flex flex-row items-start gap-4 py-4">
-                  <Radio value={mode.id} className="mt-1" />
+                <CardContent className="flex flex-row items-start gap-4 py-4 px-4">
+                  <RadioGroupItem value={mode.id} id={`mode-${mode.id}`} className="mt-1" />
                   <div
                     className={`p-2 rounded-lg ${
                       isSelected
@@ -224,26 +218,26 @@ export function AutopilotSettingsStep({
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <Label htmlFor={`mode-${mode.id}`} className="font-medium text-gray-900 dark:text-white cursor-pointer">
                         {mode.label}
-                      </p>
+                      </Label>
                       {mode.recommended && (
-                        <Chip size="sm" color="primary" variant="flat">
+                        <Badge variant="secondary">
                           Recommended
-                        </Chip>
+                        </Badge>
                       )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {mode.description}
                     </p>
                     {mode.warning && isSelected && (
-                      <div className="flex items-center gap-1 mt-2 text-sm text-warning">
+                      <div className="flex items-center gap-1 mt-2 text-sm text-amber-600 dark:text-amber-400">
                         <AlertTriangle className="w-4 h-4" />
                         {mode.warning}
                       </div>
                     )}
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             );
           })}
@@ -252,7 +246,7 @@ export function AutopilotSettingsStep({
 
       {/* Posts Per Week */}
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4 py-4 px-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">
@@ -262,31 +256,33 @@ export function AutopilotSettingsStep({
                 How many posts should AI create each week?
               </p>
             </div>
-            <Chip size="lg" color="primary" variant="flat">
+            <Badge variant="secondary" className="text-base px-3 py-1">
               {postsPerWeek} posts
-            </Chip>
+            </Badge>
           </div>
-          <Slider
-            size="lg"
-            step={1}
-            minValue={1}
-            maxValue={21}
-            value={postsPerWeek}
-            onChange={(value) => setPostsPerWeek(value as number)}
-            marks={[
-              { value: 1, label: "1" },
-              { value: 7, label: "7" },
-              { value: 14, label: "14" },
-              { value: 21, label: "21" },
-            ]}
-            className="max-w-full"
-          />
-        </CardBody>
+          <div className="space-y-2">
+            <input
+              type="range"
+              className="w-full accent-primary"
+              min={1}
+              max={21}
+              step={1}
+              value={postsPerWeek}
+              onChange={(e) => setPostsPerWeek(Number(e.target.value))}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>1</span>
+              <span>7</span>
+              <span>14</span>
+              <span>21</span>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Content Mix */}
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4 py-4 px-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">
@@ -298,18 +294,15 @@ export function AutopilotSettingsStep({
             </div>
             <Button
               size="sm"
-              color="primary"
-              variant="flat"
-              startContent={
-                isSuggesting ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )
-              }
-              onPress={handleAISuggest}
-              isDisabled={isSuggesting}
+              variant="secondary"
+              onClick={handleAISuggest}
+              disabled={isSuggesting}
             >
+              {isSuggesting ? (
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <Sparkles className="mr-2 w-4 h-4" />
+              )}
               AI Suggest
             </Button>
           </div>
@@ -332,16 +325,16 @@ export function AutopilotSettingsStep({
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${color}`} />
-                  <Slider
-                    size="sm"
+                  <input
+                    type="range"
+                    className="flex-1 accent-primary"
+                    min={0}
+                    max={100}
                     step={5}
-                    minValue={0}
-                    maxValue={100}
                     value={contentMix[key]}
-                    onChange={(value) =>
-                      handleContentMixChange(key, value as number)
+                    onChange={(e) =>
+                      handleContentMixChange(key, Number(e.target.value))
                     }
-                    className="flex-1"
                   />
                 </div>
               </div>
@@ -369,11 +362,11 @@ export function AutopilotSettingsStep({
           </div>
 
           {totalMix !== 100 && (
-            <p className="text-sm text-warning text-center">
+            <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
               Total: {totalMix}% (should be 100%)
             </p>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 
 export default function Error({
   error,
@@ -23,7 +23,7 @@ export default function Error({
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           An unexpected error occurred. Please try again.
         </p>
-        <Button color="primary" onPress={() => reset()}>
+        <Button onClick={() => reset()}>
           Try again
         </Button>
       </div>

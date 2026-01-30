@@ -1,6 +1,6 @@
 "use client";
 
-import { Progress, Badge } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 /**
@@ -91,11 +91,11 @@ function ConfidenceBadge({
 }) {
   const level = getConfidenceLevel(score);
 
-  const badgeColor = level === "high"
-    ? "success"
+  const badgeVariant: "default" | "secondary" | "outline" = level === "high"
+    ? "default"
     : level === "medium"
-    ? "warning"
-    : "default";
+    ? "secondary"
+    : "outline";
 
   const label = level === "high"
     ? "High Confidence"
@@ -105,8 +105,7 @@ function ConfidenceBadge({
 
   return (
     <Badge
-      color={badgeColor}
-      variant="flat"
+      variant={badgeVariant}
       className={className}
     >
       {label}
@@ -130,21 +129,20 @@ function ConfidenceBar({
 }) {
   const level = getConfidenceLevel(score);
 
-  const progressColor = level === "high"
-    ? "success"
+  const barColor = level === "high"
+    ? "bg-green-500"
     : level === "medium"
-    ? "warning"
-    : "default";
+    ? "bg-yellow-500"
+    : "bg-gray-400";
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <Progress
-        value={score}
-        color={progressColor}
-        className="flex-1"
-        size="sm"
-        aria-label={`${score}% confidence`}
-      />
+      <div className="h-2 w-full rounded-full bg-muted flex-1" aria-label={`${score}% confidence`}>
+        <div
+          className={cn("h-full rounded-full transition-all", barColor)}
+          style={{ width: `${score}%` }}
+        />
+      </div>
       {showPercentage && (
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[3rem] text-right">
           {score}%

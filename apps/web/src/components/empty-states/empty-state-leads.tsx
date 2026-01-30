@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function EmptyStateLeads() {
   return (
@@ -18,7 +19,7 @@ export function EmptyStateLeads() {
 
       {/* Empty State */}
       <Card className="max-w-2xl mx-auto">
-        <CardBody className="py-16 text-center">
+        <CardContent className="py-16 text-center">
           <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">👥</span>
           </div>
@@ -36,7 +37,6 @@ export function EmptyStateLeads() {
             <Button
               as={Link}
               href="/dashboard/social"
-              color="primary"
               size="lg"
             >
               Set Up Social
@@ -44,7 +44,7 @@ export function EmptyStateLeads() {
             <Button
               as={Link}
               href="/dashboard/voice"
-              variant="bordered"
+              variant="outline"
               size="lg"
             >
               Create Voice Agent
@@ -83,7 +83,7 @@ export function EmptyStateLeads() {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

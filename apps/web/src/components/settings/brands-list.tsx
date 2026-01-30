@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Button,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -44,7 +37,7 @@ interface BrandsListProps {
 
 export function BrandsList({ brands, organizationId }: BrandsListProps) {
   const router = useRouter();
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +75,7 @@ export function BrandsList({ brands, organizationId }: BrandsListProps) {
       }
 
       reset();
-      onClose();
+      setIsOpen(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -101,7 +94,7 @@ export function BrandsList({ brands, organizationId }: BrandsListProps) {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             No brands yet. Create your first brand to get started.
           </p>
-          <Button color="primary" onPress={onOpen}>
+          <Button onClick={() => setIsOpen(true)}>
             Create Brand
           </Button>
         </div>
@@ -140,52 +133,44 @@ export function BrandsList({ brands, organizationId }: BrandsListProps) {
             ))}
           </div>
 
-          <Button variant="flat" color="primary" onPress={onOpen}>
+          <Button variant="secondary" onClick={() => setIsOpen(true)}>
             + Add Brand
           </Button>
         </div>
       )}
 
       {/* Create Brand Modal */}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
-          {(onClose) => (
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <ModalHeader>Create New Brand</ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  <Input
-                    label="Brand Name"
-                    placeholder="My Awesome Brand"
-                    {...register("name")}
-                    isInvalid={!!errors.name}
-                    errorMessage={errors.name?.message}
-                    autoFocus
-                  />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DialogHeader><DialogTitle>Create New Brand</DialogTitle></DialogHeader>
+            <div className="py-4">
+              <div className="space-y-4">
+                <Input
+                  placeholder="My Awesome Brand"
+                  {...register("name")}
+                  autoFocus
+                />
 
-                  <Input
-                    label="Website (Optional)"
-                    placeholder="https://example.com"
-                    {...register("website")}
-                    isInvalid={!!errors.website}
-                    errorMessage={errors.website?.message}
-                  />
+                <Input
+                  placeholder="https://example.com"
+                  {...register("website")}
+                />
 
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="light" onPress={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" color="primary" isLoading={isLoading}>
-                  Create Brand
-                </Button>
-              </ModalFooter>
-            </form>
-          )}
-        </ModalContent>
-      </Modal>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                Create Brand
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

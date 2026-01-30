@@ -1,6 +1,9 @@
 "use client";
 
-import { Card, CardBody, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   BarChart3,
   CheckCircle,
@@ -96,7 +99,7 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
                   : "border-amber-200 dark:border-amber-800"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div
                     className={`p-2 rounded-lg ${
@@ -129,7 +132,7 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -138,25 +141,25 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
       {/* Metrics Summary */}
       {hasMetrics && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Tracked Metrics
             </h4>
             <div className="flex flex-wrap gap-2">
               {metrics.map((metric) => (
-                <Chip key={metric} color="secondary" variant="flat">
+                <Badge key={metric} variant="secondary">
                   {METRIC_LABELS[metric] || metric}
-                </Chip>
+                </Badge>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Reporting Summary */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Reporting Settings
@@ -188,13 +191,13 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
               </div>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Goals Summary */}
       {hasGoals && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <Target className="w-4 h-4" />
               Optimization Goals
@@ -210,34 +213,33 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
                   </span>
                   <div className="flex items-center gap-2">
                     {goal.target && (
-                      <Chip size="sm" variant="flat">
+                      <Badge variant="secondary">
                         Target: {goal.target}
-                      </Chip>
+                      </Badge>
                     )}
-                    <Chip
-                      size="sm"
-                      color={
+                    <Badge
+                      variant="secondary"
+                      className={
                         goal.priority === "high"
-                          ? "danger"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                           : goal.priority === "medium"
-                          ? "warning"
-                          : "default"
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                          : ""
                       }
-                      variant="flat"
                     >
                       {goal.priority}
-                    </Chip>
+                    </Badge>
                   </div>
                 </div>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* AI Learning Note */}
       <Card className="border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-800">
               <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -253,25 +255,24 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Confirmation */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
-          <Checkbox
-            isSelected={data.confirmed}
-            onValueChange={(value) => updateData({ confirmed: value })}
-            classNames={{
-              label: "text-gray-700 dark:text-gray-300",
-            }}
-          >
-            <span>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="confirm-learn"
+              checked={data.confirmed || false}
+              onCheckedChange={(checked) => updateData({ confirmed: checked === true })}
+            />
+            <Label htmlFor="confirm-learn" className="text-gray-700 dark:text-gray-300 cursor-pointer">
               I confirm my analytics settings are correct and I&apos;m ready to
               start the learning loop.
-            </span>
-          </Checkbox>
-        </CardBody>
+            </Label>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,26 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Tabs,
-  Tab,
-  Chip,
-  Progress,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Select,
-  SelectItem,
-  useDisclosure,
-  Spinner,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import {
   Globe,
   Rss,
@@ -90,7 +79,9 @@ export function ContextEnginePage({
   const [syncingSourceId, setSyncingSourceId] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState(false);
 
-  const { isOpen: isAddSourceOpen, onOpen: onAddSourceOpen, onClose: onAddSourceClose } = useDisclosure();
+  const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
+  const onAddSourceOpen = () => setIsAddSourceOpen(true);
+  const onAddSourceClose = () => setIsAddSourceOpen(false);
   const [newSourceType, setNewSourceType] = useState<string>("WEBSITE");
   const [newSourceName, setNewSourceName] = useState("");
   const [newSourceUrl, setNewSourceUrl] = useState("");
@@ -295,7 +286,7 @@ export function ContextEnginePage({
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-lg">
               <Database className="w-6 h-6 text-primary" />
             </div>
@@ -303,11 +294,11 @@ export function ContextEnginePage({
               <p className="text-sm text-default-500">Total Sources</p>
               <p className="text-2xl font-bold">{stats.totalSources}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-success/10 rounded-lg">
               <FileText className="w-6 h-6 text-success" />
             </div>
@@ -315,11 +306,11 @@ export function ContextEnginePage({
               <p className="text-sm text-default-500">Content Items</p>
               <p className="text-2xl font-bold">{stats.totalItems}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-secondary/10 rounded-lg">
               <Upload className="w-6 h-6 text-secondary" />
             </div>
@@ -327,34 +318,37 @@ export function ContextEnginePage({
               <p className="text-sm text-default-500">Documents</p>
               <p className="text-2xl font-bold">{documents.length}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs aria-label="Context Engine tabs" size="lg" color="primary">
-        {/* Sources Tab */}
-        <Tab
-          key="sources"
-          title={
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              <span>Sources</span>
-            </div>
-          }
-        >
+      <Tabs defaultValue="sources">
+        <TabsList>
+          <TabsTrigger value="sources">
+            <Globe className="w-4 h-4 mr-2" />
+            Sources
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            <Upload className="w-4 h-4 mr-2" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="search">
+            <Search className="w-4 h-4 mr-2" />
+            Search
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sources">
           <Card className="mt-4">
             <CardHeader className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Context Sources</h3>
-              <Button
-                color="primary"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={onAddSourceOpen}
-              >
+              <Button onClick={onAddSourceOpen}>
+                <Plus className="w-4 h-4 mr-2" />
                 Add Source
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {sources.length === 0 ? (
                 <div className="text-center py-8 text-default-500">
                   <Database className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -393,26 +387,28 @@ export function ContextEnginePage({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Chip color={getStatusColor(source.status)} size="sm" variant="flat">
+                          <Badge variant="secondary" className={
+                            getStatusColor(source.status) === "success" ? "bg-green-100 text-green-800" :
+                            getStatusColor(source.status) === "warning" ? "bg-yellow-100 text-yellow-800" :
+                            getStatusColor(source.status) === "danger" ? "bg-red-100 text-red-800" : ""
+                          }>
                             {source.status}
-                          </Chip>
+                          </Badge>
 
                           <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            isLoading={syncingSourceId === source.id}
-                            onPress={() => handleSyncSource(source.id)}
+                            variant="ghost"
+                            size="icon"
+                            disabled={syncingSourceId === source.id}
+                            onClick={() => handleSyncSource(source.id)}
                           >
-                            <RefreshCw className="w-4 h-4" />
+                            {syncingSourceId === source.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                           </Button>
 
                           <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            color="danger"
-                            onPress={() => handleDeleteSource(source.id)}
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => handleDeleteSource(source.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -422,25 +418,16 @@ export function ContextEnginePage({
                   })}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        {/* Documents Tab */}
-        <Tab
-          key="documents"
-          title={
-            <div className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              <span>Documents</span>
-            </div>
-          }
-        >
+        <TabsContent value="documents">
           <Card className="mt-4">
             <CardHeader>
               <h3 className="text-lg font-semibold">Document Uploads</h3>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {/* Upload Zone */}
               <div
                 {...getRootProps()}
@@ -453,7 +440,7 @@ export function ContextEnginePage({
                 <input {...getInputProps()} />
                 {uploadingFiles ? (
                   <div className="flex flex-col items-center">
-                    <Spinner size="lg" />
+                    <Loader2 className="w-8 h-8 animate-spin" />
                     <p className="mt-2">Uploading...</p>
                   </div>
                 ) : (
@@ -495,9 +482,13 @@ export function ContextEnginePage({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Chip color={getStatusColor(doc.status)} size="sm" variant="flat">
+                        <Badge variant="secondary" className={
+                          getStatusColor(doc.status) === "success" ? "bg-green-100 text-green-800" :
+                          getStatusColor(doc.status) === "warning" ? "bg-yellow-100 text-yellow-800" :
+                          getStatusColor(doc.status) === "danger" ? "bg-red-100 text-red-800" : ""
+                        }>
                           {doc.status}
-                        </Chip>
+                        </Badge>
                         {doc.errorMessage && (
                           <span className="text-sm text-danger" title={doc.errorMessage}>
                             <AlertCircle className="w-4 h-4" />
@@ -508,66 +499,59 @@ export function ContextEnginePage({
                   ))}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        {/* Search Tab */}
-        <Tab
-          key="search"
-          title={
-            <div className="flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              <span>Search</span>
-            </div>
-          }
-        >
+        <TabsContent value="search">
           <ContextSearchTab brandId={brandId} />
-        </Tab>
+        </TabsContent>
       </Tabs>
 
       {/* Add Source Modal */}
-      <Modal isOpen={isAddSourceOpen} onClose={onAddSourceClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Add Context Source</ModalHeader>
-          <ModalBody>
+      <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Context Source</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
-              <Select
-                label="Source Type"
-                selectedKeys={[newSourceType]}
-                onSelectionChange={(keys) => setNewSourceType(Array.from(keys)[0] as string)}
-              >
-                {SOURCE_TYPES.map((type) => (
-                  <SelectItem key={type.key} textValue={type.label}>
-                    <div className="flex items-center gap-2">
-                      <type.icon className="w-4 h-4" />
-                      <div>
-                        <p className="font-medium">{type.label}</p>
-                        <p className="text-sm text-default-500">{type.description}</p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Source Type</Label>
+                <Select value={newSourceType} onValueChange={setNewSourceType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_TYPES.map((type) => (
+                      <SelectItem key={type.key} value={type.key}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Input
-                label="Name"
-                placeholder="e.g., Company Website, Industry News"
-                value={newSourceName}
-                onChange={(e) => setNewSourceName(e.target.value)}
-              />
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  placeholder="e.g., Company Website, Industry News"
+                  value={newSourceName}
+                  onChange={(e) => setNewSourceName(e.target.value)}
+                />
+              </div>
 
               {(newSourceType === "WEBSITE" || newSourceType === "RSS_FEED") && (
-                <Input
-                  label={newSourceType === "WEBSITE" ? "Website URL" : "Feed URL"}
-                  placeholder={
-                    newSourceType === "WEBSITE"
-                      ? "https://example.com"
-                      : "https://example.com/feed.xml"
-                  }
-                  value={newSourceUrl}
-                  onChange={(e) => setNewSourceUrl(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <Label>{newSourceType === "WEBSITE" ? "Website URL" : "Feed URL"}</Label>
+                  <Input
+                    placeholder={
+                      newSourceType === "WEBSITE"
+                        ? "https://example.com"
+                        : "https://example.com/feed.xml"
+                    }
+                    value={newSourceUrl}
+                    onChange={(e) => setNewSourceUrl(e.target.value)}
+                  />
+                </div>
               )}
 
               {newSourceType === "MANUAL_NOTE" && (
@@ -579,22 +563,20 @@ export function ContextEnginePage({
                 />
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onAddSourceClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={onAddSourceClose}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              isLoading={isLoading}
-              onPress={handleAddSource}
-              isDisabled={!newSourceName || (newSourceType !== "MANUAL_NOTE" && !newSourceUrl)}
+              onClick={handleAddSource}
+              disabled={!newSourceName || (newSourceType !== "MANUAL_NOTE" && !newSourceUrl) || isLoading}
             >
               Add Source
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -636,17 +618,16 @@ function ContextSearchTab({ brandId }: { brandId: string }) {
       <CardHeader>
         <h3 className="text-lg font-semibold">Search Context</h3>
       </CardHeader>
-      <CardBody>
+      <CardContent>
         <div className="flex gap-2 mb-6">
           <Input
             placeholder="Search your context items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            startContent={<Search className="w-4 h-4 text-default-400" />}
-            className="flex-1"
+                        className="flex-1"
           />
-          <Button color="primary" isLoading={isSearching} onPress={handleSearch}>
+          <Button disabled={isSearching} onClick={handleSearch}>
             Search
           </Button>
         </div>
@@ -661,12 +642,12 @@ function ContextSearchTab({ brandId }: { brandId: string }) {
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium">{item.title || "Untitled"}</h4>
                   <div className="flex items-center gap-2">
-                    <Chip size="sm" variant="flat">
+                    <Badge variant="secondary">
                       {item.contentType}
-                    </Chip>
-                    <Chip size="sm" variant="flat" color="primary">
+                    </Badge>
+                    <Badge variant="default">
                       Score: {item.importance}/10
-                    </Chip>
+                    </Badge>
                   </div>
                 </div>
                 <p className="text-sm text-default-600 line-clamp-2">
@@ -686,7 +667,7 @@ function ContextSearchTab({ brandId }: { brandId: string }) {
             <p>Enter a search term to find relevant context</p>
           </div>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

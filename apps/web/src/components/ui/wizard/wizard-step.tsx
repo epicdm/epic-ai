@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useWizard } from "./wizard-context";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, Loader2Icon } from "lucide-react";
@@ -93,11 +93,11 @@ export function WizardStep({
         <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
           {!hidePrev && !isFirstStep ? (
             <Button
-              variant="light"
-              onPress={handlePrev}
-              isDisabled={disablePrev || isLoading}
-              startContent={<ArrowLeftIcon className="w-4 h-4" />}
+              variant="ghost"
+              onClick={handlePrev}
+              disabled={disablePrev || isLoading}
             >
+              <ArrowLeftIcon className="w-4 h-4 mr-2" />
               {prevLabel}
             </Button>
           ) : (
@@ -106,19 +106,18 @@ export function WizardStep({
 
           {!hideNext && (
             <Button
-              color="primary"
-              onPress={handleNext}
-              isDisabled={disableNext || isLoading}
-              isLoading={isLoading}
-              endContent={
-                isLoading ? null : isLastStep ? (
-                  <CheckIcon className="w-4 h-4" />
-                ) : (
-                  <ArrowRightIcon className="w-4 h-4" />
-                )
-              }
+              onClick={handleNext}
+              disabled={disableNext || isLoading}
             >
+              {isLoading && <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />}
               {nextLabel || defaultNextLabel}
+              {!isLoading && (
+                isLastStep ? (
+                  <CheckIcon className="w-4 h-4 ml-2" />
+                ) : (
+                  <ArrowRightIcon className="w-4 h-4 ml-2" />
+                )
+              )}
             </Button>
           )}
         </div>

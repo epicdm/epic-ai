@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Switch } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import {
   Bell,
   Mail,
@@ -103,7 +104,7 @@ export function NotificationsStep({ data, updateData }: NotificationsStepProps) 
 
       {/* Notification Channels */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-4">
             Notification Channels
           </h4>
@@ -139,22 +140,21 @@ export function NotificationsStep({ data, updateData }: NotificationsStepProps) 
                     </div>
                   </div>
                   <Switch
-                    isSelected={isEnabled}
-                    onValueChange={(value) =>
+                    checked={isEnabled}
+                    onCheckedChange={(value) =>
                       handleChange(channel.id as keyof NotificationSettings, value)
                     }
-                    size="sm"
-                  />
+                        />
                 </div>
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Notification Types */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-4">
             What to Notify About
           </h4>
@@ -193,28 +193,27 @@ export function NotificationsStep({ data, updateData }: NotificationsStepProps) 
                     </div>
                   </div>
                   <Switch
-                    isSelected={isEnabled}
-                    onValueChange={(value) =>
+                    checked={isEnabled}
+                    onCheckedChange={(value) =>
                       handleChange(type.id as keyof NotificationSettings, value)
                     }
-                    size="sm"
-                  />
+                        />
                 </div>
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Quiet Mode Note */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <strong>Pro tip:</strong> Start with all notifications enabled to
             understand the system. Once comfortable, you can disable some to
             reduce noise while staying informed about what matters most.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

@@ -30,6 +30,16 @@ export function createCallbackWorker() {
     connection: { url: reqEnv("REDIS_URL") },
     prefix,
     concurrency: 5,
+    lockDuration: 300_000, // 5 minutes
+    stalledInterval: 30_000, // 30 seconds
+    settings: {
+      backoffStrategy: (attemptsMade: number): number => {
+        // Exponential backoff: 1min, 5min, 15min
+        const delays = [60_000, 300_000, 900_000];
+        const index = Math.min(attemptsMade - 1, delays.length - 1);
+        return delays[index] ?? delays[delays.length - 1]!;
+      },
+    },
   });
 
   worker.on("completed", (job) => {

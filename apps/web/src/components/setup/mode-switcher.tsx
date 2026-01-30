@@ -9,7 +9,7 @@
  * - Expert: Full control over all configuration options
  */
 
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { Zap, Sparkles, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -25,32 +25,29 @@ export function ModeSwitcher({ currentMode = "expert" }: ModeSwitcherProps) {
   return (
     <div className="flex items-center gap-2">
       <Button
-        variant={currentMode === "ai" ? "solid" : "bordered"}
-        color={currentMode === "ai" ? "secondary" : "default"}
+        variant={currentMode === "ai" ? "default" : "outline"}
         size="sm"
-        startContent={<Zap className="w-4 h-4" />}
-        onPress={() => router.push("/setup/ai")}
+        onClick={() => router.push("/setup/ai")}
       >
+        <Zap className="w-4 h-4 mr-1" />
         AI Express
       </Button>
 
       <Button
-        variant={currentMode === "guided" ? "solid" : "bordered"}
-        color={currentMode === "guided" ? "primary" : "default"}
+        variant={currentMode === "guided" ? "default" : "outline"}
         size="sm"
-        startContent={<Sparkles className="w-4 h-4" />}
-        onPress={() => router.push("/setup?mode=guided")}
+        onClick={() => router.push("/setup?mode=guided")}
       >
+        <Sparkles className="w-4 h-4 mr-1" />
         Guided
       </Button>
 
       <Button
-        variant={currentMode === "expert" ? "solid" : "bordered"}
-        color={currentMode === "expert" ? "default" : "default"}
+        variant={currentMode === "expert" ? "default" : "outline"}
         size="sm"
-        startContent={<Settings2 className="w-4 h-4" />}
-        onPress={() => router.push("/setup")}
+        onClick={() => router.push("/setup")}
       >
+        <Settings2 className="w-4 h-4 mr-1" />
         Expert
       </Button>
     </div>

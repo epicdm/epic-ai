@@ -6,24 +6,13 @@
  */
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Switch,
-  Chip,
-  Spinner,
-  Select,
-  SelectItem,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Clock,
   Plus,
@@ -92,7 +81,7 @@ export function PublishingSettings({ orgId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   const [editingSchedule, setEditingSchedule] = useState<{
     platform: SocialPlatform;
@@ -164,7 +153,7 @@ export function PublishingSettings({ orgId }: Props) {
 
       setSuccess("Schedule saved successfully");
       setTimeout(() => setSuccess(null), 3000);
-      onClose();
+      setIsOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
@@ -249,7 +238,7 @@ export function PublishingSettings({ orgId }: Props) {
         isActive: true,
       });
     }
-    onOpen();
+    setIsOpen(true);
   };
 
   // Add/remove posting time
@@ -287,7 +276,7 @@ export function PublishingSettings({ orgId }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -301,7 +290,8 @@ export function PublishingSettings({ orgId }: Props) {
             <Settings className="w-5 h-5" />
             <h2 className="text-xl font-semibold">Publishing Schedules</h2>
           </div>
-          <Button color="primary" startContent={<Plus className="w-4 h-4" />} onPress={() => openEditModal()}>
+          <Button onClick={() => openEditModal()}>
+            <Plus className="w-4 h-4 mr-1" />
             Add Schedule
           </Button>
         </CardHeader>
@@ -310,38 +300,38 @@ export function PublishingSettings({ orgId }: Props) {
       {/* Messages */}
       {error && (
         <Card className="bg-red-50 dark:bg-red-900/20">
-          <CardBody className="flex flex-row items-center gap-2 text-red-600">
+          <CardContent className="flex flex-row items-center gap-2 text-red-600">
             <AlertCircle className="w-4 h-4" />
             {error}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {success && (
         <Card className="bg-green-50 dark:bg-green-900/20">
-          <CardBody className="flex flex-row items-center gap-2 text-green-600">
+          <CardContent className="flex flex-row items-center gap-2 text-green-600">
             <CheckCircle className="w-4 h-4" />
             {success}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Schedules List */}
       {schedules.length === 0 ? (
         <Card>
-          <CardBody className="text-center py-12">
+          <CardContent className="text-center py-12">
             <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <p className="text-gray-500">No publishing schedules configured</p>
             <p className="text-sm text-gray-400 mt-1">
               Add a schedule to automate your content publishing
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
           {schedules.map((schedule) => (
             <Card key={schedule.id}>
-              <CardBody>
+              <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
@@ -372,66 +362,66 @@ export function PublishingSettings({ orgId }: Props) {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <Chip
+                    <Badge
                       color={schedule.isActive ? "success" : "default"}
-                      variant="flat"
-                      size="sm"
+                      variant="secondary"
+                      
                     >
                       {schedule.isActive ? "Active" : "Paused"}
-                    </Chip>
+                    </Badge>
 
                     <Switch
-                      isSelected={schedule.isActive}
-                      onValueChange={() => toggleSchedule(schedule)}
+                      checked={schedule.isActive}
+                      onCheckedChange={() => toggleSchedule(schedule)}
                       size="sm"
                     />
 
                     <Button
-                      variant="light"
+                      variant="ghost"
                       size="sm"
-                      onPress={() => openEditModal(schedule)}
+                      onClick={() => openEditModal(schedule)}
                     >
                       Edit
                     </Button>
 
                     <Button
-                      isIconOnly
-                      variant="light"
+                      size="icon"
+                      variant="ghost"
                       size="sm"
-                      color="danger"
-                      onPress={() => deleteSchedule(schedule.platform)}
+                      variant="destructive"
+                      onClick={() => deleteSchedule(schedule.platform)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {/* Edit Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             {schedules.find((s) => s.platform === editingSchedule.platform)
               ? "Edit Schedule"
               : "Add Schedule"}
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-6">
               {/* Platform */}
               <Select
                 label="Platform"
-                selectedKeys={[editingSchedule.platform]}
+                value={editingSchedule.platform}
                 onChange={(e) =>
                   setEditingSchedule((prev) => ({
                     ...prev,
                     platform: e.target.value as SocialPlatform,
                   }))
                 }
-                isDisabled={schedules.some(
+                disabled={schedules.some(
                   (s) => s.platform === editingSchedule.platform
                 )}
               >
@@ -462,7 +452,7 @@ export function PublishingSettings({ orgId }: Props) {
                           ? "primary"
                           : "default"
                       }
-                      onPress={() => toggleDay(day.value)}
+                      onClick={() => toggleDay(day.value)}
                     >
                       {day.label}
                     </Button>
@@ -476,10 +466,10 @@ export function PublishingSettings({ orgId }: Props) {
                   <label className="text-sm font-medium">Posting Times</label>
                   <Button
                     size="sm"
-                    variant="light"
-                    startContent={<Plus className="w-3 h-3" />}
-                    onPress={addPostingTime}
-                  >
+                    variant="ghost"
+                    
+                    onClick={addPostingTime}
+                  ><Plus className="w-3 h-3" /> 
                     Add Time
                   </Button>
                 </div>
@@ -496,11 +486,11 @@ export function PublishingSettings({ orgId }: Props) {
                       />
                       {editingSchedule.postingTimes.length > 1 && (
                         <Button
-                          isIconOnly
+                          size="icon"
                           size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => removePostingTime(index)}
+                          variant="ghost"
+                          variant="destructive"
+                          onClick={() => removePostingTime(index)}
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -513,7 +503,7 @@ export function PublishingSettings({ orgId }: Props) {
               {/* Timezone */}
               <Select
                 label="Timezone"
-                selectedKeys={[editingSchedule.timezone]}
+                value={editingSchedule.timezone}
                 onChange={(e) =>
                   setEditingSchedule((prev) => ({
                     ...prev,
@@ -543,17 +533,16 @@ export function PublishingSettings({ orgId }: Props) {
                 max={20}
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={saveSchedule} isLoading={saving}>
+            <Button onClick={saveSchedule} disabled={saving}>
               Save Schedule
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
     </div>
   );
 }

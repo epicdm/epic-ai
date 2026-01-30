@@ -1,9 +1,13 @@
 "use client";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useTour } from "@/context/tour-context";
 
-export function TourPopover({ 
+export function TourPopover({
   tourId,
   step,
   title,

@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Progress, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Brain,
   Sparkles,
@@ -127,11 +128,11 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
     return "Start";
   };
 
-  const getButtonVariant = () => {
-    if (isBlocked) return "flat";
-    if (isCompleted) return "bordered";
-    if (isInProgress) return "solid";
-    return "solid";
+  const getButtonVariant = (): "ghost" | "outline" | "default" => {
+    if (isBlocked) return "ghost";
+    if (isCompleted) return "outline";
+    if (isInProgress) return "default";
+    return "default";
   };
 
   return (
@@ -143,10 +144,9 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
       } ${isCompleted ? "border-2 border-green-500/50" : ""} ${
         isInProgress ? `border-2 ${colors.border}` : ""
       }`}
-      isPressable={!isBlocked}
-      onPress={isBlocked ? undefined : onClick}
+      onClick={isBlocked ? undefined : onClick}
     >
-      <CardBody className="p-5">
+      <CardContent className="p-5">
         {/* Phase Number Badge */}
         <div className="absolute -top-3 -left-2">
           <span
@@ -206,14 +206,9 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
                   </span>
                   <span className={colors.text}>{progressPercent}%</span>
                 </div>
-                <Progress
-                  size="sm"
-                  value={progressPercent}
-                  classNames={{
-                    indicator: colors.progress,
-                    track: "bg-gray-100 dark:bg-gray-800",
-                  }}
-                />
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
               </div>
             )}
 
@@ -221,11 +216,9 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
             <Button
               size="sm"
               variant={getButtonVariant()}
-              color={isBlocked ? "default" : isCompleted ? "success" : "primary"}
-              className={`${isBlocked ? "pointer-events-none" : ""}`}
-              endContent={!isBlocked && <ChevronRight className="w-4 h-4" />}
-              isDisabled={isBlocked}
-              onPress={!isBlocked ? onClick : undefined}
+              className={isBlocked ? "pointer-events-none" : ""}
+              disabled={isBlocked}
+              onClick={!isBlocked ? onClick : undefined}
             >
               {getButtonLabel()}
             </Button>
@@ -242,7 +235,7 @@ export function PhaseCard({ phaseInfo, phaseState, onClick, index }: PhaseCardPr
             }`}
           />
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

@@ -133,7 +133,7 @@ export function CreateWizard({
       onComplete={handleComplete}
       onSave={handleSave}
       canProceed={canProceed()}
-      isLoading={isLoading}
+      disabled={isLoading}
     >
       {renderStep()}
     </WizardLayout>

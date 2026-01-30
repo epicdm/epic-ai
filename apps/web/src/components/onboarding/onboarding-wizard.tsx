@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button, Input, Progress } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -134,14 +136,11 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <Card className="max-w-lg w-full">
-        <CardBody className="p-8">
+        <CardContent className="p-8">
           {/* Progress Bar */}
-          <Progress
-            value={progress[step]}
-            className="mb-8"
-            color="primary"
-            size="sm"
-          />
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress[step]}%` }} />
+            </div>
 
           {/* Step: Welcome */}
           {step === "welcome" && (
@@ -160,10 +159,9 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
               </p>
 
               <Button
-                color="primary"
                 size="lg"
                 className="w-full"
-                onPress={() => setStep("organization")}
+                onClick={() => setStep("organization")}
               >
                 Let&apos;s Get Started
               </Button>
@@ -191,8 +189,8 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
                     label="Organization Name"
                     placeholder="Acme Inc."
                     {...orgForm.register("name")}
-                    isInvalid={!!orgForm.formState.errors.name}
-                    errorMessage={orgForm.formState.errors.name?.message}
+                    
+                    
                     autoFocus
                   />
 
@@ -202,10 +200,9 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
 
                   <Button
                     type="submit"
-                    color="primary"
                     size="lg"
                     className="w-full"
-                    isLoading={isLoading}
+                    disabled={isLoading}
                   >
                     Continue
                   </Button>
@@ -235,8 +232,8 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
                     label="Brand Name"
                     placeholder="My Awesome Brand"
                     {...brandForm.register("name")}
-                    isInvalid={!!brandForm.formState.errors.name}
-                    errorMessage={brandForm.formState.errors.name?.message}
+                    
+                    
                     autoFocus
                   />
 
@@ -244,8 +241,8 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
                     label="Website (Optional)"
                     placeholder="https://example.com"
                     {...brandForm.register("website")}
-                    isInvalid={!!brandForm.formState.errors.website}
-                    errorMessage={brandForm.formState.errors.website?.message}
+                    
+                    
                   />
 
                   {error && (
@@ -254,19 +251,18 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
 
                   <Button
                     type="submit"
-                    color="primary"
                     size="lg"
                     className="w-full"
-                    isLoading={isLoading}
+                    disabled={isLoading}
                   >
                     Create Brand
                   </Button>
 
                   <Button
                     type="button"
-                    variant="light"
+                    variant="ghost"
                     className="w-full"
-                    onPress={handleSkipBrand}
+                    onClick={handleSkipBrand}
                   >
                     Skip for now
                   </Button>
@@ -322,17 +318,16 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
               )}
 
               <Button
-                color="primary"
                 size="lg"
                 className="w-full"
-                onPress={handleComplete}
-                isLoading={isLoading}
+                onClick={handleComplete}
+                disabled={isLoading}
               >
                 Go to Dashboard
               </Button>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Chip, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Target, Users, Compass, TrendingUp } from "lucide-react";
 
 interface Audience {
@@ -60,7 +61,7 @@ export default function BrandStrategyPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -69,11 +70,11 @@ export default function BrandStrategyPage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl">
         <Card>
-          <CardBody>
+          <CardContent>
             <p className="text-center text-gray-500">
               {error || "No brand brain found. Please set up your brand first."}
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -100,7 +101,7 @@ export default function BrandStrategyPage() {
               </p>
             </div>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Mission</label>
               <p className="text-gray-500 text-sm">
@@ -112,14 +113,14 @@ export default function BrandStrategyPage() {
                 <label className="text-sm font-medium">Core Values</label>
                 <div className="flex flex-wrap gap-2">
                   {brandBrain.values.map((value: string, i: number) => (
-                    <Chip key={i} color="secondary" variant="flat" size="sm">
+                    <Badge key={i} variant="secondary" variant="secondary" >
                       {value}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Market Position */}
@@ -133,10 +134,10 @@ export default function BrandStrategyPage() {
               </p>
             </div>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Industry</label>
-              <Chip variant="bordered">{brandBrain.industry || "Not specified"}</Chip>
+              <Badge variant="outline">{brandBrain.industry || "Not specified"}</Badge>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Target Market</label>
@@ -154,7 +155,7 @@ export default function BrandStrategyPage() {
                 </ul>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Target Audiences */}
@@ -168,7 +169,7 @@ export default function BrandStrategyPage() {
               </p>
             </div>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             {(!brandBrain.audiences || brandBrain.audiences.length === 0) ? (
               <p className="text-gray-500 text-sm">No audiences defined yet.</p>
             ) : (
@@ -181,7 +182,7 @@ export default function BrandStrategyPage() {
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">{audience.name}</h4>
                       {audience.isPrimary && (
-                        <Chip color="primary" variant="flat" size="sm">Primary</Chip>
+                        <Badge  variant="secondary" >Primary</Badge>
                       )}
                     </div>
                     <p className="text-sm text-gray-500">
@@ -196,7 +197,7 @@ export default function BrandStrategyPage() {
                 ))}
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Content Pillars */}
@@ -210,7 +211,7 @@ export default function BrandStrategyPage() {
               </p>
             </div>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             {(!brandBrain.pillars || brandBrain.pillars.length === 0) ? (
               <p className="text-gray-500 text-sm">No content pillars defined yet.</p>
             ) : (
@@ -223,9 +224,9 @@ export default function BrandStrategyPage() {
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">{pillar.name}</h4>
-                      <Chip color={pillar.isActive ? "success" : "default"} variant="flat" size="sm">
+                      <Badge color={pillar.isActive ? "success" : "default"} variant="secondary" >
                         {pillar.isActive ? "Active" : "Inactive"}
-                      </Chip>
+                      </Badge>
                     </div>
                     <p className="text-sm text-gray-500">
                       {pillar.description || "No description"}
@@ -233,14 +234,14 @@ export default function BrandStrategyPage() {
                     {pillar.topics && pillar.topics.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {pillar.topics.slice(0, 3).map((topic: string, i: number) => (
-                          <Chip key={i} variant="bordered" size="sm">
+                          <Badge key={i} variant="outline" >
                             {topic}
-                          </Chip>
+                          </Badge>
                         ))}
                         {pillar.topics.length > 3 && (
-                          <Chip variant="bordered" size="sm">
+                          <Badge variant="outline" >
                             +{pillar.topics.length - 3} more
-                          </Chip>
+                          </Badge>
                         )}
                       </div>
                     )}
@@ -248,7 +249,7 @@ export default function BrandStrategyPage() {
                 ))}
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>

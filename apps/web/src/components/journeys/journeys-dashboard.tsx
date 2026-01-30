@@ -5,25 +5,33 @@
  * Displays cross-channel journey analytics and individual journey visualization
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
   Select,
+  SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
-  TableHeader,
-  TableColumn,
   TableBody,
-  TableRow,
   TableCell,
-  Pagination,
-  Progress,
-} from "@heroui/react";
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   GitMerge,
   Waypoints,
@@ -39,6 +47,7 @@ import {
   RefreshCw,
   Eye,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 
@@ -116,59 +125,56 @@ const CHANNEL_COLORS: Record<string, string> = {
   ADS: "bg-pink-500",
 };
 
-const CHANNEL_CHIP_COLORS: Record<string, "primary" | "secondary" | "success" | "warning" | "danger" | "default"> = {
-  SOCIAL: "primary",
-  VOICE: "secondary",
-  EMAIL: "success",
-  CHAT: "warning",
-  WEBSITE: "default",
-  ADS: "danger",
+const CHANNEL_BADGE_CLASSES: Record<string, string> = {
+  SOCIAL: "bg-blue-100 text-blue-700 border-blue-200",
+  VOICE: "bg-purple-100 text-purple-700 border-purple-200",
+  EMAIL: "bg-green-100 text-green-700 border-green-200",
+  CHAT: "bg-orange-100 text-orange-700 border-orange-200",
+  WEBSITE: "bg-gray-100 text-gray-700 border-gray-200",
+  ADS: "bg-pink-100 text-pink-700 border-pink-200",
 };
 
-const STATUS_COLORS: Record<string, "success" | "warning" | "default"> = {
-  active: "warning",
-  converted: "success",
-  dormant: "default",
+const STATUS_BADGE_VARIANT: Record<string, "outline" | "default" | "secondary"> = {
+  active: "outline",
+  converted: "default",
+  dormant: "secondary",
 };
+
+async function fetchJourneysData(
+  period: string,
+  page: number,
+  statusFilter: string,
+  channelFilter: string
+): Promise<JourneysData> {
+  const params = new URLSearchParams({
+    period,
+    page: page.toString(),
+    limit: "10",
+  });
+  if (statusFilter) params.append("status", statusFilter);
+  if (channelFilter) params.append("channel", channelFilter);
+
+  const response = await fetch(`/api/journeys?${params}`);
+  const result = await response.json();
+  return result;
+}
 
 export function JourneysDashboard({ orgId }: { orgId: string }) {
-  const [data, setData] = useState<JourneysData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [channelFilter, setChannelFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        period,
-        page: page.toString(),
-        limit: "10",
-      });
-      if (statusFilter) params.append("status", statusFilter);
-      if (channelFilter) params.append("channel", channelFilter);
+  const { data, isLoading, isRefetching, refetch } = useQuery<JourneysData>({
+    queryKey: ["journeys", period, statusFilter, channelFilter, page],
+    queryFn: () => fetchJourneysData(period, page, statusFilter, channelFilter),
+  });
 
-      const response = await fetch(`/api/journeys?${params}`);
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error("Error fetching journeys:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [period, statusFilter, channelFilter, page]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  if (loading && !data) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -185,38 +191,40 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
     channelBreakdown: [],
   };
 
+  const totalPages = data?.pagination.totalPages ?? 1;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Customer Journeys</h1>
-          <p className="text-default-500">
+          <p className="text-muted-foreground">
             Track cross-channel customer interactions from first touch to conversion
           </p>
         </div>
         <div className="flex gap-3">
-          <Select
-            size="sm"
-            className="w-32"
-            selectedKeys={[period]}
-            onSelectionChange={(keys) => {
-              const value = Array.from(keys)[0] as string;
-              setPeriod(value);
-            }}
-            aria-label="Time period"
-          >
-            <SelectItem key="7">7 Days</SelectItem>
-            <SelectItem key="30">30 Days</SelectItem>
-            <SelectItem key="90">90 Days</SelectItem>
+          <Select value={period} onValueChange={(val) => setPeriod(val)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 Days</SelectItem>
+              <SelectItem value="30">30 Days</SelectItem>
+              <SelectItem value="90">90 Days</SelectItem>
+            </SelectContent>
           </Select>
           <Button
+            variant="outline"
             size="sm"
-            variant="flat"
-            startContent={<RefreshCw className="w-4 h-4" />}
-            onPress={fetchData}
-            isLoading={loading}
+            onClick={() => refetch()}
+            disabled={isRefetching}
           >
+            {isRefetching ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
             Refresh
           </Button>
         </div>
@@ -225,46 +233,46 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardBody className="text-center py-4">
+          <CardContent className="text-center py-4">
             <Waypoints className="w-8 h-8 text-cyan-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">{stats.totalJourneys}</p>
-            <p className="text-sm text-default-500">Total Journeys</p>
-          </CardBody>
+            <p className="text-sm text-muted-foreground">Total Journeys</p>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="text-center py-4">
+          <CardContent className="text-center py-4">
             <GitMerge className="w-8 h-8 text-purple-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">{stats.multiChannelJourneys}</p>
-            <p className="text-sm text-default-500">Multi-Channel ({stats.synergyRate}%)</p>
-          </CardBody>
+            <p className="text-sm text-muted-foreground">Multi-Channel ({stats.synergyRate}%)</p>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="text-center py-4">
-            <CheckCircle className="w-8 h-8 text-success mx-auto mb-2" />
+          <CardContent className="text-center py-4">
+            <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">{stats.convertedJourneys}</p>
-            <p className="text-sm text-default-500">Converted ({stats.conversionRate}%)</p>
-          </CardBody>
+            <p className="text-sm text-muted-foreground">Converted ({stats.conversionRate}%)</p>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="text-center py-4">
-            <DollarSign className="w-8 h-8 text-warning mx-auto mb-2" />
+          <CardContent className="text-center py-4">
+            <DollarSign className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
             <p className="text-2xl font-bold">
               ${stats.totalConversionValue.toLocaleString()}
             </p>
-            <p className="text-sm text-default-500">Conversion Value</p>
-          </CardBody>
+            <p className="text-sm text-muted-foreground">Conversion Value</p>
+          </CardContent>
         </Card>
       </div>
 
       {/* Channel Breakdown */}
       <Card>
         <CardHeader>
-          <h3 className="font-semibold">Channel Performance</h3>
+          <CardTitle>Channel Performance</CardTitle>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="space-y-3">
             {stats.channelBreakdown.length > 0 ? (
               stats.channelBreakdown.map((ch) => {
@@ -273,88 +281,93 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                 const percentage = maxCount > 0 ? (ch.count / maxCount) * 100 : 0;
                 return (
                   <div key={ch.channel} className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${CHANNEL_COLORS[ch.channel] || "bg-default-200"}`}>
+                    <div className={`p-2 rounded-lg ${CHANNEL_COLORS[ch.channel] || "bg-muted"}`}>
                       <Icon className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium">{ch.channel}</span>
-                        <span className="text-sm text-default-500">{ch.count} touchpoints</span>
+                        <span className="text-sm text-muted-foreground">{ch.count} touchpoints</span>
                       </div>
-                      <Progress
-                        value={percentage}
-                        color={CHANNEL_CHIP_COLORS[ch.channel] || "default"}
-                        size="sm"
-                      />
+                      <div className="h-2 w-full rounded-full bg-muted">
+                        <div
+                          className={`h-full rounded-full ${CHANNEL_COLORS[ch.channel] || "bg-primary"}`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <p className="text-default-400 text-center py-4">
+              <p className="text-muted-foreground text-center py-4">
                 No touchpoint data yet. Customer interactions will appear here.
               </p>
             )}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Filters */}
       <div className="flex gap-3">
         <Select
-          size="sm"
-          className="w-40"
-          placeholder="All Statuses"
-          selectedKeys={statusFilter ? [statusFilter] : []}
-          onSelectionChange={(keys) => {
-            const value = Array.from(keys)[0] as string;
-            setStatusFilter(value || "");
+          value={statusFilter || "all"}
+          onValueChange={(val) => {
+            setStatusFilter(val === "all" ? "" : val);
             setPage(1);
           }}
-          aria-label="Filter by status"
         >
-          <SelectItem key="active">Active</SelectItem>
-          <SelectItem key="converted">Converted</SelectItem>
-          <SelectItem key="dormant">Dormant</SelectItem>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="converted">Converted</SelectItem>
+            <SelectItem value="dormant">Dormant</SelectItem>
+          </SelectContent>
         </Select>
 
         <Select
-          size="sm"
-          className="w-40"
-          placeholder="All Channels"
-          selectedKeys={channelFilter ? [channelFilter] : []}
-          onSelectionChange={(keys) => {
-            const value = Array.from(keys)[0] as string;
-            setChannelFilter(value || "");
+          value={channelFilter || "all"}
+          onValueChange={(val) => {
+            setChannelFilter(val === "all" ? "" : val);
             setPage(1);
           }}
-          aria-label="Filter by channel"
         >
-          <SelectItem key="SOCIAL">Social</SelectItem>
-          <SelectItem key="VOICE">Voice</SelectItem>
-          <SelectItem key="EMAIL">Email</SelectItem>
-          <SelectItem key="CHAT">Chat</SelectItem>
-          <SelectItem key="WEBSITE">Website</SelectItem>
-          <SelectItem key="ADS">Ads</SelectItem>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Channels" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Channels</SelectItem>
+            <SelectItem value="SOCIAL">Social</SelectItem>
+            <SelectItem value="VOICE">Voice</SelectItem>
+            <SelectItem value="EMAIL">Email</SelectItem>
+            <SelectItem value="CHAT">Chat</SelectItem>
+            <SelectItem value="WEBSITE">Website</SelectItem>
+            <SelectItem value="ADS">Ads</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
       {/* Journeys Table */}
       <Card>
         <CardHeader>
-          <h3 className="font-semibold">Customer Journeys</h3>
+          <CardTitle>Customer Journeys</CardTitle>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {data?.journeys && data.journeys.length > 0 ? (
             <>
-              <Table aria-label="Customer journeys table">
+              <Table>
                 <TableHeader>
-                  <TableColumn>CUSTOMER</TableColumn>
-                  <TableColumn>STATUS</TableColumn>
-                  <TableColumn>CHANNELS</TableColumn>
-                  <TableColumn>TOUCHPOINTS</TableColumn>
-                  <TableColumn>JOURNEY</TableColumn>
-                  <TableColumn>ACTIONS</TableColumn>
+                  <TableRow>
+                    <TableHead>CUSTOMER</TableHead>
+                    <TableHead>STATUS</TableHead>
+                    <TableHead>CHANNELS</TableHead>
+                    <TableHead>TOUCHPOINTS</TableHead>
+                    <TableHead>JOURNEY</TableHead>
+                    <TableHead>ACTIONS</TableHead>
+                  </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.journeys.map((journey) => (
@@ -364,19 +377,17 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                           <p className="font-medium">
                             {journey.fullName || journey.email || journey.phone || "Anonymous"}
                           </p>
-                          <p className="text-xs text-default-400">
+                          <p className="text-xs text-muted-foreground">
                             {new Date(journey.startedAt).toLocaleDateString()}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          size="sm"
-                          color={STATUS_COLORS[journey.status] || "default"}
-                          variant="flat"
+                        <Badge
+                          variant={STATUS_BADGE_VARIANT[journey.status] || "secondary"}
                         >
                           {journey.status}
-                        </Chip>
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -386,7 +397,7 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                               return (
                                 <div
                                   key={channel}
-                                  className={`p-1 rounded ${CHANNEL_COLORS[channel] || "bg-default-200"}`}
+                                  className={`p-1 rounded ${CHANNEL_COLORS[channel] || "bg-muted"}`}
                                   title={`${channel}: ${journey.channelBreakdown![channel]} touchpoints`}
                                 >
                                   <Icon className="w-3 h-3 text-white" />
@@ -398,7 +409,7 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{journey.totalTouchpoints}</span>
-                          <span className="text-xs text-default-400">
+                          <span className="text-xs text-muted-foreground">
                             ({journey.uniqueChannels} channels)
                           </span>
                         </div>
@@ -408,12 +419,12 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                       </TableCell>
                       <TableCell>
                         <Button
+                          variant="ghost"
                           size="sm"
-                          variant="light"
-                          endContent={<ChevronRight className="w-4 h-4" />}
-                          onPress={() => setSelectedJourney(journey)}
+                          onClick={() => setSelectedJourney(journey)}
                         >
                           View
+                          <ChevronRight className="w-4 h-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -421,41 +432,67 @@ export function JourneysDashboard({ orgId }: { orgId: string }) {
                 </TableBody>
               </Table>
 
-              {data.pagination.totalPages > 1 && (
-                <div className="flex justify-center mt-4">
-                  <Pagination
-                    total={data.pagination.totalPages}
-                    page={page}
-                    onChange={setPage}
-                  />
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t px-4 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
           ) : (
             <div className="text-center py-12">
-              <Waypoints className="w-16 h-16 text-default-200 mx-auto mb-4" />
+              <Waypoints className="w-16 h-16 text-muted mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No Journeys Yet</h3>
-              <p className="text-default-500">
+              <p className="text-muted-foreground">
                 Customer journeys will appear here as they interact with your channels.
               </p>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
-      {/* Journey Detail Modal */}
-      {selectedJourney && (
-        <JourneyDetailPanel
-          journey={selectedJourney}
-          onClose={() => setSelectedJourney(null)}
-        />
-      )}
+      {/* Journey Detail Sheet */}
+      <Sheet
+        open={!!selectedJourney}
+        onOpenChange={(open) => !open && setSelectedJourney(null)}
+      >
+        <SheetContent className="overflow-y-auto sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Journey Details</SheetTitle>
+            <SheetDescription>
+              Detailed view of the customer journey timeline and touchpoints.
+            </SheetDescription>
+          </SheetHeader>
+          {selectedJourney && (
+            <JourneyDetailPanel journey={selectedJourney} />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
 function JourneyMiniTimeline({ touchpoints }: { touchpoints: Touchpoint[] }) {
-  if (touchpoints.length === 0) return <span className="text-default-400">-</span>;
+  if (touchpoints.length === 0) return <span className="text-muted-foreground">-</span>;
 
   return (
     <div className="flex items-center gap-1">
@@ -464,158 +501,142 @@ function JourneyMiniTimeline({ touchpoints }: { touchpoints: Touchpoint[] }) {
         return (
           <div key={tp.id} className="flex items-center">
             <div
-              className={`p-1 rounded ${CHANNEL_COLORS[tp.channelType] || "bg-default-200"}`}
+              className={`p-1 rounded ${CHANNEL_COLORS[tp.channelType] || "bg-muted"}`}
               title={`${tp.channelType}: ${tp.action}`}
             >
               <Icon className="w-2.5 h-2.5 text-white" />
             </div>
             {i < touchpoints.length - 1 && (
-              <div className="w-2 h-0.5 bg-default-200" />
+              <div className="w-2 h-0.5 bg-muted" />
             )}
           </div>
         );
       })}
-      {touchpoints.length >= 5 && <span className="text-xs text-default-400 ml-1">...</span>}
+      {touchpoints.length >= 5 && <span className="text-xs text-muted-foreground ml-1">...</span>}
     </div>
   );
 }
 
-function JourneyDetailPanel({
-  journey,
-  onClose,
-}: {
-  journey: Journey;
-  onClose: () => void;
-}) {
+function JourneyDetailPanel({ journey }: { journey: Journey }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex justify-end">
-      <div className="w-full max-w-xl bg-content1 h-full overflow-y-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">Journey Details</h2>
-          <Button size="sm" variant="light" onPress={onClose}>
-            Close
-          </Button>
-        </div>
-
-        {/* Customer Info */}
-        <Card className="mb-4">
-          <CardBody>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">
-                  {journey.fullName || "Anonymous Customer"}
-                </p>
-                {journey.email && (
-                  <p className="text-sm text-default-500">{journey.email}</p>
-                )}
-                {journey.phone && (
-                  <p className="text-sm text-default-500">{journey.phone}</p>
-                )}
-              </div>
-              <div className="ml-auto">
-                <Chip
-                  color={STATUS_COLORS[journey.status] || "default"}
-                  variant="flat"
-                >
-                  {journey.status}
-                </Chip>
-              </div>
+    <div className="mt-6 space-y-4">
+      {/* Customer Info */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <Users className="w-6 h-6 text-primary" />
             </div>
-          </CardBody>
-        </Card>
-
-        {/* Journey Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <Card>
-            <CardBody className="text-center py-3">
-              <p className="text-xl font-bold">{journey.totalTouchpoints}</p>
-              <p className="text-xs text-default-500">Touchpoints</p>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody className="text-center py-3">
-              <p className="text-xl font-bold">{journey.uniqueChannels}</p>
-              <p className="text-xs text-default-500">Channels</p>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody className="text-center py-3">
-              <p className="text-xl font-bold">
-                {journey.conversionValue ? `$${journey.conversionValue}` : "-"}
+            <div>
+              <p className="font-medium">
+                {journey.fullName || "Anonymous Customer"}
               </p>
-              <p className="text-xs text-default-500">Value</p>
-            </CardBody>
-          </Card>
-        </div>
-
-        {/* Timeline */}
-        <Card>
-          <CardHeader>
-            <h3 className="font-semibold">Journey Timeline</h3>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-4">
-              {journey.touchpoints.map((tp, i) => {
-                const Icon = CHANNEL_ICONS[tp.channelType] || Globe;
-                return (
-                  <div key={tp.id} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`p-2 rounded-full ${CHANNEL_COLORS[tp.channelType] || "bg-default-200"}`}
-                      >
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      {i < journey.touchpoints.length - 1 && (
-                        <div className="w-0.5 h-full bg-default-200 my-1" />
-                      )}
-                    </div>
-                    <div className="flex-1 pb-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{tp.action}</p>
-                          <p className="text-sm text-default-500">
-                            {tp.channelName || tp.channelType}
-                            {tp.actionDetail && ` - ${tp.actionDetail}`}
-                          </p>
-                          {tp.sourceTitle && (
-                            <p className="text-xs text-default-400 mt-1">
-                              {tp.sourceTitle}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-default-400">
-                            {new Date(tp.occurredAt).toLocaleDateString()}
-                          </p>
-                          <p className="text-xs text-default-400">
-                            {new Date(tp.occurredAt).toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                      {tp.engagementScore > 0 && (
-                        <div className="mt-2">
-                          <Progress
-                            value={tp.engagementScore}
-                            color="primary"
-                            size="sm"
-                            className="max-w-[200px]"
-                          />
-                          <p className="text-xs text-default-400 mt-1">
-                            Engagement: {tp.engagementScore}%
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {journey.email && (
+                <p className="text-sm text-muted-foreground">{journey.email}</p>
+              )}
+              {journey.phone && (
+                <p className="text-sm text-muted-foreground">{journey.phone}</p>
+              )}
             </div>
-          </CardBody>
+            <div className="ml-auto">
+              <Badge
+                variant={STATUS_BADGE_VARIANT[journey.status] || "secondary"}
+              >
+                {journey.status}
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Journey Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="text-center py-3">
+            <p className="text-xl font-bold">{journey.totalTouchpoints}</p>
+            <p className="text-xs text-muted-foreground">Touchpoints</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="text-center py-3">
+            <p className="text-xl font-bold">{journey.uniqueChannels}</p>
+            <p className="text-xs text-muted-foreground">Channels</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="text-center py-3">
+            <p className="text-xl font-bold">
+              {journey.conversionValue ? `$${journey.conversionValue}` : "-"}
+            </p>
+            <p className="text-xs text-muted-foreground">Value</p>
+          </CardContent>
         </Card>
       </div>
+
+      {/* Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Journey Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {journey.touchpoints.map((tp, i) => {
+              const Icon = CHANNEL_ICONS[tp.channelType] || Globe;
+              return (
+                <div key={tp.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`p-2 rounded-full ${CHANNEL_COLORS[tp.channelType] || "bg-muted"}`}
+                    >
+                      <Icon className="w-4 h-4 text-white" />
+                    </div>
+                    {i < journey.touchpoints.length - 1 && (
+                      <div className="w-0.5 h-full bg-muted my-1" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{tp.action}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {tp.channelName || tp.channelType}
+                          {tp.actionDetail && ` - ${tp.actionDetail}`}
+                        </p>
+                        {tp.sourceTitle && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {tp.sourceTitle}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(tp.occurredAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(tp.occurredAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                    {tp.engagementScore > 0 && (
+                      <div className="mt-2">
+                        <div className="h-2 w-full max-w-[200px] rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${tp.engagementScore}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Engagement: {tp.engagementScore}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

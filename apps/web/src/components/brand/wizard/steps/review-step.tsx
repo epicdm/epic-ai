@@ -8,19 +8,13 @@
  */
 
 import { useState, useCallback } from "react";
-import {
-  Input,
-  Textarea,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Avatar,
-  Select,
-  SelectItem,
-  Chip,
-  Divider,
-} from "@heroui/react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   WizardStepContainer,
   WizardStepHeader,
@@ -140,11 +134,11 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 <h3 className="font-semibold">Brand Identity</h3>
               </div>
             </CardHeader>
-            <CardBody className="gap-4">
+            <CardContent className="gap-4">
               <div className="flex gap-4 items-start">
                 {/* Logo Preview */}
                 <div className="flex-shrink-0">
-                  <Avatar
+                  <div
                     src={wizardData.brandLogo || undefined}
                     className="w-20 h-20"
                     radius="lg"
@@ -155,10 +149,9 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                   />
                   <Button
                     size="sm"
-                    variant="light"
+                    variant="ghost"
                     className="mt-2 w-full"
-                    startContent={<Upload className="w-3 h-3" />}
-                    isDisabled
+                                        disabled
                   >
                     Upload
                   </Button>
@@ -166,33 +159,36 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
 
                 {/* Name and Description */}
                 <div className="flex-1 space-y-3">
-                  <Input
-                    label="Brand Name"
-                    placeholder="Your brand name"
-                    value={wizardData.brandName}
-                    onChange={(e) => updateField("brandName", e.target.value)}
-                    isRequired
-                    isInvalid={!wizardData.brandName?.trim()}
-                    errorMessage={!wizardData.brandName?.trim() ? "Brand name is required" : undefined}
-                  />
-                  <Input
-                    label="Website"
-                    placeholder="https://yourcompany.com"
-                    value={wizardData.brandWebsite}
-                    onChange={(e) => updateField("brandWebsite", e.target.value)}
-                  />
+                  <div className="space-y-1">
+                    <Label>Brand Name</Label>
+                    <Input
+                      placeholder="Your brand name"
+                      value={wizardData.brandName}
+                      onChange={(e) => updateField("brandName", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Website</Label>
+                    <Input
+                      placeholder="https://yourcompany.com"
+                      value={wizardData.brandWebsite}
+                      onChange={(e) => updateField("brandWebsite", e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <Textarea
-                label="Brand Description"
-                placeholder="Describe your brand..."
-                value={wizardData.brandDescription}
-                onChange={(e) => updateField("brandDescription", e.target.value)}
-                minRows={2}
-                maxRows={4}
-              />
-            </CardBody>
+              <div className="space-y-1">
+                <Label>Brand Description</Label>
+                <Textarea
+                  placeholder="Describe your brand..."
+                  value={wizardData.brandDescription}
+                  onChange={(e) => updateField("brandDescription", e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </CardContent>
           </Card>
 
           {/* Voice & Tone Section */}
@@ -203,69 +199,63 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 <h3 className="font-semibold">Voice & Tone</h3>
               </div>
             </CardHeader>
-            <CardBody className="gap-4">
+            <CardContent className="gap-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Select
-                  label="Voice Tone"
-                  selectedKeys={[wizardData.voiceTone]}
-                  onChange={(e) => updateField("voiceTone", e.target.value)}
-                  size="sm"
-                >
-                  {voiceToneOptions.map((opt) => (
-                    <SelectItem key={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="space-y-1">
+                  <Label className="text-xs">Voice Tone</Label>
+                  <Select value={wizardData.voiceTone} onValueChange={(v) => updateField("voiceTone", v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {voiceToneOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select
-                  label="Writing Style"
-                  selectedKeys={[wizardData.writingStyle]}
-                  onChange={(e) => updateField("writingStyle", e.target.value)}
-                  size="sm"
-                >
-                  {writingStyleOptions.map((opt) => (
-                    <SelectItem key={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="space-y-1">
+                  <Label className="text-xs">Writing Style</Label>
+                  <Select value={wizardData.writingStyle} onValueChange={(v) => updateField("writingStyle", v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {writingStyleOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select
-                  label="Emoji Style"
-                  selectedKeys={[wizardData.emojiStyle]}
-                  onChange={(e) =>
-                    updateField(
-                      "emojiStyle",
-                      e.target.value as BrandWizardData["emojiStyle"]
-                    )
-                  }
-                  size="sm"
-                >
-                  {emojiStyleOptions.map((opt) => (
-                    <SelectItem key={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="space-y-1">
+                  <Label className="text-xs">Emoji Style</Label>
+                  <Select value={wizardData.emojiStyle} onValueChange={(v) => updateField("emojiStyle", v as BrandWizardData["emojiStyle"])}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {emojiStyleOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select
-                  label="CTA Style"
-                  selectedKeys={[wizardData.ctaStyle]}
-                  onChange={(e) =>
-                    updateField(
-                      "ctaStyle",
-                      e.target.value as BrandWizardData["ctaStyle"]
-                    )
-                  }
-                  size="sm"
-                >
-                  {ctaStyleOptions.map((opt) => (
-                    <SelectItem key={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="space-y-1">
+                  <Label className="text-xs">CTA Style</Label>
+                  <Select value={wizardData.ctaStyle} onValueChange={(v) => updateField("ctaStyle", v as BrandWizardData["ctaStyle"])}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ctaStyleOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {wizardData.selectedTemplate && (
@@ -274,7 +264,7 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                   <span>Based on {wizardData.selectedTemplate.name} template</span>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Content Pillars Section */}
@@ -285,7 +275,7 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 <h3 className="font-semibold">Content Pillars</h3>
               </div>
             </CardHeader>
-            <CardBody className="gap-3">
+            <CardContent className="gap-3">
               <p className="text-sm text-default-500">
                 Topics and themes you'll focus on in your content
               </p>
@@ -293,14 +283,14 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
               {wizardData.contentPillars.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {wizardData.contentPillars.map((pillar, idx) => (
-                    <Chip
+                    <Badge
                       key={idx}
-                      variant="flat"
-                      color="secondary"
+                      variant="secondary"
+                      variant="secondary"
                       onClose={() => handleRemovePillar(idx)}
                     >
                       {pillar}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
               )}
@@ -316,15 +306,15 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 />
                 <Button
                   size="sm"
-                  color="secondary"
-                  variant="flat"
-                  onPress={handleAddPillar}
-                  isDisabled={!newPillar.trim()}
+                  variant="secondary"
+                  variant="secondary"
+                  onClick={handleAddPillar}
+                  disabled={!newPillar.trim()}
                 >
                   Add
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Hashtags Section */}
@@ -335,7 +325,7 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 <h3 className="font-semibold">Suggested Hashtags</h3>
               </div>
             </CardHeader>
-            <CardBody className="gap-3">
+            <CardContent className="gap-3">
               <p className="text-sm text-default-500">
                 Hashtags to use across your social content
               </p>
@@ -343,14 +333,14 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
               {wizardData.suggestedHashtags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {wizardData.suggestedHashtags.map((tag, idx) => (
-                    <Chip
+                    <Badge
                       key={idx}
-                      variant="flat"
-                      color="primary"
+                      variant="secondary"
+                      
                       onClose={() => handleRemoveHashtag(idx)}
                     >
                       {tag}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
               )}
@@ -366,24 +356,24 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 />
                 <Button
                   size="sm"
-                  color="primary"
-                  variant="flat"
-                  onPress={handleAddHashtag}
-                  isDisabled={!newHashtag.trim()}
+                  
+                  variant="secondary"
+                  onClick={handleAddHashtag}
+                  disabled={!newHashtag.trim()}
                 >
                   Add
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Cancel Button */}
           {onCancel && (
             <div className="flex justify-center pt-4">
               <Button
-                variant="light"
-                color="danger"
-                onPress={onCancel}
+                variant="ghost"
+                variant="destructive"
+                onClick={onCancel}
               >
                 Cancel Setup
               </Button>

@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, RadioGroup, Radio } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Shield, Clock, Bot, CheckCircle, AlertTriangle } from "lucide-react";
 import type { AutomateWizardData } from "@/lib/flywheel/types";
 
@@ -50,7 +52,7 @@ const APPROVAL_MODES = [
     icon: Bot,
     title: "Autopilot Mode",
     subtitle: "Maximum Automation",
-    description: "AI handles everything—generates, schedules, and posts automatically",
+    description: "AI handles everything\u2014generates, schedules, and posts automatically",
     pros: [
       "Zero daily maintenance",
       "Never miss posting schedule",
@@ -80,9 +82,7 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
       <RadioGroup
         value={data.approvalMode || ""}
         onValueChange={handleChange}
-        classNames={{
-          wrapper: "gap-4",
-        }}
+        className="space-y-4"
       >
         {APPROVAL_MODES.map((mode) => {
           const Icon = mode.icon;
@@ -107,22 +107,21 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
           const colorClasses = colorMap[mode.color as keyof typeof colorMap] ?? colorMap.blue;
 
           return (
-            <Radio
+            <div
               key={mode.value}
-              value={mode.value}
-              classNames={{
-                base: `border-2 rounded-xl p-0 m-0 max-w-full ${colorClasses.border} transition-all`,
-                wrapper: "hidden",
-                labelWrapper: "w-full",
-              }}
+              className={`border-2 rounded-xl transition-all ${colorClasses.border} cursor-pointer`}
+              onClick={() => handleChange(mode.value)}
             >
               <Card className="border-0 shadow-none bg-transparent">
-                <CardBody className="p-4">
+                <CardContent className="p-4">
                   <div className="flex items-start gap-4">
+                    <div className="pt-1">
+                      <RadioGroupItem value={mode.value} id={`approval-${mode.value}`} />
+                    </div>
                     <div className={`p-3 rounded-xl ${colorClasses.bg}`}>
                       <Icon className={`w-6 h-6 ${colorClasses.text}`} />
                     </div>
-                    <div className="flex-1">
+                    <Label htmlFor={`approval-${mode.value}`} className="flex-1 cursor-pointer">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-gray-900 dark:text-white">
                           {mode.title}
@@ -173,11 +172,11 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
                           </ul>
                         </div>
                       </div>
-                    </div>
+                    </Label>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
-            </Radio>
+            </div>
           );
         })}
       </RadioGroup>
@@ -185,7 +184,7 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
       {/* Selected Mode Summary */}
       {data.approvalMode && (
         <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               <strong>Your choice:</strong>{" "}
               {data.approvalMode === "review" && (
@@ -207,7 +206,7 @@ export function ApprovalModeStep({ data, updateData }: ApprovalModeStepProps) {
                 </>
               )}
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

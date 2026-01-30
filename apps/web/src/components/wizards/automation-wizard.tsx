@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
-import { Button, Card, CardBody, Select, SelectItem, Textarea } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/lib/analytics";
 import { AIBadge, AIConfidenceDots } from "@/components/ui/ai-badge";
@@ -26,25 +29,24 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Workflow Type</h3>
-          <Select 
-            label="Select workflow type"
-            selectedKeys={[workflowType]}
-            onSelectionChange={(keys) => setWorkflowType(Array.from(keys)[0] as string)}
-          >
-            <SelectItem key="welcome">Welcome Series</SelectItem>
-            <SelectItem key="nurture">Lead Nurture</SelectItem>
-            <SelectItem key="winback">Win-back</SelectItem>
-            <SelectItem key="custom">Custom</SelectItem>
-          </Select>
+          <Select value={workflowType} onValueChange={(v: string) => setWorkflowType(v)}>
+              <SelectTrigger><SelectValue placeholder="Select workflow type" /></SelectTrigger>
+              <SelectContent>
+            <SelectItem value="welcome">Welcome Series</SelectItem>
+            <SelectItem value="nurture">Lead Nurture</SelectItem>
+            <SelectItem value="winback">Win-back</SelectItem>
+            <SelectItem value="custom">Custom</SelectItem>
+          </SelectContent>
+            </Select>
           <Button 
-            onPress={() => onComplete({ workflowType })}
-            isDisabled={!workflowType}
+            onClick={() => onComplete({ workflowType })}
+            disabled={!workflowType}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -71,17 +73,17 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <h3 className="font-medium">Workflow Template</h3>
             <div className="grid grid-cols-1 gap-4">
               {templates.map((t) => (
                 <Card 
                   key={t.id} 
-                  isPressable 
-                  onPress={() => setTemplate(t)}
+                  className="cursor-pointer" 
+                  onClick={() => setTemplate(t)}
                   className={template?.id === t.id ? "border-primary" : ""}
                 >
-                  <CardBody className="relative">
+                  <CardContent className="relative">
                     {t.recommended && (
                       <AIBadge 
                         type="recommended" 
@@ -96,8 +98,8 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
                       <h4 className="capitalize">{t.name} Series</h4>
                       <Button 
                         size="sm" 
-                        variant="flat"
-                        onPress={() => handlePreview(t.id)}
+                        variant="secondary"
+                        onClick={() => handlePreview(t.id)}
                       >
                         Preview
                       </Button>
@@ -106,28 +108,28 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
                       {t.id === "welcome" ? "New lead onboarding" : 
                        t.id === "nurture" ? "Lead education" : "Re-engage inactive leads"}
                     </p>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
         
         {previewTemplate && (
           <Card>
-            <CardBody>
+            <CardContent>
               <h3 className="font-medium mb-4">Template Preview</h3>
-              <pre className="bg-default-100 p-4 rounded-lg overflow-auto">
+              <pre className="bg-muted p-4 rounded-lg overflow-auto">
                 {JSON.stringify(previewTemplate, null, 2)}
               </pre>
-            </CardBody>
+            </CardContent>
           </Card>
         )}
         
         <div className="md:col-span-2">
           <Button 
-            onPress={() => onComplete({ template })}
-            isDisabled={!template}
+            onClick={() => onComplete({ template })}
+            disabled={!template}
             className="w-full"
           >
             Continue
@@ -143,7 +145,7 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Workflow Actions</h3>
           <Textarea 
             label="Actions JSON" 
@@ -151,12 +153,12 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
             onChange={(e) => setActions(JSON.parse(e.target.value))}
           />
           <Button 
-            onPress={() => onComplete({ actions })}
-            isDisabled={!actions.length}
+            onClick={() => onComplete({ actions })}
+            disabled={!actions.length}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -165,13 +167,13 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
   const ActivateStep = ({ onComplete }: { onComplete: (data: any) => void }) => {
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Activate Workflow</h3>
           <p>Review your settings and activate the workflow</p>
-          <Button onPress={() => onComplete({ status: "active" })}>
+          <Button onClick={() => onComplete({ status: "active" })}>
             Activate
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };

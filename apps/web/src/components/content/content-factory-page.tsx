@@ -2,31 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Tabs,
-  Tab,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Avatar,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Textarea,
-  useDisclosure,
-  Spinner,
-  Badge,
-  Tooltip,
-  Progress,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Plus,
@@ -113,7 +98,9 @@ export function ContentFactoryPage({
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState("all");
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
   const [editContent, setEditContent] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -282,15 +269,14 @@ export function ContentFactoryPage({
         actions={
           <div className="flex gap-2">
             <Button
-              variant="flat"
-              startContent={generating ? <Spinner size="sm" /> : <Zap className="w-4 h-4" />}
-              onPress={handleQuickGenerate}
-              isDisabled={generating}
+              variant="secondary"
+                            onClick={handleQuickGenerate}
+              disabled={generating}
             >
               Quick Generate
             </Button>
             <Link href="/dashboard/content/generate">
-              <Button color="primary" startContent={<Sparkles className="w-4 h-4" />}>
+              <Button  >
                 Generate Content
               </Button>
             </Link>
@@ -301,58 +287,55 @@ export function ContentFactoryPage({
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardBody className="py-4">
+          <CardContent className="py-4">
             <p className="text-2xl font-bold">{stats.total}</p>
             <p className="text-sm text-gray-500">Total Content</p>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
-          <CardBody className="py-4">
+          <CardContent className="py-4">
             <p className="text-2xl font-bold text-warning">{stats.pending}</p>
             <p className="text-sm text-gray-500">Pending Review</p>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
-          <CardBody className="py-4">
+          <CardContent className="py-4">
             <p className="text-2xl font-bold text-primary">{stats.scheduled}</p>
             <p className="text-sm text-gray-500">Scheduled</p>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
-          <CardBody className="py-4">
+          <CardContent className="py-4">
             <p className="text-2xl font-bold text-success">{stats.published}</p>
             <p className="text-sm text-gray-500">Published</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Content List */}
       <Card>
         <CardHeader className="border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <Tabs
-            selectedKey={selectedTab}
-            onSelectionChange={(key) => setSelectedTab(key as string)}
-            variant="underlined"
-          >
-            <Tab key="all" title={`All (${items.length})`} />
-            <Tab key="pending" title={`Pending (${stats.pending})`} />
-            <Tab key="scheduled" title={`Scheduled (${stats.scheduled})`} />
-            <Tab key="published" title={`Published (${stats.published})`} />
+          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList>
+              <TabsTrigger value="all">All ({items.length})</TabsTrigger>
+              <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
+              <TabsTrigger value="scheduled">Scheduled ({stats.scheduled})</TabsTrigger>
+              <TabsTrigger value="published">Published ({stats.published})</TabsTrigger>
+            </TabsList>
           </Tabs>
           <Button
             size="sm"
-            variant="light"
-            startContent={<RefreshCw className="w-4 h-4" />}
-            onPress={loadItems}
-            isDisabled={loading}
+            variant="ghost"
+                        onClick={loadItems}
+            disabled={loading}
           >
             Refresh
           </Button>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Spinner size="lg" />
+              <Loader2 className="w-8 h-8 animate-spin" />
             </div>
           ) : items.length === 0 ? (
             <ContentEmptyState
@@ -368,7 +351,7 @@ export function ContentFactoryPage({
                 <ContentCard
                   key={item.id}
                   item={item}
-                  isLoading={actionLoading === item.id}
+                  disabled={actionLoading === item.id}
                   onApprove={() => handleApprove(item.id)}
                   onReject={() => handleReject(item.id)}
                   onPublish={() => handlePublish(item.id)}
@@ -378,21 +361,22 @@ export function ContentFactoryPage({
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Edit Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-        <ModalContent>
-          <ModalHeader>Edit Content</ModalHeader>
-          <ModalBody>
-            <Textarea
-              label="Main Content"
-              value={editContent}
-              onValueChange={setEditContent}
-              minRows={4}
-              maxRows={8}
-            />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Content</DialogTitle></DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label>Main Content</Label>
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={6}
+              />
+            </div>
             {selectedItem?.contentVariations && selectedItem.contentVariations.length > 0 && (
               <div className="mt-4">
                 <p className="text-sm font-medium mb-2">Platform Variations</p>
@@ -403,16 +387,16 @@ export function ContentFactoryPage({
                       className="p-3 rounded-lg border border-gray-200 dark:border-gray-700"
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <Chip size="sm" variant="flat">
+                        <Badge size="sm" variant="secondary">
                           {getPlatformName(variation.platform)}
-                        </Chip>
+                        </Badge>
                         <span className="text-xs text-gray-500">
                           {variation.characterCount} characters
                         </span>
                         {!variation.isOptimal && (
-                          <Chip size="sm" color="warning" variant="flat">
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
                             Over optimal length
-                          </Chip>
+                          </Badge>
                         )}
                       </div>
                       <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -423,17 +407,17 @@ export function ContentFactoryPage({
                 </div>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleSaveEdit}>
+            <Button  onClick={handleSaveEdit}>
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -468,22 +452,22 @@ function ContentCard({
         {/* Content Preview */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <Chip size="sm" color={STATUS_COLORS[item.status]} variant="flat">
+            <Badge size="sm" color={STATUS_COLORS[item.status]} variant="secondary">
               {item.status.replace("_", " ")}
-            </Chip>
+            </Badge>
             {item.approvalStatus !== item.status && (
-              <Chip size="sm" color={STATUS_COLORS[item.approvalStatus]} variant="bordered">
+              <Badge size="sm" color={STATUS_COLORS[item.approvalStatus]} variant="outline">
                 {item.approvalStatus.replace("_", " ")}
-              </Chip>
+              </Badge>
             )}
             {item.category && (
-              <Chip size="sm" variant="flat" color="secondary">
+              <Badge variant="secondary">
                 {item.category}
-              </Chip>
+              </Badge>
             )}
-            <Chip size="sm" variant="flat" startContent={<Sparkles className="w-3 h-3" />}>
+            <Badge size="sm" variant="secondary" >
               AI Generated
-            </Chip>
+            </Badge>
           </div>
 
           <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3">
@@ -498,36 +482,38 @@ function ContentCard({
                 const bgColor = getPlatformColor(variation.platform);
 
                 return (
-                  <Tooltip
-                    key={variation.id}
-                    content={
-                      <div className="max-w-xs p-2">
-                        <p className="font-medium mb-1">{getPlatformName(variation.platform)}</p>
-                        <p className="text-xs text-gray-400 mb-2">
-                          {variation.characterCount} chars | {variation.status}
-                        </p>
-                        <p className="text-sm">{variation.text.slice(0, 100)}...</p>
-                        {variation.account && (
-                          <p className="text-xs text-gray-400 mt-2">
-                            @{variation.account.username}
+                  <TooltipProvider key={variation.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${bgColor} text-white cursor-default`}
+                        >
+                          {Icon && <Icon className="w-3 h-3" />}
+                          <span>{getPlatformName(variation.platform)}</span>
+                          {variation.status === "PUBLISHED" && (
+                            <CheckCircle2 className="w-3 h-3" />
+                          )}
+                          {variation.status === "FAILED" && (
+                            <XCircle className="w-3 h-3" />
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="max-w-xs p-2">
+                          <p className="font-medium mb-1">{getPlatformName(variation.platform)}</p>
+                          <p className="text-xs text-gray-400 mb-2">
+                            {variation.characterCount} chars | {variation.status}
                           </p>
-                        )}
-                      </div>
-                    }
-                  >
-                    <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${bgColor} text-white cursor-default`}
-                    >
-                      {Icon && <Icon className="w-3 h-3" />}
-                      <span>{getPlatformName(variation.platform)}</span>
-                      {variation.status === "PUBLISHED" && (
-                        <CheckCircle2 className="w-3 h-3" />
-                      )}
-                      {variation.status === "FAILED" && (
-                        <XCircle className="w-3 h-3" />
-                      )}
-                    </div>
-                  </Tooltip>
+                          <p className="text-sm">{variation.text.slice(0, 100)}...</p>
+                          {variation.account && (
+                            <p className="text-xs text-gray-400 mt-2">
+                              @{variation.account.username}
+                            </p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </div>
@@ -550,21 +536,19 @@ function ContentCard({
             <div className="flex gap-2">
               <Button
                 size="sm"
-                color="success"
-                variant="flat"
-                startContent={<ThumbsUp className="w-4 h-4" />}
-                onPress={onApprove}
-                isLoading={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                variant="secondary"
+                                onClick={onApprove}
+                disabled={isLoading}
               >
                 Approve
               </Button>
               <Button
                 size="sm"
-                color="danger"
-                variant="flat"
-                startContent={<ThumbsDown className="w-4 h-4" />}
-                onPress={onReject}
-                isLoading={isLoading}
+                variant="destructive"
+                variant="secondary"
+                                onClick={onReject}
+                disabled={isLoading}
               >
                 Reject
               </Button>
@@ -574,46 +558,35 @@ function ContentCard({
           {canPublish && (
             <Button
               size="sm"
-              color="primary"
-              startContent={<Send className="w-4 h-4" />}
-              onPress={onPublish}
-              isLoading={isLoading}
+             
+                            onClick={onPublish}
+              disabled={isLoading}
             >
               Publish Now
             </Button>
           )}
 
-          <Dropdown>
-            <DropdownTrigger>
-              <Button isIconOnly size="sm" variant="light" isDisabled={isLoading}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" disabled={isLoading}>
                 <MoreVertical className="w-4 h-4" />
               </Button>
-            </DropdownTrigger>
-            <DropdownMenu>
-              <DropdownItem
-                key="edit"
-                startContent={<Edit3 className="w-4 h-4" />}
-                onPress={onEdit}
-              >
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={onEdit}>
                 Edit
-              </DropdownItem>
-              <DropdownItem
-                key="view"
-                startContent={<Eye className="w-4 h-4" />}
-              >
+              </DropdownMenuItem>
+              <DropdownMenuItem>
                 Preview
-              </DropdownItem>
-              <DropdownItem
-                key="delete"
-                startContent={<Trash2 className="w-4 h-4" />}
-                color="danger"
-                className="text-danger"
-                onPress={onDelete}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={onDelete}
               >
                 Delete
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <p className="text-xs text-gray-400">
             {new Date(item.createdAt).toLocaleDateString()}

@@ -1,37 +1,40 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Chip,
-  Spinner,
+} from "@/components/ui/select";
+import {
   Table,
   TableHeader,
-  TableColumn,
+  TableHead,
   TableBody,
   TableRow,
   TableCell,
-  Tabs,
-  Tab,
-  Tooltip,
-  Dropdown,
-  DropdownTrigger,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   DropdownMenu,
-  DropdownItem,
-  Checkbox,
-} from "@heroui/react";
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Phone,
@@ -109,8 +112,8 @@ const US_AREA_CODES = [
 ];
 
 export function PhoneNumbersPage() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isBulkDeleteOpen, onOpen: onBulkDeleteOpen, onClose: onBulkDeleteClose } = useDisclosure();
+  const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("owned");
   const [mounted, setMounted] = useState(false);
 
@@ -205,7 +208,6 @@ export function PhoneNumbersPage() {
     }
   }, []);
 
-  // Hydration-safe mounting
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -233,11 +235,10 @@ export function PhoneNumbersPage() {
       });
 
       if (response.ok) {
-        onClose();
+        setIsPurchaseOpen(false);
         setSelectedDID(null);
         setSelectedAgentId("");
         fetchOwnedNumbers();
-        // Remove from available list
         setAvailableNumbers((prev) =>
           prev.filter((d) => d.phoneNumber !== selectedDID.phoneNumber)
         );
@@ -330,7 +331,7 @@ export function PhoneNumbersPage() {
         console.error(`Failed to delete ${failed} phone numbers`);
       }
 
-      onBulkDeleteClose();
+      setIsBulkDeleteOpen(false);
       clearNumberSelection();
       fetchOwnedNumbers();
     } catch (error) {
@@ -346,11 +347,10 @@ export function PhoneNumbersPage() {
 
   const openPurchaseModal = (did: AvailableDID) => {
     setSelectedDID(did);
-    onOpen();
+    setIsPurchaseOpen(true);
   };
 
   const formatPhoneNumber = (number: string) => {
-    // Format US numbers as (xxx) xxx-xxxx
     if (number.startsWith("+1") && number.length === 12) {
       const digits = number.slice(2);
       return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -358,20 +358,32 @@ export function PhoneNumbersPage() {
     return number;
   };
 
-  const getStatusColor = (status: string | null) => {
+  const getStatusBadgeClass = (status: string | null): string => {
     switch (status) {
       case "active":
-        return "success";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
       case "pending":
-        return "warning";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
       case "failed":
-        return "danger";
+        return "";
       default:
-        return "default";
+        return "";
     }
   };
 
-  // Show loading state until mounted to prevent hydration mismatch
+  const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case "active":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "failed":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
   if (!mounted) {
     return (
       <div className="space-y-8">
@@ -380,11 +392,11 @@ export function PhoneNumbersPage() {
           description="Manage phone numbers for your voice agents via Magnus Billing."
         />
         <Card>
-          <CardBody>
+          <CardContent>
             <div className="flex justify-center items-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -396,65 +408,49 @@ export function PhoneNumbersPage() {
         title="Phone Numbers"
         description="Manage phone numbers for your voice agents via Magnus Billing."
         actions={
-          <Button
-            color="primary"
-            startContent={<Plus className="w-4 h-4" />}
-            onPress={() => setActiveTab("available")}
-          >
+          <Button onClick={() => setActiveTab("available")}>
+            <Plus className="w-4 h-4 mr-2" />
             Get New Number
           </Button>
         }
       />
 
-      <Tabs
-        selectedKey={activeTab}
-        onSelectionChange={(key) => setActiveTab(key as string)}
-        variant="underlined"
-        size="lg"
-      >
-        <Tab
-          key="owned"
-          title={
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
-              <span>My Numbers</span>
-              {ownedNumbers.length > 0 && (
-                <Chip size="sm" variant="flat">
-                  {ownedNumbers.length}
-                </Chip>
-              )}
-            </div>
-          }
-        />
-        <Tab
-          key="available"
-          title={
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              <span>Get Numbers</span>
-            </div>
-          }
-        />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="owned" className="flex items-center gap-2">
+            <Phone className="w-4 h-4" />
+            <span>My Numbers</span>
+            {ownedNumbers.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {ownedNumbers.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="available" className="flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            <span>Get Numbers</span>
+          </TabsTrigger>
+        </TabsList>
       </Tabs>
 
       {activeTab === "owned" && (
         <Card>
-          <CardHeader className="flex justify-between items-center">
+          <CardHeader className="flex flex-row justify-between items-center">
             <h3 className="text-lg font-semibold">Your Phone Numbers</h3>
             <Button
               size="sm"
-              variant="flat"
-              startContent={<RefreshCw className="w-4 h-4" />}
-              onPress={fetchOwnedNumbers}
-              isLoading={loadingOwned}
+              variant="secondary"
+              onClick={fetchOwnedNumbers}
+              disabled={loadingOwned}
             >
+              <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </Button>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             {loadingOwned ? (
               <div className="flex justify-center py-12">
-                <Spinner size="lg" />
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : ownedNumbers.length === 0 ? (
               <div className="text-center py-12">
@@ -465,11 +461,8 @@ export function PhoneNumbersPage() {
                 <p className="text-gray-500 mb-4">
                   Get started by purchasing a phone number from Magnus Billing.
                 </p>
-                <Button
-                  color="primary"
-                  startContent={<Plus className="w-4 h-4" />}
-                  onPress={() => setActiveTab("available")}
-                >
+                <Button onClick={() => setActiveTab("available")}>
+                  <Plus className="w-4 h-4 mr-2" />
                   Get Your First Number
                 </Button>
               </div>
@@ -477,156 +470,152 @@ export function PhoneNumbersPage() {
               <div className="space-y-4">
                 {/* Bulk Action Bar */}
                 {selectedNumberIds.size > 0 && (
-                  <div className="flex items-center justify-between p-3 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                         {selectedNumberIds.size} phone number{selectedNumberIds.size !== 1 ? "s" : ""} selected
                       </span>
                       <Button
                         size="sm"
-                        variant="light"
-                        onPress={clearNumberSelection}
-                        startContent={<X className="w-3 h-3" />}
+                        variant="ghost"
+                        onClick={clearNumberSelection}
                       >
+                        <X className="w-4 h-4 mr-1" />
                         Clear
                       </Button>
                     </div>
                     <Button
                       size="sm"
-                      color="danger"
-                      variant="flat"
-                      startContent={<Trash2 className="w-4 h-4" />}
-                      onPress={onBulkDeleteOpen}
+                      variant="destructive"
+                      onClick={() => setIsBulkDeleteOpen(true)}
                     >
+                      <Trash2 className="w-4 h-4 mr-2" />
                       Delete Selected
                     </Button>
                   </div>
                 )}
 
-                <Table aria-label="Phone numbers table">
+                <Table>
                   <TableHeader>
-                    <TableColumn width={40}>
-                      <Checkbox
-                        isSelected={selectedNumberIds.size === ownedNumbers.length && ownedNumbers.length > 0}
-                        isIndeterminate={selectedNumberIds.size > 0 && selectedNumberIds.size < ownedNumbers.length}
-                        onValueChange={toggleSelectAllNumbers}
-                        aria-label="Select all"
-                      />
-                    </TableColumn>
-                    <TableColumn>PHONE NUMBER</TableColumn>
-                  <TableColumn>STATUS</TableColumn>
-                  <TableColumn>ASSIGNED TO</TableColumn>
-                  <TableColumn>CALLS</TableColumn>
-                  <TableColumn>ACTIONS</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {ownedNumbers.map((number) => (
-                    <TableRow
-                      key={number.id}
-                      className={selectedNumberIds.has(number.id) ? "bg-primary-50 dark:bg-primary-900/10" : ""}
-                    >
-                      <TableCell>
+                    <TableRow>
+                      <TableHead className="w-[40px]">
                         <Checkbox
-                          isSelected={selectedNumberIds.has(number.id)}
-                          onValueChange={() => toggleNumberSelection(number.id)}
-                          aria-label={`Select ${number.phoneNumber}`}
+                          checked={selectedNumberIds.size === ownedNumbers.length && ownedNumbers.length > 0}
+                          onCheckedChange={toggleSelectAllNumbers}
+                          aria-label="Select all"
                         />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {formatPhoneNumber(number.phoneNumber)}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {number.areaCode && `Area: ${number.areaCode}`}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Chip
-                            size="sm"
-                            color={getStatusColor(number.magnusStatus)}
-                            variant="flat"
-                            startContent={
-                              number.magnusStatus === "active" ? (
+                      </TableHead>
+                      <TableHead>PHONE NUMBER</TableHead>
+                      <TableHead>STATUS</TableHead>
+                      <TableHead>ASSIGNED TO</TableHead>
+                      <TableHead>CALLS</TableHead>
+                      <TableHead>ACTIONS</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ownedNumbers.map((number) => (
+                      <TableRow
+                        key={number.id}
+                        className={selectedNumberIds.has(number.id) ? "bg-blue-50 dark:bg-blue-900/10" : ""}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedNumberIds.has(number.id)}
+                            onCheckedChange={() => toggleNumberSelection(number.id)}
+                            aria-label={`Select ${number.phoneNumber}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {formatPhoneNumber(number.phoneNumber)}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {number.areaCode && `Area: ${number.areaCode}`}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={getStatusBadgeVariant(number.magnusStatus)}
+                              className={`flex items-center gap-1 ${getStatusBadgeClass(number.magnusStatus)}`}
+                            >
+                              {number.magnusStatus === "active" ? (
                                 <CheckCircle className="w-3 h-3" />
                               ) : number.magnusStatus === "failed" ? (
                                 <XCircle className="w-3 h-3" />
                               ) : (
                                 <AlertCircle className="w-3 h-3" />
-                              )
-                            }
-                          >
-                            {number.magnusStatus || "Unknown"}
-                          </Chip>
-                          {number.isActive && (
-                            <Chip size="sm" color="success" variant="dot">
-                              Active
-                            </Chip>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {number.agent ? (
-                          <div className="flex items-center gap-2">
-                            <Bot className="w-4 h-4 text-primary" />
-                            <span>{number.agent.name}</span>
+                              )}
+                              {number.magnusStatus || "Unknown"}
+                            </Badge>
+                            {number.isActive && (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                Active
+                              </Badge>
+                            )}
                           </div>
-                        ) : (
-                          <Select
-                            size="sm"
-                            placeholder="Assign to agent"
-                            className="max-w-[180px]"
-                            onChange={(e) => handleAssign(number.id, e.target.value || null)}
-                          >
-                            {agents.map((agent) => (
-                              <SelectItem key={agent.id}>
-                                {agent.name}
-                              </SelectItem>
-                            ))}
-                          </Select>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Chip size="sm" variant="flat">
-                          {number._count.callLogs} calls
-                        </Chip>
-                      </TableCell>
-                      <TableCell>
-                        <Dropdown>
-                          <DropdownTrigger>
-                            <Button isIconOnly size="sm" variant="light">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownTrigger>
+                        </TableCell>
+                        <TableCell>
+                          {number.agent ? (
+                            <div className="flex items-center gap-2">
+                              <Bot className="w-4 h-4 text-primary" />
+                              <span>{number.agent.name}</span>
+                            </div>
+                          ) : (
+                            <Select
+                              onValueChange={(value) => handleAssign(number.id, value || null)}
+                            >
+                              <SelectTrigger className="max-w-[180px]">
+                                <SelectValue placeholder="Assign to agent" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {agents.map((agent) => (
+                                  <SelectItem key={agent.id} value={agent.id}>
+                                    {agent.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {number._count.callLogs} calls
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <DropdownMenu>
-                            <DropdownItem
-                              key="unassign"
-                              isDisabled={!number.agent}
-                              onPress={() => handleAssign(number.id, null)}
-                            >
-                              Unassign from agent
-                            </DropdownItem>
-                            <DropdownItem
-                              key="delete"
-                              className="text-danger"
-                              color="danger"
-                              startContent={<Trash2 className="w-4 h-4" />}
-                              onPress={() => handleDelete(number.id)}
-                            >
-                              Release Number
-                            </DropdownItem>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                disabled={!number.agent}
+                                onSelect={() => handleAssign(number.id, null)}
+                              >
+                                Unassign from agent
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={() => handleDelete(number.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Release Number
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
                           </DropdownMenu>
-                        </Dropdown>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -634,47 +623,50 @@ export function PhoneNumbersPage() {
         <div className="space-y-6">
           {/* Search Filters */}
           <Card>
-            <CardBody>
+            <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row gap-4">
-                <Select
-                  label="Country"
-                  selectedKeys={[searchCountry]}
-                  onChange={(e) => setSearchCountry(e.target.value)}
-                  className="sm:max-w-[200px]"
-                  startContent={<Globe className="w-4 h-4 text-gray-400" />}
-                >
-                  {COUNTRY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="sm:max-w-[200px]">
+                  <Label className="mb-2 block">Country</Label>
+                  <Select value={searchCountry} onValueChange={setSearchCountry}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRY_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select
-                  label="Area Code"
-                  selectedKeys={searchAreaCode ? [searchAreaCode] : []}
-                  onChange={(e) => setSearchAreaCode(e.target.value)}
-                  className="sm:max-w-[200px]"
-                  startContent={<MapPin className="w-4 h-4 text-gray-400" />}
-                >
-                  {US_AREA_CODES.map((option) => (
-                    <SelectItem key={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </Select>
+                <div className="sm:max-w-[200px]">
+                  <Label className="mb-2 block">Area Code</Label>
+                  <Select value={searchAreaCode} onValueChange={setSearchAreaCode}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Any Area Code" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {US_AREA_CODES.map((option) => (
+                        <SelectItem key={option.value || "any"} value={option.value || "any"}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <Button
-                  color="primary"
-                  startContent={<Search className="w-4 h-4" />}
-                  onPress={fetchAvailableNumbers}
-                  isLoading={loadingAvailable}
+                  onClick={fetchAvailableNumbers}
+                  disabled={loadingAvailable}
                   className="sm:self-end"
                 >
+                  <Search className="w-4 h-4 mr-2" />
                   Search Numbers
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Results */}
@@ -682,7 +674,7 @@ export function PhoneNumbersPage() {
             <CardHeader>
               <h3 className="text-lg font-semibold">Available Numbers</h3>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {!hasSearched ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -695,7 +687,7 @@ export function PhoneNumbersPage() {
                 </div>
               ) : loadingAvailable ? (
                 <div className="flex justify-center py-12">
-                  <Spinner size="lg" />
+                  <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : availableNumbers.length === 0 ? (
                 <div className="text-center py-12">
@@ -713,10 +705,9 @@ export function PhoneNumbersPage() {
                     <Card
                       key={did.phoneNumber}
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      isPressable
-                      onPress={() => openPurchaseModal(did)}
+                      onClick={() => openPurchaseModal(did)}
                     >
-                      <CardBody className="p-4">
+                      <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <p className="font-semibold text-lg">
@@ -728,9 +719,9 @@ export function PhoneNumbersPage() {
                                 : `Area ${did.areaCode}`}
                             </p>
                           </div>
-                          <Chip size="sm" color="success" variant="flat">
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                             Available
-                          </Chip>
+                          </Badge>
                         </div>
 
                         <div className="flex items-center justify-between">
@@ -743,7 +734,7 @@ export function PhoneNumbersPage() {
                               </span>
                             )}
                           </div>
-                          <Button size="sm" color="primary" variant="flat">
+                          <Button size="sm" variant="secondary">
                             Select
                           </Button>
                         </div>
@@ -751,43 +742,43 @@ export function PhoneNumbersPage() {
                         {did.features.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-3">
                             {did.features.slice(0, 3).map((feature) => (
-                              <Chip key={feature} size="sm" variant="bordered">
+                              <Badge key={feature} variant="outline">
                                 {feature}
-                              </Chip>
+                              </Badge>
                             ))}
                           </div>
                         )}
-                      </CardBody>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}
 
       {/* Purchase Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalContent>
+      <Dialog open={isPurchaseOpen} onOpenChange={setIsPurchaseOpen}>
+        <DialogContent>
           {selectedDID && (
             <>
-              <ModalHeader>
-                <div className="flex items-center gap-3">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                     <Phone className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Purchase Phone Number</h3>
+                    <div className="text-lg font-semibold">Purchase Phone Number</div>
                     <p className="text-sm text-gray-500">
                       {formatPhoneNumber(selectedDID.phoneNumber)}
                     </p>
                   </div>
-                </div>
-              </ModalHeader>
-              <ModalBody className="space-y-4">
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <Card className="bg-gray-50 dark:bg-gray-800/50">
-                  <CardBody className="p-4">
+                  <CardContent className="p-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-gray-500">Location</span>
@@ -808,24 +799,24 @@ export function PhoneNumbersPage() {
                         </div>
                       )}
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
+                  <Label className="mb-2 block">
                     Assign to Voice Agent (Optional)
-                  </label>
-                  <Select
-                    placeholder="Select an agent"
-                    selectedKeys={selectedAgentId ? [selectedAgentId] : []}
-                    onChange={(e) => setSelectedAgentId(e.target.value)}
-                    startContent={<Bot className="w-4 h-4 text-gray-400" />}
-                  >
-                    {agents.map((agent) => (
-                      <SelectItem key={agent.id}>
-                        {agent.name}
-                      </SelectItem>
-                    ))}
+                  </Label>
+                  <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an agent" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500 mt-1">
                     You can also assign this number to an agent later.
@@ -834,58 +825,57 @@ export function PhoneNumbersPage() {
 
                 {selectedDID.features.length > 0 && (
                   <div>
-                    <span className="text-sm font-medium mb-2 block">Features</span>
+                    <Label className="mb-2 block">Features</Label>
                     <div className="flex flex-wrap gap-2">
                       {selectedDID.features.map((feature) => (
-                        <Chip key={feature} size="sm" variant="flat" color="primary">
+                        <Badge key={feature} variant="default">
                           {feature}
-                        </Chip>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 )}
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsPurchaseOpen(false)}>
                   Cancel
                 </Button>
                 <Button
-                  color="primary"
-                  onPress={handlePurchase}
-                  isLoading={purchasing}
-                  startContent={!purchasing && <ShoppingCart className="w-4 h-4" />}
+                  onClick={handlePurchase}
+                  disabled={purchasing}
                 >
+                  {purchasing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Purchase Number
                 </Button>
-              </ModalFooter>
+              </DialogFooter>
             </>
           )}
-        </ModalContent>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Delete Confirmation Modal */}
-      <Modal isOpen={isBulkDeleteOpen} onClose={onBulkDeleteClose} size="md">
-        <ModalContent>
-          <ModalHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-danger/10 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-danger" />
+      <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Delete Phone Numbers</h3>
+                <div className="text-lg font-semibold">Delete Phone Numbers</div>
                 <p className="text-sm text-gray-500">
                   This action cannot be undone
                 </p>
               </div>
-            </div>
-          </ModalHeader>
-          <ModalBody className="space-y-4">
-            <div className="p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg">
-              <p className="text-sm text-danger-700 dark:text-danger-300">
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-300">
                 You are about to delete <strong>{selectedNumberIds.size}</strong> phone number{selectedNumberIds.size !== 1 ? "s" : ""}.
                 This will:
               </p>
-              <ul className="list-disc list-inside text-sm text-danger-600 dark:text-danger-400 mt-2 space-y-1">
+              <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-400 mt-2 space-y-1">
                 <li>Release the phone numbers from Magnus</li>
                 <li>Delete associated LiveKit trunks and dispatch rules</li>
                 <li>Remove all configuration and call routing</li>
@@ -893,17 +883,17 @@ export function PhoneNumbersPage() {
             </div>
 
             {selectedWithAgents.length > 0 && (
-              <div className="p-4 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded-lg">
-                <div className="flex items-center gap-2 text-warning-700 dark:text-warning-300 mb-2">
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 mb-2">
                   <Bot className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {selectedWithAgents.length} number{selectedWithAgents.length !== 1 ? "s" : ""} assigned to agents
                   </span>
                 </div>
-                <p className="text-sm text-warning-600 dark:text-warning-400">
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">
                   The following numbers are currently assigned to voice agents:
                 </p>
-                <ul className="text-sm text-warning-600 dark:text-warning-400 mt-1 space-y-1">
+                <ul className="text-sm text-yellow-600 dark:text-yellow-400 mt-1 space-y-1">
                   {selectedWithAgents.slice(0, 5).map((n) => (
                     <li key={n.id}>
                       {formatPhoneNumber(n.phoneNumber)} → {n.agent?.name}
@@ -920,33 +910,34 @@ export function PhoneNumbersPage() {
               <p className="text-sm font-medium mb-2">Numbers to be deleted:</p>
               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                 {selectedNumbers.slice(0, 10).map((n) => (
-                  <Chip key={n.id} size="sm" variant="flat">
+                  <Badge key={n.id} variant="secondary">
                     {formatPhoneNumber(n.phoneNumber)}
-                  </Chip>
+                  </Badge>
                 ))}
                 {selectedNumbers.length > 10 && (
-                  <Chip size="sm" variant="flat" color="default">
+                  <Badge variant="outline">
                     +{selectedNumbers.length - 10} more
-                  </Chip>
+                  </Badge>
                 )}
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onBulkDeleteClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsBulkDeleteOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="danger"
-              onPress={handleBulkDelete}
-              isLoading={bulkDeleting}
-              startContent={!bulkDeleting && <Trash2 className="w-4 h-4" />}
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
             >
+              {bulkDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <Trash2 className="w-4 h-4 mr-2" />
               Delete {selectedNumberIds.size} Number{selectedNumberIds.size !== 1 ? "s" : ""}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

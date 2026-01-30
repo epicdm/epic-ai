@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Card, CardBody, Button, Select, SelectItem, Spinner, Chip, Tooltip, Tabs, Tab } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { Mic, MicOff, Phone, PhoneOff, Volume2, Send, AlertCircle, DollarSign, Clock, Info, PhoneCall, Monitor } from "lucide-react";
 import Link from "next/link";
@@ -153,7 +159,7 @@ export function TestConsole() {
           const data = await response.json();
           addMessage("system", `Call ended. ${data.summary || ""}`);
           setStats(data.stats);
-          
+
           // Track call ended analytics
           if (data.stats && selectedAgentId) {
             const durationSeconds = data.stats.duration || 0;
@@ -378,7 +384,7 @@ export function TestConsole() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -394,28 +400,28 @@ export function TestConsole() {
 
       {/* Mode Tabs */}
       <Tabs
-        aria-label="Test modes"
-        color="primary"
-        variant="bordered"
-        classNames={{
-          tabList: "gap-4",
-          cursor: "bg-primary",
-          tab: "px-6 py-3",
-        }}
+        defaultValue="browser"
       >
-        <Tab
-          key="browser"
-          title={
+        <TabsList>
+          <TabsTrigger value="browser">
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4" />
               <span>Browser Test</span>
             </div>
-          }
-        >
+          </TabsTrigger>
+          <TabsTrigger value="outbound">
+            <div className="flex items-center gap-2">
+              <PhoneCall className="w-4 h-4" />
+              <span>Outbound Call</span>
+            </div>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="browser">
           <div className="space-y-6 pt-4">
             {/* Cost Information Banner */}
       <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-200 dark:bg-amber-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -431,71 +437,82 @@ export function TestConsole() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Tooltip content={
-                <div className="p-2 space-y-1 text-sm">
-                  <p className="font-medium">Cost Breakdown</p>
-                  <p>STT: ${PRICING.voice.breakdown.stt.toFixed(2)}/min</p>
-                  <p>LLM: ${PRICING.voice.breakdown.llm.toFixed(2)}/min</p>
-                  <p>TTS: ${PRICING.voice.breakdown.tts.toFixed(2)}/min</p>
-                  <p>Telephony: ${PRICING.voice.breakdown.telephony.toFixed(2)}/min</p>
-                </div>
-              }>
-                <Chip size="sm" variant="flat" className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 cursor-help">
-                  <span className="flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    View breakdown
-                  </span>
-                </Chip>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 cursor-help">
+                      <span className="flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        View breakdown
+                      </span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="p-2 space-y-1 text-sm">
+                      <p className="font-medium">Cost Breakdown</p>
+                      <p>STT: ${PRICING.voice.breakdown.stt.toFixed(2)}/min</p>
+                      <p>LLM: ${PRICING.voice.breakdown.llm.toFixed(2)}/min</p>
+                      <p>TTS: ${PRICING.voice.breakdown.tts.toFixed(2)}/min</p>
+                      <p>Telephony: ${PRICING.voice.breakdown.telephony.toFixed(2)}/min</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
-                as={Link}
-                href="/dashboard/settings/usage"
+                asChild
                 size="sm"
-                variant="flat"
+                variant="secondary"
                 className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300"
               >
-                View Usage
+                <Link href="/dashboard/settings/usage">
+                  View Usage
+                </Link>
               </Button>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Error display */}
       {error && (
-        <Card className="border-danger-200 bg-danger-50">
-          <CardBody className="flex flex-row items-center gap-3 py-3">
-            <AlertCircle className="w-5 h-5 text-danger" />
-            <span className="text-danger text-sm">{error}</span>
-            <Button size="sm" variant="light" onPress={() => setError(null)} className="ml-auto">
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardContent className="flex flex-row items-center gap-3 py-3 px-4">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <span className="text-destructive text-sm">{error}</span>
+            <Button size="sm" variant="ghost" onClick={() => setError(null)} className="ml-auto">
               Dismiss
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Controls Panel */}
         <Card className="lg:col-span-1">
-          <CardBody className="space-y-6">
+          <CardContent className="space-y-6 p-6">
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
                 Select Agent
               </h3>
+              <Label className="mb-2 block">Voice Agent</Label>
               <Select
-                label="Voice Agent"
-                selectedKeys={selectedAgentId ? [selectedAgentId] : []}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-                isDisabled={isInCall}
+                value={selectedAgentId}
+                onValueChange={(value) => setSelectedAgentId(value)}
+                disabled={isInCall}
               >
-                {agents.map((agent) => (
-                  <SelectItem key={agent.id} textValue={agent.name}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               {selectedAgent?.description && (
-                <p className="text-sm text-gray-500 mt-2">{selectedAgent.description}</p>
+                <p className="text-sm text-muted-foreground mt-2">{selectedAgent.description}</p>
               )}
             </div>
 
@@ -507,12 +524,11 @@ export function TestConsole() {
 
               {!isInCall ? (
                 <Button
-                  color="success"
+                  variant="default"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
                   size="lg"
-                  className="w-full"
-                  startContent={<Phone className="w-5 h-5" />}
-                  onPress={startCall}
-                  isDisabled={!selectedAgentId || agents.length === 0}
+                  onClick={startCall}
+                  disabled={!selectedAgentId || agents.length === 0}
                 >
                   Start Test Call
                 </Button>
@@ -520,24 +536,21 @@ export function TestConsole() {
                 <div className="space-y-3">
                   {/* Recording Button */}
                   <Button
-                    color={isRecording ? "danger" : "primary"}
+                    variant={isRecording ? "destructive" : "default"}
                     size="lg"
                     className="w-full"
-                    startContent={isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                    onPress={isRecording ? stopRecording : startRecording}
-                    isDisabled={isProcessing || isSpeaking}
+                    onClick={isRecording ? stopRecording : startRecording}
+                    disabled={isProcessing || isSpeaking}
                   >
                     {isRecording ? "Stop Recording" : "Push to Talk"}
                   </Button>
 
                   {/* End Call Button */}
                   <Button
-                    color="danger"
-                    variant="bordered"
+                    variant="outline"
                     size="lg"
-                    className="w-full"
-                    startContent={<PhoneOff className="w-5 h-5" />}
-                    onPress={endCall}
+                    className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={endCall}
                   >
                     End Call
                   </Button>
@@ -553,25 +566,25 @@ export function TestConsole() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {isRecording && (
-                    <Chip color="danger" variant="flat" size="sm">
+                    <Badge variant="destructive">
                       <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 bg-danger rounded-full animate-pulse" />
+                        <span className="w-2 h-2 bg-destructive-foreground rounded-full animate-pulse" />
                         Recording
                       </span>
-                    </Chip>
+                    </Badge>
                   )}
                   {isProcessing && (
-                    <Chip color="warning" variant="flat" size="sm">
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
                       Processing...
-                    </Chip>
+                    </Badge>
                   )}
                   {isSpeaking && (
-                    <Chip color="primary" variant="flat" size="sm">
+                    <Badge variant="default">
                       <span className="flex items-center gap-1">
                         <Volume2 className="w-3 h-3" />
                         Speaking
                       </span>
-                    </Chip>
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -584,23 +597,23 @@ export function TestConsole() {
                   Conversation Stats
                 </h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-gray-500">Messages:</div>
+                  <div className="text-muted-foreground">Messages:</div>
                   <div className="font-medium">{stats.messageCount}</div>
-                  <div className="text-gray-500">Duration:</div>
+                  <div className="text-muted-foreground">Duration:</div>
                   <div className="font-medium">{Math.floor(stats.duration / 60)}:{String(stats.duration % 60).padStart(2, "0")}</div>
-                  <div className="text-gray-500">Est. Cost:</div>
+                  <div className="text-muted-foreground">Est. Cost:</div>
                   <div className="font-medium text-amber-600">
                     ${((stats.duration / 60) * PRICING.voice.perMinute).toFixed(2)}
                   </div>
                 </div>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Conversation Panel */}
         <Card className="lg:col-span-2">
-          <CardBody className="p-0">
+          <CardContent className="p-0">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
                 Conversation
@@ -610,7 +623,7 @@ export function TestConsole() {
             {/* Messages */}
             <div className="h-[500px] overflow-y-auto p-4 space-y-4">
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <Phone className="w-12 h-12 mb-4 opacity-50" />
                   <p>Start a test call to begin the conversation</p>
                 </div>
@@ -626,12 +639,12 @@ export function TestConsole() {
                           ? "bg-primary text-white"
                           : msg.role === "system"
                           ? "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm italic"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                          : "bg-muted text-gray-900 dark:text-white"
                       }`}
                     >
                       <p>{msg.content}</p>
                       <p className={`text-xs mt-1 ${
-                        msg.role === "user" ? "text-primary-100" : "text-gray-400"
+                        msg.role === "user" ? "text-primary-100" : "text-muted-foreground"
                       }`}>
                         {msg.timestamp.toLocaleTimeString()}
                       </p>
@@ -641,13 +654,13 @@ export function TestConsole() {
               )}
               <div ref={messagesEndRef} />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Instructions */}
       <Card>
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             How to Use
           </h3>
@@ -658,7 +671,7 @@ export function TestConsole() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Select an Agent</p>
-                <p className="text-sm text-gray-500">Choose the voice agent you want to test</p>
+                <p className="text-sm text-muted-foreground">Choose the voice agent you want to test</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -667,7 +680,7 @@ export function TestConsole() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Start the Call</p>
-                <p className="text-sm text-gray-500">Click "Start Test Call" and allow microphone access</p>
+                <p className="text-sm text-muted-foreground">Click &quot;Start Test Call&quot; and allow microphone access</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -676,28 +689,20 @@ export function TestConsole() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Push to Talk</p>
-                <p className="text-sm text-gray-500">Hold the button to speak, release to send</p>
+                <p className="text-sm text-muted-foreground">Hold the button to speak, release to send</p>
               </div>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="outbound"
-          title={
-            <div className="flex items-center gap-2">
-              <PhoneCall className="w-4 h-4" />
-              <span>Outbound Call</span>
-            </div>
-          }
-        >
+        <TabsContent value="outbound">
           <div className="pt-4">
             <OutboundTestPanel />
           </div>
-        </Tab>
+        </TabsContent>
       </Tabs>
     </div>
   );

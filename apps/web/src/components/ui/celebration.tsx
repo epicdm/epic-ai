@@ -3,7 +3,14 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { toast } from "sonner";
 import { useAnalytics } from "@/lib/analytics";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type CelebrationType = "confetti" | "toast" | "modal";
 
@@ -22,7 +29,7 @@ export function CelebrationProvider({ children }: { children: ReactNode }) {
   const showCelebration = (type: CelebrationType, message = "Completed successfully!") => {
     track("celebration_shown", { type });
     setCelebrationType(type);
-    
+
     switch (type) {
       case "confetti":
         if (typeof window !== "undefined") {
@@ -58,17 +65,17 @@ export function CelebrationProvider({ children }: { children: ReactNode }) {
   return (
     <CelebrationContext.Provider value={{ showCelebration }}>
       {children}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-        <ModalContent>
-          <ModalHeader>🎉 Success!</ModalHeader>
-          <ModalBody>
-            <p>{modalContent}</p>
-          </ModalBody>
-          <ModalFooter>
-            <Button onPress={() => setModalOpen(false)}>Close</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Success!</DialogTitle>
+          </DialogHeader>
+          <p>{modalContent}</p>
+          <DialogFooter>
+            <Button onClick={() => setModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </CelebrationContext.Provider>
   );
 }

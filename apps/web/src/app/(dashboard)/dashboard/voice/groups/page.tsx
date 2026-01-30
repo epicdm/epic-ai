@@ -1,34 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Chip,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Select,
-  SelectItem,
-  Textarea,
-  Spinner,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -80,7 +60,7 @@ export default function AgentGroupsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -142,7 +122,7 @@ export default function AgentGroupsPage() {
       }
 
       toast.success("Agent group created successfully");
-      onClose();
+      setIsOpen(false);
       setFormData({
         name: "",
         description: "",
@@ -209,7 +189,7 @@ export default function AgentGroupsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -226,7 +206,7 @@ export default function AgentGroupsPage() {
             Organize agents into groups for call routing
           </p>
         </div>
-        <Button color="primary" onPress={onOpen}>
+        <Button onClick={() => setIsOpen(true)}>
           + Create Group
         </Button>
       </div>
@@ -234,7 +214,7 @@ export default function AgentGroupsPage() {
       {/* Groups List */}
       {groups.length === 0 ? (
         <Card>
-          <CardBody className="text-center py-12">
+          <CardContent className="text-center py-12">
             <div className="text-4xl mb-4">👥</div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No Agent Groups Yet
@@ -242,16 +222,16 @@ export default function AgentGroupsPage() {
             <p className="text-gray-500 mb-4">
               Create groups to organize your agents and set up call routing
             </p>
-            <Button color="primary" onPress={onOpen}>
+            <Button onClick={() => setIsOpen(true)}>
               Create Your First Group
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
           {groups.map((group) => (
             <Card key={group.id} className="hover:shadow-md transition-shadow">
-              <CardBody className="p-6">
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -261,20 +241,20 @@ export default function AgentGroupsPage() {
                       >
                         {group.name}
                       </Link>
-                      <Chip
-                        size="sm"
+                      <Badge
+                        
                         color={group.isActive ? "success" : "default"}
-                        variant="flat"
+                        variant="secondary"
                       >
                         {group.isActive ? "Active" : "Inactive"}
-                      </Chip>
-                      <Chip
-                        size="sm"
+                      </Badge>
+                      <Badge
+                        
                         color={getStrategyColor(group.routingStrategy)}
-                        variant="flat"
+                        variant="secondary"
                       >
                         {group.routingStrategy.replace(/_/g, " ")}
-                      </Chip>
+                      </Badge>
                     </div>
                     {group.description && (
                       <p className="text-gray-500 text-sm mb-3">
@@ -294,19 +274,19 @@ export default function AgentGroupsPage() {
                         <span className="text-sm text-gray-500">Members:</span>
                         <div className="flex flex-wrap gap-1">
                           {group.members.slice(0, 5).map((member) => (
-                            <Chip
+                            <Badge
                               key={member.id}
-                              size="sm"
-                              variant="flat"
+                              
+                              variant="secondary"
                               color={member.isActive && member.agent?.isActive ? "success" : "default"}
                             >
                               {member.agent?.name || "Unknown"}
-                            </Chip>
+                            </Badge>
                           ))}
                           {group.members.length > 5 && (
-                            <Chip size="sm" variant="flat">
+                            <Badge  variant="secondary">
                               +{group.members.length - 5} more
-                            </Chip>
+                            </Badge>
                           )}
                         </div>
                       </div>
@@ -314,7 +294,7 @@ export default function AgentGroupsPage() {
                   </div>
                   <Dropdown>
                     <DropdownTrigger>
-                      <Button size="sm" variant="light" isIconOnly>
+                      <Button size="sm" variant="ghost" size="icon">
                         ⋮
                       </Button>
                     </DropdownTrigger>
@@ -329,24 +309,24 @@ export default function AgentGroupsPage() {
                         key="delete"
                         className="text-danger"
                         color="danger"
-                        onPress={() => handleDeleteGroup(group.id)}
+                        onClick={() => handleDeleteGroup(group.id)}
                       >
                         Delete Group
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {/* Create Group Modal */}
-      <Modal size="2xl" isOpen={isOpen} onClose={onClose} scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Create Agent Group</ModalHeader>
-          <ModalBody>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Agent Group</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
               <Input
                 label="Group Name"
@@ -365,7 +345,7 @@ export default function AgentGroupsPage() {
 
               <Select
                 label="Routing Strategy"
-                selectedKeys={[formData.routingStrategy]}
+                value={formData.routingStrategy}
                 onChange={(e) => setFormData({ ...formData, routingStrategy: e.target.value })}
               >
                 {ROUTING_STRATEGIES.map((strategy) => (
@@ -427,13 +407,13 @@ export default function AgentGroupsPage() {
                         <TableRow key={agent.id}>
                           <TableCell>{agent.name}</TableCell>
                           <TableCell>
-                            <Chip
-                              size="sm"
+                            <Badge
+                              
                               color={agent.isActive ? "success" : "default"}
-                              variant="flat"
+                              variant="secondary"
                             >
                               {agent.isActive ? "Active" : "Inactive"}
-                            </Chip>
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -442,17 +422,16 @@ export default function AgentGroupsPage() {
                 )}
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleCreateGroup} isLoading={saving}>
+            <Button onClick={handleCreateGroup} disabled={saving}>
               Create Group
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
-import { Card, CardBody, CheckboxGroup, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Eye,
   Users,
@@ -72,8 +75,12 @@ const METRICS = [
 export function MetricsStep({ data, updateData }: MetricsStepProps) {
   const selectedMetrics = data.priorityMetrics || [];
 
-  const handleChange = (values: string[]) => {
-    updateData({ priorityMetrics: values as MetricType[] });
+  const toggleMetric = (metricId: MetricType) => {
+    if (selectedMetrics.includes(metricId)) {
+      updateData({ priorityMetrics: selectedMetrics.filter((m) => m !== metricId) as MetricType[] });
+    } else {
+      updateData({ priorityMetrics: [...selectedMetrics, metricId] as MetricType[] });
+    }
   };
 
   const categories = [...new Set(METRICS.map((m) => m.category))];
@@ -90,13 +97,12 @@ export function MetricsStep({ data, updateData }: MetricsStepProps) {
         <span className="text-sm text-gray-500 dark:text-gray-400">
           Selected metrics:
         </span>
-        <Chip
-          size="sm"
-          color={selectedMetrics.length >= 3 ? "success" : "warning"}
-          variant="flat"
+        <Badge
+          variant="secondary"
+          className={selectedMetrics.length >= 3 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"}
         >
           {selectedMetrics.length} of {METRICS.length}
-        </Chip>
+        </Badge>
         {selectedMetrics.length < 3 && (
           <span className="text-sm text-amber-600 dark:text-amber-400">
             (Select at least 3 for best insights)
@@ -105,79 +111,72 @@ export function MetricsStep({ data, updateData }: MetricsStepProps) {
       </div>
 
       {/* Metrics by Category */}
-      <CheckboxGroup
-        value={selectedMetrics}
-        onValueChange={handleChange}
-        classNames={{
-          wrapper: "gap-6",
-        }}
-      >
-        {categories.map((category) => (
-          <div key={category} className="space-y-3">
-            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              {category}
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {METRICS.filter((m) => m.category === category).map((metric) => {
-                const Icon = metric.icon;
-                const isSelected = selectedMetrics.includes(metric.id);
+      {categories.map((category) => (
+        <div key={category} className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            {category}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {METRICS.filter((m) => m.category === category).map((metric) => {
+              const Icon = metric.icon;
+              const isSelected = selectedMetrics.includes(metric.id);
 
-                return (
-                  <Checkbox
-                    key={metric.id}
-                    value={metric.id}
-                    classNames={{
-                      base: `border rounded-lg p-3 m-0 max-w-full transition-all ${
+              return (
+                <div
+                  key={metric.id}
+                  className={`border rounded-lg p-3 transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                  }`}
+                  onClick={() => toggleMetric(metric.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleMetric(metric.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div
+                      className={`p-2 rounded-lg ${
                         isSelected
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                      }`,
-                      wrapper: "hidden",
-                      label: "w-full cursor-pointer",
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${
+                          ? "bg-purple-100 dark:bg-purple-900"
+                          : "bg-gray-100 dark:bg-gray-800"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 ${
                           isSelected
-                            ? "bg-purple-100 dark:bg-purple-900"
-                            : "bg-gray-100 dark:bg-gray-800"
+                            ? "text-purple-600 dark:text-purple-400"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p
+                        className={`font-medium ${
+                          isSelected
+                            ? "text-purple-900 dark:text-purple-100"
+                            : "text-gray-900 dark:text-white"
                         }`}
                       >
-                        <Icon
-                          className={`w-4 h-4 ${
-                            isSelected
-                              ? "text-purple-600 dark:text-purple-400"
-                              : "text-gray-500"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p
-                          className={`font-medium ${
-                            isSelected
-                              ? "text-purple-900 dark:text-purple-100"
-                              : "text-gray-900 dark:text-white"
-                          }`}
-                        >
-                          {metric.name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {metric.description}
-                        </p>
-                      </div>
+                        {metric.name}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {metric.description}
+                      </p>
                     </div>
-                  </Checkbox>
-                );
-              })}
-            </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </CheckboxGroup>
+        </div>
+      ))}
 
       {/* Recommendation */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
             Recommended for Most Businesses
           </h5>
@@ -186,7 +185,7 @@ export function MetricsStep({ data, updateData }: MetricsStepProps) {
             <strong>Follower Growth</strong>. These give you a balanced view of
             how your content performs and how your audience is growing.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

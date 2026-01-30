@@ -1,13 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import {
   Upload,
   FileText,
@@ -130,7 +126,7 @@ export function ContextDocumentsPage({
         <CardHeader>
           <h3 className="text-lg font-semibold">Documents</h3>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {/* Upload Zone */}
           <div
             {...getRootProps()}
@@ -143,7 +139,7 @@ export function ContextDocumentsPage({
             <input {...getInputProps()} />
             {uploadingFiles ? (
               <div className="flex flex-col items-center">
-                <Spinner size="lg" />
+                <Loader2 className="w-8 h-8 animate-spin" />
                 <p className="mt-2">Uploading...</p>
               </div>
             ) : (
@@ -185,9 +181,13 @@ export function ContextDocumentsPage({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Chip color={getStatusColor(doc.status)} size="sm" variant="flat">
+                    <Badge variant="secondary" className={
+                      doc.status === "ACTIVE" || doc.status === "COMPLETED" ? "bg-green-100 text-green-800" :
+                      doc.status === "SYNCING" || doc.status === "PROCESSING" || doc.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
+                      doc.status === "ERROR" || doc.status === "FAILED" ? "bg-red-100 text-red-800" : ""
+                    }>
                       {doc.status}
-                    </Chip>
+                    </Badge>
                     {doc.errorMessage && (
                       <span className="text-sm text-danger" title={doc.errorMessage}>
                         <AlertCircle className="w-4 h-4" />
@@ -198,7 +198,7 @@ export function ContextDocumentsPage({
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

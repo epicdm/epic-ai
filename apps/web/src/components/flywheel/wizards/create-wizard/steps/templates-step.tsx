@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Textarea,
-  Checkbox,
-  CheckboxGroup,
-  Chip,
-} from "@heroui/react";
-import { Plus, Trash2, FileText, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, FileText, Sparkles, X } from "lucide-react";
 import type { CreateWizardData, ContentTemplateData, ContentType } from "@/lib/flywheel/types";
 
 interface TemplatesStepProps {
@@ -35,19 +32,19 @@ const CONTENT_TYPE_OPTIONS: { id: ContentType; label: string }[] = [
 const DEFAULT_TEMPLATES: Omit<ContentTemplateData, "id">[] = [
   {
     name: "Thought Leadership",
-    structure: "Hook → Insight → Examples → Call-to-action",
+    structure: "Hook \u2192 Insight \u2192 Examples \u2192 Call-to-action",
     contentType: "text",
     platforms: ["linkedin", "twitter"],
   },
   {
     name: "Tips & How-To",
-    structure: "Problem → 3-5 Tips → Summary",
+    structure: "Problem \u2192 3-5 Tips \u2192 Summary",
     contentType: "text",
     platforms: ["twitter", "linkedin", "instagram"],
   },
   {
     name: "Story/Case Study",
-    structure: "Challenge → Action → Result → Lesson",
+    structure: "Challenge \u2192 Action \u2192 Result \u2192 Lesson",
     contentType: "text",
     platforms: ["linkedin", "facebook"],
   },
@@ -92,6 +89,14 @@ export function TemplatesStep({ data, updateData }: TemplatesStepProps) {
     });
   };
 
+  const togglePlatform = (platformId: string) => {
+    const current = newTemplate.platforms || [];
+    const updated = current.includes(platformId)
+      ? current.filter((p) => p !== platformId)
+      : [...current, platformId];
+    setNewTemplate((prev) => ({ ...prev, platforms: updated }));
+  };
+
   return (
     <div className="space-y-6">
       <p className="text-gray-600 dark:text-gray-400">
@@ -105,11 +110,8 @@ export function TemplatesStep({ data, updateData }: TemplatesStepProps) {
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             No templates yet. Start with our recommended templates.
           </p>
-          <Button
-            color="primary"
-            startContent={<Sparkles className="w-4 h-4" />}
-            onPress={addDefaultTemplates}
-          >
+          <Button onClick={addDefaultTemplates}>
+            <Sparkles className="w-4 h-4 mr-2" />
             Add Recommended Templates
           </Button>
         </div>
@@ -121,7 +123,7 @@ export function TemplatesStep({ data, updateData }: TemplatesStepProps) {
             key={template.id}
             className="border border-gray-200 dark:border-gray-700"
           >
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900 dark:text-white">
@@ -131,64 +133,65 @@ export function TemplatesStep({ data, updateData }: TemplatesStepProps) {
                     {template.structure}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <Chip size="sm" variant="flat" color="primary">
+                    <Badge variant="secondary">
                       {template.contentType}
-                    </Chip>
+                    </Badge>
                     {template.platforms.map((p) => (
-                      <Chip key={p} size="sm" variant="bordered">
+                      <Badge key={p} variant="outline">
                         {PLATFORM_OPTIONS.find((opt) => opt.id === p)?.label || p}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
                 <Button
-                  isIconOnly
                   size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={() => removeTemplate(template.id!)}
+                  variant="ghost"
+                  onClick={() => removeTemplate(template.id!)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {isAdding ? (
         <Card className="border-2 border-dashed border-blue-300 dark:border-blue-700">
-          <CardBody className="p-4 space-y-4">
-            <Input
-              label="Template Name"
-              placeholder="e.g., Product Announcement"
-              value={newTemplate.name || ""}
-              onValueChange={(value) =>
-                setNewTemplate((prev) => ({ ...prev, name: value }))
-              }
-            />
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <Label htmlFor="template-name">Template Name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g., Product Announcement"
+                value={newTemplate.name || ""}
+                onChange={(e) =>
+                  setNewTemplate((prev) => ({ ...prev, name: e.target.value }))
+                }
+              />
+            </div>
 
-            <Textarea
-              label="Structure"
-              placeholder="e.g., Hook → Problem → Solution → CTA"
-              value={newTemplate.structure || ""}
-              onValueChange={(value) =>
-                setNewTemplate((prev) => ({ ...prev, structure: value }))
-              }
-            />
+            <div>
+              <Label htmlFor="template-structure">Structure</Label>
+              <Textarea
+                id="template-structure"
+                placeholder="e.g., Hook \u2192 Problem \u2192 Solution \u2192 CTA"
+                value={newTemplate.structure || ""}
+                onChange={(e) =>
+                  setNewTemplate((prev) => ({ ...prev, structure: e.target.value }))
+                }
+              />
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-2">Content Type</p>
                 <div className="flex flex-wrap gap-2">
                   {CONTENT_TYPE_OPTIONS.map((type) => (
-                    <Chip
+                    <Badge
                       key={type.id}
                       variant={
-                        newTemplate.contentType === type.id ? "solid" : "bordered"
-                      }
-                      color={
-                        newTemplate.contentType === type.id ? "primary" : "default"
+                        newTemplate.contentType === type.id ? "default" : "outline"
                       }
                       className="cursor-pointer"
                       onClick={() =>
@@ -199,51 +202,51 @@ export function TemplatesStep({ data, updateData }: TemplatesStepProps) {
                       }
                     >
                       {type.label}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
               </div>
 
               <div>
                 <p className="text-sm font-medium mb-2">Platforms</p>
-                <CheckboxGroup
-                  value={newTemplate.platforms || []}
-                  onValueChange={(value) =>
-                    setNewTemplate((prev) => ({ ...prev, platforms: value }))
-                  }
-                  orientation="horizontal"
-                >
+                <div className="flex flex-wrap gap-2">
                   {PLATFORM_OPTIONS.map((p) => (
-                    <Checkbox key={p.id} value={p.id} size="sm">
-                      {p.label}
-                    </Checkbox>
+                    <div key={p.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`platform-${p.id}`}
+                        checked={(newTemplate.platforms || []).includes(p.id)}
+                        onCheckedChange={() => togglePlatform(p.id)}
+                      />
+                      <Label htmlFor={`platform-${p.id}`} className="text-sm cursor-pointer">
+                        {p.label}
+                      </Label>
+                    </div>
                   ))}
-                </CheckboxGroup>
+                </div>
               </div>
             </div>
 
             <div className="flex gap-2 justify-end">
-              <Button variant="light" onPress={() => setIsAdding(false)}>
+              <Button variant="ghost" onClick={() => setIsAdding(false)}>
                 Cancel
               </Button>
               <Button
-                color="primary"
-                onPress={addTemplate}
-                isDisabled={!newTemplate.name || !newTemplate.structure}
+                onClick={addTemplate}
+                disabled={!newTemplate.name || !newTemplate.structure}
               >
                 Add Template
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         templates.length > 0 && (
           <Button
-            variant="bordered"
+            variant="outline"
             className="w-full"
-            startContent={<Plus className="w-4 h-4" />}
-            onPress={() => setIsAdding(true)}
+            onClick={() => setIsAdding(true)}
           >
+            <Plus className="w-4 h-4 mr-2" />
             Create Custom Template
           </Button>
         )

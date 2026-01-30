@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  Checkbox,
-  Chip,
-  RadioGroup,
-  Radio,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Heart,
   Eye,
@@ -26,14 +23,7 @@ interface KeyMetricsStepProps {
   updateData: (data: Partial<StreamlinedWizardData>) => void;
 }
 
-type MetricType =
-  | "engagement"
-  | "reach"
-  | "clicks"
-  | "followers"
-  | "impressions"
-  | "conversions"
-  | "leads";
+type MetricType = "engagement" | "reach" | "clicks" | "followers" | "impressions" | "conversions" | "leads";
 
 interface MetricOption {
   id: MetricType;
@@ -44,55 +34,13 @@ interface MetricOption {
 }
 
 const METRICS: MetricOption[] = [
-  {
-    id: "engagement",
-    label: "Engagement Rate",
-    description: "Likes, comments, shares, and saves",
-    icon: Heart,
-    recommended: true,
-  },
-  {
-    id: "reach",
-    label: "Reach",
-    description: "Unique people who see your content",
-    icon: Eye,
-    recommended: true,
-  },
-  {
-    id: "clicks",
-    label: "Click-through Rate",
-    description: "Link clicks from your posts",
-    icon: MousePointer,
-    recommended: true,
-  },
-  {
-    id: "followers",
-    label: "Follower Growth",
-    description: "New followers gained per week",
-    icon: UserPlus,
-    recommended: false,
-  },
-  {
-    id: "impressions",
-    label: "Impressions",
-    description: "Total times your content is viewed",
-    icon: BarChart3,
-    recommended: false,
-  },
-  {
-    id: "conversions",
-    label: "Conversions",
-    description: "Goal completions (signups, purchases)",
-    icon: Target,
-    recommended: false,
-  },
-  {
-    id: "leads",
-    label: "Leads Generated",
-    description: "Contact form submissions and inquiries",
-    icon: Users,
-    recommended: false,
-  },
+  { id: "engagement", label: "Engagement Rate", description: "Likes, comments, shares, and saves", icon: Heart, recommended: true },
+  { id: "reach", label: "Reach", description: "Unique people who see your content", icon: Eye, recommended: true },
+  { id: "clicks", label: "Click-through Rate", description: "Link clicks from your posts", icon: MousePointer, recommended: true },
+  { id: "followers", label: "Follower Growth", description: "New followers gained per week", icon: UserPlus, recommended: false },
+  { id: "impressions", label: "Impressions", description: "Total times your content is viewed", icon: BarChart3, recommended: false },
+  { id: "conversions", label: "Conversions", description: "Goal completions (signups, purchases)", icon: Target, recommended: false },
+  { id: "leads", label: "Leads Generated", description: "Contact form submissions and inquiries", icon: Users, recommended: false },
 ];
 
 const REPORT_FREQUENCIES = [
@@ -113,26 +61,15 @@ export function KeyMetricsStep({ data, updateData }: KeyMetricsStepProps) {
   const [isLoadingAISuggestions, setIsLoadingAISuggestions] = useState(false);
 
   useEffect(() => {
-    updateData({
-      priorityMetrics: selectedMetrics,
-      reportFrequency,
-    });
+    updateData({ priorityMetrics: selectedMetrics, reportFrequency });
   }, [selectedMetrics, reportFrequency, updateData]);
 
-  // AI-powered metrics suggestions based on goals
   const handleAISuggest = async () => {
     setIsLoadingAISuggestions(true);
     try {
-      // Get context from previous wizard data
-      const goals = data.optimizationGoals || [];
       const industry = data.industry || "";
-
-      // Simulate AI suggestion
       await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Determine metrics based on goals/industry
       let suggestedMetrics: MetricType[] = ["engagement", "reach"];
-
       if (industry.toLowerCase().includes("ecommerce") || industry.toLowerCase().includes("retail")) {
         suggestedMetrics = ["clicks", "conversions", "reach", "engagement"];
       } else if (industry.toLowerCase().includes("saas") || industry.toLowerCase().includes("tech")) {
@@ -142,7 +79,6 @@ export function KeyMetricsStep({ data, updateData }: KeyMetricsStepProps) {
       } else {
         suggestedMetrics = ["engagement", "reach", "clicks"];
       }
-
       setSelectedMetrics(suggestedMetrics);
     } catch (error) {
       console.error("Error getting AI suggestions:", error);
@@ -154,11 +90,9 @@ export function KeyMetricsStep({ data, updateData }: KeyMetricsStepProps) {
   const handleToggleMetric = (metricId: MetricType) => {
     setSelectedMetrics((prev) => {
       if (prev.includes(metricId)) {
-        // Don't allow deselecting if it would leave fewer than 3
         if (prev.length <= 3) return prev;
         return prev.filter((m) => m !== metricId);
       } else {
-        // Don't allow selecting more than 5
         if (prev.length >= 5) return prev;
         return [...prev, metricId];
       }
@@ -171,130 +105,79 @@ export function KeyMetricsStep({ data, updateData }: KeyMetricsStepProps) {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Key Metrics
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Select 3-5 metrics that matter most to your goals
-          </p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Key Metrics</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Select 3-5 metrics that matter most to your goals</p>
         </div>
-        <AIAssistButton
-          onSuggest={handleAISuggest}
-          loading={isLoadingAISuggestions}
-          label="AI Suggest"
-          tooltip="Get metric suggestions based on your industry and goals"
-        />
+        <AIAssistButton onSuggest={handleAISuggest} loading={isLoadingAISuggestions} label="AI Suggest" tooltip="Get metric suggestions based on your industry and goals" />
       </div>
 
-      {/* Metrics Selection */}
       <div className="space-y-3">
         {METRICS.map((metric) => {
           const Icon = metric.icon;
           const isSelected = selectedMetrics.includes(metric.id);
-          const isDisabledSelect =
-            !isSelected && selectedMetrics.length >= 5;
-          const isDisabledDeselect =
-            isSelected && selectedMetrics.length <= 3;
+          const isDisabledSelect = !isSelected && selectedMetrics.length >= 5;
+          const isDisabledDeselect = isSelected && selectedMetrics.length <= 3;
 
           return (
             <Card
               key={metric.id}
-              isPressable={!isDisabledSelect && !isDisabledDeselect}
               className={`transition-all ${
                 isSelected
-                  ? "border-2 border-primary bg-primary/5"
+                  ? "border-2 border-primary bg-primary/5 cursor-pointer"
                   : isDisabledSelect
                   ? "opacity-50 cursor-not-allowed border-2 border-transparent"
-                  : "border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                  : "border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 cursor-pointer"
               }`}
-              onPress={() => {
-                if (!isDisabledSelect && !isDisabledDeselect) {
-                  handleToggleMetric(metric.id);
-                }
-              }}
+              onClick={() => { if (!isDisabledSelect && !isDisabledDeselect) handleToggleMetric(metric.id); }}
             >
-              <CardBody className="flex flex-row items-center gap-4 py-4">
+              <CardContent className="flex flex-row items-center gap-4 py-4 px-4">
                 <Checkbox
-                  isSelected={isSelected}
-                  isDisabled={isDisabledSelect || isDisabledDeselect}
-                  onValueChange={() => handleToggleMetric(metric.id)}
-                  size="lg"
+                  checked={isSelected}
+                  disabled={isDisabledSelect || isDisabledDeselect}
+                  onCheckedChange={() => handleToggleMetric(metric.id)}
+                  className="h-5 w-5"
                 />
-                <div
-                  className={`p-2 rounded-lg ${
-                    isSelected
-                      ? "bg-primary/10"
-                      : "bg-gray-100 dark:bg-gray-800"
-                  }`}
-                >
-                  <Icon
-                    className={`w-5 h-5 ${
-                      isSelected ? "text-primary" : "text-gray-500"
-                    }`}
-                  />
+                <div className={`p-2 rounded-lg ${isSelected ? "bg-primary/10" : "bg-gray-100 dark:bg-gray-800"}`}>
+                  <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-gray-500"}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {metric.label}
-                    </p>
-                    {metric.recommended && (
-                      <Chip size="sm" color="primary" variant="flat">
-                        Recommended
-                      </Chip>
-                    )}
+                    <p className="font-medium text-gray-900 dark:text-white">{metric.label}</p>
+                    {metric.recommended && <Badge variant="secondary">Recommended</Badge>}
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {metric.description}
-                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{metric.description}</p>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Selection Counter */}
       <div className="flex items-center justify-center">
-        <Chip
-          size="lg"
-          color={isValid ? "primary" : "warning"}
-          variant="flat"
-        >
+        <Badge variant={isValid ? "default" : "secondary"} className="text-base px-3 py-1">
           {selectedMetrics.length} of 3-5 selected
-        </Chip>
+        </Badge>
       </div>
 
-      {/* Report Frequency */}
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4 py-4 px-4">
           <div>
-            <p className="font-medium text-gray-900 dark:text-white mb-1">
-              Report Frequency
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              How often would you like to receive performance reports?
-            </p>
+            <p className="font-medium text-gray-900 dark:text-white mb-1">Report Frequency</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">How often would you like to receive performance reports?</p>
           </div>
-
-          <RadioGroup
-            value={reportFrequency}
-            onValueChange={(value) => setReportFrequency(value as ReportFrequency)}
-            orientation="horizontal"
-          >
+          <RadioGroup value={reportFrequency} onValueChange={(value) => setReportFrequency(value as ReportFrequency)} className="flex flex-row gap-4">
             {REPORT_FREQUENCIES.map((freq) => (
-              <Radio key={freq.value} value={freq.value}>
-                {freq.label}
-              </Radio>
+              <div key={freq.value} className="flex items-center space-x-2">
+                <RadioGroupItem value={freq.value} id={`freq-${freq.value}`} />
+                <Label htmlFor={`freq-${freq.value}`} className="cursor-pointer">{freq.label}</Label>
+              </div>
             ))}
           </RadioGroup>
-        </CardBody>
+        </CardContent>
       </Card>
 
-      {/* Summary */}
       <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-        You&apos;ll receive {reportFrequency} reports tracking{" "}
-        {selectedMetrics.length} key metrics
+        You&apos;ll receive {reportFrequency} reports tracking {selectedMetrics.length} key metrics
       </div>
     </div>
   );

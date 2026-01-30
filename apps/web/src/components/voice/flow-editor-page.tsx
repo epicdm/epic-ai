@@ -1,29 +1,38 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
-  Chip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Spinner,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Breadcrumbs,
+} from "@/components/ui/select";
+import {
+  Breadcrumb,
+  BreadcrumbList,
   BreadcrumbItem,
-} from "@heroui/react";
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { FlowBuilder } from "./flow-builder";
 
 interface Flow {
@@ -53,7 +62,7 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
   const [saving, setSaving] = useState(false);
 
   // Settings modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
   const [flowDescription, setFlowDescription] = useState("");
   const [flowAgentId, setFlowAgentId] = useState<string | null>(null);
@@ -127,7 +136,7 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
       const data = await res.json();
       setFlow(data.flow);
       toast.success("Settings saved");
-      onClose();
+      setIsSettingsOpen(false);
     } catch (error) {
       console.error("Error saving settings:", error);
       toast.error(
@@ -167,15 +176,10 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
     }
   };
 
-  // Get available agents
-  const availableAgents = agents.filter(
-    (agent) => agent.id === flow?.agentId || !flow?.agent
-  );
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[600px]">
-        <Spinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -187,15 +191,25 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
   return (
     <div className="space-y-4">
       {/* Breadcrumbs */}
-      <Breadcrumbs>
-        <BreadcrumbItem>
-          <Link href="/dashboard/voice">Voice</Link>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <Link href="/dashboard/voice/flows">Flows</Link>
-        </BreadcrumbItem>
-        <BreadcrumbItem>{flow.name}</BreadcrumbItem>
-      </Breadcrumbs>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard/voice">Voice</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard/voice/flows">Flows</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{flow.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -205,17 +219,17 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
               {flow.name}
             </h1>
             {flow.isPublished ? (
-              <Chip color="success" size="sm" variant="flat">
+              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                 Published
-              </Chip>
+              </Badge>
             ) : (
-              <Chip color="warning" size="sm" variant="flat">
+              <Badge variant="secondary">
                 Draft
-              </Chip>
+              </Badge>
             )}
-            <Chip color="default" size="sm" variant="flat">
+            <Badge variant="outline">
               v{flow.version}
-            </Chip>
+            </Badge>
           </div>
           {flow.description && (
             <p className="text-gray-500 mt-1">{flow.description}</p>
@@ -227,19 +241,18 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="flat" onPress={onOpen}>
+          <Button variant="secondary" onClick={() => setIsSettingsOpen(true)}>
             Settings
           </Button>
           <Button
-            color={flow.isPublished ? "warning" : "success"}
-            variant="flat"
-            onPress={togglePublish}
+            variant="secondary"
+            onClick={togglePublish}
           >
             {flow.isPublished ? "Unpublish" : "Publish"}
           </Button>
           <Button
-            variant="light"
-            onPress={() => router.push("/dashboard/voice/flows")}
+            variant="ghost"
+            onClick={() => router.push("/dashboard/voice/flows")}
           >
             Back to Flows
           </Button>
@@ -264,48 +277,57 @@ export function FlowEditorPage({ flowId }: FlowEditorPageProps) {
       />
 
       {/* Settings Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Flow Settings</ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Flow Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Flow Name</Label>
               <Input
-                label="Flow Name"
                 value={flowName}
-                onValueChange={setFlowName}
-                isRequired
+                onChange={(e) => setFlowName(e.target.value)}
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
               <Textarea
-                label="Description"
                 value={flowDescription}
-                onValueChange={setFlowDescription}
-                minRows={2}
+                onChange={(e) => setFlowDescription(e.target.value)}
+                rows={2}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Linked Agent</Label>
               <Select
-                label="Linked Agent"
-                placeholder="Select an agent"
-                selectedKeys={flowAgentId ? [flowAgentId] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setFlowAgentId(selected || null);
-                }}
+                value={flowAgentId || ""}
+                onValueChange={(value) => setFlowAgentId(value || null)}
               >
-                {agents.map((agent) => (
-                  <SelectItem key={agent.id}>{agent.name}</SelectItem>
-                ))}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsSettingsOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleSaveSettings} isLoading={saving}>
+            <Button onClick={handleSaveSettings} disabled={saving}>
               Save Settings
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

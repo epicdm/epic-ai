@@ -1,16 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Spinner,
-  Chip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Wand2,
   Sparkles,
@@ -283,18 +278,17 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
       return (
         <Select
           key={field.key}
-          label={field.label}
-          placeholder={`Select ${field.label.toLowerCase()}`}
-          selectedKeys={formData[field.key] ? [formData[field.key]] : []}
-          onSelectionChange={(keys) => {
-            const selected = Array.from(keys)[0];
-            handleInputChange(field.key, selected as string);
-          }}
-          isRequired={field.required}
+          value={formData[field.key] || ""}
+          onValueChange={(v) => handleInputChange(field.key, v)}
         >
-          {field.options.map((option) => (
-            <SelectItem key={option.value}>{option.label}</SelectItem>
-          ))}
+          <SelectTrigger>
+            <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+          </SelectTrigger>
+          <SelectContent>
+            {field.options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       );
     }
@@ -316,7 +310,7 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
   if (generatedConfig) {
     return (
       <Card className={`border-2 ${colors.border}`}>
-        <CardBody className="p-6 space-y-6">
+        <CardContent className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${colors.bg}`}>
               <Sparkles className={`w-6 h-6 ${colors.text}`} />
@@ -338,33 +332,32 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
               {Object.entries(generatedConfig).slice(0, 8).map(([key, value]) => {
                 if (typeof value === "object") return null;
                 return (
-                  <Chip key={key} size="sm" variant="flat">
+                  <Badge key={key}  variant="secondary">
                     {key}: {String(value).substring(0, 30)}
                     {String(value).length > 30 ? "..." : ""}
-                  </Chip>
+                  </Badge>
                 );
               })}
               {Object.keys(generatedConfig).length > 8 && (
-                <Chip size="sm" variant="flat" color="primary">
+                <Badge  variant="secondary" >
                   +{Object.keys(generatedConfig).length - 8} more
-                </Chip>
+                </Badge>
               )}
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
             <Button
-              variant="bordered"
-              onPress={() => setGeneratedConfig(null)}
+              variant="outline"
+              onClick={() => setGeneratedConfig(null)}
               className="flex-1"
             >
               Regenerate
             </Button>
             <Button
-              color="primary"
-              onPress={handleAccept}
+              onClick={handleAccept}
               className="flex-1"
-              endContent={<ArrowRight className="w-4 h-4" />}
+              
             >
               Accept & Continue
             </Button>
@@ -373,7 +366,7 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             You can edit individual settings later in the detailed wizard
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -382,7 +375,7 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
     <div className="space-y-6">
       {/* AI Quick Setup Card */}
       <Card className={`border-2 ${colors.border}`}>
-        <CardBody className="p-6 space-y-6">
+        <CardContent className="p-6 space-y-6">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${colors.bg}`}>
               <Wand2 className={`w-6 h-6 ${colors.text}`} />
@@ -413,27 +406,26 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
           {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
-              color="primary"
-              onPress={handleGenerate}
-              isLoading={isLoading}
-              isDisabled={!canSubmit()}
+              onClick={handleGenerate}
+              disabled={isLoading}
+              disabled={!canSubmit()}
               className="flex-1"
-              startContent={!isLoading && <Sparkles className="w-4 h-4" />}
-            >
+              
+            >!isLoading && <Sparkles className="w-4 h-4" /> 
               {isLoading ? "Generating..." : "Generate with AI"}
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Manual Setup Option */}
       <div className="text-center">
         <Button
-          variant="light"
-          onPress={onSkip}
-          startContent={<Settings2 className="w-4 h-4" />}
+          variant="ghost"
+          onClick={onSkip}
+          
           className="text-gray-500"
-        >
+        ><Settings2 className="w-4 h-4" /> 
           Set up manually instead
         </Button>
       </div>

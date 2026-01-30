@@ -1,19 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Card,
-  CardBody,
-  ScrollShadow,
-  Switch,
-  useDisclosure,
-} from "@heroui/react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
 import { Sparkles, Wand2 } from "lucide-react";
 import { brandTemplates, type BrandTemplate } from "@/lib/brand-brain/templates";
 
@@ -23,7 +15,9 @@ interface TemplatePickerProps {
 }
 
 export function TemplatePickerButton({ brandId, onTemplateApplied }: TemplatePickerProps) {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
   const [selectedTemplate, setSelectedTemplate] = useState<BrandTemplate | null>(null);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -80,22 +74,18 @@ export function TemplatePickerButton({ brandId, onTemplateApplied }: TemplatePic
   return (
     <>
       <Button
-        color="secondary"
-        variant="flat"
-        startContent={<Wand2 className="w-4 h-4" />}
-        onPress={onOpen}
+        variant="secondary"
+        onClick={onOpen}
       >
         Apply Template
       </Button>
 
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="2xl"
-        scrollBehavior="inside"
+      <Dialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
       >
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
+        <DialogContent>
+          <DialogHeader className="flex flex-col gap-1"><DialogTitle>
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <span>Apply Brand Template</span>
@@ -103,33 +93,33 @@ export function TemplatePickerButton({ brandId, onTemplateApplied }: TemplatePic
             <p className="text-sm font-normal text-gray-500">
               Choose a business type to pre-fill your Brand Brain settings
             </p>
-          </ModalHeader>
+          </DialogTitle></DialogHeader>
 
-          <ModalBody>
-            <ScrollShadow className="max-h-[400px]">
+          <div className="py-4">
+            <div style={{overflowY:"auto"}} className="max-h-[400px]">
               <div className="grid grid-cols-3 gap-3">
                 {templates.map((template) => (
                   <Card
                     key={template.id}
-                    isPressable
-                    isHoverable
+                   
+                   
                     className={`transition-all ${
                       selectedTemplate?.id === template.id
                         ? "border-2 border-primary bg-primary/5"
                         : "border-2 border-transparent"
                     }`}
-                    onPress={() => setSelectedTemplate(template)}
+                    onClick={() => setSelectedTemplate(template)}
                   >
-                    <CardBody className="p-3 text-center">
+                    <CardContent className="p-3 text-center">
                       <span className="text-2xl mb-1 block">{template.icon}</span>
                       <p className="font-semibold text-xs text-gray-900 dark:text-white">
                         {template.name}
                       </p>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 ))}
               </div>
-            </ScrollShadow>
+            </div>
 
             {selectedTemplate && (
               <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
@@ -183,29 +173,28 @@ export function TemplatePickerButton({ brandId, onTemplateApplied }: TemplatePic
                   </div>
                   <Switch
                     size="sm"
-                    isSelected={replaceExisting}
-                    onValueChange={setReplaceExisting}
+                    checked={replaceExisting}
+                    onCheckedChange={setReplaceExisting}
                   />
                 </div>
               </div>
             )}
-          </ModalBody>
+          </div>
 
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              isDisabled={!selectedTemplate}
-              isLoading={applying}
-              onPress={handleApplyTemplate}
+              disabled={!selectedTemplate || applying}
+              onClick={handleApplyTemplate}
             >
+              {applying && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Apply Template
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

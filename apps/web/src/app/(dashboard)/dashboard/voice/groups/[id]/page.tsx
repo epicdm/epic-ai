@@ -1,26 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Chip,
-  Select,
-  SelectItem,
-  Textarea,
-  Spinner,
-  Switch,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Slider,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -224,7 +212,7 @@ export default function EditGroupPage({
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -232,7 +220,7 @@ export default function EditGroupPage({
   if (!group) {
     return (
       <Card>
-        <CardBody className="text-center py-12">
+        <CardContent className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             Group Not Found
           </h3>
@@ -240,9 +228,9 @@ export default function EditGroupPage({
             The agent group you're looking for doesn't exist.
           </p>
           <Link href="/dashboard/voice/groups">
-            <Button color="primary">Back to Groups</Button>
+            <Button >Back to Groups</Button>
           </Link>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -270,10 +258,10 @@ export default function EditGroupPage({
           </h1>
         </div>
         <div className="flex gap-2">
-          <Button color="danger" variant="light" onPress={handleDelete}>
+          <Button variant="destructive" variant="ghost" onClick={handleDelete}>
             Delete
           </Button>
-          <Button color="primary" onPress={handleSave} isLoading={saving}>
+          <Button onClick={handleSave} disabled={saving}>
             Save Changes
           </Button>
         </div>
@@ -284,7 +272,7 @@ export default function EditGroupPage({
         <CardHeader>
           <h2 className="text-lg font-semibold">Basic Information</h2>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Group Name"
@@ -296,7 +284,7 @@ export default function EditGroupPage({
 
             <Select
               label="Routing Strategy"
-              selectedKeys={[formData.routingStrategy]}
+              value={formData.routingStrategy}
               onChange={(e) => setFormData({ ...formData, routingStrategy: e.target.value })}
             >
               {ROUTING_STRATEGIES.map((strategy) => (
@@ -316,13 +304,13 @@ export default function EditGroupPage({
 
           <div className="flex items-center gap-4">
             <Switch
-              isSelected={formData.isActive}
-              onValueChange={(value) => setFormData({ ...formData, isActive: value })}
+              checked={formData.isActive}
+              onCheckedChange={(value) => setFormData({ ...formData, isActive: value })}
             >
               Group Active
             </Switch>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Members */}
@@ -330,7 +318,7 @@ export default function EditGroupPage({
         <CardHeader className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">Group Members ({formData.members.length})</h2>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {formData.members.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
               No members in this group. Add agents below.
@@ -375,16 +363,18 @@ export default function EditGroupPage({
                       </TableCell>
                       <TableCell>
                         <div className="w-32">
-                          <Slider
-                            size="sm"
-                            step={10}
-                            minValue={0}
-                            maxValue={100}
-                            value={member.weight}
-                            onChange={(value) =>
-                              updateMember(member.agentId, "weight", value as number)
-                            }
-                          />
+                          <div>
+                            <label className="text-sm font-medium">Weight</label>
+                            <input
+                              type="range"
+                              className="w-full"
+                              value={member.weight}
+                              onChange={(e) => updateMember(member.agentId, "weight", Number(e.target.value))}
+                              min={0}
+                              max={100}
+                              step={10}
+                            />
+                          </div>
                           <span className="text-xs text-gray-500">{member.weight}%</span>
                         </div>
                       </TableCell>
@@ -404,8 +394,8 @@ export default function EditGroupPage({
                       <TableCell>
                         <Switch
                           size="sm"
-                          isSelected={member.isActive}
-                          onValueChange={(value) =>
+                          checked={member.isActive}
+                          onCheckedChange={(value) =>
                             updateMember(member.agentId, "isActive", value)
                           }
                         />
@@ -413,9 +403,9 @@ export default function EditGroupPage({
                       <TableCell>
                         <Button
                           size="sm"
-                          color="danger"
-                          variant="light"
-                          onPress={() => toggleMember(member.agentId)}
+                          variant="destructive"
+                          variant="ghost"
+                          onClick={() => toggleMember(member.agentId)}
                         >
                           Remove
                         </Button>
@@ -435,19 +425,19 @@ export default function EditGroupPage({
               </p>
               <div className="flex flex-wrap gap-2">
                 {availableAgents.map((agent) => (
-                  <Chip
+                  <Badge
                     key={agent.id}
-                    variant="flat"
+                    variant="secondary"
                     className="cursor-pointer hover:bg-primary-100"
                     onClick={() => toggleMember(agent.id)}
                   >
                     + {agent.name}
-                  </Chip>
+                  </Badge>
                 ))}
               </div>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Routing Rules */}
@@ -457,12 +447,12 @@ export default function EditGroupPage({
             Associated Routing Rules ({group._count.routingRules})
           </h2>
           <Link href="/dashboard/voice/routing">
-            <Button size="sm" variant="light">
+            <Button size="sm" variant="ghost">
               Manage Rules
             </Button>
           </Link>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {group.routingRules.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
               No routing rules associated with this group.
@@ -470,13 +460,13 @@ export default function EditGroupPage({
           ) : (
             <div className="flex flex-wrap gap-2">
               {group.routingRules.map((rule) => (
-                <Chip key={rule.id} variant="flat">
+                <Badge key={rule.id} variant="secondary">
                   {rule.name}
-                </Chip>
+                </Badge>
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

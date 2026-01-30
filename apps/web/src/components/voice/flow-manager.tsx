@@ -1,30 +1,35 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
-  Chip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Spinner,
-  Dropdown,
-  DropdownTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
-  DropdownItem,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-} from "@heroui/react";
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface Flow {
   id: string;
@@ -53,17 +58,13 @@ export function FlowManager() {
   const [creating, setCreating] = useState(false);
 
   // Create flow modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newFlowName, setNewFlowName] = useState("");
   const [newFlowDescription, setNewFlowDescription] = useState("");
   const [newFlowAgentId, setNewFlowAgentId] = useState<string | null>(null);
 
   // Delete confirmation modal
-  const {
-    isOpen: isDeleteOpen,
-    onOpen: onDeleteOpen,
-    onClose: onDeleteClose,
-  } = useDisclosure();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [flowToDelete, setFlowToDelete] = useState<Flow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -125,7 +126,7 @@ export function FlowManager() {
 
       const data = await res.json();
       toast.success("Flow created successfully");
-      onClose();
+      setIsCreateOpen(false);
       setNewFlowName("");
       setNewFlowDescription("");
       setNewFlowAgentId(null);
@@ -156,7 +157,7 @@ export function FlowManager() {
 
       toast.success("Flow deleted successfully");
       setFlows((prev) => prev.filter((f) => f.id !== flowToDelete.id));
-      onDeleteClose();
+      setIsDeleteOpen(false);
       setFlowToDelete(null);
     } catch (error) {
       console.error("Error deleting flow:", error);
@@ -205,7 +206,7 @@ export function FlowManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -222,7 +223,7 @@ export function FlowManager() {
             Design visual conversation flows for your voice agents
           </p>
         </div>
-        <Button color="primary" onPress={onOpen}>
+        <Button onClick={() => setIsCreateOpen(true)}>
           Create Flow
         </Button>
       </div>
@@ -230,17 +231,17 @@ export function FlowManager() {
       {/* Flows Grid */}
       {flows.length === 0 ? (
         <Card>
-          <CardBody className="p-12 text-center">
+          <CardContent className="p-12 text-center">
             <div className="text-4xl mb-4">🔀</div>
             <h3 className="text-lg font-medium mb-2">No Conversation Flows</h3>
             <p className="text-gray-500 mb-4">
               Create your first visual conversation flow to guide how your voice
               agents handle calls.
             </p>
-            <Button color="primary" onPress={onOpen}>
+            <Button onClick={() => setIsCreateOpen(true)}>
               Create Your First Flow
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -256,58 +257,54 @@ export function FlowManager() {
                       </p>
                     )}
                   </div>
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button isIconOnly size="sm" variant="light">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
                         ⋮
                       </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu>
-                      <DropdownItem
-                        key="edit"
-                        onPress={() =>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onSelect={() =>
                           router.push(`/dashboard/voice/flows/${flow.id}`)
                         }
                       >
                         Edit Flow
-                      </DropdownItem>
-                      <DropdownItem
-                        key="publish"
-                        onPress={() => togglePublish(flow)}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => togglePublish(flow)}
                       >
                         {flow.isPublished ? "Unpublish" : "Publish"}
-                      </DropdownItem>
-                      <DropdownItem
-                        key="delete"
-                        className="text-danger"
-                        color="danger"
-                        onPress={() => {
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onSelect={() => {
                           setFlowToDelete(flow);
-                          onDeleteOpen();
+                          setIsDeleteOpen(true);
                         }}
                       >
                         Delete
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardBody>
+              <CardContent>
                 <div className="space-y-3">
                   {/* Status */}
                   <div className="flex items-center gap-2">
                     {flow.isPublished ? (
-                      <Chip color="success" size="sm" variant="flat">
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                         Published
-                      </Chip>
+                      </Badge>
                     ) : (
-                      <Chip color="warning" size="sm" variant="flat">
+                      <Badge variant="secondary">
                         Draft
-                      </Chip>
+                      </Badge>
                     )}
-                    <Chip color="default" size="sm" variant="flat">
+                    <Badge variant="outline">
                       v{flow.version}
-                    </Chip>
+                    </Badge>
                   </div>
 
                   {/* Stats */}
@@ -330,54 +327,62 @@ export function FlowManager() {
 
                   {/* Actions */}
                   <Button
-                    color="primary"
-                    variant="flat"
+                    variant="secondary"
                     className="w-full mt-2"
-                    onPress={() =>
+                    onClick={() =>
                       router.push(`/dashboard/voice/flows/${flow.id}`)
                     }
                   >
                     Open Editor
                   </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {/* Create Flow Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Create Conversation Flow</ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Conversation Flow</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Flow Name</Label>
               <Input
-                label="Flow Name"
                 placeholder="e.g., Customer Support Flow"
                 value={newFlowName}
-                onValueChange={setNewFlowName}
-                isRequired
+                onChange={(e) => setNewFlowName(e.target.value)}
+                required
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
               <Textarea
-                label="Description"
                 placeholder="Describe what this flow does..."
                 value={newFlowDescription}
-                onValueChange={setNewFlowDescription}
-                minRows={2}
+                onChange={(e) => setNewFlowDescription(e.target.value)}
+                rows={2}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Link to Agent (Optional)</Label>
               <Select
-                label="Link to Agent (Optional)"
-                placeholder="Select an agent"
-                selectedKeys={newFlowAgentId ? [newFlowAgentId] : []}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys)[0] as string;
-                  setNewFlowAgentId(selected || null);
-                }}
+                value={newFlowAgentId || ""}
+                onValueChange={(value) => setNewFlowAgentId(value || null)}
               >
-                {availableAgents.map((agent) => (
-                  <SelectItem key={agent.id}>{agent.name}</SelectItem>
-                ))}
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAgents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               {availableAgents.length === 0 && agents.length > 0 && (
                 <p className="text-sm text-gray-500">
@@ -386,39 +391,41 @@ export function FlowManager() {
                 </p>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleCreate} isLoading={creating}>
+            <Button onClick={handleCreate} disabled={creating}>
               Create Flow
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
-        <ModalContent>
-          <ModalHeader>Delete Flow</ModalHeader>
-          <ModalBody>
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Flow</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
             <p>
               Are you sure you want to delete{" "}
               <strong>{flowToDelete?.name}</strong>? This action cannot be
               undone.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onDeleteClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)}>
               Cancel
             </Button>
-            <Button color="danger" onPress={handleDelete} isLoading={deleting}>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

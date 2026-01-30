@@ -1,7 +1,9 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Button, Card, CardBody, Chip } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Plus as PlusIcon,
   ArrowRight as ArrowRightIcon,
@@ -9,6 +11,7 @@ import {
   Play as PlayIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export interface EmptyStateAction {
   label: string;
@@ -48,36 +51,51 @@ export function EmptyState({
 
     return (
       <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 mt-6 w-full sm:w-auto">
-        {actions.map((action, index) => (
-          <Button
-            key={index}
-            color={action.variant === "primary" ? "primary" : "default"}
-            variant={action.variant === "secondary" ? "bordered" : "solid"}
-            size={variant === "compact" ? "sm" : "md"}
-            className={cn(
-              "w-full sm:w-auto",
-              variant !== "compact" && "min-w-[160px]"
-            )}
-            startContent={
-              action.icon || (action.variant === "primary" ? <PlusIcon className="w-4 h-4" /> : null)
-            }
-            endContent={action.variant !== "primary" ? <ArrowRightIcon className="w-4 h-4" /> : null}
-            onPress={action.onClick}
-            as={action.href ? "a" : "button"}
-            href={action.href}
-          >
-            {action.label}
-          </Button>
-        ))}
+        {actions.map((action, index) => {
+          const buttonVariant = action.variant === "secondary" ? "outline" : "default";
+          const buttonSize = variant === "compact" ? "sm" : "default";
+          const buttonContent = (
+            <>
+              {action.icon || (action.variant === "primary" ? <PlusIcon className="w-4 h-4 mr-2" /> : null)}
+              {action.label}
+              {action.variant !== "primary" ? <ArrowRightIcon className="w-4 h-4 ml-2" /> : null}
+            </>
+          );
+
+          if (action.href) {
+            return (
+              <Button
+                key={index}
+                variant={buttonVariant}
+                size={buttonSize}
+                className={cn("w-full sm:w-auto", variant !== "compact" && "min-w-[160px]")}
+                asChild
+              >
+                <Link href={action.href}>{buttonContent}</Link>
+              </Button>
+            );
+          }
+
+          return (
+            <Button
+              key={index}
+              variant={buttonVariant}
+              size={buttonSize}
+              className={cn("w-full sm:w-auto", variant !== "compact" && "min-w-[160px]")}
+              onClick={action.onClick}
+            >
+              {buttonContent}
+            </Button>
+          );
+        })}
         {showDemo && onStartDemo && (
           <Button
-            variant="flat"
-            color="secondary"
-            size={variant === "compact" ? "sm" : "md"}
+            variant="secondary"
+            size={variant === "compact" ? "sm" : "default"}
             className="w-full sm:w-auto"
-            startContent={<PlayIcon className="w-4 h-4" />}
-            onPress={onStartDemo}
+            onClick={onStartDemo}
           >
+            <PlayIcon className="w-4 h-4 mr-2" />
             Try Demo Mode
           </Button>
         )}
@@ -91,15 +109,10 @@ export function EmptyState({
     return (
       <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
         {features.map((feature, index) => (
-          <Chip
-            key={index}
-            size="sm"
-            variant="flat"
-            color="default"
-            startContent={<SparklesIcon className="w-3 h-3" />}
-          >
+          <Badge key={index} variant="secondary">
+            <SparklesIcon className="w-3 h-3 mr-1" />
             {feature}
-          </Chip>
+          </Badge>
         ))}
       </div>
     );
@@ -109,11 +122,11 @@ export function EmptyState({
     <>
       {icon && (
         <div className={cn(
-          "mx-auto mb-4 flex items-center justify-center rounded-full bg-default-100",
+          "mx-auto mb-4 flex items-center justify-center rounded-full bg-muted",
           variant === "compact" ? "w-12 h-12" : "w-14 h-14 sm:w-16 sm:h-16"
         )}>
           <div className={cn(
-            "text-default-500",
+            "text-muted-foreground",
             variant === "compact" ? "w-6 h-6" : "w-7 h-7 sm:w-8 sm:h-8"
           )}>
             {icon}
@@ -127,7 +140,7 @@ export function EmptyState({
         {title}
       </h3>
       <p className={cn(
-        "text-default-500 text-center mt-2 max-w-md mx-auto px-4",
+        "text-muted-foreground text-center mt-2 max-w-md mx-auto px-4",
         variant === "compact" ? "text-sm" : "text-sm sm:text-base"
       )}>
         {description}
@@ -141,9 +154,9 @@ export function EmptyState({
   if (variant === "card") {
     return (
       <Card className={cn("w-full", className)}>
-        <CardBody className="py-8 px-4 sm:py-12 sm:px-8">
+        <CardContent className="py-8 px-4 sm:py-12 sm:px-8">
           {content}
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }

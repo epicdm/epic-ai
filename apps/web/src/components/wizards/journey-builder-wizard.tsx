@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
-import { Button, Card, CardBody, Select, SelectItem, Textarea } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics/track";
 
@@ -15,25 +18,24 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Journey Type</h3>
-          <Select 
-            label="Select journey type"
-            selectedKeys={[journeyType]}
-            onSelectionChange={(keys) => setJourneyType(Array.from(keys)[0] as string)}
-          >
-            <SelectItem key="onboarding">Customer Onboarding</SelectItem>
-            <SelectItem key="education">Lead Education</SelectItem>
-            <SelectItem key="retention">Customer Retention</SelectItem>
-            <SelectItem key="custom">Custom Journey</SelectItem>
-          </Select>
+          <Select value={journeyType} onValueChange={(v: string) => setJourneyType(v)}>
+              <SelectTrigger><SelectValue placeholder="Select journey type" /></SelectTrigger>
+              <SelectContent>
+            <SelectItem value="onboarding">Customer Onboarding</SelectItem>
+            <SelectItem value="education">Lead Education</SelectItem>
+            <SelectItem value="retention">Customer Retention</SelectItem>
+            <SelectItem value="custom">Custom Journey</SelectItem>
+          </SelectContent>
+            </Select>
           <Button 
-            onPress={() => onComplete({ journeyType })}
-            isDisabled={!journeyType}
+            onClick={() => onComplete({ journeyType })}
+            disabled={!journeyType}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -44,7 +46,7 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Touchpoints</h3>
           <Textarea 
             label="Touchpoints JSON" 
@@ -52,12 +54,12 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
             onChange={(e) => setTouchpoints(JSON.parse(e.target.value))}
           />
           <Button 
-            onPress={() => onComplete({ touchpoints })}
-            isDisabled={!touchpoints.length}
+            onClick={() => onComplete({ touchpoints })}
+            disabled={!touchpoints.length}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -68,7 +70,7 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Triggers</h3>
           <Textarea 
             label="Triggers JSON" 
@@ -76,12 +78,12 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
             onChange={(e) => setTriggers(JSON.parse(e.target.value))}
           />
           <Button 
-            onPress={() => onComplete({ triggers })}
-            isDisabled={!triggers.length}
+            onClick={() => onComplete({ triggers })}
+            disabled={!triggers.length}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -90,12 +92,12 @@ export function JourneyBuilderWizard({ brandId }: { brandId: string }) {
   const ActivateStep = ({ onComplete }: { onComplete: (data: any) => void }) => {
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Activate Journey</h3>
-          <Button onPress={() => onComplete({ status: "active" })}>
+          <Button onClick={() => onComplete({ status: "active" })}>
             Activate
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Spinner, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { ArrowLeft as ArrowLeftIcon } from "lucide-react";
@@ -12,7 +12,7 @@ const UsageDashboard = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     ),
   }
@@ -28,10 +28,10 @@ export function UsagePageClient() {
           <Button
             as={Link}
             href="/dashboard/settings"
-            variant="bordered"
+            variant="outline"
             size="sm"
-            startContent={<ArrowLeftIcon className="w-4 h-4" />}
-          >
+            
+          ><ArrowLeftIcon className="w-4 h-4" /> 
             Back to Settings
           </Button>
         }

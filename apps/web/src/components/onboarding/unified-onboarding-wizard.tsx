@@ -11,22 +11,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Button,
-  Input,
-  Textarea,
-  Card,
-  CardBody,
-  ScrollShadow,
-  Chip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Tooltip,
-  Divider,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -745,16 +736,16 @@ function AgentTypeStep({
             {recommendedOptions.map((option) => (
               <Card
                 key={option.id}
-                isPressable
-                isHoverable
+                className="cursor-pointer"
+                
                 className={`transition-all ${
                   selectedAgentType === option.id
                     ? "border-2 border-primary bg-primary/5"
                     : "border-2 border-transparent"
                 }`}
-                onPress={() => handleAgentTypeSelect(option.id)}
+                onClick={() => handleAgentTypeSelect(option.id)}
               >
-                <CardBody className="flex flex-row items-center gap-4 p-4">
+                <CardContent className="flex flex-row items-center gap-4 p-4">
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       selectedAgentType === option.id
@@ -767,14 +758,14 @@ function AgentTypeStep({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-gray-900 dark:text-white">{option.title}</p>
-                      <Chip size="sm" color="primary" variant="flat">Recommended</Chip>
+                      <Badge   variant="secondary">Recommended</Badge>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{option.description}</p>
                   </div>
                   {selectedAgentType === option.id && (
                     <CheckCircleIcon className="w-6 h-6 text-primary" />
                   )}
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -785,16 +776,16 @@ function AgentTypeStep({
               {otherOptions.map((option) => (
                 <Card
                   key={option.id}
-                  isPressable
-                  isHoverable
+                  className="cursor-pointer"
+                  
                   className={`transition-all ${
                     selectedAgentType === option.id
                       ? "border-2 border-primary bg-primary/5"
                       : "border-2 border-transparent"
                   }`}
-                  onPress={() => handleAgentTypeSelect(option.id)}
+                  onClick={() => handleAgentTypeSelect(option.id)}
                 >
-                  <CardBody className="flex flex-row items-center gap-4 p-4">
+                  <CardContent className="flex flex-row items-center gap-4 p-4">
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center ${
                         selectedAgentType === option.id
@@ -811,7 +802,7 @@ function AgentTypeStep({
                     {selectedAgentType === option.id && (
                       <CheckCircleIcon className="w-6 h-6 text-primary" />
                     )}
-                  </CardBody>
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -1186,7 +1177,7 @@ function BusinessInfoStep({
           {/* Quick Setup with Facebook - PROMINENT at top */}
           <div className="mb-6">
             <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0">
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-white/20 rounded-full p-3">
                     <FacebookIcon className="w-8 h-8 text-white" />
@@ -1202,13 +1193,13 @@ function BusinessInfoStep({
                   <Button
                     size="lg"
                     className="bg-white text-blue-600 font-semibold hover:bg-white/90"
-                    isLoading={facebookConnecting}
-                    onPress={handleQuickFacebookConnect}
+                    disabled={facebookConnecting}
+                    onClick={handleQuickFacebookConnect}
                   >
                     {facebookConnecting ? 'Connecting...' : 'Connect Facebook'}
                   </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
 
@@ -1218,7 +1209,7 @@ function BusinessInfoStep({
             <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
           </div>
 
-          <ScrollShadow className="max-h-[280px]">
+          <div className="max-h-[280px]" className="overflow-auto">
             <div className="grid grid-cols-2 gap-3">
               {brandTemplates.map((template) => {
                 const recommendation = getRecommendedTemplatesForGoal(selectedGoal)
@@ -1227,12 +1218,12 @@ function BusinessInfoStep({
                 return (
                   <Card 
                     key={template.id}
-                    isPressable
-                    isHoverable
+                    className="cursor-pointer"
+                    
                     className={`transition-all ${selectedTemplate?.id === template.id ? "border-2 border-primary bg-primary/5" : "border-2 border-transparent"}`}
-                    onPress={() => handleTemplatePreview(template)}
+                    onClick={() => handleTemplatePreview(template)}
                   >
-                    <CardBody className="flex flex-col gap-2">
+                    <CardContent className="flex flex-col gap-2">
                       <div className="flex items-start justify-between">
                         <span className="text-2xl">{template.icon}</span>
                         {recommendation && (
@@ -1249,33 +1240,31 @@ function BusinessInfoStep({
                       <p className="text-sm text-muted-foreground">{template.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {template.tags?.map((tag) => (
-                          <Chip key={tag} size="sm" variant="flat">
+                          <Badge key={tag}  variant="secondary">
                             {tag}
-                          </Chip>
+                          </Badge>
                         ))}
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 );
               })}
             </div>
-          </ScrollShadow>
+          </div>
 
           <p className="text-xs text-center text-gray-500 mt-4">
             You can customize everything later!
           </p>
 
           {/* Template Preview Modal */}
-          <Modal
-            isOpen={showPreviewModal}
-            onClose={handleClosePreview}
-            size="2xl"
-            scrollBehavior="inside"
+          <Dialog
+            open={showPreviewModal}
+            onOpenChange={(open) => { if (!open) handleClosePreview(); }}
           >
-            <ModalContent>
+            <DialogContent>
               {previewTemplate && (
                 <>
-                  <ModalHeader className="flex flex-col gap-1 pb-0">
+                  <DialogHeader className="flex flex-col gap-1 pb-0"><DialogTitle>
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{previewTemplate.icon}</span>
                       <div>
@@ -1283,8 +1272,8 @@ function BusinessInfoStep({
                         <p className="text-sm text-gray-500 font-normal">{previewTemplate.description}</p>
                       </div>
                     </div>
-                  </ModalHeader>
-                  <ModalBody className="py-4">
+                  </DialogTitle></DialogHeader>
+                  <div className="py-4">
                     {/* Voice & Tone Section */}
                     <div className="space-y-4">
                       <div>
@@ -1312,7 +1301,7 @@ function BusinessInfoStep({
                         </div>
                       </div>
 
-                      <Divider />
+                      <div className="border-t my-4" />
 
                       {/* Sample Content Section */}
                       <div>
@@ -1332,7 +1321,7 @@ function BusinessInfoStep({
                         </div>
                       </div>
 
-                      <Divider />
+                      <div className="border-t my-4" />
 
                       {/* Content Pillars Section */}
                       {previewTemplate.contentPillars && previewTemplate.contentPillars.length > 0 && (
@@ -1343,9 +1332,9 @@ function BusinessInfoStep({
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {previewTemplate.contentPillars.map((pillar, idx) => (
-                              <Chip key={idx} size="sm" variant="flat" color="primary">
+                              <Badge key={idx}  variant="secondary" >
                                 {pillar}
-                              </Chip>
+                              </Badge>
                             ))}
                           </div>
                         </div>
@@ -1360,15 +1349,15 @@ function BusinessInfoStep({
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {previewTemplate.targetAudience.demographics.map((audience, idx) => (
-                              <Chip key={idx} size="sm" variant="flat" color="secondary">
+                              <Badge key={idx} variant="secondary">
                                 {audience}
-                              </Chip>
+                              </Badge>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      <Divider />
+                      <div className="border-t my-4" />
 
                       {/* Recommended Channels Section */}
                       <div>
@@ -1399,14 +1388,14 @@ function BusinessInfoStep({
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2">
                                         <span className="text-sm font-medium">{config.label}</span>
-                                        <Chip
-                                          size="sm"
-                                          variant="flat"
+                                        <Badge
+                                          
+                                          variant="secondary"
                                           color={rec.priority === 'high' ? 'success' : rec.priority === 'medium' ? 'warning' : 'default'}
                                           className="h-5 text-xs"
                                         >
                                           {rec.priority === 'high' ? 'Recommended' : rec.priority === 'medium' ? 'Good fit' : 'Optional'}
-                                        </Chip>
+                                        </Badge>
                                       </div>
                                       <p className="text-xs text-gray-500 mt-0.5">{rec.reason}</p>
                                     </div>
@@ -1418,26 +1407,25 @@ function BusinessInfoStep({
                         })()}
                       </div>
                     </div>
-                  </ModalBody>
-                  <ModalFooter>
+                  </div>
+                  <DialogFooter>
                     <Button
-                      variant="flat"
-                      onPress={handleClosePreview}
+                      variant="secondary"
+                      onClick={handleClosePreview}
                     >
                       Show Me Others
                     </Button>
                     <Button
-                      color="primary"
-                      onPress={handleConfirmTemplate}
-                      startContent={<CheckCircleIcon className="w-4 h-4" />}
-                    >
+                      onClick={handleConfirmTemplate}
+                      
+                    ><CheckCircleIcon className="w-4 h-4" /> 
                       This Looks Right
                     </Button>
-                  </ModalFooter>
+                  </DialogFooter>
                 </>
               )}
-            </ModalContent>
-          </Modal>
+            </DialogContent>
+          </Dialog>
         </WizardStepContent>
       </WizardStepContainer>
     );
@@ -1466,8 +1454,8 @@ function BusinessInfoStep({
             </div>
             <Button
               size="sm"
-              variant="flat"
-              onPress={() => setShowForm(false)}
+              variant="secondary"
+              onClick={() => setShowForm(false)}
             >
               Change
             </Button>
@@ -1478,8 +1466,8 @@ function BusinessInfoStep({
           label="Organization Name"
           placeholder="Acme Inc."
           {...form.register("organizationName")}
-          isInvalid={!!form.formState.errors.organizationName}
-          errorMessage={form.formState.errors.organizationName?.message}
+          
+          
           autoFocus
         />
 
@@ -1487,17 +1475,17 @@ function BusinessInfoStep({
           label="Brand Name"
           placeholder="My Awesome Brand"
           {...form.register("brandName")}
-          isInvalid={!!form.formState.errors.brandName}
-          errorMessage={form.formState.errors.brandName?.message}
+          
+          
         />
 
         <Input
           label="Website URL (Optional - helps AI setup)"
           placeholder="https://example.com"
           {...form.register("website")}
-          isInvalid={!!form.formState.errors.website}
-          errorMessage={form.formState.errors.website?.message}
-          description="If provided, AI can analyze your website for faster setup"
+          
+          
+          
         />
 
         <Textarea
@@ -1505,9 +1493,7 @@ function BusinessInfoStep({
           placeholder="Paste key details, offers, or a short brand brief..."
           minRows={4}
           {...form.register("brandNotes")}
-          isInvalid={!!form.formState.errors.brandNotes}
-          errorMessage={form.formState.errors.brandNotes?.message}
-          description="We’ll use this to enrich your Brand Brain and tailor the agent recommendations."
+                              description="We’ll use this to enrich your Brand Brain and tailor the agent recommendations."
         />
 
         {/* Social Connection Option */}
@@ -1521,11 +1507,11 @@ function BusinessInfoStep({
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="flat"
+              variant="secondary"
               className={`flex-1 ${localConnectedAccounts.includes('facebook') ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-              startContent={localConnectedAccounts.includes('facebook') ? <CheckIcon className="w-4 h-4" /> : <FacebookIcon className="w-4 h-4" />}
-              isDisabled={isLoading || localConnectedAccounts.includes('facebook')}
-              onPress={async () => {
+              
+              disabled={isLoading || localConnectedAccounts.includes('facebook')}
+              onClick={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
                 if (!isValid) return;
@@ -1591,15 +1577,16 @@ function BusinessInfoStep({
                 }
               }}
             >
+              {localConnectedAccounts.includes('facebook') ? <CheckIcon className="w-4 h-4 mr-1" /> : <FacebookIcon className="w-4 h-4 mr-1" />}
               {localConnectedAccounts.includes('facebook') ? 'Connected' : 'Facebook'}
             </Button>
             <Button
               size="sm"
-              variant="flat"
+              variant="secondary"
               className={`flex-1 ${localConnectedAccounts.includes('instagram') ? 'bg-green-600 text-white' : 'bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white'}`}
-              startContent={localConnectedAccounts.includes('instagram') ? <CheckIcon className="w-4 h-4" /> : <InstagramIcon className="w-4 h-4" />}
-              isDisabled={isLoading || localConnectedAccounts.includes('instagram')}
-              onPress={async () => {
+              
+              disabled={isLoading || localConnectedAccounts.includes('instagram')}
+              onClick={async () => {
                 // Validate and submit form first to create brand
                 const isValid = await form.trigger();
                 if (!isValid) return;
@@ -1665,6 +1652,7 @@ function BusinessInfoStep({
                 }
               }}
             >
+              {localConnectedAccounts.includes('instagram') ? <CheckIcon className="w-4 h-4 mr-1" /> : <InstagramIcon className="w-4 h-4 mr-1" />}
               {localConnectedAccounts.includes('instagram') ? 'Connected' : 'Instagram'}
             </Button>
           </div>
@@ -1774,7 +1762,7 @@ function AgentSetupStep({
 
           {agentConfig?.template && (
             <Card>
-              <CardBody className="space-y-2">
+              <CardContent className="space-y-2">
                 <p className="font-semibold text-gray-900 dark:text-white">
                   Template: {agentConfig.template.name}
                 </p>
@@ -1783,12 +1771,12 @@ function AgentSetupStep({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {agentConfig.template.features.map((feature) => (
-                    <Chip key={feature} size="sm" color="primary" variant="flat">
+                    <Badge key={feature}   variant="secondary">
                       {feature}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -1800,25 +1788,24 @@ function AgentSetupStep({
 
           <div className="flex flex-col gap-2">
             <Button
-              color="primary"
-              onPress={handleCreate}
-              isLoading={isCreating}
-              isDisabled={!brandId || !selectedAgentTemplateId}
+              onClick={handleCreate}
+              disabled={isCreating}
+              disabled={!brandId || !selectedAgentTemplateId}
             >
               Create agent with AI defaults
             </Button>
             <Button
-              variant="bordered"
-              onPress={onProvisionPhone}
-              isLoading={isProvisioning}
-              isDisabled={!createdAgentId}
+              variant="outline"
+              onClick={onProvisionPhone}
+              disabled={isProvisioning}
+              disabled={!createdAgentId}
             >
               Provision phone number
             </Button>
             <Button
-              variant="light"
-              onPress={onSkipAgent}
-              isDisabled={isCreating || isProvisioning}
+              variant="ghost"
+              onClick={onSkipAgent}
+              disabled={isCreating || isProvisioning}
             >
               Skip for now
             </Button>
@@ -1837,12 +1824,12 @@ function AgentSetupStep({
               <p className="text-sm font-medium text-gray-900 dark:text-white">Connect required tools</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {agentConfig.requiredTools.includes("calendar") && (
-                  <Button size="sm" variant="bordered" onPress={() => window.open("/dashboard/calendar", "_blank")}>
+                  <Button size="sm" variant="outline" onClick={() => window.open("/dashboard/calendar", "_blank")}>
                     Connect calendar
                   </Button>
                 )}
                 {agentConfig.requiredTools.includes("leads") && (
-                  <Button size="sm" variant="bordered" onPress={() => window.open("/dashboard/leads", "_blank")}>
+                  <Button size="sm" variant="outline" onClick={() => window.open("/dashboard/leads", "_blank")}>
                     Connect CRM
                   </Button>
                 )}
@@ -1906,9 +1893,9 @@ function ChannelSelectionStep({
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {lockedTools?.map((tool) => (
-                  <Chip key={tool} size="sm" color="primary" variant="flat">
+                  <Badge key={tool}   variant="secondary">
                     {tool.replace("_", " ")}
-                  </Chip>
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -1918,9 +1905,9 @@ function ChannelSelectionStep({
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {lockedChannels.map((channel) => (
-                  <Chip key={channel} size="sm" color="success" variant="flat">
+                  <Badge key={channel}  variant="outline" variant="secondary">
                     {channel.toUpperCase()}
-                  </Chip>
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -2034,16 +2021,16 @@ function PathSelectionStep({
           {getPathOptions().map((option) => (
             <Card
               key={option.id}
-              isPressable
-              isHoverable
+              className="cursor-pointer"
+              
               className={`transition-all ${
                 selectedPath === option.id
                   ? "border-2 border-primary bg-primary/5"
                   : "border-2 border-transparent"
               } ${option.recommended ? "ring-2 ring-primary/20" : ""}`}
-              onPress={() => handlePathSelect(option.id)}
+              onClick={() => handlePathSelect(option.id)}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -2060,9 +2047,9 @@ function PathSelectionStep({
                         {option.title}
                       </p>
                       {option.recommended && (
-                        <Chip size="sm" color="primary" variant="flat">
+                        <Badge   variant="secondary">
                           Recommended
-                        </Chip>
+                        </Badge>
                       )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -2090,7 +2077,7 @@ function PathSelectionStep({
                     <CheckCircleIcon className="w-6 h-6 text-primary flex-shrink-0" />
                   )}
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>

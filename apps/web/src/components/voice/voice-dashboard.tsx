@@ -2,30 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Card,
-  CardBody,
-  Button,
-  Chip,
-  Spinner,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import {
   Tooltip,
-  Checkbox,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  RadioGroup,
-  Radio,
-  useDisclosure,
-} from "@heroui/react";
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DemoIndicator } from "@/components/demo";
 import { useDemo } from "@/lib/demo";
 import { PricingTooltip, PRICING } from "@/components/ui/cost-estimator";
-import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3, Trash2, AlertTriangle, X, Info } from "lucide-react";
+import { Phone, Plus, Bot, Clock, TrendingUp, DollarSign, BarChart3, Trash2, AlertTriangle, X, Info, Loader2 } from "lucide-react";
 
 interface VoiceAgent {
   id: string;
@@ -60,7 +62,7 @@ export function VoiceDashboard() {
   const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [deletePhoneOption, setDeletePhoneOption] = useState<"pool" | "release">("pool");
-  const { isOpen: isBulkDeleteOpen, onOpen: onBulkDeleteOpen, onClose: onBulkDeleteClose } = useDisclosure();
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
   const selectedAgents = agents.filter(a => selectedAgentIds.has(a.id));
   const totalPhoneNumbers = selectedAgents.reduce((acc, a) => acc + a.phoneNumbers.length, 0);
@@ -120,7 +122,7 @@ export function VoiceDashboard() {
       }
 
       setSelectedAgentIds(new Set());
-      onBulkDeleteClose();
+      setIsBulkDeleteOpen(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete agents");
@@ -135,7 +137,6 @@ export function VoiceDashboard() {
   }, []);
 
   useEffect(() => {
-    // If in demo mode, use demo data
     if (isDemo && demoData) {
       const demoAgent = demoData.voiceAgent as unknown as VoiceAgent;
       setAgents(demoAgent ? [demoAgent] : []);
@@ -147,7 +148,6 @@ export function VoiceDashboard() {
     async function fetchData() {
       try {
         console.log("[VoiceDashboard] Fetching agents and stats...");
-        // Fetch agents and stats in parallel
         const [agentsRes, statsRes] = await Promise.all([
           fetch("/api/voice/agents"),
           fetch("/api/voice/stats"),
@@ -180,11 +180,10 @@ export function VoiceDashboard() {
     fetchData();
   }, [isDemo, demoData]);
 
-  // Show loading state until mounted to prevent hydration mismatch
   if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -200,14 +199,11 @@ export function VoiceDashboard() {
         }
         description="Manage your AI voice agents for automated phone calls."
         actions={
-          <Button
-            as={Link}
-            href="/dashboard/voice/agents/new"
-            color="primary"
-            startContent={<Plus className="w-4 h-4" />}
-            isDisabled={isDemo}
-          >
-            Create Agent
+          <Button disabled={isDemo} asChild>
+            <Link href="/dashboard/voice/agents/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Agent
+            </Link>
           </Button>
         }
       />
@@ -215,7 +211,7 @@ export function VoiceDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
         <Card>
-          <CardBody className="p-4 md:p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <Bot className="w-4 h-4 md:w-5 md:h-5 text-blue-600 dark:text-blue-400" />
@@ -227,11 +223,11 @@ export function VoiceDashboard() {
                 <p className="text-xs md:text-sm text-gray-500">Agents</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-4 md:p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <Phone className="w-4 h-4 md:w-5 md:h-5 text-green-600 dark:text-green-400" />
@@ -243,11 +239,11 @@ export function VoiceDashboard() {
                 <p className="text-xs md:text-sm text-gray-500">Calls</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-4 md:p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                 <Clock className="w-4 h-4 md:w-5 md:h-5 text-purple-600 dark:text-purple-400" />
@@ -263,11 +259,11 @@ export function VoiceDashboard() {
                 <p className="text-xs md:text-sm text-gray-500">Minutes</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-4 md:p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-orange-600 dark:text-orange-400" />
@@ -279,12 +275,12 @@ export function VoiceDashboard() {
                 <p className="text-xs md:text-sm text-gray-500">Success</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Cost Card */}
         <Card className="col-span-2 md:col-span-1 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800">
-          <CardBody className="p-4 md:p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-200 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-amber-700 dark:text-amber-400" />
@@ -294,57 +290,59 @@ export function VoiceDashboard() {
                   <p className="text-xl md:text-2xl font-bold text-amber-800 dark:text-amber-300">
                     ${(stats?.totalCost || 0).toFixed(2)}
                   </p>
-                  <Tooltip content={
-                    <div className="p-2 space-y-1">
-                      <p className="font-medium">Voice AI Pricing</p>
-                      <p className="text-sm">${PRICING.voice.perMinute.toFixed(2)}/minute</p>
-                      <p className="text-xs text-default-500">Includes STT, LLM, TTS & telephony</p>
-                    </div>
-                  }>
-                    <Info className="w-4 h-4 text-amber-600 cursor-help" />
-                  </Tooltip>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-amber-600 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="p-2 space-y-1">
+                          <p className="font-medium">Voice AI Pricing</p>
+                          <p className="text-sm">${PRICING.voice.perMinute.toFixed(2)}/minute</p>
+                          <p className="text-xs text-muted-foreground">Includes STT, LLM, TTS & telephony</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <p className="text-xs md:text-sm text-amber-700 dark:text-amber-500">This Month</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Cost Transparency Banner */}
-      <Card className="bg-default-50 dark:bg-default-100/10">
-        <CardBody className="p-4">
+      <Card className="bg-gray-50 dark:bg-gray-900/50">
+        <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                <BarChart3 className="w-5 h-5 text-primary-600" />
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="font-medium text-sm">Voice calls cost ${PRICING.voice.perMinute.toFixed(2)}/minute</p>
-                <p className="text-xs text-default-500">
+                <p className="text-xs text-muted-foreground">
                   View detailed breakdown of your voice AI usage and spending
                 </p>
               </div>
             </div>
-            <Button
-              as={Link}
-              href="/dashboard/settings/usage"
-              size="sm"
-              variant="flat"
-              endContent={<DollarSign className="w-4 h-4" />}
-            >
-              View Usage
+            <Button variant="secondary" size="sm" asChild>
+              <Link href="/dashboard/settings/usage">
+                View Usage
+                <DollarSign className="w-4 h-4 ml-2" />
+              </Link>
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Agents List */}
       {error ? (
         <Card>
-          <CardBody className="p-6 text-center">
+          <CardContent className="p-6 text-center">
             <p className="text-red-500">{error}</p>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : agents.length === 0 ? (
         <EmptyState
@@ -366,7 +364,6 @@ export function VoiceDashboard() {
           ]}
           showDemo
           onStartDemo={() => {
-            // Navigate to demo mode setup
             window.location.href = "/onboarding?demo=true&goal=voice";
           }}
           variant="card"
@@ -380,8 +377,8 @@ export function VoiceDashboard() {
             {agents.length > 1 && (
               <Button
                 size="sm"
-                variant="flat"
-                onPress={toggleSelectAll}
+                variant="secondary"
+                onClick={toggleSelectAll}
               >
                 {selectedAgentIds.size === agents.length ? "Deselect All" : "Select All"}
               </Button>
@@ -390,40 +387,40 @@ export function VoiceDashboard() {
 
           {/* Bulk Action Bar */}
           {selectedAgentIds.size > 0 && (
-            <Card className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
-              <CardBody className="p-4">
+            <Card className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-primary-800 dark:text-primary-300">
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
                       {selectedAgentIds.size} agent{selectedAgentIds.size > 1 ? "s" : ""} selected
                     </span>
                     {totalPhoneNumbers > 0 && (
-                      <Chip size="sm" variant="flat" color="warning">
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                         {totalPhoneNumbers} phone number{totalPhoneNumbers > 1 ? "s" : ""}
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      variant="flat"
-                      onPress={clearSelection}
-                      startContent={<X className="w-4 h-4" />}
+                      variant="secondary"
+                      onClick={clearSelection}
                     >
+                      <X className="w-4 h-4 mr-2" />
                       Clear
                     </Button>
                     <Button
                       size="sm"
-                      color="danger"
-                      onPress={onBulkDeleteOpen}
-                      startContent={<Trash2 className="w-4 h-4" />}
-                      isDisabled={isDemo}
+                      variant="destructive"
+                      onClick={() => setIsBulkDeleteOpen(true)}
+                      disabled={isDemo}
                     >
+                      <Trash2 className="w-4 h-4 mr-2" />
                       Delete Selected
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -436,38 +433,31 @@ export function VoiceDashboard() {
                   onClick={(e) => toggleAgentSelection(agent.id, e)}
                 >
                   <Checkbox
-                    isSelected={selectedAgentIds.has(agent.id)}
-                    onValueChange={() => {}}
-                    classNames={{
-                      wrapper: "bg-white/90 dark:bg-gray-800/90 rounded shadow-sm",
-                    }}
+                    checked={selectedAgentIds.has(agent.id)}
+                    onCheckedChange={() => {}}
+                    className="bg-white/90 dark:bg-gray-800/90 rounded shadow-sm"
                   />
                 </div>
                 <Link href={`/dashboard/voice/agents/${agent.id}`}>
                   <Card
-                    isPressable
-                    className={`h-full hover:shadow-md transition-shadow ${
-                      selectedAgentIds.has(agent.id) ? "ring-2 ring-primary-500" : ""
+                    className={`h-full hover:shadow-md transition-shadow cursor-pointer ${
+                      selectedAgentIds.has(agent.id) ? "ring-2 ring-blue-500" : ""
                     }`}
                   >
-                    <CardBody className="p-6 pl-12">
+                    <CardContent className="p-6 pl-12">
                       <div className="flex items-start justify-between mb-4">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                           <Bot className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex gap-2">
                           {agent.isDeployed && (
-                            <Chip size="sm" color="success" variant="flat">
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                               Live
-                            </Chip>
+                            </Badge>
                           )}
-                          <Chip
-                            size="sm"
-                            color={agent.isActive ? "primary" : "default"}
-                            variant="flat"
-                          >
+                          <Badge variant={agent.isActive ? "default" : "secondary"}>
                             {agent.isActive ? "Active" : "Inactive"}
-                          </Chip>
+                          </Badge>
                         </div>
                       </div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
@@ -480,7 +470,7 @@ export function VoiceDashboard() {
                         <span>{agent._count.calls} calls</span>
                         <span>{agent.phoneNumbers.length} numbers</span>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 </Link>
               </div>
@@ -492,8 +482,8 @@ export function VoiceDashboard() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Link href="/dashboard/voice/calls">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <Phone className="w-8 h-8 mx-auto mb-3 text-gray-400" />
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Call History
@@ -501,13 +491,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 View all call logs and recordings
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/numbers">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">📞</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Phone Numbers
@@ -515,13 +505,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 Manage your phone numbers
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/knowledge-bases">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">📚</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Knowledge Bases
@@ -529,13 +519,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 RAG documents for agents
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/flows">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">🔀</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Conversation Flows
@@ -543,13 +533,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 Visual flow designer
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/groups">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">👥</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Agent Groups
@@ -557,13 +547,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 Organize agents for routing
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/routing">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">🔄</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Routing Rules
@@ -571,13 +561,13 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 Configure call routing
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/voice/test">
-          <Card isPressable className="hover:shadow-md transition-shadow">
-            <CardBody className="p-6 text-center">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
               <span className="text-3xl block mb-3">🧪</span>
               <h3 className="font-medium text-gray-900 dark:text-white">
                 Test Console
@@ -585,24 +575,26 @@ export function VoiceDashboard() {
               <p className="text-sm text-gray-500 mt-1">
                 Test agents in your browser
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
       </div>
 
       {/* Bulk Delete Modal */}
-      <Modal isOpen={isBulkDeleteOpen} onClose={onBulkDeleteClose} size="lg">
-        <ModalContent>
-          <ModalHeader className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Delete {selectedAgentIds.size} Agent{selectedAgentIds.size > 1 ? "s" : ""}</h3>
-              <p className="text-sm text-gray-500 font-normal">This action cannot be undone</p>
-            </div>
-          </ModalHeader>
-          <ModalBody>
+      <Dialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">Delete {selectedAgentIds.size} Agent{selectedAgentIds.size > 1 ? "s" : ""}</div>
+                <p className="text-sm text-gray-500 font-normal">This action cannot be undone</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               Are you sure you want to delete the following agent{selectedAgentIds.size > 1 ? "s" : ""}?
             </p>
@@ -618,9 +610,9 @@ export function VoiceDashboard() {
                     <span className="font-medium">{agent.name}</span>
                   </div>
                   {agent.phoneNumbers.length > 0 && (
-                    <Chip size="sm" variant="flat">
+                    <Badge variant="secondary">
                       {agent.phoneNumbers.length} number{agent.phoneNumbers.length > 1 ? "s" : ""}
-                    </Chip>
+                    </Badge>
                   )}
                 </div>
               ))}
@@ -640,16 +632,20 @@ export function VoiceDashboard() {
                   onValueChange={(value) => setDeletePhoneOption(value as "pool" | "release")}
                   className="gap-3"
                 >
-                  <Radio value="pool" description="Numbers remain available for other agents">
-                    Return to pool
-                  </Radio>
-                  <Radio
-                    value="release"
-                    description="Delete from LiveKit and release from Magnus (permanent)"
-                    classNames={{ label: "text-red-600 dark:text-red-400" }}
-                  >
-                    Delete &amp; release numbers
-                  </Radio>
+                  <div className="flex items-start space-x-3">
+                    <RadioGroupItem value="pool" id="pool" />
+                    <div>
+                      <Label htmlFor="pool">Return to pool</Label>
+                      <p className="text-sm text-muted-foreground">Numbers remain available for other agents</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <RadioGroupItem value="release" id="release" />
+                    <div>
+                      <Label htmlFor="release" className="text-red-600 dark:text-red-400">Delete &amp; release numbers</Label>
+                      <p className="text-sm text-muted-foreground">Delete from LiveKit and release from Magnus (permanent)</p>
+                    </div>
+                  </div>
                 </RadioGroup>
 
                 {deletePhoneOption === "release" && (
@@ -669,24 +665,24 @@ export function VoiceDashboard() {
                 </div>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={onBulkDeleteClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkDeleteOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="danger"
-              isLoading={bulkDeleting}
-              onPress={handleBulkDelete}
-              startContent={!bulkDeleting && <Trash2 className="w-4 h-4" />}
+              variant="destructive"
+              disabled={bulkDeleting}
+              onClick={handleBulkDelete}
             >
+              {!bulkDeleting && <Trash2 className="w-4 h-4 mr-2" />}
               {totalPhoneNumbers > 0 && deletePhoneOption === "release"
                 ? `Delete ${selectedAgentIds.size} Agent${selectedAgentIds.size > 1 ? "s" : ""} & Numbers`
                 : `Delete ${selectedAgentIds.size} Agent${selectedAgentIds.size > 1 ? "s" : ""}`}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,17 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Textarea,
-  Switch,
-} from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   ArrowLeft,
@@ -153,7 +148,7 @@ export function CreateCampaignPage() {
           <CardHeader>
             <h2 className="text-lg font-semibold">Campaign Details</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <Input
               label="Campaign Name"
               placeholder="e.g., Q1 Lead Gen - Small Business"
@@ -161,28 +156,26 @@ export function CreateCampaignPage() {
               onChange={(e) => setName(e.target.value)}
             />
 
-            <Select
-              label="Platform"
-              selectedKeys={[platform]}
-              onSelectionChange={(keys) => setPlatform(Array.from(keys)[0] as string)}
-            >
+            <Select value={platform} onValueChange={(v: string) => setPlatform(v)}>
+              <SelectTrigger><SelectValue placeholder="Platform" /></SelectTrigger>
+              <SelectContent>
               {PLATFORMS.map((p) => (
-                <SelectItem key={p.value}>
+                <SelectItem key={p.value} value={p.value}>
                   {p.label}
                 </SelectItem>
               ))}
+              </SelectContent>
             </Select>
 
-            <Select
-              label="Objective"
-              selectedKeys={[objective]}
-              onSelectionChange={(keys) => setObjective(Array.from(keys)[0] as string)}
-            >
+            <Select value={objective} onValueChange={(v: string) => setObjective(v)}>
+              <SelectTrigger><SelectValue placeholder="Objective" /></SelectTrigger>
+              <SelectContent>
               {OBJECTIVES.map((o) => (
-                <SelectItem key={o.value}>
+                <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>
               ))}
+              </SelectContent>
             </Select>
 
             <Input
@@ -191,20 +184,18 @@ export function CreateCampaignPage() {
               placeholder="50"
               value={dailyBudget}
               onChange={(e) => setDailyBudget(e.target.value)}
-              startContent={<span className="text-default-400">$</span>}
-            />
+                          />
 
             <div className="flex justify-end">
               <Button
-                color="primary"
-                endContent={<ArrowRight className="w-4 h-4" />}
+                
                 onClick={() => setStep(2)}
-                isDisabled={!name}
+                disabled={!name}
               >
                 Next
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -214,7 +205,7 @@ export function CreateCampaignPage() {
           <CardHeader>
             <h2 className="text-lg font-semibold">Generate Ad Content</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <Textarea
               label="Target Audience"
               placeholder="Describe your ideal customer (e.g., Small business owners who want to automate their sales process)"
@@ -231,17 +222,16 @@ export function CreateCampaignPage() {
               minRows={2}
             />
 
-            <Switch isSelected={includeImage} onValueChange={setIncludeImage}>
+            <Switch checked={includeImage} onCheckedChange={setIncludeImage}>
               Generate AI Image
             </Switch>
 
             <Button
-              color="primary"
-              startContent={<Sparkles className="w-4 h-4" />}
+              
               onClick={generateAds}
-              isLoading={generating}
+              disabled={generating}
               className="w-full"
-            >
+            ><Sparkles className="w-4 h-4" /> 
               Generate Ad Variations
             </Button>
 
@@ -256,13 +246,13 @@ export function CreateCampaignPage() {
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedVariation === index
                         ? "border-primary bg-primary/5"
-                        : "border-default-200 hover:border-default-300"
+                        : "border-border hover:border-default-300"
                     }`}
                   >
                     <p className="font-semibold text-lg">{variation.headline}</p>
-                    <p className="text-default-600 mt-2">{variation.primaryText}</p>
+                    <p className="text-muted-foreground mt-2">{variation.primaryText}</p>
                     {variation.description && (
-                      <p className="text-sm text-default-400 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {variation.description}
                       </p>
                     )}
@@ -288,22 +278,21 @@ export function CreateCampaignPage() {
 
             <div className="flex justify-between pt-4">
               <Button
-                variant="bordered"
-                startContent={<ArrowLeft className="w-4 h-4" />}
+                variant="outline"
                 onClick={() => setStep(1)}
               >
+                <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
               <Button
-                color="primary"
-                endContent={<ArrowRight className="w-4 h-4" />}
+                
                 onClick={() => setStep(3)}
-                isDisabled={selectedVariation === null}
+                disabled={selectedVariation === null}
               >
                 Next
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -313,30 +302,30 @@ export function CreateCampaignPage() {
           <CardHeader>
             <h2 className="text-lg font-semibold">Review & Create</h2>
           </CardHeader>
-          <CardBody className="space-y-6">
+          <CardContent className="space-y-6">
             {/* Campaign Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-default-500">Campaign Name</p>
+                <p className="text-sm text-muted-foreground">Campaign Name</p>
                 <p className="font-medium">{name}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Platform</p>
+                <p className="text-sm text-muted-foreground">Platform</p>
                 <p className="font-medium">{platform}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Objective</p>
+                <p className="text-sm text-muted-foreground">Objective</p>
                 <p className="font-medium">{objective.replace("_", " ")}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Daily Budget</p>
+                <p className="text-sm text-muted-foreground">Daily Budget</p>
                 <p className="font-medium">${dailyBudget || "Not set"}</p>
               </div>
             </div>
 
             {/* Ad Preview */}
-            <div className="p-4 bg-default-50 rounded-lg">
-              <p className="text-sm text-default-500 mb-2">Ad Preview</p>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Ad Preview</p>
               {imageUrl && (
                 <img
                   src={imageUrl}
@@ -348,28 +337,27 @@ export function CreateCampaignPage() {
                 {adVariations[selectedVariation].headline}
               </p>
               <p className="mt-2">{adVariations[selectedVariation].primaryText}</p>
-              <Button size="sm" color="primary" className="mt-4">
+              <Button size="sm" className="mt-4">
                 {adVariations[selectedVariation].callToAction}
               </Button>
             </div>
 
             <div className="flex justify-between pt-4">
               <Button
-                variant="bordered"
-                startContent={<ArrowLeft className="w-4 h-4" />}
+                variant="outline"
                 onClick={() => setStep(2)}
               >
+                <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
               <Button
-                color="primary"
                 onClick={saveCampaign}
-                isLoading={saving}
+                disabled={saving}
               >
                 Create Campaign
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

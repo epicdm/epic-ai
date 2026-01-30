@@ -13,16 +13,11 @@
  */
 
 import { useState } from "react";
-import {
-  Input,
-  Button,
-  Card,
-  CardBody,
-  Chip,
-  Avatar,
-  Spinner,
-  Alert,
-} from "@heroui/react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import {
   WizardStepContainer,
   WizardStepHeader,
@@ -108,43 +103,41 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
               placeholder="https://yourcompany.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              startContent={<Globe className="w-4 h-4 text-default-400" />}
-              isDisabled={isAnalyzing}
+                            disabled={isAnalyzing}
               classNames={{
                 base: "flex-1",
               }}
             />
             <Button
-              color="primary"
-              onPress={handleAnalyze}
-              isLoading={isAnalyzing}
-              isDisabled={!url.trim()}
-              startContent={!isAnalyzing && <Search className="w-4 h-4" />}
-            >
+              
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              disabled={!url.trim()}
+                          >
               Analyze
             </Button>
           </div>
 
           {error && (
-            <Alert color="danger" variant="flat">
+            <div className="p-3 rounded-lg border bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
               {error}
-            </Alert>
+            </div>
           )}
 
           {/* Loading State */}
           {isAnalyzing && (
             <Card className="bg-default-50">
-              <CardBody className="flex items-center justify-center py-8">
-                <Spinner size="lg" />
+              <CardContent className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
                 <p className="mt-4 text-default-500">Analyzing website...</p>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
           {/* Results */}
           {websiteData && !isAnalyzing && (
             <Card className="bg-success-50 dark:bg-success-900/20">
-              <CardBody className="gap-4">
+              <CardContent className="gap-4">
                 <div className="flex items-center gap-2 text-success">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">Website analyzed successfully!</span>
@@ -154,7 +147,7 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
                   {/* Logo Preview */}
                   {(websiteData.logo || websiteData.favicon) && (
                     <div className="flex items-center gap-3">
-                      <Avatar
+                      <div
                         src={websiteData.logo || websiteData.favicon || undefined}
                         className="w-16 h-16"
                         radius="lg"
@@ -193,19 +186,17 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
                     <p className="text-xs text-default-500 mb-2">Social Links Found</p>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(websiteData.socialLinks).map(([platform, url]) => (
-                        <Chip
+                        <a
                           key={platform}
-                          size="sm"
-                          variant="flat"
-                          color="primary"
-                          endContent={<ExternalLink className="w-3 h-3" />}
-                          as="a"
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {platform}
-                        </Chip>
+                          <Badge variant="secondary" className="gap-1">
+                            {platform}
+                            <ExternalLink className="w-3 h-3" />
+                          </Badge>
+                        </a>
                       ))}
                     </div>
                   </div>
@@ -232,9 +223,9 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
                 {websiteData.suggestedTemplate && (
                   <div className="pt-2 border-t border-divider">
                     <p className="text-xs text-default-500 mb-1">Suggested Template</p>
-                    <Chip color="secondary" variant="flat">
+                    <Badge variant="secondary">
                       {websiteData.suggestedTemplate}
-                    </Chip>
+                    </Badge>
                     {websiteData.suggestedTemplateReason && (
                       <p className="text-xs text-default-400 mt-1">
                         {websiteData.suggestedTemplateReason}
@@ -242,7 +233,7 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
                     )}
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -250,10 +241,9 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
           {!websiteData && !isAnalyzing && (
             <div className="text-center pt-4">
               <Button
-                variant="light"
-                onPress={handleSkip}
-                startContent={<SkipForward className="w-4 h-4" />}
-              >
+                variant="ghost"
+                onClick={handleSkip}
+                              >
                 Skip this step
               </Button>
               <p className="text-xs text-default-400 mt-2">

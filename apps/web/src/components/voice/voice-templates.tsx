@@ -2,21 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Card,
-  CardBody,
-  Button,
-  Chip,
-  Input,
-  Tabs,
-  Tab,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -57,13 +54,10 @@ const categoryLabels: Record<VoiceAgentTemplate["category"], string> = {
   general: "General",
 };
 
-const difficultyColors: Record<
-  VoiceAgentTemplate["difficulty"],
-  "success" | "warning" | "danger"
-> = {
-  beginner: "success",
-  intermediate: "warning",
-  advanced: "danger",
+const difficultyBadgeClass: Record<VoiceAgentTemplate["difficulty"], string> = {
+  beginner: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  intermediate: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  advanced: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const agentTypeIcons: Record<VoiceAgentTemplate["agentType"], React.ReactNode> = {
@@ -74,7 +68,7 @@ const agentTypeIcons: Record<VoiceAgentTemplate["agentType"], React.ReactNode> =
 
 export function VoiceTemplates() {
   const router = useRouter();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<VoiceAgentTemplate | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,11 +85,10 @@ export function VoiceTemplates() {
 
   const handlePreview = (template: VoiceAgentTemplate) => {
     setSelectedTemplate(template);
-    onOpen();
+    setIsPreviewOpen(true);
   };
 
   const handleUseTemplate = (template: VoiceAgentTemplate) => {
-    // Navigate to create agent page with template ID
     router.push(`/dashboard/voice/agents/new?template=${template.id}`);
   };
 
@@ -105,49 +98,46 @@ export function VoiceTemplates() {
         title="Voice Agent Templates"
         description="Start with a pre-configured template to quickly deploy your AI voice agent."
         actions={
-          <Button
-            as={Link}
-            href="/dashboard/voice"
-            variant="flat"
-            startContent={<ArrowLeft className="w-4 h-4" />}
-          >
-            Back to Voice AI
+          <Button variant="secondary" asChild>
+            <Link href="/dashboard/voice">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Voice AI
+            </Link>
           </Button>
         }
       />
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <Input
-          placeholder="Search templates..."
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-          startContent={<MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />}
-          className="sm:max-w-xs"
-        />
-        <Tabs
-          selectedKey={selectedCategory}
-          onSelectionChange={(key) => setSelectedCategory(key as string)}
-          variant="solid"
-          size="sm"
-        >
-          <Tab key="all" title="All" />
-          <Tab key="sales" title="Sales" />
-          <Tab key="support" title="Support" />
-          <Tab key="booking" title="Booking" />
-          <Tab key="survey" title="Survey" />
-          <Tab key="general" title="General" />
+        <div className="relative sm:max-w-xs">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Input
+            placeholder="Search templates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="sales">Sales</TabsTrigger>
+            <TabsTrigger value="support">Support</TabsTrigger>
+            <TabsTrigger value="booking">Booking</TabsTrigger>
+            <TabsTrigger value="survey">Survey</TabsTrigger>
+            <TabsTrigger value="general">General</TabsTrigger>
+          </TabsList>
         </Tabs>
       </div>
 
       {/* Templates Grid */}
       {filteredTemplates.length === 0 ? (
         <Card>
-          <CardBody className="p-12 text-center">
+          <CardContent className="p-12 text-center">
             <p className="text-gray-500">
               No templates found matching your search.
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -156,18 +146,14 @@ export function VoiceTemplates() {
               key={template.id}
               className="hover:shadow-lg transition-shadow"
             >
-              <CardBody className="p-6">
+              <CardContent className="p-6">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="text-4xl">{template.icon}</div>
                   <div className="flex gap-2">
-                    <Chip
-                      size="sm"
-                      color={difficultyColors[template.difficulty]}
-                      variant="flat"
-                    >
+                    <Badge className={difficultyBadgeClass[template.difficulty]}>
                       {template.difficulty}
-                    </Chip>
+                    </Badge>
                   </div>
                 </div>
 
@@ -176,7 +162,6 @@ export function VoiceTemplates() {
                   <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                     {template.name}
                   </h3>
-                  {/* Add confidence dots inline */}
                   {(() => {
                     const recommendations = getRecommendedVoiceTemplates();
                     const recommendation = recommendations.find(r => r.templateId === template.id);
@@ -218,83 +203,83 @@ export function VoiceTemplates() {
                     <ClockIcon className="w-4 h-4" />
                     <span>{template.estimatedSetupTime}</span>
                   </div>
-                  <Chip size="sm" variant="flat">
+                  <Badge variant="secondary">
                     {categoryLabels[template.category]}
-                  </Chip>
+                  </Badge>
                 </div>
 
                 {/* Features Preview */}
                 <div className="flex flex-wrap gap-1 mb-4">
                   {template.features.slice(0, 3).map((feature) => (
-                    <Chip key={feature} size="sm" variant="bordered" className="text-xs">
+                    <Badge key={feature} variant="outline" className="text-xs">
                       {feature}
-                    </Chip>
+                    </Badge>
                   ))}
                   {template.features.length > 3 && (
-                    <Chip size="sm" variant="bordered" className="text-xs">
+                    <Badge variant="outline" className="text-xs">
                       +{template.features.length - 3} more
-                    </Chip>
+                    </Badge>
                   )}
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-2">
                   <Button
-                    variant="flat"
+                    variant="secondary"
                     size="sm"
                     className="flex-1"
-                    onPress={() => handlePreview(template)}
+                    onClick={() => handlePreview(template)}
                   >
                     Preview
                   </Button>
                   <Button
-                    color="primary"
                     size="sm"
                     className="flex-1"
-                    startContent={<Sparkles className="w-4 h-4" />}
-                    onPress={() => handleUseTemplate(template)}
+                    onClick={() => handleUseTemplate(template)}
                   >
+                    <Sparkles className="w-4 h-4 mr-2" />
                     Use Template
                   </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {/* Preview Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
-        <ModalContent>
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedTemplate && (
             <>
-              <ModalHeader className="flex items-center gap-3">
-                <span className="text-3xl">{selectedTemplate.icon}</span>
-                <div>
-                  <h3 className="text-xl font-semibold">{selectedTemplate.name}</h3>
-                  <p className="text-sm text-gray-500 font-normal">
-                    {selectedTemplate.description}
-                  </p>
-                </div>
-              </ModalHeader>
-              <ModalBody className="space-y-6">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <span className="text-3xl">{selectedTemplate.icon}</span>
+                  <div>
+                    <div className="text-xl font-semibold">{selectedTemplate.name}</div>
+                    <p className="text-sm text-gray-500 font-normal">
+                      {selectedTemplate.description}
+                    </p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
                 {/* Overview */}
                 <div className="flex flex-wrap gap-3">
-                  <Chip
-                    color={difficultyColors[selectedTemplate.difficulty]}
-                    variant="flat"
-                  >
+                  <Badge className={difficultyBadgeClass[selectedTemplate.difficulty]}>
                     {selectedTemplate.difficulty} level
-                  </Chip>
-                  <Chip variant="flat" startContent={agentTypeIcons[selectedTemplate.agentType]}>
+                  </Badge>
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {agentTypeIcons[selectedTemplate.agentType]}
                     {selectedTemplate.agentType}
-                  </Chip>
-                  <Chip variant="flat" startContent={<ClockIcon className="w-4 h-4" />}>
+                  </Badge>
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <ClockIcon className="w-4 h-4" />
                     {selectedTemplate.estimatedSetupTime} setup
-                  </Chip>
-                  <Chip variant="flat">
+                  </Badge>
+                  <Badge variant="secondary">
                     {categoryLabels[selectedTemplate.category]}
-                  </Chip>
+                  </Badge>
                 </div>
 
                 {/* Features */}
@@ -317,11 +302,11 @@ export function VoiceTemplates() {
                 <div>
                   <h4 className="font-medium mb-2">Greeting Message</h4>
                   <Card className="bg-gray-50 dark:bg-gray-800/50">
-                    <CardBody className="p-4">
+                    <CardContent className="p-4">
                       <p className="text-sm italic text-gray-600 dark:text-gray-300">
                         &ldquo;{selectedTemplate.greetingMessage}&rdquo;
                       </p>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 </div>
 
@@ -329,11 +314,11 @@ export function VoiceTemplates() {
                 <div>
                   <h4 className="font-medium mb-2">System Prompt</h4>
                   <Card className="bg-gray-50 dark:bg-gray-800/50">
-                    <CardBody className="p-4 max-h-48 overflow-y-auto">
+                    <CardContent className="p-4 max-h-48 overflow-y-auto">
                       <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap font-mono">
                         {selectedTemplate.systemPrompt}
                       </pre>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 </div>
 
@@ -371,26 +356,25 @@ export function VoiceTemplates() {
                     </p>
                   </div>
                 )}
-              </ModalBody>
-              <ModalFooter>
-                <Button variant="flat" onPress={onClose}>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsPreviewOpen(false)}>
                   Close
                 </Button>
                 <Button
-                  color="primary"
-                  startContent={<Sparkles className="w-4 h-4" />}
-                  onPress={() => {
-                    onClose();
+                  onClick={() => {
+                    setIsPreviewOpen(false);
                     handleUseTemplate(selectedTemplate);
                   }}
                 >
+                  <Sparkles className="w-4 h-4 mr-2" />
                   Use This Template
                 </Button>
-              </ModalFooter>
+              </DialogFooter>
             </>
           )}
-        </ModalContent>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

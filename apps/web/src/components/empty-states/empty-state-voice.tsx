@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function EmptyStateVoice() {
   return (
@@ -18,7 +19,7 @@ export function EmptyStateVoice() {
 
       {/* Empty State */}
       <Card className="max-w-2xl mx-auto">
-        <CardBody className="py-16 text-center">
+        <CardContent className="py-16 text-center">
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">🤖</span>
           </div>
@@ -36,7 +37,6 @@ export function EmptyStateVoice() {
             <Button
               as={Link}
               href="/dashboard/voice/agents/new"
-              color="primary"
               size="lg"
             >
               Create Agent
@@ -44,7 +44,7 @@ export function EmptyStateVoice() {
             <Button
               as={Link}
               href="/dashboard/voice/phone-numbers"
-              variant="bordered"
+              variant="outline"
               size="lg"
             >
               Get Phone Number
@@ -83,7 +83,7 @@ export function EmptyStateVoice() {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

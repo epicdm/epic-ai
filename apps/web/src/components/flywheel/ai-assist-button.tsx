@@ -7,7 +7,8 @@
  * in manual wizard steps.
  */
 
-import { Button, Tooltip } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sparkles } from "lucide-react";
 
 export interface AIAssistButtonProps {
@@ -34,23 +35,26 @@ export function AIAssistButton({
   const button = (
     <Button
       size={size}
-      variant={variant}
-      color="secondary"
-      startContent={!loading && <Sparkles className="w-3.5 h-3.5" />}
-      isLoading={loading}
-      isDisabled={disabled}
-      onPress={onSuggest}
+      variant="secondary"
+      disabled={loading || disabled}
+      onClick={onSuggest}
       className={`font-medium ${className}`}
     >
+      {!loading && <Sparkles className="w-3.5 h-3.5" />}
       {label}
     </Button>
   );
 
   if (tooltip) {
     return (
-      <Tooltip content={tooltip} placement="top">
-        {button}
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {button}
+          </TooltipTrigger>
+          <TooltipContent>{tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
@@ -113,10 +117,9 @@ export function AIAssistCard({
       </div>
       <Button
         size="sm"
-        color="secondary"
-        variant="solid"
-        isLoading={loading}
-        onPress={onSuggest}
+        variant="default"
+        disabled={loading}
+        onClick={onSuggest}
       >
         {buttonLabel}
       </Button>

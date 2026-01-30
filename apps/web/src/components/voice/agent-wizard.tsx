@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Switch,
-  Slider,
-  Tooltip,
-  Chip,
-} from "@heroui/react";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Wizard,
   useWizard,
@@ -201,20 +201,18 @@ export function AgentWizard({ brands }: AgentWizardProps) {
           </p>
         </div>
         <Button
-          as={Link}
-          href="/dashboard/voice"
-          variant="bordered"
-          startContent={<ArrowLeft className="w-4 h-4" />}
+          variant="outline"
+          asChild
         >
-          Back
+          <Link href="/dashboard/voice">Back</Link>
         </Button>
       </div>
 
       {error && (
         <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <p className="text-red-600 dark:text-red-400">{error}</p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -256,17 +254,15 @@ function WizardStepContent({ formData, setFormData, brands, loading }: WizardSte
 
       <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
         <Button
-          variant="bordered"
-          onPress={prevStep}
-          isDisabled={isFirstStep || loading}
+          variant="outline"
+          onClick={prevStep}
+          disabled={isFirstStep || loading}
         >
           Previous
         </Button>
         <Button
-          color="primary"
-          onPress={nextStep}
-          isLoading={loading}
-          startContent={isLastStep ? <Save className="w-4 h-4" /> : undefined}
+          onClick={nextStep}
+          disabled={loading}
         >
           {isLastStep ? "Create Agent" : "Next"}
         </Button>
@@ -289,40 +285,45 @@ function BasicInfoStep({ formData, setFormData, brands }: { formData: any; setFo
       </div>
 
       <div className="space-y-4">
-        <Input
-          label="Agent Name"
-          placeholder="e.g., Sales Assistant, Support Bot"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          isRequired
-          size="lg"
-          startContent={<User className="w-4 h-4 text-gray-400" />}
-        />
+        <div className="space-y-2">
+          <Label>Agent Name</Label>
+          <Input
+            placeholder="e.g., Sales Assistant, Support Bot"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+        </div>
 
-        <Textarea
-          label="Description"
-          placeholder="Brief description of what this agent does"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          size="lg"
-          minRows={3}
-        />
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Textarea
+            placeholder="Brief description of what this agent does"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={3}
+          />
+        </div>
 
-        <Select
-          label="Brand"
-          selectedKeys={formData.brandId ? [formData.brandId] : []}
-          onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-          isRequired
-          size="lg"
-          startContent={<Building className="w-4 h-4 text-gray-400" />}
-        >
-          {brands.map((brand) => (
-            <SelectItem key={brand.id}>{brand.name}</SelectItem>
-          ))}
-        </Select>
+        <div className="space-y-2">
+          <Label>Brand</Label>
+          <Select
+            value={formData.brandId}
+            onValueChange={(value) => setFormData({ ...formData, brandId: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a brand" />
+            </SelectTrigger>
+            <SelectContent>
+              {brands.map((brand) => (
+                <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
@@ -333,13 +334,13 @@ function BasicInfoStep({ formData, setFormData, brands }: { formData: any; setFo
                 </p>
               </div>
               <Switch
-                isSelected={formData.isActive}
-                onValueChange={(value) =>
+                checked={formData.isActive}
+                onCheckedChange={(value) =>
                   setFormData({ ...formData, isActive: value })
                 }
               />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>
@@ -361,7 +362,7 @@ function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData
 
       <div className="space-y-4">
         <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-blue-200 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Phone className="w-6 h-6 text-blue-700 dark:text-blue-400" />
@@ -397,11 +398,11 @@ function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
@@ -412,18 +413,18 @@ function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData
                 </p>
               </div>
               <Switch
-                isSelected={formData.provisionPhone}
-                onValueChange={(value) =>
+                checked={formData.provisionPhone}
+                onCheckedChange={(value) =>
                   setFormData({ ...formData, provisionPhone: value })
                 }
               />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {!formData.provisionPhone && (
           <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-start gap-2">
                 <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-700 dark:text-amber-400">
@@ -433,12 +434,12 @@ function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData
                   </p>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4 space-y-3">
+          <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-gray-500" />
               <h4 className="font-medium text-gray-900 dark:text-white">Pricing</h4>
@@ -458,7 +459,7 @@ function PhoneNumberStep({ formData, setFormData }: { formData: any; setFormData
             <p className="text-xs text-gray-500">
               Phone number charges apply monthly. Call charges are per minute of active call time.
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>
@@ -479,62 +480,75 @@ function VoiceSettingsStep({ formData, setFormData }: { formData: any; setFormDa
       </div>
 
       <div className="space-y-4">
-        <Select
-          label="Text-to-Speech Provider"
-          selectedKeys={[formData.ttsProvider]}
-          onChange={(e) => setFormData({ ...formData, ttsProvider: e.target.value })}
-          size="lg"
-          startContent={<Mic className="w-4 h-4 text-gray-400" />}
-        >
-          {TTS_PROVIDERS.map((provider) => (
-            <SelectItem key={provider.key}>{provider.label}</SelectItem>
-          ))}
-        </Select>
+        <div className="space-y-2">
+          <Label>Text-to-Speech Provider</Label>
+          <Select
+            value={formData.ttsProvider}
+            onValueChange={(value) => setFormData({ ...formData, ttsProvider: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {TTS_PROVIDERS.map((provider) => (
+                <SelectItem key={provider.key} value={provider.key}>{provider.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {formData.ttsProvider === "openai" && (
-          <Select
-            label="Voice"
-            selectedKeys={formData.voiceId ? [formData.voiceId] : []}
-            onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-            size="lg"
-            description="Choose the voice personality for your agent"
-          >
-            {OPENAI_VOICES.map((voice) => (
-              <SelectItem key={voice.key}>{voice.label}</SelectItem>
-            ))}
-          </Select>
+          <div className="space-y-2">
+            <Label>Voice</Label>
+            <Select
+              value={formData.voiceId}
+              onValueChange={(value) => setFormData({ ...formData, voiceId: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a voice" />
+              </SelectTrigger>
+              <SelectContent>
+                {OPENAI_VOICES.map((voice) => (
+                  <SelectItem key={voice.key} value={voice.key}>{voice.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Choose the voice personality for your agent</p>
+          </div>
         )}
 
         {formData.ttsProvider !== "openai" && (
-          <Input
-            label="Voice ID"
-            placeholder="Provider-specific voice ID"
-            value={formData.voiceId}
-            onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-            size="lg"
-            description="Enter the voice ID from your TTS provider"
-          />
+          <div className="space-y-2">
+            <Label>Voice ID</Label>
+            <Input
+              placeholder="Provider-specific voice ID"
+              value={formData.voiceId}
+              onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Enter the voice ID from your TTS provider</p>
+          </div>
         )}
 
-        <Textarea
-          label="Greeting Message"
-          placeholder="What the agent says when answering a call"
-          value={formData.greeting}
-          onChange={(e) => setFormData({ ...formData, greeting: e.target.value })}
-          minRows={3}
-          size="lg"
-          description="This is the first thing callers will hear"
-        />
+        <div className="space-y-2">
+          <Label>Greeting Message</Label>
+          <Textarea
+            placeholder="What the agent says when answering a call"
+            value={formData.greeting}
+            onChange={(e) => setFormData({ ...formData, greeting: e.target.value })}
+            rows={3}
+          />
+          <p className="text-xs text-muted-foreground">This is the first thing callers will hear</p>
+        </div>
 
-        <Input
-          label="Transfer Number (Optional)"
-          placeholder="+1234567890"
-          value={formData.transferNumber}
-          onChange={(e) => setFormData({ ...formData, transferNumber: e.target.value })}
-          size="lg"
-          startContent={<Phone className="w-4 h-4 text-gray-400" />}
-          description="Number to transfer calls to when requested or escalation needed"
-        />
+        <div className="space-y-2">
+          <Label>Transfer Number (Optional)</Label>
+          <Input
+            placeholder="+1234567890"
+            value={formData.transferNumber}
+            onChange={(e) => setFormData({ ...formData, transferNumber: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">Number to transfer calls to when requested or escalation needed</p>
+        </div>
       </div>
     </div>
   );
@@ -557,47 +571,59 @@ function AIConfigurationStep({ formData, setFormData }: { formData: any; setForm
 
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="LLM Provider"
-            selectedKeys={[formData.llmProvider]}
-            onChange={(e) => setFormData({
-              ...formData,
-              llmProvider: e.target.value,
-              llmModel: LLM_MODELS[e.target.value as keyof typeof LLM_MODELS]?.[0]?.key || "gpt-4o-mini"
-            })}
-            size="lg"
-            startContent={<Brain className="w-4 h-4 text-gray-400" />}
-          >
-            {LLM_PROVIDERS.map((provider) => (
-              <SelectItem key={provider.key}>{provider.label}</SelectItem>
-            ))}
-          </Select>
+          <div className="space-y-2">
+            <Label>LLM Provider</Label>
+            <Select
+              value={formData.llmProvider}
+              onValueChange={(value) => setFormData({
+                ...formData,
+                llmProvider: value,
+                llmModel: LLM_MODELS[value as keyof typeof LLM_MODELS]?.[0]?.key || "gpt-4o-mini"
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a provider" />
+              </SelectTrigger>
+              <SelectContent>
+                {LLM_PROVIDERS.map((provider) => (
+                  <SelectItem key={provider.key} value={provider.key}>{provider.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            label="Model"
-            selectedKeys={[formData.llmModel]}
-            onChange={(e) => setFormData({ ...formData, llmModel: e.target.value })}
-            size="lg"
-          >
-            {currentModels.map((model) => (
-              <SelectItem key={model.key}>{model.label}</SelectItem>
-            ))}
-          </Select>
+          <div className="space-y-2">
+            <Label>Model</Label>
+            <Select
+              value={formData.llmModel}
+              onValueChange={(value) => setFormData({ ...formData, llmModel: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent>
+                {currentModels.map((model) => (
+                  <SelectItem key={model.key} value={model.key}>{model.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <Textarea
-          label="System Prompt"
-          placeholder="Instructions for how the AI should behave..."
-          value={formData.systemPrompt}
-          onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-          minRows={6}
-          isRequired
-          size="lg"
-          description="Define the agent's role, personality, and guidelines"
-        />
+        <div className="space-y-2">
+          <Label>System Prompt</Label>
+          <Textarea
+            placeholder="Instructions for how the AI should behave..."
+            value={formData.systemPrompt}
+            onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
+            rows={6}
+            required
+          />
+          <p className="text-xs text-muted-foreground">Define the agent's role, personality, and guidelines</p>
+        </div>
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4 space-y-3">
+          <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Temperature
@@ -606,23 +632,23 @@ function AIConfigurationStep({ formData, setFormData }: { formData: any; setForm
                 {formData.temperature}
               </span>
             </div>
-            <Slider
+            <input
+              type="range"
+              min={0}
+              max={1}
               step={0.1}
-              minValue={0}
-              maxValue={1}
               value={formData.temperature}
-              onChange={(value) =>
-                setFormData({ ...formData, temperature: value as number })
+              onChange={(e) =>
+                setFormData({ ...formData, temperature: Number(e.target.value) })
               }
-              size="sm"
-              color="primary"
+              className="w-full"
             />
             <p className="text-xs text-gray-500">
               Lower values (0.0-0.3) = more focused and deterministic
               <br />
               Higher values (0.7-1.0) = more creative and varied responses
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>
@@ -657,7 +683,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
               <h3 className="text-lg font-semibold">Basic Information</h3>
             </div>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">Name</p>
               <p className="font-medium">{formData.name || "Not set"}</p>
@@ -674,15 +700,13 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
             </div>
             <div>
               <p className="text-sm text-gray-500">Status</p>
-              <Chip
-                size="sm"
-                color={formData.isActive ? "success" : "default"}
-                variant="flat"
+              <Badge
+                variant={formData.isActive ? "default" : "secondary"}
               >
                 {formData.isActive ? "Active" : "Inactive"}
-              </Chip>
+              </Badge>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Phone Number */}
@@ -693,17 +717,14 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
               <h3 className="text-lg font-semibold">Phone Number</h3>
             </div>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">Automatic Provisioning</p>
-              <Chip
-                size="sm"
-                color={formData.provisionPhone ? "success" : "default"}
-                variant="flat"
-                startContent={formData.provisionPhone ? <CheckCircle className="w-3 h-3" /> : undefined}
+              <Badge
+                variant={formData.provisionPhone ? "default" : "secondary"}
               >
                 {formData.provisionPhone ? "Enabled" : "Disabled"}
-              </Chip>
+              </Badge>
             </div>
             {formData.provisionPhone && (
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
@@ -720,7 +741,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
                 </p>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Voice Settings */}
@@ -731,7 +752,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
               <h3 className="text-lg font-semibold">Voice Settings</h3>
             </div>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">TTS Provider</p>
               <p className="font-medium">{selectedTTSProvider?.label || formData.ttsProvider}</p>
@@ -750,7 +771,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
                 <p className="font-medium">{formData.transferNumber}</p>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* AI Configuration */}
@@ -761,7 +782,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
               <h3 className="text-lg font-semibold">AI Configuration</h3>
             </div>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">Model</p>
               <p className="font-medium">
@@ -778,7 +799,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
                 {formData.systemPrompt || "Not set"}
               </p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Pricing Info */}
@@ -793,7 +814,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
               </h3>
             </div>
           </CardHeader>
-          <CardBody className="pt-2 space-y-4">
+          <CardContent className="pt-2 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/50 dark:bg-black/20 rounded-lg">
               <div>
                 <p className="font-medium text-amber-900 dark:text-amber-200">Voice AI Calls</p>
@@ -816,7 +837,7 @@ function ReviewStep({ formData, brands }: { formData: any; brands: Brand[] }) {
                 </p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>

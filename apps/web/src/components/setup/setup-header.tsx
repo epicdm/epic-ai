@@ -7,7 +7,8 @@
  */
 
 import { useRouter } from "next/navigation";
-import { Button, Progress, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   ZapIcon,
   BookOpenIcon,
@@ -57,10 +58,8 @@ export function SetupHeader({
                 do the heavy lifting with our Express Setup.
               </p>
               <Button
-                color="primary"
                 size="sm"
-                endContent={<ArrowRightIcon className="w-4 h-4" />}
-                onPress={handleSwitchToAI}
+                onClick={handleSwitchToAI}
               >
                 Try AI Express Setup
               </Button>
@@ -86,30 +85,27 @@ export function SetupHeader({
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant={mode === "guided" ? "solid" : "flat"}
-            color={mode === "guided" ? "primary" : "default"}
-            startContent={<BookOpenIcon className="w-4 h-4" />}
-            onPress={() => handleSwitchMode("guided")}
+            variant={mode === "guided" ? "default" : "ghost"}
+            onClick={() => handleSwitchMode("guided")}
           >
+            <BookOpenIcon className="w-4 h-4 mr-1" />
             Guided
           </Button>
           <Button
             size="sm"
-            variant={mode === "expert" ? "solid" : "flat"}
-            color={mode === "expert" ? "primary" : "default"}
-            startContent={<WrenchIcon className="w-4 h-4" />}
-            onPress={() => handleSwitchMode("expert")}
+            variant={mode === "expert" ? "default" : "ghost"}
+            onClick={() => handleSwitchMode("expert")}
           >
+            <WrenchIcon className="w-4 h-4 mr-1" />
             Expert
           </Button>
           <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
           <Button
             size="sm"
-            variant="flat"
-            color="secondary"
-            startContent={<ZapIcon className="w-4 h-4" />}
-            onPress={handleSwitchToAI}
+            variant="secondary"
+            onClick={handleSwitchToAI}
           >
+            <ZapIcon className="w-4 h-4 mr-1" />
             AI Setup
           </Button>
         </div>
@@ -121,20 +117,16 @@ export function SetupHeader({
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Overall Progress
           </span>
-          <Chip
-            size="sm"
-            variant="flat"
-            color={overallProgress === 100 ? "success" : "primary"}
+          <Badge
+            variant="secondary"
+            className={overallProgress === 100 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : ""}
           >
             {overallProgress}% Complete
-          </Chip>
+          </Badge>
         </div>
-        <Progress
-          value={overallProgress}
-          color={overallProgress === 100 ? "success" : "primary"}
-          size="md"
-          className="w-full"
-        />
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${overallProgress}%` }} />
+            </div>
         {overallProgress === 100 && (
           <p className="text-sm text-green-600 dark:text-green-400 mt-2">
             Your flywheel is fully configured! Head to the dashboard to start.

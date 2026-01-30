@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   BarChart3,
   TrendingUp,
@@ -81,7 +82,7 @@ export function AnalyticsIntroStep({ data, updateData }: AnalyticsIntroStepProps
               key={step.title}
               className="border border-gray-200 dark:border-gray-700 relative"
             >
-              <CardBody className="p-4 text-center">
+              <CardContent className="p-4 text-center">
                 <div className="absolute -top-3 left-4 bg-gray-100 dark:bg-gray-800 px-2 text-xs font-medium text-gray-500">
                   Step {index + 1}
                 </div>
@@ -94,7 +95,7 @@ export function AnalyticsIntroStep({ data, updateData }: AnalyticsIntroStepProps
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {step.description}
                 </p>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -102,7 +103,7 @@ export function AnalyticsIntroStep({ data, updateData }: AnalyticsIntroStepProps
 
       {/* Features Grid */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <h4 className="font-medium text-gray-900 dark:text-white mb-4">
             What You&apos;ll Get
           </h4>
@@ -160,16 +161,14 @@ export function AnalyticsIntroStep({ data, updateData }: AnalyticsIntroStepProps
               </div>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* CTA */}
       <div className="text-center">
         <Button
-          color="primary"
           size="lg"
-          endContent={<ArrowRight className="w-4 h-4" />}
-          onPress={handleContinue}
+          onClick={handleContinue}
           className={data.seenIntro ? "bg-green-600" : ""}
         >
           {data.seenIntro ? "Let's Configure Analytics" : "I Understand, Let's Set It Up"}

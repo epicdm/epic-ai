@@ -1,11 +1,9 @@
 "use client";
 
-import {
-  Card,
-  CardBody,
-  Chip,
-  Checkbox,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   FileText,
   Sparkles,
@@ -94,7 +92,7 @@ export function CreateReviewStep({ data, updateData }: CreateReviewStepProps) {
                   : "border-amber-200 dark:border-amber-800"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div
                     className={`p-2 rounded-lg ${
@@ -130,20 +128,19 @@ export function CreateReviewStep({ data, updateData }: CreateReviewStepProps) {
                     {section.details.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {section.details.map((detail, i) => (
-                          <Chip
+                          <Badge
                             key={i}
-                            size="sm"
-                            variant="flat"
+                            variant="secondary"
                             className="text-xs"
                           >
                             {detail}
-                          </Chip>
+                          </Badge>
                         ))}
                       </div>
                     )}
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -161,23 +158,22 @@ export function CreateReviewStep({ data, updateData }: CreateReviewStepProps) {
                 key={content.id}
                 className="border border-gray-200 dark:border-gray-700"
               >
-                <CardBody className="p-3">
+                <CardContent className="p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Chip size="sm" variant="flat" color="secondary">
+                    <Badge variant="secondary">
                       {content.platform}
-                    </Chip>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={content.status === "approved" ? "success" : "warning"}
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className={content.status === "approved" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"}
                     >
                       {content.status}
-                    </Chip>
+                    </Badge>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
                     {content.content}
                   </p>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -186,30 +182,31 @@ export function CreateReviewStep({ data, updateData }: CreateReviewStepProps) {
 
       {/* What Happens Next */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
             What happens next?
           </h4>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-            <li>• Your Content Factory settings will be saved</li>
-            <li>• AI will use your templates and brand voice to generate content</li>
-            <li>• You can always modify these settings later</li>
-            <li>• Next: Connect your social accounts in the Distribute phase</li>
+            <li>&#8226; Your Content Factory settings will be saved</li>
+            <li>&#8226; AI will use your templates and brand voice to generate content</li>
+            <li>&#8226; You can always modify these settings later</li>
+            <li>&#8226; Next: Connect your social accounts in the Distribute phase</li>
           </ul>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Confirmation */}
       <div className="flex items-center justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Checkbox
-          isSelected={data.confirmed || false}
-          onValueChange={(checked) => updateData({ confirmed: checked })}
-          size="lg"
-        >
-          <span className="text-gray-700 dark:text-gray-300">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="confirm-create"
+            checked={data.confirmed || false}
+            onCheckedChange={(checked) => updateData({ confirmed: checked === true })}
+          />
+          <Label htmlFor="confirm-create" className="text-gray-700 dark:text-gray-300 cursor-pointer">
             I've reviewed my Content Factory settings and I'm ready to proceed
-          </span>
-        </Checkbox>
+          </Label>
+        </div>
       </div>
 
       {!allComplete && (

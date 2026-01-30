@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Input,
-  Textarea,
-  Button,
-  Card,
-  CardBody,
-  Chip,
-} from "@heroui/react";
-import { Plus, Trash2, Users, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, Users, Sparkles, X } from "lucide-react";
 import type { UnderstandWizardData, AudiencePersona } from "@/lib/flywheel/types";
 
 interface AudiencesStepProps {
@@ -132,20 +129,22 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Define your target audiences. Create 1-3 personas that represent your
             ideal customers.
           </p>
         </div>
         <Button
           size="sm"
-          variant="flat"
-          color="secondary"
-          startContent={<Sparkles className="w-4 h-4" />}
-          onPress={generateAudiences}
-          isLoading={isGenerating}
-          isDisabled={!data.industry && !data.brandDescription}
+          variant="secondary"
+          onClick={generateAudiences}
+          disabled={isGenerating || (!data.industry && !data.brandDescription)}
         >
+          {isGenerating ? (
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          ) : (
+            <Sparkles className="mr-2 w-4 h-4" />
+          )}
           AI Suggest
         </Button>
       </div>
@@ -153,51 +152,51 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
       <div className="space-y-4">
         {audiences.map((audience) => (
           <Card key={audience.id} className="border border-gray-200 dark:border-gray-700">
-            <CardBody className="p-4 space-y-4">
+            <CardContent className="p-4 space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-purple-500" />
                   <Input
                     value={audience.name}
-                    onValueChange={(value) =>
-                      updateAudience(audience.id!, { name: value })
+                    onChange={(e) =>
+                      updateAudience(audience.id!, { name: e.target.value })
                     }
                     placeholder="Persona Name"
-                    variant="underlined"
-                    classNames={{
-                      input: "font-medium text-lg",
-                    }}
+                    className="font-medium text-lg border-0 border-b rounded-none px-0 focus-visible:ring-0"
                   />
                 </div>
                 <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  color="danger"
-                  onPress={() => removeAudience(audience.id!)}
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => removeAudience(audience.id!)}
+                  className="text-destructive hover:text-destructive"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
 
-              <Textarea
-                label="Description"
-                placeholder="Describe this persona..."
-                value={audience.description || ""}
-                onValueChange={(value) =>
-                  updateAudience(audience.id!, { description: value })
-                }
-                minRows={2}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Description</label>
+                <Textarea
+                  placeholder="Describe this persona..."
+                  value={audience.description || ""}
+                  onChange={(e) =>
+                    updateAudience(audience.id!, { description: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
 
-              <Input
-                label="Demographics"
-                placeholder="Age, location, profession, etc."
-                value={audience.demographics || ""}
-                onValueChange={(value) =>
-                  updateAudience(audience.id!, { demographics: value })
-                }
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Demographics</label>
+                <Input
+                  placeholder="Age, location, profession, etc."
+                  value={audience.demographics || ""}
+                  onChange={(e) =>
+                    updateAudience(audience.id!, { demographics: e.target.value })
+                  }
+                />
+              </div>
 
               {/* Pain Points */}
               <div className="space-y-2">
@@ -206,23 +205,28 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {audience.painPoints?.map((point, index) => (
-                    <Chip
+                    <Badge
                       key={index}
-                      onClose={() => removePainPoint(audience.id!, index)}
-                      variant="flat"
-                      color="danger"
+                      variant="secondary"
+                      className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 gap-1"
                     >
                       {point}
-                    </Chip>
+                      <button
+                        type="button"
+                        onClick={() => removePainPoint(audience.id!, index)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
                 <div className="flex gap-2">
                   <Input
-                    size="sm"
                     placeholder="Add a pain point..."
                     value={newPainPoint[audience.id!] || ""}
-                    onValueChange={(value) =>
-                      setNewPainPoint((prev) => ({ ...prev, [audience.id!]: value }))
+                    onChange={(e) =>
+                      setNewPainPoint((prev) => ({ ...prev, [audience.id!]: e.target.value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -230,12 +234,12 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                         addPainPoint(audience.id!);
                       }
                     }}
+                    className="text-sm"
                   />
                   <Button
-                    size="sm"
-                    isIconOnly
-                    variant="flat"
-                    onPress={() => addPainPoint(audience.id!)}
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => addPainPoint(audience.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
@@ -249,23 +253,28 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {audience.goals?.map((goal, index) => (
-                    <Chip
+                    <Badge
                       key={index}
-                      onClose={() => removeGoal(audience.id!, index)}
-                      variant="flat"
-                      color="success"
+                      variant="secondary"
+                      className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 gap-1"
                     >
                       {goal}
-                    </Chip>
+                      <button
+                        type="button"
+                        onClick={() => removeGoal(audience.id!, index)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
                 <div className="flex gap-2">
                   <Input
-                    size="sm"
                     placeholder="Add a goal..."
                     value={newGoal[audience.id!] || ""}
-                    onValueChange={(value) =>
-                      setNewGoal((prev) => ({ ...prev, [audience.id!]: value }))
+                    onChange={(e) =>
+                      setNewGoal((prev) => ({ ...prev, [audience.id!]: e.target.value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -273,35 +282,35 @@ export function AudiencesStep({ data, updateData }: AudiencesStepProps) {
                         addGoal(audience.id!);
                       }
                     }}
+                    className="text-sm"
                   />
                   <Button
-                    size="sm"
-                    isIconOnly
-                    variant="flat"
-                    onPress={() => addGoal(audience.id!)}
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => addGoal(audience.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
 
         {audiences.length < 3 && (
           <Button
-            variant="bordered"
+            variant="outline"
             className="w-full"
-            startContent={<Plus className="w-4 h-4" />}
-            onPress={addAudience}
+            onClick={addAudience}
           >
+            <Plus className="mr-2 w-4 h-4" />
             Add Audience Persona
           </Button>
         )}
       </div>
 
       {audiences.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+        <p className="text-sm text-muted-foreground text-center py-4">
           Add at least one target audience to continue.
         </p>
       )}

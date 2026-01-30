@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-} from "@heroui/react";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { ArrowLeft, Save } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 interface Brand {
   id: string;
@@ -123,13 +125,11 @@ export function LeadForm({ brands, initialData }: LeadFormProps) {
         title={initialData ? "Edit Lead" : "Add New Lead"}
         description="Enter the lead's contact information and details."
         actions={
-          <Button
-            as={Link}
-            href="/dashboard/leads"
-            variant="bordered"
-            startContent={<ArrowLeft className="w-4 h-4" />}
-          >
-            Back
+          <Button asChild variant="outline">
+            <Link href="/dashboard/leads">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Link>
           </Button>
         }
       />
@@ -137,163 +137,217 @@ export function LeadForm({ brands, initialData }: LeadFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
         {error && (
           <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <p className="text-red-600 dark:text-red-400">{error}</p>
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
         {/* Contact Info */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold">Contact Information</h2>
+            <CardTitle className="text-lg">Contact Information</CardTitle>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="First Name"
-                placeholder="John"
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                isRequired
-              />
-              <Input
-                label="Last Name"
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  value={formData.firstName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
+                />
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="email"
-                label="Email"
-                placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-              <Input
-                type="tel"
-                label="Phone"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                />
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Company"
-                placeholder="Acme Inc."
-                value={formData.company}
-                onChange={(e) =>
-                  setFormData({ ...formData, company: e.target.value })
-                }
-              />
-              <Input
-                label="Job Title"
-                placeholder="Marketing Manager"
-                value={formData.jobTitle}
-                onChange={(e) =>
-                  setFormData({ ...formData, jobTitle: e.target.value })
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="company">Company</Label>
+                <Input
+                  id="company"
+                  placeholder="Acme Inc."
+                  value={formData.company}
+                  onChange={(e) =>
+                    setFormData({ ...formData, company: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jobTitle">Job Title</Label>
+                <Input
+                  id="jobTitle"
+                  placeholder="Marketing Manager"
+                  value={formData.jobTitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, jobTitle: e.target.value })
+                  }
+                />
+              </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Lead Details */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold">Lead Details</h2>
+            <CardTitle className="text-lg">Lead Details</CardTitle>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                label="Status"
-                selectedKeys={[formData.status]}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.key}>{option.label}</SelectItem>
-                ))}
-              </Select>
-              <Select
-                label="Source"
-                selectedKeys={[formData.source]}
-                onChange={(e) =>
-                  setFormData({ ...formData, source: e.target.value })
-                }
-              >
-                {SOURCE_OPTIONS.map((option) => (
-                  <SelectItem key={option.key}>{option.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, status: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.key} value={option.key}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Source</Label>
+                <Select
+                  value={formData.source}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, source: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option.key} value={option.key}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Source Details"
-                placeholder="e.g., Facebook Ad Campaign"
-                value={formData.sourceDetails}
-                onChange={(e) =>
-                  setFormData({ ...formData, sourceDetails: e.target.value })
-                }
-              />
-              <Input
-                type="number"
-                label="Estimated Value ($)"
-                placeholder="5000"
-                value={formData.estimatedValue}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedValue: e.target.value })
-                }
-              />
+              <div className="space-y-2">
+                <Label htmlFor="sourceDetails">Source Details</Label>
+                <Input
+                  id="sourceDetails"
+                  placeholder="e.g., Facebook Ad Campaign"
+                  value={formData.sourceDetails}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sourceDetails: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="estimatedValue">Estimated Value ($)</Label>
+                <Input
+                  id="estimatedValue"
+                  type="number"
+                  placeholder="5000"
+                  value={formData.estimatedValue}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      estimatedValue: e.target.value,
+                    })
+                  }
+                />
+              </div>
             </div>
             {brands.length > 0 && (
-              <Select
-                label="Associated Brand"
-                selectedKeys={formData.brandId ? [formData.brandId] : []}
-                onChange={(e) =>
-                  setFormData({ ...formData, brandId: e.target.value })
-                }
-              >
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id}>{brand.name}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Associated Brand</Label>
+                <Select
+                  value={formData.brandId}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, brandId: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-            <Textarea
-              label="Notes"
-              placeholder="Additional notes about this lead..."
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              minRows={4}
-            />
-          </CardBody>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Additional notes about this lead..."
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                rows={4}
+              />
+            </div>
+          </CardContent>
         </Card>
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
-          <Button as={Link} href="/dashboard/leads" variant="bordered">
-            Cancel
+          <Button asChild variant="outline">
+            <Link href="/dashboard/leads">Cancel</Link>
           </Button>
-          <Button
-            type="submit"
-            color="primary"
-            isLoading={loading}
-            startContent={!loading && <Save className="w-4 h-4" />}
-          >
+          <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {!loading && <Save className="mr-2 h-4 w-4" />}
             {initialData ? "Save Changes" : "Create Lead"}
           </Button>
         </div>

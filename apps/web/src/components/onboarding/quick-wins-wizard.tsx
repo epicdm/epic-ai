@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardBody, Spinner } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Wizard, WizardStep } from "@/components/ui/wizard";
 import { WizardStepContainer, WizardStepHeader, WizardStepContent } from "@/components/flywheel/shared/wizard-layout";
 import { Sparkles, CheckCircle, ArrowRight } from "lucide-react";
@@ -100,12 +101,12 @@ export function QuickWinsWizard({ path, brandId, organizationId }: QuickWinsWiza
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card>
-          <CardBody className="text-center p-8">
+          <CardContent className="text-center p-8">
             <p className="text-gray-600">Invalid setup path</p>
-            <Button color="primary" onPress={() => router.push("/dashboard")} className="mt-4">
+            <Button onClick={() => router.push("/dashboard")} className="mt-4">
               Go to Dashboard
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -179,29 +180,28 @@ export function QuickWinsWizard({ path, brandId, organizationId }: QuickWinsWiza
         {/* Navigation */}
         <div className="flex justify-between items-center mt-8 max-w-4xl mx-auto">
           <Button
-            variant="flat"
-            onPress={() => setCurrentStep(Math.max(0, currentStep - 1))}
-            isDisabled={currentStep === 0 || isLoading}
+            variant="secondary"
+            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+            disabled={currentStep === 0 || isLoading}
           >
             Back
           </Button>
 
           {currentStep < steps.length - 1 ? (
             <Button
-              color="primary"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={() => setCurrentStep(currentStep + 1)}
-              isDisabled={!canProceed(currentStep) || isLoading}
+              
+              onClick={() => setCurrentStep(currentStep + 1)}
+              disabled={!canProceed(currentStep) || isLoading}
             >
               Next
             </Button>
           ) : (
             <Button
-              color="success"
-              endContent={<CheckCircle className="w-4 h-4" />}
-              onPress={handleComplete}
-              isLoading={isLoading}
-              isDisabled={!canProceed(currentStep)}
+              variant="outline"
+              
+              onClick={handleComplete}
+              disabled={isLoading}
+              disabled={!canProceed(currentStep)}
             >
               Complete Setup
             </Button>
@@ -251,34 +251,34 @@ function SocialConnectStep({ onComplete }: { onComplete: () => void }) {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card isPressable isHoverable onPress={() => handleConnect("facebook")}>
-          <CardBody className="text-center p-6">
+        <Card className="cursor-pointer"  onClick={() => handleConnect("facebook")}>
+          <CardContent className="text-center p-6">
             <div className="text-4xl mb-2">📘</div>
             <h3 className="font-semibold">Facebook</h3>
             <p className="text-sm text-gray-500 mt-1">Connect Facebook Page</p>
-          </CardBody>
+          </CardContent>
         </Card>
 
-        <Card isPressable isHoverable onPress={() => handleConnect("linkedin")}>
-          <CardBody className="text-center p-6">
+        <Card className="cursor-pointer"  onClick={() => handleConnect("linkedin")}>
+          <CardContent className="text-center p-6">
             <div className="text-4xl mb-2">💼</div>
             <h3 className="font-semibold">LinkedIn</h3>
             <p className="text-sm text-gray-500 mt-1">Connect LinkedIn Profile</p>
-          </CardBody>
+          </CardContent>
         </Card>
 
-        <Card isPressable isHoverable onPress={() => handleConnect("twitter")}>
-          <CardBody className="text-center p-6">
+        <Card className="cursor-pointer"  onClick={() => handleConnect("twitter")}>
+          <CardContent className="text-center p-6">
             <div className="text-4xl mb-2">🐦</div>
             <h3 className="font-semibold">Twitter/X</h3>
             <p className="text-sm text-gray-500 mt-1">Connect Twitter Account</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {isConnecting && (
         <div className="flex items-center justify-center gap-2 text-purple-600">
-          <Spinner size="sm" color="secondary" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           <span>Connecting...</span>
         </div>
       )}
@@ -336,25 +336,24 @@ function GeneratePostStep({ brandId, onComplete }: { brandId?: string; onComplet
       </div>
 
       <Button
-        color="primary"
         size="lg"
-        onPress={handleGenerate}
-        isLoading={isGenerating}
-        isDisabled={!topic.trim()}
-        startContent={<Sparkles className="w-5 h-5" />}
+        onClick={handleGenerate}
+        disabled={isGenerating}
+        disabled={!topic.trim()}
+        
         className="w-full"
-      >
+      ><Sparkles className="w-5 h-5" /> 
         {isGenerating ? "Generating..." : "Generate Post"}
       </Button>
 
       {generatedContent && (
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <h4 className="font-semibold mb-3">Your AI-Generated Post</h4>
             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
               {generatedContent}
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>
@@ -377,11 +376,11 @@ function SchedulePostStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="space-y-3">
         <Card
-          isPressable
+          className="cursor-pointer"
           className={selectedTime === "optimal" ? "ring-2 ring-purple-500" : ""}
-          onPress={() => setSelectedTime("optimal")}
+          onClick={() => setSelectedTime("optimal")}
         >
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -392,15 +391,15 @@ function SchedulePostStep({ onComplete }: { onComplete: () => void }) {
               </div>
               {selectedTime === "optimal" && <CheckCircle className="w-5 h-5 text-purple-600" />}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card
-          isPressable
+          className="cursor-pointer"
           className={selectedTime === "now" ? "ring-2 ring-purple-500" : ""}
-          onPress={() => setSelectedTime("now")}
+          onClick={() => setSelectedTime("now")}
         >
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold">Publish Now</h4>
@@ -408,17 +407,17 @@ function SchedulePostStep({ onComplete }: { onComplete: () => void }) {
               </div>
               {selectedTime === "now" && <CheckCircle className="w-5 h-5 text-purple-600" />}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       <Button
-        color="success"
+        variant="outline"
         size="lg"
-        onPress={handleSchedule}
+        onClick={handleSchedule}
         className="w-full"
-        startContent={<CheckCircle className="w-5 h-5" />}
-      >
+        
+      ><CheckCircle className="w-5 h-5" /> 
         Schedule Post
       </Button>
     </div>
@@ -433,7 +432,7 @@ function PhoneNumberStep({ onComplete }: { onComplete: () => void }) {
       <p className="text-gray-600 dark:text-gray-400">
         Get a phone number for your AI voice agent.
       </p>
-      <Button color="primary" onPress={onComplete} className="w-full">
+      <Button onClick={onComplete} className="w-full">
         Get Phone Number (Coming Soon)
       </Button>
     </div>
@@ -446,7 +445,7 @@ function AgentTemplateStep({ onComplete }: { onComplete: () => void }) {
       <p className="text-gray-600 dark:text-gray-400">
         Choose a voice agent template for your business.
       </p>
-      <Button color="primary" onPress={onComplete} className="w-full">
+      <Button onClick={onComplete} className="w-full">
         Choose Template (Coming Soon)
       </Button>
     </div>
@@ -459,7 +458,7 @@ function GreetingStep({ onComplete }: { onComplete: () => void }) {
       <p className="text-gray-600 dark:text-gray-400">
         Set up your AI voice agent's greeting message.
       </p>
-      <Button color="primary" onPress={onComplete} className="w-full">
+      <Button onClick={onComplete} className="w-full">
         Record Greeting (Coming Soon)
       </Button>
     </div>
@@ -472,7 +471,7 @@ function AutomationSetupStep({ onComplete }: { onComplete: () => void }) {
       <p className="text-gray-600 dark:text-gray-400">
         Set up your Welcome Series automation to nurture new leads.
       </p>
-      <Button color="primary" onPress={onComplete} className="w-full">
+      <Button onClick={onComplete} className="w-full">
         Configure Automation (Coming Soon)
       </Button>
     </div>
@@ -487,7 +486,7 @@ function ReviewStep({ path, onComplete }: { path: SetupPath; onComplete: () => v
       <p className="text-gray-600 dark:text-gray-400">
         Your {path === "hybrid" ? "cross-channel" : ""} setup is complete. Let's dive into your dashboard!
       </p>
-      <Button color="success" size="lg" onPress={onComplete} className="mx-auto">
+      <Button variant="outline" size="lg" onClick={onComplete} className="mx-auto">
         Go to Dashboard
       </Button>
     </div>

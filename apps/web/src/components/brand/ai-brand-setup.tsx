@@ -8,18 +8,10 @@
  */
 
 import { useState, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Progress,
-  Chip,
-  Divider,
-  Spinner,
-  Accordion,
-  AccordionItem,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import {
   Sparkles,
   Brain,
@@ -217,7 +209,7 @@ export function AIBrandSetup({
   if (compact) {
     return (
       <Card className="border-2 border-dashed border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-6 h-6 text-white" />
@@ -231,16 +223,16 @@ export function AIBrandSetup({
               </p>
             </div>
             <Button
-              color="secondary"
-              variant="flat"
-              endContent={<Sparkles className="w-4 h-4" />}
-              onPress={handleAnalyze}
-              isLoading={step === "analyzing"}
+              variant="secondary"
+              onClick={handleAnalyze}
+              disabled={step === "analyzing"}
             >
+              {step === "analyzing" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {step === "analyzing" ? "Analyzing..." : "Analyze"}
+              {step !== "analyzing" && <Sparkles className="w-4 h-4 ml-2" />}
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -261,7 +253,7 @@ export function AIBrandSetup({
               Let AI analyze your social media posts and configure your brand voice automatically
             </p>
           </CardHeader>
-          <CardBody className="pt-2">
+          <CardContent className="pt-2">
             {/* What AI will do */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
@@ -287,32 +279,31 @@ export function AIBrandSetup({
             </div>
 
             <Button
-              color="primary"
               size="lg"
               className="w-full"
-              startContent={<Sparkles className="w-5 h-5" />}
-              onPress={handleAnalyze}
+              onClick={handleAnalyze}
             >
+              <Sparkles className="w-5 h-5 mr-2" />
               Analyze My Social Posts
             </Button>
 
             {showSkip && onSkip && (
               <Button
-                variant="light"
+                variant="ghost"
                 className="w-full mt-2"
-                onPress={onSkip}
+                onClick={onSkip}
               >
                 Skip - I&apos;ll set up manually
               </Button>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Analyzing State */}
       {step === "analyzing" && (
         <Card>
-          <CardBody className="py-12 text-center">
+          <CardContent className="py-12 text-center">
             <div className="relative w-20 h-20 mx-auto mb-6">
               <div
                 className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-spin"
@@ -327,30 +318,32 @@ export function AIBrandSetup({
               AI is reading your posts to understand your brand voice and patterns
             </p>
 
-            <Progress
-              value={analysisProgress}
-              className="max-w-xs mx-auto mb-4"
-              classNames={{
-                indicator: "bg-gradient-to-r from-purple-500 to-pink-500",
-              }}
-            />
+            <div className="w-full max-w-xs mx-auto mb-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300"
+                style={{ width: `${analysisProgress}%` }}
+              />
+            </div>
 
             <div className="flex flex-wrap justify-center gap-2">
-              <Chip size="sm" variant="flat" startContent={<Check className="w-3 h-3" />}>
+              <Badge variant="secondary">
+                <Check className="w-3 h-3 mr-1" />
                 Fetching posts
-              </Chip>
+              </Badge>
               {analysisProgress > 30 && (
-                <Chip size="sm" variant="flat" startContent={<Spinner size="sm" />}>
+                <Badge variant="secondary">
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                   Analyzing voice
-                </Chip>
+                </Badge>
               )}
               {analysisProgress > 60 && (
-                <Chip size="sm" variant="flat" startContent={<Spinner size="sm" />}>
+                <Badge variant="secondary">
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                   Finding patterns
-                </Chip>
+                </Badge>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -359,7 +352,7 @@ export function AIBrandSetup({
         <div className="space-y-4">
           {/* Success Banner */}
           <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                   <Check className="w-5 h-5 text-white" />
@@ -372,155 +365,150 @@ export function AIBrandSetup({
                     {result.dataSourcesSummary}
                   </p>
                 </div>
-                <Chip color="success" variant="flat">
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
                   {Math.round((result.confidence || 0.8) * 100)}% confidence
-                </Chip>
+                </Badge>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* AI Insights */}
-          <Accordion variant="bordered" defaultExpandedKeys={["voice", "content"]}>
+          <div className="space-y-3">
             {/* Voice Analysis */}
-            <AccordionItem
-              key="voice"
-              aria-label="Voice Analysis"
-              startContent={<MessageSquare className="w-5 h-5 text-purple-500" />}
-              title="Voice & Style"
-              subtitle={result.analysis?.voicePatterns.tone || "Detected"}
-            >
-              <div className="space-y-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Tone:</span>
-                  <Chip size="sm" color="secondary" variant="flat">
-                    {result.analysis?.voicePatterns.tone}
-                  </Chip>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare className="w-5 h-5 text-purple-500" />
+                  <h4 className="font-semibold">Voice & Style</h4>
+                  <span className="text-sm text-muted-foreground">{result.analysis?.voicePatterns.tone || "Detected"}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Formality:</span>
-                  <Chip size="sm" variant="flat">
-                    {result.analysis?.voicePatterns.formality}
-                  </Chip>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Personality:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {result.analysis?.voicePatterns.personality.map((trait, i) => (
-                      <Chip key={i} size="sm" variant="flat">{trait}</Chip>
-                    ))}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Tone:</span>
+                    <Badge variant="secondary">{result.analysis?.voicePatterns.tone}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Formality:</span>
+                    <Badge variant="secondary">{result.analysis?.voicePatterns.formality}</Badge>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Personality:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {result.analysis?.voicePatterns.personality.map((trait, i) => (
+                        <Badge key={i} variant="secondary">{trait}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Writing Style:</span>
+                    <p className="text-sm mt-1">{result.analysis?.voicePatterns.writingStyle}</p>
                   </div>
                 </div>
-                <div>
-                  <span className="text-sm text-gray-500">Writing Style:</span>
-                  <p className="text-sm mt-1">{result.analysis?.voicePatterns.writingStyle}</p>
-                </div>
-              </div>
-            </AccordionItem>
+              </CardContent>
+            </Card>
 
             {/* Content Patterns */}
-            <AccordionItem
-              key="content"
-              aria-label="Content Patterns"
-              startContent={<Target className="w-5 h-5 text-blue-500" />}
-              title="Content Patterns"
-              subtitle={`${result.analysis?.contentPatterns.topTopics.length || 0} topics identified`}
-            >
-              <div className="space-y-3 py-2">
-                <div>
-                  <span className="text-sm text-gray-500">Top Topics:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {result.analysis?.contentPatterns.topTopics.map((topic, i) => (
-                      <Chip key={i} size="sm" color="primary" variant="flat">{topic}</Chip>
-                    ))}
-                  </div>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target className="w-5 h-5 text-blue-500" />
+                  <h4 className="font-semibold">Content Patterns</h4>
+                  <span className="text-sm text-muted-foreground">{`${result.analysis?.contentPatterns.topTopics.length || 0} topics identified`}</span>
                 </div>
-                <div>
-                  <span className="text-sm text-gray-500">Common Themes:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {result.analysis?.contentPatterns.commonThemes.map((theme, i) => (
-                      <Chip key={i} size="sm" variant="flat">{theme}</Chip>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
+                <div className="space-y-3">
                   <div>
-                    <span className="text-sm text-gray-500">Emoji Usage:</span>
-                    <Chip size="sm" variant="flat" className="ml-2">
-                      {result.analysis?.contentPatterns.emojiUsage}
-                    </Chip>
+                    <span className="text-sm text-gray-500">Top Topics:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {result.analysis?.contentPatterns.topTopics.map((topic, i) => (
+                        <Badge key={i} variant="default">{topic}</Badge>
+                      ))}
+                    </div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">Avg Length:</span>
-                    <span className="text-sm ml-2">
-                      {result.analysis?.contentPatterns.avgPostLength} chars
-                    </span>
+                    <span className="text-sm text-gray-500">Common Themes:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {result.analysis?.contentPatterns.commonThemes.map((theme, i) => (
+                        <Badge key={i} variant="secondary">{theme}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className="text-sm text-gray-500">Emoji Usage:</span>
+                      <Badge variant="secondary" className="ml-2">{result.analysis?.contentPatterns.emojiUsage}</Badge>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Avg Length:</span>
+                      <span className="text-sm ml-2">{result.analysis?.contentPatterns.avgPostLength} chars</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </AccordionItem>
+              </CardContent>
+            </Card>
 
             {/* Hashtags */}
-            {(result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0) > 0 ? (
-              <AccordionItem
-                key="hashtags"
-                aria-label="Hashtags"
-                startContent={<Hash className="w-5 h-5 text-green-500" />}
-                title="Hashtags Found"
-                subtitle={`${result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0} hashtags`}
-              >
-                <div className="flex flex-wrap gap-1 py-2">
-                  {result.analysis?.contentPatterns?.hashtagsUsed?.map((tag, i) => (
-                    <Chip key={i} size="sm" color="success" variant="flat">{tag}</Chip>
-                  ))}
-                </div>
-              </AccordionItem>
-            ) : null}
-
-            {/* Engagement Insights */}
-            <AccordionItem
-              key="engagement"
-              aria-label="Engagement Insights"
-              startContent={<TrendingUp className="w-5 h-5 text-amber-500" />}
-              title="What's Working"
-              subtitle="High-engagement patterns"
-            >
-              <div className="space-y-3 py-2">
-                <div>
-                  <span className="text-sm text-gray-500">Best Topics:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {result.analysis?.engagementInsights.bestPerformingTopics.map((topic, i) => (
-                      <Chip key={i} size="sm" color="warning" variant="flat">{topic}</Chip>
+            {(result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0) > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Hash className="w-5 h-5 text-green-500" />
+                    <h4 className="font-semibold">Hashtags Found</h4>
+                    <span className="text-sm text-muted-foreground">{`${result.analysis?.contentPatterns?.hashtagsUsed?.length ?? 0} hashtags`}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {result.analysis?.contentPatterns?.hashtagsUsed?.map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="bg-green-100 text-green-800">{tag}</Badge>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Engagement Insights */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-5 h-5 text-amber-500" />
+                  <h4 className="font-semibold">What's Working</h4>
+                  <span className="text-sm text-muted-foreground">High-engagement patterns</span>
                 </div>
-                <div>
-                  <span className="text-sm text-gray-500">Success Patterns:</span>
-                  <ul className="list-disc list-inside text-sm mt-1 space-y-1">
-                    {result.analysis?.engagementInsights.highEngagementPatterns.map((pattern, i) => (
-                      <li key={i}>{pattern}</li>
-                    ))}
-                  </ul>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-gray-500">Best Topics:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {result.analysis?.engagementInsights.bestPerformingTopics.map((topic, i) => (
+                        <Badge key={i} variant="secondary" className="bg-yellow-100 text-yellow-800">{topic}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Success Patterns:</span>
+                    <ul className="list-disc list-inside text-sm mt-1 space-y-1">
+                      {result.analysis?.engagementInsights.highEngagementPatterns.map((pattern, i) => (
+                        <li key={i}>{pattern}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </AccordionItem>
-          </Accordion>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Actions */}
           <div className="flex flex-col gap-3 pt-2">
             <Button
-              color="primary"
               size="lg"
               className="w-full"
-              endContent={<Zap className="w-5 h-5" />}
-              onPress={handleApply}
+              onClick={handleApply}
             >
               Apply to Brand Brain
+              <Zap className="w-5 h-5 ml-2" />
             </Button>
             <Button
-              variant="light"
-              startContent={<RefreshCw className="w-4 h-4" />}
-              onPress={handleRetry}
+              variant="ghost"
+              onClick={handleRetry}
             >
+              <RefreshCw className="w-4 h-4 mr-2" />
               Re-analyze
             </Button>
           </div>
@@ -530,20 +518,20 @@ export function AIBrandSetup({
       {/* Applying State */}
       {step === "applying" && (
         <Card>
-          <CardBody className="py-12 text-center">
-            <Spinner size="lg" color="primary" className="mb-4" />
+          <CardContent className="py-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Applying AI Setup...</h3>
             <p className="text-sm text-gray-500">
               Configuring your Brand Brain with the analyzed settings
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Complete State */}
       {step === "complete" && (
         <Card className="border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20">
-          <CardBody className="py-12 text-center">
+          <CardContent className="py-12 text-center">
             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-white" />
             </div>
@@ -554,20 +542,21 @@ export function AIBrandSetup({
               AI has set up your brand voice, content pillars, and target audiences.
             </p>
             <Button
-              color="success"
-              endContent={<ChevronRight className="w-4 h-4" />}
-              onPress={() => router.push("/dashboard/brand")}
+              variant="default"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => router.push("/dashboard/brand")}
             >
               View Brand Brain
+              <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Error State */}
       {step === "error" && (
         <Card className="border-2 border-red-200 dark:border-red-800">
-          <CardBody className="py-8 text-center">
+          <CardContent className="py-8 text-center">
             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-6 h-6 text-red-500" />
             </div>
@@ -578,16 +567,16 @@ export function AIBrandSetup({
               {error}
             </p>
             <div className="flex gap-3 justify-center">
-              <Button variant="flat" onPress={handleRetry}>
+              <Button variant="secondary" onClick={handleRetry}>
                 Try Again
               </Button>
               {showSkip && onSkip && (
-                <Button variant="light" onPress={onSkip}>
+                <Button variant="ghost" onClick={onSkip}>
                   Skip for now
                 </Button>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

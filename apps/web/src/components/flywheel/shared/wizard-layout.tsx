@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Card, CardBody, CardHeader, Progress, Button, Link, Tooltip } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChevronLeft, ChevronRight, X, Check, Sparkles, Home, ChevronRight as ChevronRightIcon, Undo2, Redo2, History, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { WizardStep, WizardNavigation } from "@/lib/flywheel/types";
@@ -105,7 +107,7 @@ export function WizardLayout({
         {children}
         <div className="flex gap-4 mt-6">
           <Button onClick={() => setIsPreviewMode(false)}>Back to Edit</Button>
-          <Button onClick={handleComplete} isLoading={isCompleting}>
+          <Button onClick={handleComplete} disabled={isCompleting}>
             Confirm & Complete
           </Button>
         </div>
@@ -127,17 +129,24 @@ export function WizardLayout({
         </div>
         
         {showHistory && (
-          <Tooltip content="History">
-            <Button variant="ghost" size="icon" onClick={() => console.log("Show history panel")}>
-              <History className="w-5 h-5" />
-            </Button>
-          </Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => console.log("Show history panel")}>
+                  <History className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>History</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
 
       {/* Progress visualization */}
       {progressVariant === "bar" ? (
-        <Progress value={Math.round(((currentStep + 1) / steps.length) * 100)} className="mb-6" />
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.round(((currentStep + 1) / steps.length) * 100)}%` }} />
+            </div>
       ) : (
         <CircularProgress percent={Math.round(((currentStep + 1) / steps.length) * 100)} className="mb-6" />
       )}
@@ -150,39 +159,49 @@ export function WizardLayout({
         <div className="flex gap-2">
           {showHistory && (
             <>
-              <Tooltip content="Undo">
-                <Button variant="ghost" size="icon" onClick={undo} disabled={history.length === 0}>
-                  <Undo2 className="w-5 h-5" />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Redo">
-                <Button variant="ghost" size="icon" onClick={redo} disabled={true /* TODO */}>
-                  <Redo2 className="w-5 h-5" />
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={undo} disabled={history.length === 0}>
+                      <Undo2 className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Undo</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={redo} disabled={true /* TODO */}>
+                      <Redo2 className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Redo</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           )}
         </div>
 
         <div className="flex gap-4">
           {currentStep !== 0 && (
-            <Button variant="bordered" onClick={() => onStepChange(currentStep - 1)} disabled={isLoading}>
+            <Button variant="outline" onClick={() => onStepChange(currentStep - 1)} disabled={isLoading}>
               <ChevronLeft className="w-5 h-5 mr-2" /> Back
             </Button>
           )}
           
           {showPreview && currentStep !== steps.length - 1 && (
-            <Button variant="bordered" onClick={() => setIsPreviewMode(true)} disabled={!canProceed || isLoading}>
+            <Button variant="outline" onClick={() => setIsPreviewMode(true)} disabled={!canProceed || isLoading}>
               <Eye className="w-5 h-5 mr-2" /> Preview
             </Button>
           )}
           
           {currentStep === steps.length - 1 ? (
-            <Button onClick={handleComplete} isLoading={isCompleting} disabled={!canProceed || isLoading}>
+            <Button onClick={handleComplete} disabled={isCompleting || !canProceed || isLoading}>
               Complete <Check className="w-5 h-5 ml-2" />
             </Button>
           ) : (
-            <Button onClick={() => onStepChange(currentStep + 1)} isLoading={isLoading || isSaving} disabled={!canProceed || isLoading || isSaving}>
+            <Button onClick={() => onStepChange(currentStep + 1)} disabled={!canProceed || isLoading || isSaving}>
               Next <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           )}

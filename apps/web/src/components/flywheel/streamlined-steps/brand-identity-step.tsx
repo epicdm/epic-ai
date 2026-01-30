@@ -10,16 +10,13 @@
  */
 
 import { useState, useCallback } from "react";
-import {
-  Input,
-  Textarea,
-  RadioGroup,
-  Radio,
-  Card,
-  CardBody,
-  Button,
-  Chip,
-} from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Sparkles, Building2, Check } from "lucide-react";
 import type { StreamlinedWizardData } from "../streamlined-flywheel-wizard";
 
@@ -85,57 +82,53 @@ export function BrandIdentityStep({
         <RadioGroup
           value={data.industry || ""}
           onValueChange={handleIndustryChange}
-          classNames={{
-            wrapper: "grid grid-cols-1 sm:grid-cols-2 gap-3",
-          }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         >
           {industryTemplates.map((template) => (
-            <Radio
-              key={template.id}
-              value={template.id}
-              classNames={{
-                base: "max-w-full m-0 p-0",
-                labelWrapper: "w-full",
-                label: "w-full",
-              }}
-            >
-              <Card
-                className={`cursor-pointer transition-all ${
-                  data.industry === template.id
-                    ? "border-2 border-primary ring-2 ring-primary/20"
-                    : "border border-gray-200 dark:border-gray-700 hover:border-primary/50"
-                }`}
-                isPressable
-                onPress={() => handleIndustryChange(template.id)}
-              >
-                <CardBody className="p-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        data.industry === template.id
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {template.name}
-                        </span>
-                        {data.industry === template.id && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
+            <div key={template.id}>
+              <RadioGroupItem
+                value={template.id}
+                id={`industry-${template.id}`}
+                className="sr-only"
+              />
+              <Label htmlFor={`industry-${template.id}`} className="cursor-pointer">
+                <Card
+                  className={`cursor-pointer transition-all ${
+                    data.industry === template.id
+                      ? "border-2 border-primary ring-2 ring-primary/20"
+                      : "border border-gray-200 dark:border-gray-700 hover:border-primary/50"
+                  }`}
+                  onClick={() => handleIndustryChange(template.id)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          data.industry === template.id
+                            ? "bg-primary text-white"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                        }`}
+                      >
+                        <Building2 className="w-5 h-5" />
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                        {template.description}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {template.name}
+                          </span>
+                          {data.industry === template.id && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                          {template.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardBody>
-              </Card>
-            </Radio>
+                  </CardContent>
+                </Card>
+              </Label>
+            </div>
           ))}
         </RadioGroup>
 
@@ -151,13 +144,16 @@ export function BrandIdentityStep({
                 </p>
                 <Button
                   size="sm"
-                  color="secondary"
-                  variant="flat"
+                  variant="secondary"
                   className="mt-2"
-                  startContent={<Sparkles className="w-3 h-3" />}
-                  isLoading={isApplyingTemplate}
-                  onPress={handleApplyTemplate}
+                  disabled={isApplyingTemplate}
+                  onClick={handleApplyTemplate}
                 >
+                  {isApplyingTemplate ? (
+                    <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <Sparkles className="mr-2 w-3 h-3" />
+                  )}
                   Apply Industry Defaults
                 </Button>
               </div>
@@ -167,56 +163,42 @@ export function BrandIdentityStep({
       </div>
 
       {/* Brand Name */}
-      <div>
+      <div className="space-y-2">
+        <Label className="text-gray-700 dark:text-gray-300">Brand Name</Label>
         <Input
-          label="Brand Name"
           placeholder="Enter your brand or company name"
           value={data.brandName || ""}
-          onValueChange={(value) => updateData({ brandName: value })}
-          variant="bordered"
-          classNames={{
-            label: "text-gray-700 dark:text-gray-300",
-            input: "text-gray-900 dark:text-white",
-          }}
+          onChange={(e) => updateData({ brandName: e.target.value })}
+          className="text-gray-900 dark:text-white"
         />
       </div>
 
       {/* Brand Description */}
-      <div>
+      <div className="space-y-2">
+        <Label className="text-gray-700 dark:text-gray-300">Brand Description</Label>
         <Textarea
-          label="Brand Description"
           placeholder="Describe what your brand does in 1-2 sentences"
           value={data.brandDescription || ""}
-          onValueChange={(value) => updateData({ brandDescription: value })}
-          variant="bordered"
-          minRows={2}
-          maxRows={4}
-          classNames={{
-            label: "text-gray-700 dark:text-gray-300",
-            input: "text-gray-900 dark:text-white",
-          }}
+          onChange={(e) => updateData({ brandDescription: e.target.value })}
+          rows={3}
+          className="text-gray-900 dark:text-white"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           This helps AI understand your business and create relevant content.
         </p>
       </div>
 
       {/* Mission Statement */}
-      <div>
+      <div className="space-y-2">
+        <Label className="text-gray-700 dark:text-gray-300">Mission Statement</Label>
         <Textarea
-          label="Mission Statement"
           placeholder="What is your brand's mission or purpose?"
           value={data.mission || ""}
-          onValueChange={(value) => updateData({ mission: value })}
-          variant="bordered"
-          minRows={2}
-          maxRows={3}
-          classNames={{
-            label: "text-gray-700 dark:text-gray-300",
-            input: "text-gray-900 dark:text-white",
-          }}
+          onChange={(e) => updateData({ mission: e.target.value })}
+          rows={2}
+          className="text-gray-900 dark:text-white"
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Optional but helps establish your brand voice.
         </p>
       </div>
@@ -229,15 +211,15 @@ export function BrandIdentityStep({
           </p>
           <div className="flex flex-wrap gap-2">
             {data.industry && (
-              <Chip size="sm" variant="flat" color="primary">
+              <Badge variant="default">
                 {industryTemplates.find((t) => t.id === data.industry)?.name ||
                   data.industry}
-              </Chip>
+              </Badge>
             )}
             {data.brandName && (
-              <Chip size="sm" variant="flat" color="default">
+              <Badge variant="secondary">
                 {data.brandName}
-              </Chip>
+              </Badge>
             )}
           </div>
         </div>

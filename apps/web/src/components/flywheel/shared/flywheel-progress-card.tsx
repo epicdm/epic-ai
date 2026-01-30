@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Progress, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Rocket, ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -38,7 +39,7 @@ export function FlywheelProgressCard({
   if (compact) {
     return (
       <Card className="border border-brand-200 dark:border-brand-800">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
@@ -57,31 +58,30 @@ export function FlywheelProgressCard({
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant="light"
-                onPress={() => router.push("/setup")}
+                variant="ghost"
+                onClick={() => router.push("/setup")}
                 className="text-brand-600 dark:text-brand-400"
               >
                 All Phases
               </Button>
               <Button
                 size="sm"
-                color="primary"
-                variant="flat"
-                endContent={<ArrowRight className="w-4 h-4" />}
-                onPress={handleContinue}
+                variant="secondary"
+                
+                onClick={handleContinue}
               >
                 {nextPhase ? "Continue" : "View"}
               </Button>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
 
   return (
     <Card className="bg-gradient-to-br from-brand-50 to-purple-50 dark:from-brand-950/30 dark:to-purple-950/30 border-brand-200 dark:border-brand-800">
-      <CardBody className="p-5">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-brand-500 flex items-center justify-center">
@@ -115,8 +115,8 @@ export function FlywheelProgressCard({
             )}
             <Button
               size="sm"
-              variant="light"
-              onPress={() => router.push("/setup")}
+              variant="ghost"
+              onClick={() => router.push("/setup")}
               className="text-brand-600 dark:text-brand-400"
             >
               All Phases
@@ -132,14 +132,9 @@ export function FlywheelProgressCard({
               {flywheelState.overallProgress}%
             </span>
           </div>
-          <Progress
-            size="md"
-            value={flywheelState.overallProgress}
-            classNames={{
-              indicator: "bg-gradient-to-r from-brand-500 to-purple-500",
-              track: "bg-white/50 dark:bg-gray-800/50",
-            }}
-          />
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${flywheelState.overallProgress}%` }} />
+            </div>
         </div>
 
         {/* Phase Indicators */}
@@ -206,14 +201,13 @@ export function FlywheelProgressCard({
 
         {/* Action Button */}
         <Button
-          color="primary"
           className="w-full"
-          endContent={<ArrowRight className="w-4 h-4" />}
-          onPress={handleContinue}
+          
+          onClick={handleContinue}
         >
           {nextPhase ? `Continue: ${PHASE_INFO[nextPhase].name}` : allComplete && !flywheelState.flywheelActive ? "Activate Flywheel" : "View Setup"}
         </Button>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

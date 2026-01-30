@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface OnboardingContentProps {
   firstName: string | null;
@@ -11,7 +12,7 @@ export function OnboardingContent({ firstName }: OnboardingContentProps) {
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <Card className="max-w-lg w-full">
-        <CardBody className="p-8 text-center">
+        <CardContent className="p-8 text-center">
           <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-3xl">🎉</span>
           </div>
@@ -27,30 +28,27 @@ export function OnboardingContent({ firstName }: OnboardingContentProps) {
 
           <div className="space-y-4">
             <Button
-              as={Link}
-              href="/dashboard/setup"
-              color="primary"
+              asChild
               size="lg"
               className="w-full"
             >
-              Set Up My Workspace
+              <Link href="/dashboard/setup">Set Up My Workspace</Link>
             </Button>
 
             <Button
-              as={Link}
-              href="/dashboard"
-              variant="light"
+              asChild
+              variant="ghost"
               size="lg"
               className="w-full"
             >
-              Skip for now
+              <Link href="/dashboard">Skip for now</Link>
             </Button>
           </div>
 
           <p className="text-xs text-gray-500 mt-6">
             You can always complete setup later from your dashboard.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

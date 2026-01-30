@@ -1,23 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Input,
-  Select,
-  SelectItem,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Plus,
@@ -45,7 +34,7 @@ const PLATFORMS = [
 export function AdAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<AdAccount[]>([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Form state
   const [platform, setPlatform] = useState("META");
@@ -90,7 +79,7 @@ export function AdAccountsPage() {
       if (res.ok) {
         const data = await res.json();
         setAccounts([{ ...data.account, _count: { campaigns: 0 } }, ...accounts]);
-        onClose();
+        setIsOpen(false);
         setAccountName("");
         setAccountId("");
       }
@@ -116,7 +105,7 @@ export function AdAccountsPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -127,7 +116,7 @@ export function AdAccountsPage() {
         title="Ad Accounts"
         description="Connect and manage your advertising accounts."
         actions={
-          <Button color="primary" startContent={<Plus className="w-4 h-4" />} onClick={onOpen}>
+          <Button  onClick={() => setIsOpen(true)}><Plus className="w-4 h-4" /> 
             Add Account
           </Button>
         }
@@ -139,14 +128,14 @@ export function AdAccountsPage() {
           const platformAccounts = accounts.filter((a) => a.platform === p.value);
           return (
             <Card key={p.value}>
-              <CardBody>
+              <CardContent>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-10 h-10 ${p.color} rounded-lg flex items-center justify-center`}>
                     <span className="text-white font-bold text-sm">{p.value.slice(0, 2)}</span>
                   </div>
                   <div>
                     <p className="font-medium">{p.label}</p>
-                    <p className="text-sm text-default-500">
+                    <p className="text-sm text-muted-foreground">
                       {platformAccounts.length} account{platformAccounts.length !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -154,11 +143,11 @@ export function AdAccountsPage() {
 
                 {platformAccounts.length === 0 ? (
                   <Button
-                    variant="bordered"
+                    variant="outline"
                     className="w-full"
                     onClick={() => {
                       setPlatform(p.value);
-                      onOpen();
+                      setIsOpen(true);
                     }}
                   >
                     Connect {p.label.split(" ")[0]}
@@ -168,23 +157,23 @@ export function AdAccountsPage() {
                     {platformAccounts.map((account) => (
                       <div
                         key={account.id}
-                        className="flex items-center justify-between p-2 rounded-lg bg-default-50"
+                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
                       >
                         <div>
                           <p className="text-sm font-medium">{account.accountName}</p>
-                          <p className="text-xs text-default-400">
+                          <p className="text-xs text-muted-foreground">
                             {account._count.campaigns} campaigns
                           </p>
                         </div>
                         <div className="flex gap-1">
-                          <Chip size="sm" color="success" variant="flat">
+                          <Badge  variant="outline" variant="secondary">
                             {account.status}
-                          </Chip>
+                          </Badge>
                           <Button
-                            isIconOnly
+                            size="icon"
                             size="sm"
-                            variant="light"
-                            color="danger"
+                            variant="ghost"
+                            variant="destructive"
                             onClick={() => deleteAccount(account.id)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -193,19 +182,19 @@ export function AdAccountsPage() {
                       </div>
                     ))}
                     <Button
-                      variant="light"
+                      variant="ghost"
                       size="sm"
                       className="w-full"
                       onClick={() => {
                         setPlatform(p.value);
-                        onOpen();
+                        setIsOpen(true);
                       }}
                     >
                       + Add Another
                     </Button>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -213,70 +202,64 @@ export function AdAccountsPage() {
 
       {/* Info Card */}
       <Card>
-        <CardBody>
+        <CardContent>
           <div className="flex items-start gap-4">
             <div className="p-3 bg-primary/10 rounded-lg">
               <ExternalLink className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h3 className="font-semibold mb-1">Manual Tracking Mode</h3>
-              <p className="text-sm text-default-500">
+              <p className="text-sm text-muted-foreground">
                 Full API integration with Meta, Google, and LinkedIn requires business verification
                 and app review. For now, you can manually enter campaign metrics to track performance
                 in Epic AI. We&apos;re working on automated sync!
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Add Account Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Add Ad Account</ModalHeader>
-          <ModalBody className="space-y-4">
-            <Select
-              label="Platform"
-              selectedKeys={[platform]}
-              onSelectionChange={(keys) => setPlatform(Array.from(keys)[0] as string)}
-            >
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Ad Account</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <Select value={platform} onValueChange={(v: string) => setPlatform(v)}>
+              <SelectTrigger><SelectValue placeholder="Platform" /></SelectTrigger>
+              <SelectContent>
               {PLATFORMS.map((p) => (
-                <SelectItem key={p.value}>
+                <SelectItem key={p.value} value={p.value}>
                   {p.label}
                 </SelectItem>
               ))}
+              </SelectContent>
             </Select>
 
             <Input
-              label="Account Name"
               placeholder="My Business Ad Account"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
             />
 
             <Input
-              label="Account ID (optional)"
               placeholder="act_123456789"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              description="Find this in your ad platform settings"
             />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onClick={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
               onClick={createAccount}
-              isLoading={saving}
-              isDisabled={!accountName}
+              disabled={saving || !accountName}
             >
               Add Account
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

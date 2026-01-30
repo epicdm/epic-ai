@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Button, Chip, RadioGroup, Radio, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Send, Calendar, Clock, Sparkles, FileText, CheckCircle } from "lucide-react";
 import type { DistributeWizardData, FirstPostOption } from "@/lib/flywheel/types";
 
@@ -94,7 +98,7 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Choose how you want to handle your first post. You can publish
         immediately, schedule it, or skip this step for now.
       </p>
@@ -103,91 +107,74 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
       <RadioGroup
         value={data.firstPostOption || "skip"}
         onValueChange={handleOptionChange}
-        classNames={{
-          wrapper: "gap-3",
-        }}
+        className="gap-3"
       >
-        <Radio
-          value="skip"
-          classNames={{
-            base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-green-500 dark:data-[selected=true]:border-green-500",
-          }}
-        >
-          <div className="flex items-center gap-3">
+        <Label htmlFor="fp-skip" className="cursor-pointer">
+          <div className={`flex items-center gap-3 border rounded-lg p-4 transition-colors ${data.firstPostOption === "skip" || !data.firstPostOption ? "border-green-500" : "border-gray-200 dark:border-gray-700"}`}>
+            <RadioGroupItem value="skip" id="fp-skip" />
             <Clock className="w-5 h-5 text-gray-400" />
             <div>
               <p className="font-medium">Skip for Now</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 I&apos;ll create and schedule content later
               </p>
             </div>
           </div>
-        </Radio>
+        </Label>
 
-        <Radio
-          value="schedule"
-          classNames={{
-            base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-green-500 dark:data-[selected=true]:border-green-500",
-          }}
-        >
-          <div className="flex items-center gap-3">
+        <Label htmlFor="fp-schedule" className="cursor-pointer">
+          <div className={`flex items-center gap-3 border rounded-lg p-4 transition-colors ${data.firstPostOption === "schedule" ? "border-green-500" : "border-gray-200 dark:border-gray-700"}`}>
+            <RadioGroupItem value="schedule" id="fp-schedule" />
             <Calendar className="w-5 h-5 text-blue-500" />
             <div>
               <p className="font-medium">Schedule First Post</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Pick content and schedule for optimal time
               </p>
             </div>
           </div>
-        </Radio>
+        </Label>
 
-        <Radio
-          value="publish"
-          classNames={{
-            base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-green-500 dark:data-[selected=true]:border-green-500",
-          }}
-        >
-          <div className="flex items-center gap-3">
+        <Label htmlFor="fp-publish" className="cursor-pointer">
+          <div className={`flex items-center gap-3 border rounded-lg p-4 transition-colors ${data.firstPostOption === "publish" ? "border-green-500" : "border-gray-200 dark:border-gray-700"}`}>
+            <RadioGroupItem value="publish" id="fp-publish" />
             <Send className="w-5 h-5 text-green-500" />
             <div>
               <p className="font-medium">Publish Now</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Send your first post immediately
               </p>
             </div>
           </div>
-        </Radio>
+        </Label>
       </RadioGroup>
 
       {/* Content Selection (for schedule/publish options) */}
       {(data.firstPostOption === "schedule" || data.firstPostOption === "publish") && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-medium text-gray-900 dark:text-white">
                 Select Content
               </h4>
               <Button
                 size="sm"
-                variant="flat"
-                color="secondary"
-                startContent={
-                  isGenerating ? (
-                    <Spinner size="sm" color="current" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )
-                }
-                onPress={generateFirstPost}
-                isDisabled={isGenerating || !brandId}
+                variant="secondary"
+                onClick={generateFirstPost}
+                disabled={isGenerating || !brandId}
               >
+                {isGenerating ? (
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                ) : (
+                  <Sparkles className="mr-2 w-4 h-4" />
+                )}
                 {isGenerating ? "Generating..." : "Generate New"}
               </Button>
             </div>
 
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Spinner size="lg" />
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
               </div>
             ) : availableContent.length > 0 ? (
               <div className="space-y-3">
@@ -219,14 +206,14 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
                         <p className="font-medium text-gray-900 dark:text-white truncate">
                           {content.title || "Untitled Post"}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                           {content.content}
                         </p>
                         <div className="flex gap-1 mt-2">
                           {content.platforms.map((p) => (
-                            <Chip key={p} size="sm" variant="flat">
+                            <Badge key={p} variant="secondary">
                               {p}
-                            </Chip>
+                            </Badge>
                           ))}
                         </div>
                       </div>
@@ -237,45 +224,44 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
             ) : (
               <div className="text-center py-8">
                 <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400 mb-3">
+                <p className="text-muted-foreground mb-3">
                   No content available yet
                 </p>
                 <Button
-                  color="primary"
-                  variant="flat"
-                  startContent={<Sparkles className="w-4 h-4" />}
-                  onPress={generateFirstPost}
-                  isDisabled={isGenerating || !brandId}
+                  variant="secondary"
+                  onClick={generateFirstPost}
+                  disabled={isGenerating || !brandId}
                 >
+                  <Sparkles className="mr-2 w-4 h-4" />
                   Generate Your First Post
                 </Button>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Platform Preview */}
       {connectedPlatforms.length > 0 && data.firstPostOption !== "skip" && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3">
               Will be posted to:
             </h4>
             <div className="flex flex-wrap gap-2">
               {connectedPlatforms.map((platform) => (
-                <Chip key={platform} color="success" variant="flat">
+                <Badge key={platform} variant="outline">
                   {platform}
-                </Chip>
+                </Badge>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Info Note */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
             Pro Tip
           </h5>
@@ -284,7 +270,7 @@ export function FirstPostStep({ data, updateData, brandId }: FirstPostStepProps)
             sharing a valuable insight. You can always create more content from
             the Content Factory later.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

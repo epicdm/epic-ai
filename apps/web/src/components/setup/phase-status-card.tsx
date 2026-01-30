@@ -7,7 +7,9 @@
  * progress tracking, and action buttons.
  */
 
-import { Card, CardBody, Button, Progress, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   CheckCircle,
   Circle,
@@ -132,10 +134,10 @@ export function PhaseStatusCard({
       return (
         <Button
           size="sm"
-          variant="light"
-          startContent={<Edit className="w-4 h-4" />}
-          onPress={onReview}
-        >
+          variant="ghost"
+          
+          onClick={onReview}
+        ><Edit className="w-4 h-4" /> 
           Review
         </Button>
       );
@@ -145,9 +147,8 @@ export function PhaseStatusCard({
       return (
         <Button
           size="sm"
-          color="primary"
-          endContent={<ArrowRight className="w-4 h-4" />}
-          onPress={onContinue}
+          
+          onClick={onContinue}
         >
           Continue
         </Button>
@@ -156,7 +157,7 @@ export function PhaseStatusCard({
 
     if (isLocked) {
       return (
-        <Button size="sm" variant="bordered" isDisabled>
+        <Button size="sm" variant="outline" disabled>
           Locked
         </Button>
       );
@@ -165,9 +166,9 @@ export function PhaseStatusCard({
     return (
       <Button
         size="sm"
-        variant="bordered"
-        color="default"
-        onPress={onStart}
+        variant="outline"
+        variant="outline"
+        onClick={onStart}
       >
         Start
       </Button>
@@ -176,7 +177,7 @@ export function PhaseStatusCard({
 
   return (
     <Card className={getCardStyle()}>
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-start gap-4">
           {/* Icon */}
           <div className="flex-shrink-0 mt-1">
@@ -192,24 +193,24 @@ export function PhaseStatusCard({
 
               {/* Status Badges */}
               {isCompleted && (
-                <Chip size="sm" color="success" variant="flat">
+                <Badge  variant="outline" variant="secondary">
                   Complete
-                </Chip>
+                </Badge>
               )}
               {isInProgress && (
-                <Chip size="sm" color="primary" variant="flat">
+                <Badge   variant="secondary">
                   In Progress
-                </Chip>
+                </Badge>
               )}
               {isLocked && (
-                <Chip size="sm" variant="flat">
+                <Badge  variant="secondary">
                   Locked
-                </Chip>
+                </Badge>
               )}
               {isNotStarted && !isLocked && (
-                <Chip size="sm" variant="flat" color="default">
+                <Badge  variant="secondary" >
                   Not Started
-                </Chip>
+                </Badge>
               )}
             </div>
 
@@ -220,14 +221,9 @@ export function PhaseStatusCard({
             {/* Progress Bar (only for in-progress) */}
             {isInProgress && (
               <div className="space-y-2">
-                <Progress
-                  value={progress}
-                  size="sm"
-                  color="primary"
-                  classNames={{
-                    indicator: "bg-gradient-to-r from-blue-500 to-purple-500",
-                  }}
-                />
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+            </div>
                 <p className="text-xs text-gray-500">
                   {currentMode === "guided"
                     ? `Step ${state.currentStep || 0} of ${totalSteps}`
@@ -256,7 +252,7 @@ export function PhaseStatusCard({
             <ActionButton />
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

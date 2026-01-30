@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Slider, Button, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Megaphone, Smile, MessageCircle, RotateCcw, Sparkles } from "lucide-react";
 import type { AutomateWizardData, ContentMixSettings } from "@/lib/flywheel/types";
 
@@ -115,17 +117,17 @@ export function ContentMixStep({ data, updateData }: ContentMixStepProps) {
         <span className="text-sm text-gray-600 dark:text-gray-400">
           Total allocation:
         </span>
-        <Chip
-          color={isValid ? "success" : total > 100 ? "danger" : "warning"}
-          variant="flat"
+        <Badge
+          variant="secondary"
+          className={isValid ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : total > 100 ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"}
         >
-          {total}% {isValid ? "✓" : total > 100 ? "(over)" : "(under)"}
-        </Chip>
+          {total}% {isValid ? "\u2713" : total > 100 ? "(over)" : "(under)"}
+        </Badge>
       </div>
 
       {/* Quick Presets */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
@@ -137,27 +139,27 @@ export function ContentMixStep({ data, updateData }: ContentMixStepProps) {
               <Button
                 key={preset.name}
                 size="sm"
-                variant="flat"
-                onPress={() => applyPreset(preset.mix)}
+                variant="secondary"
+                onClick={() => applyPreset(preset.mix)}
               >
                 {preset.name}
               </Button>
             ))}
             <Button
               size="sm"
-              variant="bordered"
-              startContent={<RotateCcw className="w-3 h-3" />}
-              onPress={resetToDefault}
+              variant="outline"
+              onClick={resetToDefault}
             >
+              <RotateCcw className="w-3 h-3 mr-1" />
               Reset
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Sliders */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-6 space-y-6">
+        <CardContent className="p-6 space-y-6">
           {CONTENT_TYPES.map((type) => {
             const Icon = type.icon;
             const value = localMix[type.id];
@@ -184,27 +186,24 @@ export function ContentMixStep({ data, updateData }: ContentMixStepProps) {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                   {type.description}
                 </p>
-                <Slider
-                  size="sm"
-                  step={5}
-                  minValue={0}
-                  maxValue={100}
+                <input
+                  type="range"
+                  className="w-full accent-primary"
                   value={value}
-                  onChange={(val) => handleSliderChange(type.id, val as number)}
-                  classNames={{
-                    track: "bg-gray-200 dark:bg-gray-700",
-                    filler: `bg-${type.color}-500`,
-                  }}
+                  onChange={(e) => handleSliderChange(type.id, Number(e.target.value))}
+                  min={0}
+                  max={100}
+                  step={5}
                 />
               </div>
             );
           })}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Visual Breakdown */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Visual Breakdown
           </h5>
@@ -244,18 +243,18 @@ export function ContentMixStep({ data, updateData }: ContentMixStepProps) {
               Engaging
             </span>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Tip */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <strong>Tip:</strong> Most successful brands follow the 40-20-20-20
             rule. Heavy on education, balanced on the rest. Adjust based on your
             industry and goals.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

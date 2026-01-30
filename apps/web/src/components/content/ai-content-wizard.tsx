@@ -13,21 +13,15 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Progress,
-  Avatar,
-  Textarea,
-  Switch,
-  RadioGroup,
-  Radio,
-  Tooltip,
-  Divider,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -49,7 +43,6 @@ import {
   Check,
   Zap,
   TrendingUp,
-  Loader2,
 } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/analytics";
 import { AIConfidence } from "@/components/ui/ai-confidence";
@@ -460,12 +453,9 @@ export function AIContentWizard({
 
       {/* Progress */}
       <div className="space-y-3">
-        <Progress
-          value={progress}
-          color="primary"
-          size="sm"
-          className="max-w-md mx-auto"
-        />
+        <div className="max-w-md mx-auto h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+        </div>
         <div className="flex justify-between max-w-md mx-auto">
           {WIZARD_STEPS.map((step) => (
             <div
@@ -510,7 +500,7 @@ export function AIContentWizard({
                   Choose a content pillar or enter a custom topic
                 </p>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 {/* AI Suggestion Banner */}
                 {suggestedPillar && (
                   <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
@@ -526,9 +516,9 @@ export function AIContentWizard({
                     </div>
                     <Button
                       size="sm"
-                      color="primary"
-                      variant="flat"
-                      onPress={() => setSelectedPillar(suggestedPillar)}
+                     
+                      variant="secondary"
+                      onClick={() => setSelectedPillar(suggestedPillar)}
                     >
                       Use This
                     </Button>
@@ -580,21 +570,20 @@ export function AIContentWizard({
                 )}
 
                 {/* Custom Topic Input */}
-                <Divider className="my-2" />
+                <div className="border-t my-4" />
                 <div>
                   <p className="text-sm font-medium mb-2">Or enter a custom topic:</p>
                   <Textarea
                     placeholder="E.g., Announce our new product launch, Share industry insights, Behind the scenes..."
                     value={customTopic}
-                    onValueChange={(val) => {
-                      setCustomTopic(val);
-                      if (val.trim()) setSelectedPillar(null);
+                    onChange={(e) => {
+                      setCustomTopic(e.target.value);
+                      if (e.target.value.trim()) setSelectedPillar(null);
                     }}
-                    minRows={2}
-                    maxRows={4}
+                    rows={3}
                   />
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -610,13 +599,13 @@ export function AIContentWizard({
                   Select the platforms for this content (AI will optimize for each)
                 </p>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 {connectedPlatforms.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500 mb-4">No social accounts connected yet.</p>
                     <Button
-                      color="primary"
-                      onPress={() => router.push("/dashboard/social/accounts")}
+                     
+                      onClick={() => router.push("/dashboard/social/accounts")}
                     >
                       Connect Accounts
                     </Button>
@@ -654,13 +643,13 @@ export function AIContentWizard({
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <Chip size="sm" variant="flat">
+                            <Badge size="sm" variant="secondary">
                               {config.charLimit.toLocaleString()} chars max
-                            </Chip>
+                            </Badge>
                             <Switch
-                              isSelected={isSelected}
-                              onValueChange={() => togglePlatform(account.platform)}
-                              color="primary"
+                              checked={isSelected}
+                              onCheckedChange={() => togglePlatform(account.platform)}
+                             
                             />
                           </div>
                         </div>
@@ -677,14 +666,14 @@ export function AIContentWizard({
                     </span>
                   </p>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
           {/* Step 3: AI Generating */}
           {currentStep === 3 && (
             <Card>
-              <CardBody className="py-16">
+              <CardContent className="py-16">
                 <div className="text-center space-y-6">
                   <div className="relative mx-auto w-20 h-20">
                     <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
@@ -715,14 +704,11 @@ export function AIContentWizard({
                     })}
                   </div>
 
-                  <Progress
-                    isIndeterminate
-                    color="primary"
-                    size="sm"
-                    className="max-w-xs mx-auto"
-                  />
+                  <div className="max-w-xs mx-auto h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full animate-pulse w-full" />
+                  </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -737,10 +723,9 @@ export function AIContentWizard({
                   </div>
                   <Button
                     size="sm"
-                    variant="flat"
-                    startContent={<RefreshCw className="w-4 h-4" />}
-                    onPress={() => handleRegenerate()}
-                    isLoading={isGenerating}
+                    variant="secondary"
+                                        onClick={() => handleRegenerate()}
+                    disabled={isGenerating}
                   >
                     Regenerate All
                   </Button>
@@ -770,55 +755,60 @@ export function AIContentWizard({
                         <span className="font-medium">{config.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Chip
+                        <Badge
                           size="sm"
-                          variant="flat"
+                          variant="secondary"
                           color={isOverLimit ? "danger" : "default"}
                         >
                           {charCount} / {config.charLimit}
-                        </Chip>
-                        <Tooltip content="Regenerate this variation">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => handleRegenerate(variation.platform)}
-                            isLoading={isGenerating}
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Copy to clipboard">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => navigator.clipboard.writeText(content)}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
+                        </Badge>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleRegenerate(variation.platform)}
+                                disabled={isGenerating}
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Regenerate this variation</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => navigator.clipboard.writeText(content)}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Copy to clipboard</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </CardHeader>
-                    <CardBody className="pt-0">
+                    <CardContent className="pt-0">
                       {isEditing ? (
                         <div className="space-y-2">
                           <Textarea
                             value={content}
-                            onValueChange={(val) =>
-                              setEditedVariations((prev) => ({ ...prev, [variation.platform]: val }))
+                            onChange={(e) =>
+                              setEditedVariations((prev) => ({ ...prev, [variation.platform]: e.target.value }))
                             }
-                            minRows={3}
-                            maxRows={10}
-                            classNames={{
-                              input: isOverLimit ? "text-danger" : "",
-                            }}
+                            rows={5}
+                            className={isOverLimit ? "text-destructive" : ""}
                           />
                           <div className="flex justify-end">
                             <Button
                               size="sm"
-                              color="primary"
-                              onPress={() => setEditingPlatform(null)}
+                             
+                              onClick={() => setEditingPlatform(null)}
                             >
                               Done
                             </Button>
@@ -842,7 +832,7 @@ export function AIContentWizard({
                           <p className="text-xs text-gray-400 mt-2">Click to edit</p>
                         </div>
                       )}
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 );
               })}
@@ -861,7 +851,7 @@ export function AIContentWizard({
                   Choose the best time to reach your audience
                 </p>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 {publishSuccess ? (
                   <div className="text-center py-8 space-y-4">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -880,18 +870,20 @@ export function AIContentWizard({
                     <RadioGroup
                       value={publishOption}
                       onValueChange={(val) => setPublishOption(val as "now" | "optimal" | "custom")}
+                      className="space-y-3"
                     >
-                      <Radio value="now">
-                        <div className="ml-2">
+                      <div className="flex items-start space-x-3">
+                        <RadioGroupItem value="now" id="publish-now" />
+                        <Label htmlFor="publish-now" className="cursor-pointer">
                           <p className="font-medium">Publish Now</p>
                           <p className="text-sm text-gray-500">Post immediately to all platforms</p>
-                        </div>
-                      </Radio>
-                      <Radio value="optimal">
-                        <div className="ml-2">
+                        </Label>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <RadioGroupItem value="optimal" id="publish-optimal" />
+                        <Label htmlFor="publish-optimal" className="cursor-pointer">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">Optimal Time</p>
-                            {/* AI Confidence Indicator */}
                             {(() => {
                               const confidence = getOptimalPublishingTimeConfidence(selectedPlatforms);
                               return (
@@ -901,28 +893,29 @@ export function AIContentWizard({
                                 />
                               );
                             })()}
-                            <Chip size="sm" color="primary" variant="flat">
+                            <Badge variant="secondary">
                               <Sparkles className="w-3 h-3 mr-1" />
                               AI Recommended
-                            </Chip>
+                            </Badge>
                           </div>
                           <p className="text-sm text-gray-500">
                             Let AI schedule for maximum engagement
                           </p>
-                        </div>
-                      </Radio>
-                      <Radio value="custom">
-                        <div className="ml-2">
+                        </Label>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <RadioGroupItem value="custom" id="publish-custom" />
+                        <Label htmlFor="publish-custom" className="cursor-pointer">
                           <p className="font-medium">Add to Queue</p>
                           <p className="text-sm text-gray-500">
                             Save to content queue for manual scheduling
                           </p>
-                        </div>
-                      </Radio>
+                        </Label>
+                      </div>
                     </RadioGroup>
 
                     {/* Summary */}
-                    <Divider />
+                    <div className="border-t my-4" />
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Summary</p>
                       <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-2">
@@ -953,7 +946,7 @@ export function AIContentWizard({
                     </div>
                   </>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           )}
         </motion.div>
@@ -963,29 +956,24 @@ export function AIContentWizard({
       {!publishSuccess && (
         <div className="flex justify-between">
           <Button
-            variant="flat"
-            startContent={<ArrowLeft className="w-4 h-4" />}
-            onPress={handleBack}
-            isDisabled={currentStep === 1 || currentStep === 3}
+            variant="secondary"
+                        onClick={handleBack}
+            disabled={currentStep === 1 || currentStep === 3}
           >
             Back
           </Button>
 
           {currentStep !== 3 && (
             <Button
-              color="primary"
-              endContent={
-                currentStep === 5 ? (
-                  isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />
-                ) : (
-                  <ArrowRight className="w-4 h-4" />
-                )
-              }
-              onPress={handleNext}
-              isDisabled={!canProceed()}
-              isLoading={currentStep === 5 && isPublishing}
+              onClick={handleNext}
+              disabled={!canProceed() || (currentStep === 5 && isPublishing)}
             >
               {currentStep === 2 ? "Generate Content" : currentStep === 5 ? "Publish" : "Continue"}
+              {currentStep === 5 ? (
+                isPublishing ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Send className="w-4 h-4 ml-2" />
+              ) : (
+                <ArrowRight className="w-4 h-4 ml-2" />
+              )}
             </Button>
           )}
         </div>

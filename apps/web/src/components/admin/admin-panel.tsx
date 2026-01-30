@@ -1,24 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Spinner,
-  Chip,
-  Divider,
-  Tabs,
-  Tab,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Settings,
@@ -96,7 +84,7 @@ export function AdminPanel() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const [initializingDefaults, setInitializingDefaults] = useState(false);
 
   // Fetch configs and stats
@@ -164,7 +152,7 @@ export function AdminPanel() {
       setError("Failed to initialize defaults");
     } finally {
       setInitializingDefaults(false);
-      onClose();
+      setIsOpen(false);
     }
   }
 
@@ -265,7 +253,7 @@ export function AdminPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -280,7 +268,7 @@ export function AdminPanel() {
       {/* Alert Messages */}
       {(successMessage || error) && (
         <Card className={error ? "bg-danger-50" : "bg-success-50"}>
-          <CardBody className="flex flex-row items-center gap-2 py-2">
+          <CardContent className="flex flex-row items-center gap-2 py-2">
             {error ? (
               <AlertCircle className="w-4 h-4 text-danger" />
             ) : (
@@ -289,35 +277,36 @@ export function AdminPanel() {
             <span className={error ? "text-danger" : "text-success"}>
               {error || successMessage}
             </span>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
-      <Tabs
-        selectedKey={selectedTab}
-        onSelectionChange={(key) => setSelectedTab(key as string)}
-        aria-label="Admin sections"
-      >
-        <Tab key="overview" title="Overview">
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v)}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="livekit">LiveKit</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
           <div className="mt-4 space-y-6">
             {/* Quick Actions */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="flat"
-                startContent={<RefreshCw className="w-4 h-4" />}
-                onPress={refreshStats}
-                isLoading={statsLoading}
-              >
+                variant="secondary"
+                
+                onClick={refreshStats}
+                disabled={statsLoading}
+              ><RefreshCw className="w-4 h-4" /> 
                 Refresh Stats
               </Button>
               {configs.length === 0 && (
                 <Button
                   size="sm"
-                  color="primary"
-                  startContent={<Settings className="w-4 h-4" />}
-                  onPress={onOpen}
-                >
+                  
+                  onClick={() => setIsOpen(true)}
+                ><Settings className="w-4 h-4" /> 
                   Initialize Defaults
                 </Button>
               )}
@@ -327,67 +316,67 @@ export function AdminPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Platform Stats */}
               <Card>
-                <CardBody>
+                <CardContent>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
                       <Building2 className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Organizations</p>
+                      <p className="text-sm text-muted-foreground">Organizations</p>
                       <p className="text-2xl font-bold">
                         {stats?.platform?.totalOrganizations || 0}
                       </p>
                     </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
 
               <Card>
-                <CardBody>
+                <CardContent>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-secondary/10 rounded-lg">
                       <Users className="w-5 h-5 text-secondary" />
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Users</p>
+                      <p className="text-sm text-muted-foreground">Users</p>
                       <p className="text-2xl font-bold">
                         {stats?.platform?.totalUsers || 0}
                       </p>
                     </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
 
               <Card>
-                <CardBody>
+                <CardContent>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-success/10 rounded-lg">
                       <PhoneCall className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Total Calls</p>
+                      <p className="text-sm text-muted-foreground">Total Calls</p>
                       <p className="text-2xl font-bold">
                         {stats?.voice?.totalCalls || 0}
                       </p>
                     </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
 
               <Card>
-                <CardBody>
+                <CardContent>
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-warning/10 rounded-lg">
                       <Clock className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Total Minutes</p>
+                      <p className="text-sm text-muted-foreground">Total Minutes</p>
                       <p className="text-2xl font-bold">
                         {stats?.voice?.totalMinutes || 0}
                       </p>
                     </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             </div>
 
@@ -396,60 +385,60 @@ export function AdminPanel() {
               <CardHeader className="flex gap-3">
                 <Activity className="w-5 h-5" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Service Status</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Service Status</p>
+                  <p className="text-sm text-muted-foreground">
                     Connection status for external services
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* LiveKit Status */}
-                  <div className="flex items-center justify-between p-3 bg-default-100 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-2">
                       <Server className="w-4 h-4" />
                       <span>LiveKit</span>
                     </div>
-                    <Chip
-                      size="sm"
+                    <Badge
+                      
                       color={stats?.livekit?.connected ? "success" : "danger"}
-                      variant="flat"
+                      variant="secondary"
                     >
                       {stats?.livekit?.connected ? "Connected" : "Disconnected"}
-                    </Chip>
+                    </Badge>
                   </div>
 
                   {/* Magnus Status */}
-                  <div className="flex items-center justify-between p-3 bg-default-100 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
                       <span>Voice Service</span>
                     </div>
-                    <Chip
-                      size="sm"
+                    <Badge
+                      
                       color={stats?.magnus?.connected ? "success" : "danger"}
-                      variant="flat"
+                      variant="secondary"
                     >
                       {stats?.magnus?.connected ? "Connected" : "Disconnected"}
-                    </Chip>
+                    </Badge>
                   </div>
 
                   {/* Database Status */}
-                  <div className="flex items-center justify-between p-3 bg-default-100 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-2">
                       <Activity className="w-4 h-4" />
                       <span>Database</span>
                     </div>
-                    <Chip size="sm" color="success" variant="flat">
+                    <Badge  variant="outline" variant="secondary">
                       Connected
-                    </Chip>
+                    </Badge>
                   </div>
                 </div>
 
                 {/* LiveKit Details */}
                 {stats?.livekit?.connected && (
-                  <div className="mt-4 p-3 bg-default-50 rounded-lg">
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm font-medium mb-2">LiveKit Details</p>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
@@ -464,7 +453,7 @@ export function AdminPanel() {
 
                 {/* Magnus Details */}
                 {stats?.magnus?.connected && (
-                  <div className="mt-4 p-3 bg-default-50 rounded-lg">
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm font-medium mb-2">Telephony Details</p>
                     <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
@@ -479,7 +468,7 @@ export function AdminPanel() {
                     </div>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Voice Stats */}
@@ -487,54 +476,54 @@ export function AdminPanel() {
               <CardHeader className="flex gap-3">
                 <PhoneCall className="w-5 h-5" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Voice Statistics</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Voice Statistics</p>
+                  <p className="text-sm text-muted-foreground">
                     Voice agent and call statistics
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-3 bg-default-50 rounded-lg">
-                    <p className="text-xs text-default-500">Active Agents</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Active Agents</p>
                     <p className="text-xl font-bold">
                       {stats?.voice?.activeAgents || 0} / {stats?.voice?.totalAgents || 0}
                     </p>
                   </div>
-                  <div className="p-3 bg-default-50 rounded-lg">
-                    <p className="text-xs text-default-500">Calls Today</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Calls Today</p>
                     <p className="text-xl font-bold">{stats?.voice?.callsToday || 0}</p>
                   </div>
-                  <div className="p-3 bg-default-50 rounded-lg">
-                    <p className="text-xs text-default-500">Calls This Week</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Calls This Week</p>
                     <p className="text-xl font-bold">{stats?.voice?.callsThisWeek || 0}</p>
                   </div>
-                  <div className="p-3 bg-default-50 rounded-lg">
-                    <p className="text-xs text-default-500">Avg Duration</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Avg Duration</p>
                     <p className="text-xl font-bold">{stats?.voice?.avgCallDuration || 0}s</p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
-        <Tab key="settings" title="Settings">
+        <TabsContent value="settings">
           <div className="mt-4 space-y-6">
             {/* Initialize Button */}
             {configs.length === 0 && (
               <Card>
-                <CardBody className="text-center py-8">
-                  <Settings className="w-12 h-12 mx-auto text-default-400 mb-4" />
+                <CardContent className="text-center py-8">
+                  <Settings className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-lg font-medium mb-2">No configurations found</p>
-                  <p className="text-default-500 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Initialize default configurations to get started
                   </p>
-                  <Button color="primary" onPress={onOpen}>
+                  <Button onClick={() => setIsOpen(true)}>
                     Initialize Defaults
                   </Button>
-                </CardBody>
+                </CardContent>
               </Card>
             )}
 
@@ -544,23 +533,23 @@ export function AdminPanel() {
                 <CardHeader className="flex gap-3">
                   {categoryLabels[category]?.icon || <Settings className="w-5 h-5" />}
                   <div className="flex flex-col">
-                    <p className="text-md font-semibold">
+                    <p className="text-base font-semibold">
                       {categoryLabels[category]?.label || category}
                     </p>
-                    <p className="text-small text-default-500">
+                    <p className="text-sm text-muted-foreground">
                       {categoryConfigs.length} setting(s)
                     </p>
                   </div>
                 </CardHeader>
-                <Divider />
-                <CardBody>
+                <div className="border-t my-4" />
+                <CardContent>
                   <div className="space-y-4">
                     {categoryConfigs.map((config) => (
                       <div key={config.key} className="flex items-end gap-3">
                         <div className="flex-1">
                           <label className="text-sm font-medium">{config.key}</label>
                           {config.description && (
-                            <p className="text-xs text-default-500 mb-1">
+                            <p className="text-xs text-muted-foreground mb-1">
                               {config.description}
                             </p>
                           )}
@@ -592,11 +581,11 @@ export function AdminPanel() {
                             />
                             {config.isEncrypted && (
                               <Button
-                                isIconOnly
+                                size="icon"
                                 size="sm"
-                                variant="flat"
-                                isLoading={revealingKey === config.key}
-                                onPress={() => toggleRevealValue(config.key)}
+                                variant="secondary"
+                                disabled={revealingKey === config.key}
+                                onClick={() => toggleRevealValue(config.key)}
                               >
                                 {showValues[config.key] ? (
                                   <EyeOff className="w-4 h-4" />
@@ -609,58 +598,55 @@ export function AdminPanel() {
                         </div>
                         <Button
                           size="sm"
-                          color="primary"
-                          isDisabled={editValues[config.key] === undefined}
-                          isLoading={saving === config.key}
-                          startContent={<Save className="w-4 h-4" />}
-                          onPress={() => saveConfig(config.key)}
+                          disabled={editValues[config.key] === undefined || saving === config.key}
+                          onClick={() => saveConfig(config.key)}
                         >
+                          <Save className="w-4 h-4 mr-2" />
                           Save
                         </Button>
                       </div>
                     ))}
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
-        </Tab>
+        </TabsContent>
 
-        <Tab key="livekit" title={<div className="flex items-center gap-2"><Radio className="w-4 h-4" />LiveKit</div>}>
+        <TabsContent value="livekit">
           <div className="mt-4">
             <LiveKitPanel />
           </div>
-        </Tab>
+        </TabsContent>
       </Tabs>
 
       {/* Initialize Defaults Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Initialize Default Configurations</ModalHeader>
-          <ModalBody>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Initialize Default Configurations</DialogTitle></DialogHeader>
+          <div className="py-4">
             <p>
               This will create default configuration entries for all platform settings.
               Existing configurations will not be overwritten.
             </p>
-            <p className="text-sm text-default-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Settings will be populated with values from environment variables where
               available.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              isLoading={initializingDefaults}
-              onPress={initializeDefaults}
+              disabled={initializingDefaults}
+              onClick={initializeDefaults}
             >
               Initialize
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

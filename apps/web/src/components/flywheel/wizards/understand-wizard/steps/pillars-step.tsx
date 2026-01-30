@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Input,
-  Textarea,
-  Button,
-  Card,
-  CardBody,
-  Chip,
-} from "@heroui/react";
-import { Plus, Trash2, Layers, Sparkles, GripVertical } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, Layers, Sparkles, GripVertical, X } from "lucide-react";
 import { AIBadge } from "@/components/ui/ai-badge";
 import type { UnderstandWizardData, ContentPillarData } from "@/lib/flywheel/types";
 
@@ -120,23 +117,25 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Define 3-5 content pillars - the main themes you'll create content
+          <p className="text-muted-foreground">
+            Define 3-5 content pillars - the main themes you will create content
             around.
           </p>
         </div>
         <Button
           size="sm"
-          variant="flat"
-          color="secondary"
-          startContent={<Sparkles className="w-4 h-4" />}
-          onPress={generatePillars}
-          isLoading={isGenerating}
-          isDisabled={!data.industry && !data.brandDescription}
+          variant="secondary"
+          onClick={generatePillars}
+          disabled={isGenerating || (!data.industry && !data.brandDescription)}
         >
+          {isGenerating ? (
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          ) : (
+            <Sparkles className="mr-2 w-4 h-4" />
+          )}
           AI Suggest Pillars
-          <AIBadge 
-            type="suggestion" 
+          <AIBadge
+            type="suggestion"
             size="sm"
             reason="Based on your brand details"
             className="ml-2"
@@ -151,23 +150,23 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
             .filter((name) => !usedPillarNames.includes(name.toLowerCase()))
             .map((topic) => {
               const isHighPriority = [
-                "Industry Trends", 
-                "Customer Success", 
+                "Industry Trends",
+                "Customer Success",
                 "Thought Leadership"
               ].includes(topic);
-              
+
               return (
                 <div key={topic} className="relative">
-                  <Button 
-                    variant="flat" 
+                  <Button
+                    variant="secondary"
                     size="sm"
-                    onPress={() => addPillar(topic)}
+                    onClick={() => addPillar(topic)}
                     className="w-full text-left justify-start"
                   >
                     {topic}
                     {isHighPriority && (
-                      <AIBadge 
-                        type="recommended" 
+                      <AIBadge
+                        type="recommended"
                         size="sm"
                         reason="High engagement for your industry"
                         confidence={85}
@@ -188,48 +187,46 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
             key={pillar.id}
             className="border border-gray-200 dark:border-gray-700"
           >
-            <CardBody className="p-4 space-y-4">
+            <CardContent className="p-4 space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+                  <GripVertical className="w-4 h-4 text-muted-foreground cursor-move" />
                   <Layers className="w-5 h-5 text-purple-500" />
                   <Input
                     value={pillar.name}
-                    onValueChange={(value) =>
-                      updatePillar(pillar.id!, { name: value })
+                    onChange={(e) =>
+                      updatePillar(pillar.id!, { name: e.target.value })
                     }
                     placeholder="Pillar Name"
-                    variant="underlined"
-                    classNames={{
-                      input: "font-medium text-lg",
-                    }}
+                    className="font-medium text-lg border-0 border-b rounded-none px-0 focus-visible:ring-0"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Chip size="sm" variant="flat">
+                  <Badge variant="secondary">
                     #{index + 1}
-                  </Chip>
+                  </Badge>
                   <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="danger"
-                    onPress={() => removePillar(pillar.id!)}
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removePillar(pillar.id!)}
+                    className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
 
-              <Textarea
-                label="Description"
-                placeholder="What topics does this pillar cover?"
-                value={pillar.description || ""}
-                onValueChange={(value) =>
-                  updatePillar(pillar.id!, { description: value })
-                }
-                minRows={2}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Description</label>
+                <Textarea
+                  placeholder="What topics does this pillar cover?"
+                  value={pillar.description || ""}
+                  onChange={(e) =>
+                    updatePillar(pillar.id!, { description: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
 
               {/* Topics */}
               <div className="space-y-2">
@@ -238,23 +235,28 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {pillar.topics?.map((topic, topicIndex) => (
-                    <Chip
+                    <Badge
                       key={topicIndex}
-                      onClose={() => removeTopic(pillar.id!, topicIndex)}
-                      variant="flat"
-                      color="secondary"
+                      variant="secondary"
+                      className="gap-1"
                     >
                       {topic}
-                    </Chip>
+                      <button
+                        type="button"
+                        onClick={() => removeTopic(pillar.id!, topicIndex)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
                 <div className="flex gap-2">
                   <Input
-                    size="sm"
                     placeholder="Add a sub-topic..."
                     value={newTopic[pillar.id!] || ""}
-                    onValueChange={(value) =>
-                      setNewTopic((prev) => ({ ...prev, [pillar.id!]: value }))
+                    onChange={(e) =>
+                      setNewTopic((prev) => ({ ...prev, [pillar.id!]: e.target.value }))
                     }
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -262,35 +264,35 @@ export function PillarsStep({ data, updateData }: PillarsStepProps) {
                         addTopic(pillar.id!);
                       }
                     }}
+                    className="text-sm"
                   />
                   <Button
-                    size="sm"
-                    isIconOnly
-                    variant="flat"
-                    onPress={() => addTopic(pillar.id!)}
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => addTopic(pillar.id!)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
 
         {pillars.length < 5 && (
           <Button
-            variant="bordered"
+            variant="outline"
             className="w-full"
-            startContent={<Plus className="w-4 h-4" />}
-            onPress={() => addPillar()}
+            onClick={() => addPillar()}
           >
+            <Plus className="mr-2 w-4 h-4" />
             Add Content Pillar
           </Button>
         )}
       </div>
 
       {pillars.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+        <p className="text-sm text-muted-foreground text-center py-4">
           Add at least one content pillar to continue.
         </p>
       )}

@@ -1,6 +1,10 @@
 "use client";
 
-import { Card, CardBody, RadioGroup, Radio, Switch, Select, SelectItem } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Calendar, Mail, Clock, FileText } from "lucide-react";
 import type { LearnWizardData } from "@/lib/flywheel/types";
 
@@ -10,13 +14,13 @@ interface ReportingStepProps {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: "Sunday" },
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
+  { value: "0", label: "Sunday" },
+  { value: "1", label: "Monday" },
+  { value: "2", label: "Tuesday" },
+  { value: "3", label: "Wednesday" },
+  { value: "4", label: "Thursday" },
+  { value: "5", label: "Friday" },
+  { value: "6", label: "Saturday" },
 ];
 
 export function ReportingStep({ data, updateData }: ReportingStepProps) {
@@ -35,7 +39,7 @@ export function ReportingStep({ data, updateData }: ReportingStepProps) {
 
       {/* Report Frequency */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
               <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -53,45 +57,70 @@ export function ReportingStep({ data, updateData }: ReportingStepProps) {
           <RadioGroup
             value={data.reportFrequency || ""}
             onValueChange={handleFrequencyChange}
-            classNames={{
-              wrapper: "gap-3",
-            }}
+            className="space-y-3"
           >
-            <Radio
-              value="daily"
-              description="Get a quick daily snapshot of your performance"
-              classNames={{
-                base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-purple-500",
-              }}
+            <div
+              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                data.reportFrequency === "daily"
+                  ? "border-purple-500"
+                  : "border-gray-200 dark:border-gray-700"
+              }`}
+              onClick={() => handleFrequencyChange("daily")}
             >
-              Daily Digest
-            </Radio>
-            <Radio
-              value="weekly"
-              description="Weekly summary with trends and recommendations"
-              classNames={{
-                base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-purple-500",
-              }}
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="daily" id="freq-daily" />
+                <Label htmlFor="freq-daily" className="flex-1 cursor-pointer">
+                  <p className="font-medium">Daily Digest</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Get a quick daily snapshot of your performance
+                  </p>
+                </Label>
+              </div>
+            </div>
+            <div
+              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                data.reportFrequency === "weekly"
+                  ? "border-purple-500"
+                  : "border-gray-200 dark:border-gray-700"
+              }`}
+              onClick={() => handleFrequencyChange("weekly")}
             >
-              Weekly Report (Recommended)
-            </Radio>
-            <Radio
-              value="monthly"
-              description="Comprehensive monthly analysis with deep insights"
-              classNames={{
-                base: "border border-gray-200 dark:border-gray-700 rounded-lg p-4 m-0 max-w-full data-[selected=true]:border-purple-500",
-              }}
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="weekly" id="freq-weekly" />
+                <Label htmlFor="freq-weekly" className="flex-1 cursor-pointer">
+                  <p className="font-medium">Weekly Report (Recommended)</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Weekly summary with trends and recommendations
+                  </p>
+                </Label>
+              </div>
+            </div>
+            <div
+              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                data.reportFrequency === "monthly"
+                  ? "border-purple-500"
+                  : "border-gray-200 dark:border-gray-700"
+              }`}
+              onClick={() => handleFrequencyChange("monthly")}
             >
-              Monthly Summary
-            </Radio>
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="monthly" id="freq-monthly" />
+                <Label htmlFor="freq-monthly" className="flex-1 cursor-pointer">
+                  <p className="font-medium">Monthly Summary</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Comprehensive monthly analysis with deep insights
+                  </p>
+                </Label>
+              </div>
+            </div>
           </RadioGroup>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Day Selection (for weekly/monthly) */}
       {(data.reportFrequency === "weekly" || data.reportFrequency === "monthly") && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
                 <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -109,31 +138,29 @@ export function ReportingStep({ data, updateData }: ReportingStepProps) {
             </div>
 
             <Select
-              label="Select day"
-              selectedKeys={data.reportDay !== undefined ? [String(data.reportDay)] : []}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0] as string;
-                if (selected) {
-                  updateData({ reportDay: parseInt(selected, 10) });
-                }
-              }}
-              classNames={{
-                trigger: "bg-white dark:bg-gray-800",
+              value={String(data.reportDay ?? "")}
+              onValueChange={(value) => {
+                updateData({ reportDay: parseInt(value, 10) });
               }}
             >
-              {DAYS_OF_WEEK.map((day) => (
-                <SelectItem key={String(day.value)} textValue={day.label}>
-                  {day.label}
-                </SelectItem>
-              ))}
+              <SelectTrigger className="bg-white dark:bg-gray-800">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent>
+                {DAYS_OF_WEEK.map((day) => (
+                  <SelectItem key={day.value} value={day.value}>
+                    {day.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Email Notifications */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
@@ -149,17 +176,16 @@ export function ReportingStep({ data, updateData }: ReportingStepProps) {
               </div>
             </div>
             <Switch
-              isSelected={data.reportEmail ?? true}
-              onValueChange={(value) => updateData({ reportEmail: value })}
-              size="sm"
+              checked={data.reportEmail ?? true}
+              onCheckedChange={(value) => updateData({ reportEmail: value })}
             />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Sample Report Preview */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
               <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -206,7 +232,7 @@ export function ReportingStep({ data, updateData }: ReportingStepProps) {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

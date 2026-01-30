@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { Zap, Wand2, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { WizardLayout } from "@/components/flywheel/shared/wizard-layout";
 import { AIQuickSetup } from "../../shared/ai-quick-setup";
 import type { AutomateWizardData } from "@/lib/flywheel/types";
@@ -213,11 +214,9 @@ export function AutomateWizard({
 
         <div className="grid gap-4">
           <Card
-            isPressable
-            onPress={() => setSetupMode("ai_quick")}
-            className="border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 dark:hover:border-orange-600 transition-colors"
+            className="cursor-pointer border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 dark:hover:border-orange-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("ai_quick")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-orange-100 dark:bg-orange-900/30">
                   <Wand2 className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -230,19 +229,17 @@ export function AutomateWizard({
                     Choose your automation level and AI will configure content mix, posting frequency, and notifications for you.
                   </p>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400">
-                    Recommended • ~30 seconds
+                    Recommended &bull; ~30 seconds
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card
-            isPressable
-            onPress={() => setSetupMode("manual")}
-            className="border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+            className="cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("manual")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
                   <Settings2 className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -259,7 +256,7 @@ export function AutomateWizard({
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -271,12 +268,12 @@ export function AutomateWizard({
       <div className="max-w-2xl mx-auto py-8">
         <div className="mb-6">
           <Button
-            variant="light"
+            variant="ghost"
             size="sm"
-            onPress={() => setSetupMode("choosing")}
+            onClick={() => setSetupMode("choosing")}
             className="text-gray-500"
           >
-            ← Back to setup options
+            &larr; Back to setup options
           </Button>
         </div>
         <AIQuickSetup
@@ -301,7 +298,7 @@ export function AutomateWizard({
       onComplete={handleComplete}
       onSave={handleSave}
       canProceed={canProceed()}
-      isLoading={isLoading}
+      disabled={isLoading}
     >
       {renderStep()}
     </WizardLayout>

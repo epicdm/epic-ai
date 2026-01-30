@@ -1,20 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardBody,
   Table,
   TableHeader,
-  TableColumn,
+  TableHead,
   TableBody,
   TableRow,
   TableCell,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+} from "@/components/ui/table";
 import { PageHeader } from "@/components/layout/page-header";
-import { Phone, PhoneIncoming, PhoneOutgoing, DollarSign } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, Loader2 } from "lucide-react";
 import { PRICING } from "@/components/ui/cost-estimator";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -67,28 +65,49 @@ export function CallHistory() {
     return (minutes * PRICING.voice.perMinute).toFixed(2);
   };
 
-  const getStatusColor = (status: string, outcome: string | null): "success" | "primary" | "danger" | "warning" | "default" => {
-    // Use outcome if available, otherwise fall back to status
+  const getBadgeVariant = (status: string, outcome: string | null): "default" | "secondary" | "destructive" | "outline" => {
     const displayStatus = outcome?.toLowerCase() || status.toLowerCase();
     switch (displayStatus) {
       case "completed":
-        return "success";
+      case "transferred":
+        return "default";
       case "in_progress":
       case "in-progress":
       case "active":
       case "ringing":
-        return "primary";
+        return "default";
       case "failed":
-        return "danger";
+        return "destructive";
       case "no_answer":
       case "no-answer":
       case "busy":
       case "voicemail":
-        return "warning";
-      case "transferred":
-        return "success";
+        return "secondary";
       default:
-        return "default";
+        return "outline";
+    }
+  };
+
+  const getBadgeClassName = (status: string, outcome: string | null): string => {
+    const displayStatus = outcome?.toLowerCase() || status.toLowerCase();
+    switch (displayStatus) {
+      case "completed":
+      case "transferred":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      case "in_progress":
+      case "in-progress":
+      case "active":
+      case "ringing":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      case "failed":
+        return "";
+      case "no_answer":
+      case "no-answer":
+      case "busy":
+      case "voicemail":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+      default:
+        return "";
     }
   };
 
@@ -102,7 +121,7 @@ export function CallHistory() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -116,9 +135,9 @@ export function CallHistory() {
 
       {error ? (
         <Card>
-          <CardBody className="p-6 text-center">
+          <CardContent className="p-6 text-center">
             <p className="text-red-500">{error}</p>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : calls.length === 0 ? (
         <EmptyState
@@ -126,10 +145,10 @@ export function CallHistory() {
           title="No Calls Yet"
           description="Your voice agents will appear here once activated."
           features={[
-            "📞 Sales outreach",
-            "💬 Customer support",
-            "📅 Appointment booking",
-            "📊 Surveys & feedback",
+            "Sales outreach",
+            "Customer support",
+            "Appointment booking",
+            "Surveys & feedback",
           ]}
           actions={[
             {
@@ -141,7 +160,6 @@ export function CallHistory() {
               label: "Hear Examples",
               variant: "secondary",
               onClick: () => {
-                // Could open a modal with sample recordings or link to demos
                 window.open("/docs/voice-examples", "_blank");
               },
             },
@@ -150,17 +168,19 @@ export function CallHistory() {
         />
       ) : (
         <Card>
-          <CardBody className="p-0">
-            <Table aria-label="Call history">
+          <CardContent className="p-0">
+            <Table>
               <TableHeader>
-                <TableColumn>Direction</TableColumn>
-                <TableColumn>From</TableColumn>
-                <TableColumn>To</TableColumn>
-                <TableColumn>Agent</TableColumn>
-                <TableColumn>Duration</TableColumn>
-                <TableColumn>Cost</TableColumn>
-                <TableColumn>Status</TableColumn>
-                <TableColumn>Date</TableColumn>
+                <TableRow>
+                  <TableHead>Direction</TableHead>
+                  <TableHead>From</TableHead>
+                  <TableHead>To</TableHead>
+                  <TableHead>Agent</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
               </TableHeader>
               <TableBody>
                 {calls.map((call) => (
@@ -190,9 +210,12 @@ export function CallHistory() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Chip size="sm" color={getStatusColor(call.status, call.outcome)} variant="flat">
+                      <Badge
+                        variant={getBadgeVariant(call.status, call.outcome)}
+                        className={getBadgeClassName(call.status, call.outcome)}
+                      >
                         {getDisplayStatus(call.status, call.outcome)}
-                      </Chip>
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {call.startedAt
@@ -203,7 +226,7 @@ export function CallHistory() {
                 ))}
               </TableBody>
             </Table>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

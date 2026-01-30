@@ -6,7 +6,8 @@
  * Shows success message and next steps for the user.
  */
 
-import { Card, CardBody, Button, Avatar } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   WizardStepContainer,
   WizardStepHeader,
@@ -61,9 +62,9 @@ export function CompleteStep({
 
           {/* Brand Preview Card */}
           <Card className="w-full max-w-md mb-8">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-center gap-4">
-                <Avatar
+                <div
                   src={wizardData.brandLogo || undefined}
                   className="w-16 h-16 flex-shrink-0"
                   radius="lg"
@@ -91,7 +92,7 @@ export function CompleteStep({
                   </div>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Next Steps */}
@@ -122,13 +123,12 @@ export function CompleteStep({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
             <Button
-              color="primary"
               size="lg"
               className="flex-1"
-              onPress={onGoToDashboard}
-              endContent={<ArrowRight className="w-4 h-4" />}
+              onClick={onGoToDashboard}
             >
               Go to Dashboard
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>

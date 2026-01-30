@@ -1,25 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Select,
-  SelectItem,
-  Textarea,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   ArrowLeft,
@@ -91,22 +95,22 @@ const ACTIVITY_TYPES = [
   { key: "MEETING", label: "Meeting" },
 ];
 
-const getStatusColor = (
+const getStatusBadgeVariant = (
   status: string
-): "default" | "primary" | "secondary" | "success" | "warning" | "danger" => {
-  const colors: Record<
+): "default" | "secondary" | "outline" | "destructive" => {
+  const variants: Record<
     string,
-    "default" | "primary" | "secondary" | "success" | "warning" | "danger"
+    "default" | "secondary" | "outline" | "destructive"
   > = {
-    NEW: "primary",
+    NEW: "default",
     CONTACTED: "secondary",
-    QUALIFIED: "warning",
-    PROPOSAL: "warning",
-    NEGOTIATION: "warning",
-    CONVERTED: "success",
-    LOST: "danger",
+    QUALIFIED: "outline",
+    PROPOSAL: "outline",
+    NEGOTIATION: "outline",
+    CONVERTED: "default",
+    LOST: "destructive",
   };
-  return colors[status] || "default";
+  return variants[status] || "default";
 };
 
 const getActivityIcon = (type: string) => {
@@ -120,55 +124,46 @@ const getActivityIcon = (type: string) => {
   return icons[type] || MessageSquare;
 };
 
+async function fetchLeadData(leadId: string): Promise<Lead> {
+  const response = await fetch(`/api/leads/${leadId}`);
+  if (!response.ok) throw new Error("Failed to fetch lead");
+  return response.json();
+}
+
 export function LeadDetail({ leadId }: { leadId: string }) {
   const router = useRouter();
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [activityType, setActivityType] = useState("NOTE");
   const [activityTitle, setActivityTitle] = useState("");
   const [activityDescription, setActivityDescription] = useState("");
 
-  useEffect(() => {
-    fetchLead();
-  }, [leadId]);
+  const {
+    data: lead,
+    isLoading,
+    error,
+  } = useQuery<Lead, Error>({
+    queryKey: ["lead", leadId],
+    queryFn: () => fetchLeadData(leadId),
+  });
 
-  async function fetchLead() {
-    try {
-      const response = await fetch(`/api/leads/${leadId}`);
-      if (!response.ok) throw new Error("Failed to fetch lead");
-      const data = await response.json();
-      setLead(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function updateStatus(newStatus: string) {
-    if (!lead) return;
-    setUpdating(true);
-    try {
+  const updateStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
       const response = await fetch(`/api/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
       if (!response.ok) throw new Error("Failed to update");
-      await fetchLead();
-    } catch (err) {
-      console.error("Error updating status:", err);
-    } finally {
-      setUpdating(false);
-    }
-  }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+    },
+  });
 
-  async function addActivity() {
-    if (!activityTitle.trim()) return;
-    try {
+  const addActivityMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch(`/api/leads/${leadId}/activities`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,32 +174,44 @@ export function LeadDetail({ leadId }: { leadId: string }) {
         }),
       });
       if (!response.ok) throw new Error("Failed to add activity");
-      await fetchLead();
-      onClose();
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      setDialogOpen(false);
       setActivityTitle("");
       setActivityDescription("");
-    } catch (err) {
-      console.error("Error adding activity:", err);
-    }
-  }
+    },
+  });
 
-  async function deleteLead() {
-    if (!confirm("Are you sure you want to delete this lead?")) return;
-    try {
+  const deleteLeadMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch(`/api/leads/${leadId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
       router.push("/dashboard/leads");
-    } catch (err) {
-      console.error("Error deleting lead:", err);
-    }
+    },
+  });
+
+  function handleDeleteLead() {
+    if (!confirm("Are you sure you want to delete this lead?")) return;
+    deleteLeadMutation.mutate();
   }
 
-  if (loading) {
+  function handleAddActivity() {
+    if (!activityTitle.trim()) return;
+    addActivityMutation.mutate();
+  }
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -212,12 +219,14 @@ export function LeadDetail({ leadId }: { leadId: string }) {
   if (error || !lead) {
     return (
       <Card>
-        <CardBody className="py-16 text-center">
-          <p className="text-red-500">{error || "Lead not found"}</p>
-          <Button as={Link} href="/dashboard/leads" className="mt-4">
-            Back to Leads
+        <CardContent className="py-16 text-center">
+          <p className="text-red-500">
+            {error instanceof Error ? error.message : "Lead not found"}
+          </p>
+          <Button asChild className="mt-4">
+            <Link href="/dashboard/leads">Back to Leads</Link>
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -229,28 +238,23 @@ export function LeadDetail({ leadId }: { leadId: string }) {
         description={lead.company || lead.email || "Lead details"}
         actions={
           <div className="flex items-center gap-3">
-            <Button
-              as={Link}
-              href="/dashboard/leads"
-              variant="bordered"
-              startContent={<ArrowLeft className="w-4 h-4" />}
-            >
-              Back
+            <Button asChild variant="outline">
+              <Link href="/dashboard/leads">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/leads/${leadId}/edit`}>
+                <Edit className="w-4 h-4" />
+                Edit
+              </Link>
             </Button>
             <Button
-              as={Link}
-              href={`/dashboard/leads/${leadId}/edit`}
-              variant="bordered"
-              startContent={<Edit className="w-4 h-4" />}
+              variant="destructive"
+              onClick={handleDeleteLead}
             >
-              Edit
-            </Button>
-            <Button
-              color="danger"
-              variant="bordered"
-              startContent={<Trash2 className="w-4 h-4" />}
-              onPress={deleteLead}
-            >
+              <Trash2 className="w-4 h-4" />
               Delete
             </Button>
           </div>
@@ -262,21 +266,26 @@ export function LeadDetail({ leadId }: { leadId: string }) {
         <div className="lg:col-span-2 space-y-6">
           {/* Contact Card */}
           <Card>
-            <CardHeader className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Contact Information</h2>
+            <CardHeader className="flex flex-row justify-between items-center space-y-0">
+              <CardTitle className="text-lg">Contact Information</CardTitle>
               <Select
-                size="sm"
-                selectedKeys={[lead.status]}
-                onChange={(e) => updateStatus(e.target.value)}
-                className="w-40"
-                isDisabled={updating}
+                value={lead.status}
+                onValueChange={(val) => updateStatusMutation.mutate(val)}
+                disabled={updateStatusMutation.isPending}
               >
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.key}>{option.label}</SelectItem>
-                ))}
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.key} value={option.key}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {lead.email && (
                   <div className="flex items-center gap-3">
@@ -342,23 +351,22 @@ export function LeadDetail({ leadId }: { leadId: string }) {
                   </p>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Activity Timeline */}
           <Card>
-            <CardHeader className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Activity</h2>
+            <CardHeader className="flex flex-row justify-between items-center space-y-0">
+              <CardTitle className="text-lg">Activity</CardTitle>
               <Button
                 size="sm"
-                color="primary"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={onOpen}
+                onClick={() => setDialogOpen(true)}
               >
+                <Plus className="w-4 h-4" />
                 Add Activity
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {lead.activities.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
                   No activities yet
@@ -393,7 +401,7 @@ export function LeadDetail({ leadId }: { leadId: string }) {
                   })}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
@@ -402,14 +410,14 @@ export function LeadDetail({ leadId }: { leadId: string }) {
           {/* Status Card */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold">Status</h2>
+              <CardTitle className="text-lg">Status</CardTitle>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Current Status</span>
-                <Chip color={getStatusColor(lead.status)} variant="flat">
+                <Badge variant={getStatusBadgeVariant(lead.status)}>
                   {lead.status}
-                </Chip>
+                </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Source</span>
@@ -433,24 +441,24 @@ export function LeadDetail({ leadId }: { leadId: string }) {
                   </span>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Tags */}
           {lead.tags.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-semibold">Tags</h2>
+                <CardTitle className="text-lg">Tags</CardTitle>
               </CardHeader>
-              <CardBody>
+              <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {lead.tags.map((tag) => (
-                    <Chip key={tag} size="sm" variant="flat">
+                    <Badge key={tag} variant="secondary">
                       {tag}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -458,9 +466,9 @@ export function LeadDetail({ leadId }: { leadId: string }) {
           {lead.calls.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-semibold">Related Calls</h2>
+                <CardTitle className="text-lg">Related Calls</CardTitle>
               </CardHeader>
-              <CardBody className="space-y-3">
+              <CardContent className="space-y-3">
                 {lead.calls.map((call) => (
                   <div
                     key={call.id}
@@ -470,60 +478,80 @@ export function LeadDetail({ leadId }: { leadId: string }) {
                       <span className="text-sm font-medium">
                         {call.direction === "inbound" ? "Inbound" : "Outbound"}
                       </span>
-                      <Chip size="sm" variant="flat">
+                      <Badge variant="secondary">
                         {call.status}
-                      </Chip>
+                      </Badge>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(call.createdAt).toLocaleString()}
                     </p>
                   </div>
                 ))}
-              </CardBody>
+              </CardContent>
             </Card>
           )}
         </div>
       </div>
 
-      {/* Add Activity Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Add Activity</ModalHeader>
-          <ModalBody>
-            <Select
-              label="Activity Type"
-              selectedKeys={[activityType]}
-              onChange={(e) => setActivityType(e.target.value)}
-            >
-              {ACTIVITY_TYPES.map((type) => (
-                <SelectItem key={type.key}>{type.label}</SelectItem>
-              ))}
-            </Select>
-            <Textarea
-              label="Title"
-              placeholder="Brief description of the activity"
-              value={activityTitle}
-              onChange={(e) => setActivityTitle(e.target.value)}
-              isRequired
-            />
-            <Textarea
-              label="Details (optional)"
-              placeholder="Additional notes..."
-              value={activityDescription}
-              onChange={(e) => setActivityDescription(e.target.value)}
-              minRows={3}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={onClose}>
+      {/* Add Activity Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Activity</DialogTitle>
+            <DialogDescription>
+              Record a new activity for this lead.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="activity-type">Activity Type</Label>
+              <Select
+                value={activityType}
+                onValueChange={(val) => setActivityType(val)}
+              >
+                <SelectTrigger id="activity-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_TYPES.map((type) => (
+                    <SelectItem key={type.key} value={type.key}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="activity-title">Title *</Label>
+              <Textarea
+                id="activity-title"
+                placeholder="Brief description of the activity"
+                value={activityTitle}
+                onChange={(e) => setActivityTitle(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="activity-description">Details (optional)</Label>
+              <Textarea
+                id="activity-description"
+                placeholder="Additional notes..."
+                value={activityDescription}
+                onChange={(e) => setActivityDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={addActivity}>
+            <Button onClick={handleAddActivity}>
               Add Activity
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -10,15 +10,10 @@
  */
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  Avatar,
-  Button,
-  Spinner,
-  Alert,
-  Chip,
-} from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import {
   WizardStepContainer,
   WizardStepHeader,
@@ -133,34 +128,33 @@ export function SocialStep({ stepIndex, organizationId }: SocialStepProps) {
           {/* Loading State */}
           {isLoading && (
             <Card className="bg-default-50">
-              <CardBody className="flex items-center justify-center py-8">
-                <Spinner size="lg" />
+              <CardContent className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
                 <p className="mt-4 text-default-500">Loading social profiles...</p>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
           {/* Error State */}
           {error && !isLoading && (
-            <Alert color="warning" variant="flat">
+            <div className="p-3 rounded-lg border bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
               <div className="flex items-center justify-between w-full">
                 <span>{error}</span>
                 <Button
                   size="sm"
-                  variant="flat"
-                  onPress={fetchSocialProfiles}
-                  startContent={<RefreshCw className="w-3 h-3" />}
-                >
+                  variant="secondary"
+                  onClick={fetchSocialProfiles}
+                                  >
                   Retry
                 </Button>
               </div>
-            </Alert>
+            </div>
           )}
 
           {/* No Profiles Found */}
           {!isLoading && !error && hasFetched && !hasProfiles && (
             <Card className="bg-default-50">
-              <CardBody className="text-center py-8">
+              <CardContent className="text-center py-8">
                 <Share2 className="w-12 h-12 mx-auto text-default-300 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No Connected Accounts</h3>
                 <p className="text-default-500 mb-4">
@@ -168,20 +162,19 @@ export function SocialStep({ stepIndex, organizationId }: SocialStepProps) {
                   them later from your brand settings.
                 </p>
                 <Button
-                  variant="light"
-                  onPress={handleSkip}
-                  startContent={<SkipForward className="w-4 h-4" />}
-                >
+                  variant="ghost"
+                  onClick={handleSkip}
+                                  >
                   Skip this step
                 </Button>
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
           {/* Profiles Found */}
           {!isLoading && hasProfiles && (
             <Card className="bg-success-50 dark:bg-success-900/20">
-              <CardBody className="gap-4">
+              <CardContent className="gap-4">
                 <div className="flex items-center gap-2 text-success">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">
@@ -207,7 +200,7 @@ export function SocialStep({ stepIndex, organizationId }: SocialStepProps) {
                   <div className="pt-4 border-t border-divider">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Avatar
+                        <div
                           src={socialData.suggestedLogo}
                           className="w-12 h-12"
                           showFallback
@@ -223,22 +216,22 @@ export function SocialStep({ stepIndex, organizationId }: SocialStepProps) {
                       {wizardData.brandLogo !== socialData.suggestedLogo && (
                         <Button
                           size="sm"
-                          color="primary"
-                          variant="flat"
-                          onPress={() => handleUseLogo(socialData.suggestedLogo!)}
+                          
+                          variant="secondary"
+                          onClick={() => handleUseLogo(socialData.suggestedLogo!)}
                         >
                           Use This
                         </Button>
                       )}
                       {wizardData.brandLogo === socialData.suggestedLogo && (
-                        <Chip color="primary" size="sm">
+                        <Badge  size="sm">
                           Selected
-                        </Chip>
+                        </Badge>
                       )}
                     </div>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           )}
 
@@ -265,9 +258,9 @@ interface ProfileCardProps {
 function ProfileCard({ profile, isLogoSelected, onUseLogo }: ProfileCardProps) {
   return (
     <Card className="bg-default-100/50">
-      <CardBody className="p-3">
+      <CardContent className="p-3">
         <div className="flex items-start gap-3">
-          <Avatar
+          <div
             src={profile.avatar || undefined}
             className="w-12 h-12 flex-shrink-0"
             showFallback
@@ -279,13 +272,13 @@ function ProfileCard({ profile, isLogoSelected, onUseLogo }: ProfileCardProps) {
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Chip
+              <Badge
                 size="sm"
                 color={platformColors[profile.platform] || "default"}
-                variant="flat"
+                variant="secondary"
               >
                 {profile.platform}
-              </Chip>
+              </Badge>
             </div>
             {profile.displayName && (
               <p className="font-medium text-sm truncate">{profile.displayName}</p>
@@ -301,10 +294,9 @@ function ProfileCard({ profile, isLogoSelected, onUseLogo }: ProfileCardProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   className="h-6 min-w-0 px-2"
-                  startContent={<ExternalLink className="w-3 h-3" />}
-                >
+                                  >
                   View
                 </Button>
               )}
@@ -314,7 +306,7 @@ function ProfileCard({ profile, isLogoSelected, onUseLogo }: ProfileCardProps) {
                   variant={isLogoSelected ? "solid" : "flat"}
                   color={isLogoSelected ? "primary" : "default"}
                   className="h-6 min-w-0 px-2"
-                  onPress={() => onUseLogo(profile.avatar!)}
+                  onClick={() => onUseLogo(profile.avatar!)}
                 >
                   {isLogoSelected ? "Logo Selected" : "Use as Logo"}
                 </Button>
@@ -322,7 +314,7 @@ function ProfileCard({ profile, isLogoSelected, onUseLogo }: ProfileCardProps) {
             </div>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

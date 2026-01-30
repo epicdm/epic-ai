@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
 import { useFeatureUnlocks } from "@/hooks/use-feature-unlocks";
 
 type NavBadgeProps = {
@@ -13,10 +13,8 @@ export function NavBadge({ featureId, className }: NavBadgeProps) {
 
   if (!isUnlocked) {
     return (
-      <Badge 
-        variant="flat" 
-        color="default" 
-        size="sm" 
+      <Badge
+        variant="secondary"
         className={className}
       />
     );
@@ -24,10 +22,8 @@ export function NavBadge({ featureId, className }: NavBadgeProps) {
 
   if (isNew) {
     return (
-      <Badge 
-        color="primary" 
-        variant="solid" 
-        size="sm" 
+      <Badge
+        variant="default"
         className={className}
       >
         New

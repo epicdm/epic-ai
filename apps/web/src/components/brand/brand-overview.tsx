@@ -1,33 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Progress,
-  Chip,
-} from "@heroui/react";
-import { PageHeader } from "@/components/layout/page-header";
-import { BrandSetupWizard } from "@/components/brand/wizard";
+import { useQuery } from "@tanstack/react-query";
 import {
   Brain,
-  Globe,
-  FileText,
-  Sparkles,
-  ArrowRight,
-  BookOpen,
+  Palette,
+  Users,
   Target,
-  MessageSquare,
+  BookOpen,
+  Globe,
+  Sparkles,
+  Plus,
+  ArrowRight,
   RefreshCw,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
 } from "lucide-react";
 
-interface Brand {
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfidenceIndicator } from "@/components/ui/confidence-indicator";
+import { SectionCard } from "@/components/ui/section-card";
+import { MetricCard, MetricCardGrid } from "@/components/ui/metric-card";
+import { apiClient, endpoints, queryKeys } from "@/lib/api";
+
+/* -------------------------------------------------------------------------- */
+/*                                   Types                                    */
+/* -------------------------------------------------------------------------- */
+
+interface BrandData {
   id: string;
   name: string;
   description: string | null;
@@ -40,407 +41,283 @@ interface Brand {
     targetAudience: string | null;
     keyTopics: string[];
     contentPillars: string[];
-    learnings: unknown;
     keyMessages: string[];
   } | null;
-  contextSources: {
+  audiences: Array<{
     id: string;
-    type: string;
     name: string;
+    description: string | null;
+  }>;
+  competitors: Array<{
+    id: string;
+    name: string;
+    website: string | null;
+  }>;
+  contextSources: Array<{
+    id: string;
+    name: string;
+    type: string;
     status: string;
-    lastProcessedAt: Date | null;
-  }[];
-  _count: {
-    contextSources: number;
-    contentItems: number;
-  };
+  }>;
 }
 
-interface BrandOverviewProps {
-  brand: Brand | null;
-  organizationId: string;
-}
+/* -------------------------------------------------------------------------- */
+/*                              Component                                     */
+/* -------------------------------------------------------------------------- */
 
-export function BrandOverview({ brand, organizationId }: BrandOverviewProps) {
-  const router = useRouter();
+export function NewBrandOverview() {
+  const { data: brand, isLoading } = useQuery({
+    queryKey: queryKeys.brand.current(),
+    queryFn: async () => {
+      const res = await apiClient.get<BrandData>(endpoints.brand.current());
+      if (res.error) throw new Error(res.error.message);
+      return res.data;
+    },
+  });
 
-  // No brand exists - show setup wizard
-  if (!brand) {
+  /* ------------------------------ Loading state ----------------------------- */
+
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Brand Brain"
-          description="Set up your brand to start generating AI-powered content."
-        />
-
-        <BrandSetupWizard
-          organizationId={organizationId}
-          onComplete={(brandId) => {
-            // Router push happens in the wizard's complete step
-            router.refresh();
-          }}
-        />
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
+        ))}
       </div>
     );
   }
 
-  // Brand exists - show overview
-  const brainCompleteness = calculateBrainCompleteness(brand);
+  /* ----------------------------- Empty / no brand --------------------------- */
+
+  if (!brand) {
+    return (
+      <Card className="py-16">
+        <CardContent className="flex flex-col items-center text-center">
+          <Brain className="mb-4 h-12 w-12 text-muted-foreground/50" />
+          <h2 className="text-xl font-semibold">No Brand Configured</h2>
+          <p className="mt-2 max-w-sm text-muted-foreground">
+            Set up your brand to power AI content generation with your unique
+            voice and style.
+          </p>
+          <Button asChild className="mt-6">
+            <Link href="/dashboard/brand/voice">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Set Up Brand
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  /* ----------------------------- Completeness ------------------------------ */
+
+  const brain = brand.brain;
+
+  const brainFields = [
+    { label: "Voice Tone", value: brain?.voiceTone },
+    { label: "Writing Style", value: brain?.writingStyle },
+    { label: "Target Audience", value: brain?.targetAudience },
+  ] as const;
+
+  const completedFields = brainFields.filter((f) => f.value).length;
+
+  const brainCompleteness = Math.round(
+    ((completedFields +
+      (brain?.contentPillars?.length ? 1 : 0) +
+      (brain?.keyTopics?.length ? 1 : 0) +
+      (brain?.keyMessages?.length ? 1 : 0)) /
+      6) *
+      100
+  );
+
+  /* -------------------------------- Render --------------------------------- */
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Brand Brain"
-        description={`AI-powered content intelligence for ${brand.name}`}
-        actions={
-          <Button
-            color="primary"
-            startContent={<RefreshCw className="w-4 h-4" />}
-            onPress={() => {
-              // Trigger brain regeneration
-              fetch(`/api/brands/${brand.id}/brain/regenerate`, { method: "POST" });
-            }}
-          >
-            Regenerate Brain
-          </Button>
-        }
-      />
-
-      {/* Brain Health */}
-      <Card>
-        <CardBody className="p-6">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-xl font-semibold">{brand.name} Brain</h2>
-                <Chip
-                  color={brainCompleteness >= 80 ? "success" : brainCompleteness >= 50 ? "warning" : "danger"}
-                  variant="flat"
-                  size="sm"
-                >
-                  {brainCompleteness}% Complete
-                </Chip>
-              </div>
-              <Progress
-                value={brainCompleteness}
-                color={brainCompleteness >= 80 ? "success" : brainCompleteness >= 50 ? "warning" : "danger"}
-                className="max-w-md"
-                size="sm"
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                {brainCompleteness < 50
-                  ? "Add more context sources to improve your brain"
-                  : brainCompleteness < 80
-                  ? "Your brain is learning! Keep adding context to improve it"
-                  : "Your brand brain is well-trained and ready to generate content"}
-              </p>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Quick Setup Steps */}
-      {brainCompleteness < 80 && (
-        <Card>
-          <CardHeader>
-            <h3 className="font-semibold">Complete Your Setup</h3>
-          </CardHeader>
-          <CardBody className="space-y-3">
-            <SetupStep
-              completed={brand.contextSources.length > 0}
-              title="Add Context Sources"
-              description="Website, documents, or RSS feeds"
-              href="/dashboard/brand/context"
-            />
-            <SetupStep
-              completed={!!brand.brain?.voiceTone}
-              title="Define Your Voice"
-              description="Tone, style, and personality"
-              href="/dashboard/brand/voice"
-            />
-            <SetupStep
-              completed={(brand.brain?.contentPillars?.length ?? 0) > 0}
-              title="Set Content Strategy"
-              description="Topics, pillars, and goals"
-              href="/dashboard/brand/strategy"
-            />
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/dashboard/brand/context">
-          <Card isPressable className="hover:shadow-md transition-shadow h-full">
-            <CardBody className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-                  <Globe className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{brand._count.contextSources}</p>
-                  <p className="text-sm text-gray-500">Context Sources</p>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </Link>
-
-        <Link href="/dashboard/content">
-          <Card isPressable className="hover:shadow-md transition-shadow h-full">
-            <CardBody className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{brand._count.contentItems}</p>
-                  <p className="text-sm text-gray-500">Content Items</p>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </Link>
-
-        <Link href="/dashboard/content/generate">
-          <Card isPressable className="hover:shadow-md transition-shadow h-full">
-            <CardBody className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-lg font-bold">Generate</p>
-                  <p className="text-sm text-gray-500">AI Content</p>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </Link>
+      {/* ---- Header ---- */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{brand.name}</h1>
+          <p className="text-muted-foreground">
+            {brand.industry && (
+              <Badge variant="outline" className="mr-2">
+                {brand.industry}
+              </Badge>
+            )}
+            {brand.website && (
+              <span className="text-sm">{brand.website}</span>
+            )}
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/brand/voice">
+            <Palette className="mr-2 h-4 w-4" />
+            Edit Voice &amp; Tone
+          </Link>
+        </Button>
       </div>
 
-      {/* Brain Details */}
-      {brand.brain && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Voice & Style */}
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-gray-500" />
-                <h3 className="font-semibold">Voice & Style</h3>
-              </div>
-              <Link href="/dashboard/brand/voice">
-                <Button size="sm" variant="light">
-                  Edit
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardBody className="space-y-4">
-              {brand.brain.voiceTone && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tone</p>
-                  <p className="text-sm">{brand.brain.voiceTone}</p>
-                </div>
-              )}
-              {brand.brain.writingStyle && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Writing Style</p>
-                  <p className="text-sm">{brand.brain.writingStyle}</p>
-                </div>
-              )}
-              {brand.brain.targetAudience && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Target Audience</p>
-                  <p className="text-sm">{brand.brain.targetAudience}</p>
-                </div>
-              )}
-              {!brand.brain.voiceTone && !brand.brain.writingStyle && (
-                <p className="text-sm text-gray-500">
-                  No voice settings configured yet.{" "}
-                  <Link href="/dashboard/brand/voice" className="text-brand-500 hover:underline">
-                    Set up now
-                  </Link>
-                </p>
-              )}
-            </CardBody>
-          </Card>
+      {/* ---- Metrics ---- */}
+      <MetricCardGrid>
+        <MetricCard
+          label="Brain Completeness"
+          value={`${brainCompleteness}%`}
+          icon={<Brain className="h-5 w-5" />}
+        />
+        <MetricCard
+          label="Content Pillars"
+          value={brain?.contentPillars?.length ?? 0}
+          icon={<BookOpen className="h-5 w-5" />}
+        />
+        <MetricCard
+          label="Audiences"
+          value={brand.audiences.length}
+          icon={<Users className="h-5 w-5" />}
+        />
+        <MetricCard
+          label="Context Sources"
+          value={brand.contextSources.length}
+          icon={<Globe className="h-5 w-5" />}
+        />
+      </MetricCardGrid>
 
-          {/* Content Strategy */}
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-gray-500" />
-                <h3 className="font-semibold">Content Strategy</h3>
-              </div>
-              <Link href="/dashboard/brand/strategy">
-                <Button size="sm" variant="light">
-                  Edit
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardBody className="space-y-4">
-              {brand.brain.contentPillars && brand.brain.contentPillars.length > 0 && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Content Pillars</p>
-                  <div className="flex flex-wrap gap-2">
-                    {brand.brain.contentPillars.map((pillar, i) => (
-                      <Chip key={i} size="sm" variant="flat">
-                        {pillar}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {brand.brain.keyTopics && brand.brain.keyTopics.length > 0 && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Key Topics</p>
-                  <div className="flex flex-wrap gap-2">
-                    {brand.brain.keyTopics.slice(0, 6).map((topic, i) => (
-                      <Chip key={i} size="sm" variant="bordered">
-                        {topic}
-                      </Chip>
-                    ))}
-                    {brand.brain.keyTopics.length > 6 && (
-                      <Chip size="sm" variant="bordered">
-                        +{brand.brain.keyTopics.length - 6} more
-                      </Chip>
-                    )}
-                  </div>
-                </div>
-              )}
-              {(!brand.brain.contentPillars || brand.brain.contentPillars.length === 0) && (
-                <p className="text-sm text-gray-500">
-                  No strategy configured yet.{" "}
-                  <Link href="/dashboard/brand/strategy" className="text-brand-500 hover:underline">
-                    Set up now
-                  </Link>
-                </p>
-              )}
-            </CardBody>
-          </Card>
-        </div>
-      )}
+      {/* ---- Tabs ---- */}
+      <Tabs defaultValue="voice">
+        <TabsList>
+          <TabsTrigger value="voice">Voice &amp; Tone</TabsTrigger>
+          <TabsTrigger value="audiences">Audiences</TabsTrigger>
+          <TabsTrigger value="context">Context Sources</TabsTrigger>
+        </TabsList>
 
-      {/* Recent Context Sources */}
-      {brand.contextSources.length > 0 && (
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-gray-500" />
-              <h3 className="font-semibold">Recent Context Sources</h3>
-            </div>
-            <Link href="/dashboard/brand/context">
-              <Button size="sm" variant="light" endContent={<ArrowRight className="w-4 h-4" />}>
-                View All
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-3">
-              {brand.contextSources.map((source) => (
-                <div
-                  key={source.id}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-                >
-                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    {source.type === "WEBSITE" && <Globe className="w-5 h-5 text-gray-500" />}
-                    {source.type === "DOCUMENT" && <FileText className="w-5 h-5 text-gray-500" />}
-                    {source.type === "RSS" && <BookOpen className="w-5 h-5 text-gray-500" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{source.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {source.lastProcessedAt
-                        ? `Updated ${new Date(source.lastProcessedAt).toLocaleDateString()}`
-                        : "Never processed"}
-                    </p>
-                  </div>
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    color={
-                      source.status === "ACTIVE" ? "success" :
-                      source.status === "PROCESSING" ? "warning" :
-                      source.status === "ERROR" ? "danger" : "default"
-                    }
-                    startContent={
-                      source.status === "ACTIVE" ? <CheckCircle2 className="w-3 h-3" /> :
-                      source.status === "PROCESSING" ? <Clock className="w-3 h-3" /> :
-                      source.status === "ERROR" ? <AlertCircle className="w-3 h-3" /> : undefined
-                    }
-                  >
-                    {source.status}
-                  </Chip>
+        {/* ==================== Voice Tab ==================== */}
+        <TabsContent value="voice" className="mt-4 space-y-4">
+          <SectionCard
+            title="Brand Voice"
+            description="How your brand communicates"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              {brainFields.map((f) => (
+                <div key={f.label} className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">{f.label}</p>
+                  <p className="mt-1 text-sm font-medium">
+                    {f.value || "Not set"}
+                  </p>
                 </div>
               ))}
             </div>
-          </CardBody>
-        </Card>
-      )}
+          </SectionCard>
+
+          {brain?.contentPillars && brain.contentPillars.length > 0 && (
+            <SectionCard
+              title="Content Pillars"
+              description="Core themes for your content"
+            >
+              <div className="flex flex-wrap gap-2">
+                {brain.contentPillars.map((pillar) => (
+                  <Badge key={pillar} variant="secondary">
+                    {pillar}
+                  </Badge>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
+          {brain?.keyTopics && brain.keyTopics.length > 0 && (
+            <SectionCard
+              title="Key Topics"
+              description="Topics your brand covers"
+            >
+              <div className="flex flex-wrap gap-2">
+                {brain.keyTopics.map((topic) => (
+                  <Badge key={topic} variant="outline">
+                    {topic}
+                  </Badge>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+        </TabsContent>
+
+        {/* ==================== Audiences Tab ==================== */}
+        <TabsContent value="audiences" className="mt-4">
+          <SectionCard
+            title="Target Audiences"
+            description={`${brand.audiences.length} audience${brand.audiences.length !== 1 ? "s" : ""}`}
+            actions={
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/brand/strategy">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add
+                </Link>
+              </Button>
+            }
+          >
+            {brand.audiences.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No audiences defined yet
+              </p>
+            ) : (
+              <div className="divide-y">
+                {brand.audiences.map((a) => (
+                  <div key={a.id} className="py-3 first:pt-0 last:pb-0">
+                    <p className="text-sm font-medium">{a.name}</p>
+                    {a.description && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {a.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </TabsContent>
+
+        {/* ==================== Context Tab ==================== */}
+        <TabsContent value="context" className="mt-4">
+          <SectionCard
+            title="Context Sources"
+            description="External data feeding your AI"
+            actions={
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/context">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Source
+                </Link>
+              </Button>
+            }
+          >
+            {brand.contextSources.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No context sources configured
+              </p>
+            ) : (
+              <div className="divide-y">
+                {brand.contextSources.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{s.name}</p>
+                      <p className="text-xs capitalize text-muted-foreground">
+                        {s.type}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={s.status === "active" ? "default" : "secondary"}
+                      className="capitalize"
+                    >
+                      {s.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
-
-function SetupStep({
-  completed,
-  title,
-  description,
-  href,
-}: {
-  completed: boolean;
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-        completed
-          ? "bg-green-50 dark:bg-green-900/20"
-          : "bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
-      }`}
-    >
-      <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-          completed ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
-        }`}
-      >
-        {completed ? (
-          <CheckCircle2 className="w-5 h-5 text-white" />
-        ) : (
-          <span className="text-white font-bold text-sm">!</span>
-        )}
-      </div>
-      <div className="flex-1">
-        <p className="font-medium">{title}</p>
-        <p className="text-sm text-gray-500">{description}</p>
-      </div>
-      {!completed && <ArrowRight className="w-5 h-5 text-gray-400" />}
-    </Link>
-  );
-}
-
-function calculateBrainCompleteness(brand: Brand): number {
-  let score = 0;
-  const weights = {
-    hasContextSources: 30,
-    hasVoiceTone: 15,
-    hasWritingStyle: 15,
-    hasTargetAudience: 10,
-    hasContentPillars: 15,
-    hasKeyTopics: 15,
-  };
-
-  if (brand.contextSources.length > 0) score += weights.hasContextSources;
-  if (brand.brain?.voiceTone) score += weights.hasVoiceTone;
-  if (brand.brain?.writingStyle) score += weights.hasWritingStyle;
-  if (brand.brain?.targetAudience) score += weights.hasTargetAudience;
-  if (brand.brain?.contentPillars && brand.brain.contentPillars.length > 0) score += weights.hasContentPillars;
-  if (brand.brain?.keyTopics && brand.brain.keyTopics.length > 0) score += weights.hasKeyTopics;
-
-  return score;
 }

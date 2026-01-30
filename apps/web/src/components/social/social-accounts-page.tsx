@@ -2,16 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Spinner,
-  Chip,
-  Avatar,
-  Divider,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import {
   Twitter,
   Linkedin,
@@ -75,13 +69,13 @@ const platformConfig = {
   },
 };
 
-const statusColors = {
-  CONNECTED: "success",
-  PENDING: "warning",
-  EXPIRED: "warning",
-  ERROR: "danger",
-  DISCONNECTED: "default",
-} as const;
+const statusBadgeClass: Record<string, string> = {
+  CONNECTED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  EXPIRED: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  ERROR: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  DISCONNECTED: "",
+};
 
 export function SocialAccountsPage() {
   const searchParams = useSearchParams();
@@ -204,7 +198,7 @@ export function SocialAccountsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -256,11 +250,10 @@ export function SocialAccountsPage() {
               </div>
             </div>
             <Button
-              color="warning"
-              variant="flat"
-              onPress={createMockAccounts}
-              isLoading={creatingMock}
-              startContent={!creatingMock && <Plus className="w-4 h-4" />}
+              variant="secondary"
+              className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
+              onClick={createMockAccounts}
+              disabled={creatingMock}
             >
               Create Mock Accounts
             </Button>
@@ -295,8 +288,8 @@ export function SocialAccountsPage() {
             Connect New Account
           </h2>
         </CardHeader>
-        <Divider />
-        <CardBody>
+        <div className="border-t my-4" />
+        <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {(
               Object.keys(platformConfig) as Array<keyof typeof platformConfig>
@@ -308,10 +301,10 @@ export function SocialAccountsPage() {
               return (
                 <Button
                   key={platform}
-                  variant={isConnected ? "bordered" : "flat"}
+                  variant={isConnected ? "outline" : "ghost"}
                   className="h-auto py-4 flex flex-col gap-2"
-                  onPress={() => handleConnect(platform)}
-                  isDisabled={isConnected}
+                  onClick={() => handleConnect(platform)}
+                  disabled={isConnected}
                 >
                   <div
                     className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center`}
@@ -320,15 +313,15 @@ export function SocialAccountsPage() {
                   </div>
                   <span className="text-sm font-medium">{config.name}</span>
                   {isConnected && (
-                    <Chip size="sm" color="success" variant="flat">
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       Connected
-                    </Chip>
+                    </Badge>
                   )}
                 </Button>
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Connected Accounts */}
@@ -339,8 +332,8 @@ export function SocialAccountsPage() {
               Your Accounts ({connectedAccounts.length})
             </h2>
           </CardHeader>
-          <Divider />
-          <CardBody className="p-0">
+          <div className="border-t my-4" />
+          <CardContent className="p-0">
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {connectedAccounts.map((account) => {
                 const config = platformConfig[account.platform];
@@ -353,11 +346,9 @@ export function SocialAccountsPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <Avatar
-                          src={account.avatar || undefined}
-                          name={account.displayName || account.username || "?"}
-                          size="lg"
-                        />
+                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-lg font-bold">
+                          {(account.displayName || account.username || "?").charAt(0).toUpperCase()}
+                        </div>
                         <div
                           className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${config.color} flex items-center justify-center`}
                         >
@@ -369,13 +360,12 @@ export function SocialAccountsPage() {
                           <span className="font-medium">
                             {account.displayName || account.username}
                           </span>
-                          <Chip
-                            size="sm"
-                            color={statusColors[account.status]}
-                            variant="flat"
+                          <Badge
+                            variant="secondary"
+                            className={statusBadgeClass[account.status] || ""}
                           >
                             {account.status.toLowerCase()}
-                          </Chip>
+                          </Badge>
                         </div>
                         <div className="text-sm text-gray-500 flex items-center gap-2">
                           <span>@{account.username}</span>
@@ -398,35 +388,35 @@ export function SocialAccountsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {account.profileUrl && (
-                        <Button
-                          as="a"
+                        <a
                           href={account.profileUrl}
                           target="_blank"
-                          variant="light"
-                          size="sm"
-                          isIconOnly
+                          rel="noopener noreferrer"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        </a>
                       )}
                       {account.status === "EXPIRED" && (
                         <Button
-                          variant="flat"
+                          variant="secondary"
                           size="sm"
-                          color="warning"
-                          startContent={<RefreshCw className="w-4 h-4" />}
-                          onPress={() => handleConnect(account.platform)}
+                          className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800"
+                          onClick={() => handleConnect(account.platform)}
                         >
                           Reconnect
                         </Button>
                       )}
                       <Button
-                        variant="flat"
-                        size="sm"
-                        color="danger"
-                        isIconOnly
-                        isLoading={actionLoading === account.id}
-                        onPress={() => handleDisconnect(account.id)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        disabled={actionLoading === account.id}
+                        onClick={() => handleDisconnect(account.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -435,7 +425,7 @@ export function SocialAccountsPage() {
                 );
               })}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <EmptyState

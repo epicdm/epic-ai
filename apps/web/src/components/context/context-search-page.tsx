@@ -1,14 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Input,
-  Button,
-  Chip,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 
 interface Props {
@@ -52,7 +48,7 @@ export function ContextSearchPage({ brandId, brandName }: Props) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Search Context</h1>
-        <p className="text-default-500">
+        <p className="text-muted-foreground">
           Search through all context items for {brandName}.
         </p>
       </div>
@@ -62,17 +58,16 @@ export function ContextSearchPage({ brandId, brandName }: Props) {
         <CardHeader>
           <h3 className="text-lg font-semibold">Search Context</h3>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="flex gap-2 mb-6">
             <Input
               placeholder="Search your context items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              startContent={<Search className="w-4 h-4 text-default-400" />}
-              className="flex-1"
+                            className="flex-1"
             />
-            <Button color="primary" isLoading={isSearching} onPress={handleSearch}>
+            <Button disabled={isSearching} onClick={handleSearch}>
               Search
             </Button>
           </div>
@@ -87,32 +82,32 @@ export function ContextSearchPage({ brandId, brandName }: Props) {
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-medium">{item.title || "Untitled"}</h4>
                     <div className="flex items-center gap-2">
-                      <Chip size="sm" variant="flat">
+                      <Badge variant="secondary">
                         {item.contentType}
-                      </Chip>
-                      <Chip size="sm" variant="flat" color="primary">
+                      </Badge>
+                      <Badge variant="default">
                         Score: {item.importance}/10
-                      </Chip>
+                      </Badge>
                     </div>
                   </div>
-                  <p className="text-sm text-default-600 line-clamp-2">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
                     {item.summary || "No summary available"}
                   </p>
                 </div>
               ))}
             </div>
           ) : searchQuery && !isSearching ? (
-            <div className="text-center py-8 text-default-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No results found for "{searchQuery}"</p>
             </div>
           ) : (
-            <div className="text-center py-8 text-default-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Enter a search term to find relevant context</p>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

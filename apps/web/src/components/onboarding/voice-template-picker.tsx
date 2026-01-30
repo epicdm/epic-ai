@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, CardFooter, Button, Chip, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AIBadge } from "@/components/ui/ai-badge";
 import { AIConfidence } from "@/components/ui/ai-confidence";
@@ -73,7 +75,7 @@ export function VoiceTemplatePicker({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Spinner size="lg" label="Loading templates..." />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -85,8 +87,7 @@ export function VoiceTemplatePicker({
           <Button
             size="sm"
             variant={categoryFilter === null ? "solid" : "flat"}
-            color="primary"
-            onPress={() => setCategoryFilter(null)}
+            onClick={() => setCategoryFilter(null)}
           >
             All
           </Button>
@@ -96,7 +97,7 @@ export function VoiceTemplatePicker({
               size="sm"
               variant={categoryFilter === cat ? "solid" : "flat"}
               color={categoryLabels[cat]?.color as "primary" | "success" | "warning" | "secondary" | "default"}
-              onPress={() => setCategoryFilter(cat)}
+              onClick={() => setCategoryFilter(cat)}
             >
               {categoryLabels[cat]?.label || cat}
             </Button>
@@ -108,15 +109,15 @@ export function VoiceTemplatePicker({
         {filteredTemplates.map((template) => (
           <Card
             key={template.id}
-            isPressable
-            isHoverable
+            className="cursor-pointer"
+            
             className={cn(
               "transition-all",
               selectedId === template.id && "ring-2 ring-primary border-primary"
             )}
-            onPress={() => onSelect(template)}
+            onClick={() => onSelect(template)}
           >
-            <CardBody className="gap-3">
+            <CardContent className="gap-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{template.icon}</span>
@@ -135,19 +136,19 @@ export function VoiceTemplatePicker({
                         ) : null;
                       })()}
                     </div>
-                    <p className="text-sm text-default-500">
+                    <p className="text-sm text-muted-foreground">
                       {template.estimatedSetupTime} setup
                     </p>
                   </div>
                 </div>
                 {selectedId === template.id && (
-                  <Chip color="primary" size="sm" variant="solid">
+                  <Badge   >
                     Selected
-                  </Chip>
+                  </Badge>
                 )}
               </div>
 
-              <p className="text-sm text-default-600">{template.description}</p>
+              <p className="text-sm text-muted-foreground">{template.description}</p>
 
               {/* AI Recommendation Badge */}
               {(() => {
@@ -166,30 +167,30 @@ export function VoiceTemplatePicker({
               })()}
 
               <div className="flex flex-wrap gap-1">
-                <Chip
-                  size="sm"
-                  variant="flat"
+                <Badge
+                  
+                  variant="secondary"
                   color={categoryLabels[template.category]?.color as "primary" | "success" | "warning" | "secondary" | "default"}
                 >
                   {categoryLabels[template.category]?.label}
-                </Chip>
-                <Chip size="sm" variant="flat">
+                </Badge>
+                <Badge  variant="secondary">
                   {agentTypeLabels[template.agentType]}
-                </Chip>
+                </Badge>
               </div>
-            </CardBody>
+            </CardContent>
 
-            <CardFooter className="border-t border-divider pt-3">
+            <CardFooter className="border-t border-border pt-3">
               <div className="flex flex-wrap gap-1">
                 {template.features.slice(0, 3).map((feature) => (
-                  <Chip key={feature} size="sm" variant="dot" color="default">
+                  <Badge key={feature}  variant="outline" >
                     {feature}
-                  </Chip>
+                  </Badge>
                 ))}
                 {template.features.length > 3 && (
-                  <Chip size="sm" variant="flat" color="default">
+                  <Badge  variant="secondary" >
                     +{template.features.length - 3} more
-                  </Chip>
+                  </Badge>
                 )}
               </div>
             </CardFooter>
@@ -198,7 +199,7 @@ export function VoiceTemplatePicker({
       </div>
 
       {filteredTemplates.length === 0 && (
-        <div className="text-center py-8 text-default-500">
+        <div className="text-center py-8 text-muted-foreground">
           No templates found for this category.
         </div>
       )}
@@ -234,7 +235,7 @@ export function QuickTemplatePicker({
             "hover:border-primary hover:bg-primary/5",
             selectedId === template.id
               ? "border-primary bg-primary/10"
-              : "border-default-200"
+              : "border-border"
           )}
         >
           <span className="text-4xl">{template.icon}</span>
@@ -265,7 +266,7 @@ export function QuickTemplatePicker({
               />
             ) : null;
           })()}
-          <span className="text-xs text-default-500">{template.estimatedSetupTime}</span>
+          <span className="text-xs text-muted-foreground">{template.estimatedSetupTime}</span>
         </button>
       ))}
     </div>

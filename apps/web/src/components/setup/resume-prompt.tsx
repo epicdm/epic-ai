@@ -8,7 +8,7 @@
  */
 
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { ArrowRight, RefreshCw, Clock, RotateCcw } from "lucide-react";
 import {
   type ResumeState,
@@ -88,31 +88,30 @@ export function ResumePrompt({
           {/* Action buttons */}
           <div className="flex flex-wrap gap-3 mt-5">
             <Button
-              color="primary"
               size="md"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={onContinue}
+              
+              onClick={onContinue}
               className="font-medium"
             >
               Continue Setup
             </Button>
 
             <Button
-              variant="flat"
+              variant="secondary"
               size="md"
-              startContent={<RotateCcw className="w-4 h-4" />}
-              onPress={handleStartFresh}
-              isLoading={isClearing}
+              
+              onClick={handleStartFresh}
+              disabled={isClearing}
               className="font-medium"
-            >
+            ><RotateCcw className="w-4 h-4" /> 
               Start Fresh
             </Button>
 
             {onDismiss && (
               <Button
-                variant="light"
+                variant="ghost"
                 size="md"
-                onPress={onDismiss}
+                onClick={onDismiss}
                 className="text-foreground-500"
               >
                 Decide Later
@@ -152,10 +151,9 @@ export function ResumePromptCompact({
         </div>
       </div>
       <Button
-        color="primary"
         size="sm"
-        endContent={<ArrowRight className="w-3.5 h-3.5" />}
-        onPress={onContinue}
+        
+        onClick={onContinue}
       >
         Continue
       </Button>
@@ -188,7 +186,7 @@ export function ResumePromptModal({
             onStartFresh();
             onClose();
           }}
-          onDismiss={onClose}
+          onDismiss={() => onClose()}
         />
       </div>
     </div>

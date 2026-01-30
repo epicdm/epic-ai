@@ -2,28 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-  Switch,
-  Slider,
-  Chip,
-  Tooltip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  RadioGroup,
-  Radio,
-  useDisclosure,
-} from "@heroui/react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/layout/page-header";
 import { ArrowLeft, Save, DollarSign, Info, Phone, Trash2, Plus, AlertTriangle, Wand2, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -179,7 +168,7 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
   const [useBrandVoice, setUseBrandVoice] = useState(false);
   const [loadingBrandVoice, setLoadingBrandVoice] = useState(false);
   const [brandVoiceApplied, setBrandVoiceApplied] = useState(false);
-  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -300,7 +289,7 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
         console.warn("Cleanup errors:", data.cleanupErrors);
       }
 
-      onDeleteModalClose();
+      setIsDeleteModalOpen(false);
       router.push("/dashboard/voice");
       router.refresh();
     } catch (err) {
@@ -402,13 +391,10 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
         title={initialData ? "Edit Agent" : "Create Voice Agent"}
         description="Configure your AI voice agent's personality and behavior."
         actions={
-          <Button
-            as={Link}
-            href="/dashboard/voice"
-            variant="bordered"
-            startContent={<ArrowLeft className="w-4 h-4" />}
-          >
-            Back
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/voice">
+              Back
+            </Link>
           </Button>
         }
       />
@@ -416,9 +402,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <p className="text-red-600 dark:text-red-400">{error}</p>
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
@@ -427,35 +413,46 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
           <CardHeader>
             <h2 className="text-lg font-semibold">Basic Information</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <Input
-              label="Agent Name"
-              placeholder="e.g., Sales Assistant, Support Bot"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              isRequired
-            />
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Agent Name</Label>
+              <Input
+                placeholder="e.g., Sales Assistant, Support Bot"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
 
-            <Textarea
-              label="Description"
-              placeholder="Brief description of what this agent does"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Brief description of what this agent does"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
 
-            <Select
-              label="Brand"
-              selectedKeys={formData.brandId ? [formData.brandId] : []}
-              onChange={(e) => {
-                setFormData({ ...formData, brandId: e.target.value });
-                setBrandVoiceApplied(false); // Reset when brand changes
-              }}
-              isRequired
-            >
-              {brands.map((brand) => (
-                <SelectItem key={brand.id}>{brand.name}</SelectItem>
-              ))}
-            </Select>
+            <div className="space-y-2">
+              <Label>Brand</Label>
+              <Select
+                value={formData.brandId}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, brandId: value });
+                  setBrandVoiceApplied(false); // Reset when brand changes
+                }}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Use Brand Voice - One Brain, Many Voices */}
             <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
@@ -467,9 +464,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                       Use Brand Voice
                     </p>
                     {brandVoiceApplied && (
-                      <Chip size="sm" color="success" variant="flat">
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                         Applied
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -478,13 +475,10 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                   </p>
                 </div>
                 <Button
-                  color="secondary"
-                  variant={brandVoiceApplied ? "flat" : "solid"}
+                  variant={brandVoiceApplied ? "secondary" : "secondary"}
                   size="sm"
-                  isLoading={loadingBrandVoice}
-                  onPress={handleApplyBrandVoice}
-                  startContent={!loadingBrandVoice && <Wand2 className="w-4 h-4" />}
-                  isDisabled={!formData.brandId}
+                  disabled={loadingBrandVoice || !formData.brandId}
+                  onClick={handleApplyBrandVoice}
                 >
                   {brandVoiceApplied ? "Re-apply" : "Apply Brand Voice"}
                 </Button>
@@ -506,31 +500,27 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                 </p>
               </div>
               <Switch
-                isSelected={formData.isActive}
-                onValueChange={(value) =>
+                checked={formData.isActive}
+                onCheckedChange={(value) =>
                   setFormData({ ...formData, isActive: value })
                 }
               />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Phone Numbers - Only shown for existing agents */}
         {initialData && (
           <Card>
-            <CardHeader className="flex justify-between items-center">
+            <CardHeader className="flex flex-row justify-between items-center">
               <h2 className="text-lg font-semibold">Assigned Phone Numbers</h2>
-              <Button
-                as={Link}
-                href="/dashboard/voice/numbers"
-                size="sm"
-                variant="flat"
-                startContent={<Phone className="w-4 h-4" />}
-              >
-                Manage Numbers
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/dashboard/voice/numbers">
+                  Manage Numbers
+                </Link>
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {phoneNumbers && phoneNumbers.length > 0 ? (
                 <div className="space-y-3">
                   {phoneNumbers.map((phone) => (
@@ -551,13 +541,12 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                           </p>
                         </div>
                       </div>
-                      <Chip
-                        size="sm"
-                        color={phone.isActive ? "success" : "default"}
-                        variant="flat"
+                      <Badge
+                        variant={phone.isActive ? "default" : "secondary"}
+                        className={phone.isActive ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : ""}
                       >
                         {phone.isActive ? "Enabled" : "Disabled"}
-                      </Chip>
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -569,17 +558,15 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                     Provision a phone number to receive inbound calls.
                   </p>
                   <Button
-                    color="primary"
                     size="sm"
-                    isLoading={provisioning}
-                    onPress={handleProvisionPhone}
-                    startContent={!provisioning && <Plus className="w-4 h-4" />}
+                    disabled={provisioning}
+                    onClick={handleProvisionPhone}
                   >
                     Provision Phone Number
                   </Button>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
@@ -588,69 +575,88 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
           <CardHeader>
             <h2 className="text-lg font-semibold">AI Configuration</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                label="LLM Provider"
-                selectedKeys={[formData.llmProvider]}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  llmProvider: e.target.value,
-                  llmModel: LLM_MODELS[e.target.value as keyof typeof LLM_MODELS]?.[0]?.key || "gpt-4o-mini"
-                })}
-              >
-                {LLM_PROVIDERS.map((provider) => (
-                  <SelectItem key={provider.key}>{provider.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>LLM Provider</Label>
+                <Select
+                  value={formData.llmProvider}
+                  onValueChange={(value) => setFormData({
+                    ...formData,
+                    llmProvider: value,
+                    llmModel: LLM_MODELS[value as keyof typeof LLM_MODELS]?.[0]?.key || "gpt-4o-mini"
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LLM_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.key} value={provider.key}>{provider.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select
-                label="Model"
-                selectedKeys={[formData.llmModel]}
-                onChange={(e) => setFormData({ ...formData, llmModel: e.target.value })}
-              >
-                {currentModels.map((model) => (
-                  <SelectItem key={model.key}>{model.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Model</Label>
+                <Select
+                  value={formData.llmModel}
+                  onValueChange={(value) => setFormData({ ...formData, llmModel: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentModels.map((model) => (
+                      <SelectItem key={model.key} value={model.key}>{model.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <Textarea
-              label="System Prompt"
-              placeholder="Instructions for how the AI should behave..."
-              value={formData.systemPrompt}
-              onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-              minRows={4}
-              isRequired
-            />
+            <div className="space-y-2">
+              <Label>System Prompt</Label>
+              <Textarea
+                placeholder="Instructions for how the AI should behave..."
+                value={formData.systemPrompt}
+                onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
+                rows={4}
+                required
+              />
+            </div>
 
-            <Textarea
-              label="Greeting Message"
-              placeholder="What the agent says when answering a call"
-              value={formData.greeting}
-              onChange={(e) => setFormData({ ...formData, greeting: e.target.value })}
-              minRows={2}
-            />
+            <div className="space-y-2">
+              <Label>Greeting Message</Label>
+              <Textarea
+                placeholder="What the agent says when answering a call"
+                value={formData.greeting}
+                onChange={(e) => setFormData({ ...formData, greeting: e.target.value })}
+                rows={2}
+              />
+            </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Temperature: {formData.temperature}
               </label>
-              <Slider
+              <input
+                type="range"
+                min={0}
+                max={1}
                 step={0.1}
-                minValue={0}
-                maxValue={1}
                 value={formData.temperature}
-                onChange={(value) =>
-                  setFormData({ ...formData, temperature: value as number })
+                onChange={(e) =>
+                  setFormData({ ...formData, temperature: Number(e.target.value) })
                 }
-                className="max-w-md"
+                className="w-full max-w-md"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Lower = more focused, Higher = more creative
               </p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Voice Settings */}
@@ -658,88 +664,123 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
           <CardHeader>
             <h2 className="text-lg font-semibold">Voice Settings</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <Select
-              label="Text-to-Speech Provider"
-              selectedKeys={[formData.ttsProvider]}
-              onChange={(e) => {
-                const provider = e.target.value;
-                let defaultVoice = "";
-                switch (provider) {
-                  case "openai": defaultVoice = "nova"; break;
-                  case "elevenlabs": defaultVoice = "21m00Tcm4TlvDq8ikWAM"; break; // Rachel
-                  case "cartesia": defaultVoice = "248be419-c632-4f23-adf1-5324ed7dbf1d"; break; // Helpful Woman
-                  case "deepgram": defaultVoice = "aura-asteria-en"; break; // Asteria
-                  default: defaultVoice = "";
-                }
-                setFormData({ ...formData, ttsProvider: provider, voiceId: defaultVoice });
-              }}
-            >
-              {TTS_PROVIDERS.map((provider) => (
-                <SelectItem key={provider.key}>{provider.label}</SelectItem>
-              ))}
-            </Select>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Text-to-Speech Provider</Label>
+              <Select
+                value={formData.ttsProvider}
+                onValueChange={(value) => {
+                  const provider = value;
+                  let defaultVoice = "";
+                  switch (provider) {
+                    case "openai": defaultVoice = "nova"; break;
+                    case "elevenlabs": defaultVoice = "21m00Tcm4TlvDq8ikWAM"; break; // Rachel
+                    case "cartesia": defaultVoice = "248be419-c632-4f23-adf1-5324ed7dbf1d"; break; // Helpful Woman
+                    case "deepgram": defaultVoice = "aura-asteria-en"; break; // Asteria
+                    default: defaultVoice = "";
+                  }
+                  setFormData({ ...formData, ttsProvider: provider, voiceId: defaultVoice });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select TTS provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TTS_PROVIDERS.map((provider) => (
+                    <SelectItem key={provider.key} value={provider.key}>{provider.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {formData.ttsProvider === "openai" && (
-              <Select
-                label="Voice"
-                selectedKeys={formData.voiceId ? [formData.voiceId] : []}
-                onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-              >
-                {OPENAI_VOICES.map((voice) => (
-                  <SelectItem key={voice.key}>{voice.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Voice</Label>
+                <Select
+                  value={formData.voiceId}
+                  onValueChange={(value) => setFormData({ ...formData, voiceId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OPENAI_VOICES.map((voice) => (
+                      <SelectItem key={voice.key} value={voice.key}>{voice.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {formData.ttsProvider === "elevenlabs" && (
               <>
-                <Select
-                  label="Voice"
-                  selectedKeys={formData.voiceId ? [formData.voiceId] : []}
-                  onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-                  description="ElevenLabs offers 75ms ultra-low latency voices"
-                >
-                  {ELEVENLABS_VOICES.map((voice) => (
-                    <SelectItem key={voice.key} textValue={voice.label}>
-                      <div className="flex flex-col">
-                        <span>{voice.label}</span>
-                        <span className="text-xs text-default-400">{voice.description}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </Select>
-                <div className="flex items-center gap-2 text-sm text-success">
-                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <div className="space-y-2">
+                  <Label>Voice</Label>
+                  <Select
+                    value={formData.voiceId}
+                    onValueChange={(value) => setFormData({ ...formData, voiceId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select voice" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ELEVENLABS_VOICES.map((voice) => (
+                        <SelectItem key={voice.key} value={voice.key}>
+                          <div className="flex flex-col">
+                            <span>{voice.label}</span>
+                            <span className="text-xs text-muted-foreground">{voice.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">ElevenLabs offers 75ms ultra-low latency voices</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   Ultra-low 75ms latency for natural conversations
                 </div>
               </>
             )}
 
             {formData.ttsProvider === "cartesia" && (
-              <Select
-                label="Voice"
-                selectedKeys={formData.voiceId ? [formData.voiceId] : []}
-                onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-              >
-                {CARTESIA_VOICES.map((voice) => (
-                  <SelectItem key={voice.key}>{voice.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Voice</Label>
+                <Select
+                  value={formData.voiceId}
+                  onValueChange={(value) => setFormData({ ...formData, voiceId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CARTESIA_VOICES.map((voice) => (
+                      <SelectItem key={voice.key} value={voice.key}>{voice.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {formData.ttsProvider === "deepgram" && (
-              <Select
-                label="Voice"
-                selectedKeys={formData.voiceId ? [formData.voiceId] : []}
-                onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
-              >
-                {DEEPGRAM_VOICES.map((voice) => (
-                  <SelectItem key={voice.key}>{voice.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Voice</Label>
+                <Select
+                  value={formData.voiceId}
+                  onValueChange={(value) => setFormData({ ...formData, voiceId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEEPGRAM_VOICES.map((voice) => (
+                      <SelectItem key={voice.key} value={voice.key}>{voice.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Call Settings */}
@@ -747,15 +788,17 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
           <CardHeader>
             <h2 className="text-lg font-semibold">Call Settings</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <Input
-              label="Transfer Number"
-              placeholder="+1234567890"
-              value={formData.transferNumber}
-              onChange={(e) => setFormData({ ...formData, transferNumber: e.target.value })}
-              description="Number to transfer calls to when requested or escalation needed"
-            />
-          </CardBody>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Transfer Number</Label>
+              <Input
+                placeholder="+1234567890"
+                value={formData.transferNumber}
+                onChange={(e) => setFormData({ ...formData, transferNumber: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">Number to transfer calls to when requested or escalation needed</p>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Function Calling Tools - Only shown for existing agents */}
@@ -764,9 +807,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <CardHeader>
               <h2 className="text-lg font-semibold">Function Calling Tools</h2>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <AgentToolsEditor agentId={initialData.id} />
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
@@ -776,9 +819,9 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <CardHeader>
               <h2 className="text-lg font-semibold">Knowledge Bases (RAG)</h2>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <AgentKnowledgeBasesEditor agentId={initialData.id} />
-            </CardBody>
+            </CardContent>
           </Card>
         )}
 
@@ -792,7 +835,7 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-300">Pricing Information</h2>
             </div>
           </CardHeader>
-          <CardBody className="pt-2 space-y-4">
+          <CardContent className="pt-2 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white/50 dark:bg-black/20 rounded-lg">
               <div>
                 <p className="font-medium text-amber-900 dark:text-amber-200">Voice AI Calls</p>
@@ -807,40 +850,54 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Tooltip content="Speech recognition to convert caller audio to text">
-                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Speech-to-Text</p>
-                  <p className="font-semibold text-amber-800 dark:text-amber-300">
-                    ${PRICING.voice.breakdown.stt.toFixed(2)}/min
-                  </p>
-                </div>
-              </Tooltip>
-              <Tooltip content="AI processing and response generation">
-                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">AI Processing</p>
-                  <p className="font-semibold text-amber-800 dark:text-amber-300">
-                    ${PRICING.voice.breakdown.llm.toFixed(2)}/min
-                  </p>
-                </div>
-              </Tooltip>
-              <Tooltip content="Convert AI responses to natural speech">
-                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Text-to-Speech</p>
-                  <p className="font-semibold text-amber-800 dark:text-amber-300">
-                    ${PRICING.voice.breakdown.tts.toFixed(2)}/min
-                  </p>
-                </div>
-              </Tooltip>
-              <Tooltip content="Phone line and carrier costs">
-                <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Telephony</p>
-                  <p className="font-semibold text-amber-800 dark:text-amber-300">
-                    ${PRICING.voice.breakdown.telephony.toFixed(2)}/min
-                  </p>
-                </div>
-              </Tooltip>
-            </div>
+            <TooltipProvider>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Speech-to-Text</p>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300">
+                        ${PRICING.voice.breakdown.stt.toFixed(2)}/min
+                      </p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Speech recognition to convert caller audio to text</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">AI Processing</p>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300">
+                        ${PRICING.voice.breakdown.llm.toFixed(2)}/min
+                      </p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>AI processing and response generation</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Text-to-Speech</p>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300">
+                        ${PRICING.voice.breakdown.tts.toFixed(2)}/min
+                      </p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Convert AI responses to natural speech</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="p-3 bg-white/30 dark:bg-black/10 rounded-lg text-center cursor-help">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Telephony</p>
+                      <p className="font-semibold text-amber-800 dark:text-amber-300">
+                        ${PRICING.voice.breakdown.telephony.toFixed(2)}/min
+                      </p>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Phone line and carrier costs</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
 
             <div className="flex items-start gap-2 p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg">
               <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -856,17 +913,16 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                 </p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Submit */}
         <div className="flex justify-between gap-3">
           {initialData ? (
             <Button
-              color="danger"
-              variant="flat"
-              onPress={onDeleteModalOpen}
-              startContent={<Trash2 className="w-4 h-4" />}
+              variant="destructive"
+              type="button"
+              onClick={() => setIsDeleteModalOpen(true)}
             >
               Delete Agent
             </Button>
@@ -874,18 +930,14 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
             <div />
           )}
           <div className="flex gap-3">
-            <Button
-              as={Link}
-              href="/dashboard/voice"
-              variant="bordered"
-            >
-              Cancel
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/voice">
+                Cancel
+              </Link>
             </Button>
             <Button
               type="submit"
-              color="primary"
-              isLoading={loading}
-              startContent={!loading && <Save className="w-4 h-4" />}
+              disabled={loading}
             >
               {initialData ? "Save Changes" : "Create Agent"}
             </Button>
@@ -893,19 +945,19 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
         </div>
       </form>
 
-      {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose} size="lg">
-        <ModalContent>
-          <ModalHeader className="flex items-center gap-3">
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader className="flex flex-row items-center gap-3">
             <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Delete Agent</h3>
-              <p className="text-sm text-gray-500 font-normal">This action cannot be undone</p>
+              <DialogTitle>Delete Agent</DialogTitle>
+              <p className="text-sm text-muted-foreground font-normal">This action cannot be undone</p>
             </div>
-          </ModalHeader>
-          <ModalBody>
+          </DialogHeader>
+          <div className="py-4">
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               Are you sure you want to delete <strong>{initialData?.name}</strong>?
             </p>
@@ -934,16 +986,17 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                   onValueChange={(value) => setDeletePhoneOption(value as "pool" | "release")}
                   className="gap-3"
                 >
-                  <Radio value="pool" description="Numbers remain available for other agents">
-                    Return to pool
-                  </Radio>
-                  <Radio
-                    value="release"
-                    description="Delete from LiveKit and release from Magnus (permanent)"
-                    classNames={{ label: "text-red-600 dark:text-red-400" }}
-                  >
-                    Delete &amp; release numbers
-                  </Radio>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pool" id="pool" />
+                    <Label htmlFor="pool">Return to pool</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-6">Numbers remain available for other agents</p>
+
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="release" id="release" />
+                    <Label htmlFor="release" className="text-red-600 dark:text-red-400">Delete &amp; release numbers</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground ml-6">Delete from LiveKit and release from Magnus (permanent)</p>
                 </RadioGroup>
 
                 {deletePhoneOption === "release" && (
@@ -963,24 +1016,23 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                 </div>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onPress={onDeleteModalClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="danger"
-              isLoading={deleting}
-              onPress={handleDeleteConfirm}
-              startContent={!deleting && <Trash2 className="w-4 h-4" />}
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleDeleteConfirm}
             >
               {phoneNumbers.length > 0 && deletePhoneOption === "release"
                 ? "Delete Agent & Numbers"
                 : "Delete Agent"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

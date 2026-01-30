@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  Switch,
-  Input,
-  Button,
-  Chip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Image, Palette, Plus, X, Sparkles } from "lucide-react";
 import type { CreateWizardData } from "@/lib/flywheel/types";
 
@@ -68,7 +65,7 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
 
       {/* AI Image Generation Toggle */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
@@ -84,12 +81,11 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
               </div>
             </div>
             <Switch
-              isSelected={imageGeneration}
-              onValueChange={(value) => updateData({ imageGeneration: value })}
-              size="lg"
+              checked={imageGeneration}
+              onCheckedChange={(value) => updateData({ imageGeneration: value })}
             />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Image Style Selection */}
@@ -108,17 +104,16 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
                     ? "border-blue-400 dark:border-blue-600 bg-blue-50/50 dark:bg-blue-900/20"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }`}
-                isPressable
-                onPress={() => updateData({ imageStyle: style.id })}
+                onClick={() => updateData({ imageStyle: style.id })}
               >
-                <CardBody className="p-3 text-center">
+                <CardContent className="p-3 text-center">
                   <p className="font-medium text-gray-900 dark:text-white text-sm">
                     {style.label}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {style.description}
                   </p>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -154,28 +149,25 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
 
         {/* Custom Color Input */}
         <div className="flex gap-2">
-          <Input
-            placeholder="#FF5733 or rgb(255, 87, 51)"
-            value={newColor}
-            onValueChange={setNewColor}
-            startContent={
-              <div
-                className="w-4 h-4 rounded border"
-                style={{
-                  backgroundColor: newColor || "#ccc",
-                }}
-              />
-            }
-            classNames={{
-              input: "text-sm",
-            }}
-          />
+          <div className="relative flex-1">
+            <div
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded border"
+              style={{
+                backgroundColor: newColor || "#ccc",
+              }}
+            />
+            <Input
+              placeholder="#FF5733 or rgb(255, 87, 51)"
+              value={newColor}
+              onChange={(e) => setNewColor(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
           <Button
-            isIconOnly
-            color="primary"
-            variant="flat"
-            onPress={() => addColor(newColor)}
-            isDisabled={!newColor.trim()}
+            size="icon"
+            variant="secondary"
+            onClick={() => addColor(newColor)}
+            disabled={!newColor.trim()}
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -185,22 +177,23 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
         {brandColors.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {brandColors.map((color) => (
-              <Chip
+              <Badge
                 key={color}
-                variant="flat"
-                onClose={() => removeColor(color)}
-                startContent={
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: color }}
-                  />
-                }
-                classNames={{
-                  closeButton: "text-gray-500 hover:text-gray-700",
-                }}
+                variant="secondary"
+                className="flex items-center gap-1"
               >
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
                 {color}
-              </Chip>
+                <button
+                  onClick={() => removeColor(color)}
+                  className="ml-1 hover:text-destructive"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
             ))}
           </div>
         )}
@@ -215,12 +208,12 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
       {/* Preview Section */}
       {imageGeneration && brandColors.length > 0 && (
         <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Color Preview
             </h5>
             <div className="h-12 rounded-lg flex overflow-hidden">
-              {brandColors.map((color, i) => (
+              {brandColors.map((color) => (
                 <div
                   key={color}
                   className="flex-1"
@@ -228,7 +221,7 @@ export function MediaSettingsStep({ data, updateData }: MediaSettingsStepProps) 
                 />
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { Share2, Wand2, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { WizardLayout } from "../../shared/wizard-layout";
 import { AIQuickSetup } from "../../shared/ai-quick-setup";
 import { DISTRIBUTE_STEPS } from "@/lib/flywheel/constants";
@@ -151,18 +152,16 @@ export function DistributeWizard({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Set Up Distribution
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             How would you like to configure your posting schedule?
           </p>
         </div>
 
         <div className="grid gap-4">
           <Card
-            isPressable
-            onPress={() => setSetupMode("ai_quick")}
-            className="border-2 border-green-200 dark:border-green-800 hover:border-green-400 dark:hover:border-green-600 transition-colors"
+            className="cursor-pointer border-2 border-green-200 dark:border-green-800 hover:border-green-400 dark:hover:border-green-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("ai_quick")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
                   <Wand2 className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -171,7 +170,7 @@ export function DistributeWizard({
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                     AI Quick Setup
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Choose your posting goal and let AI create an optimal schedule based on your audience. You can fine-tune later.
                   </p>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400">
@@ -179,24 +178,22 @@ export function DistributeWizard({
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card
-            isPressable
-            onPress={() => setSetupMode("manual")}
-            className="border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+            className="cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("manual")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
-                  <Settings2 className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  <Settings2 className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                     Manual Setup
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Configure each platform, time slot, and setting manually. Best for specific scheduling needs.
                   </p>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -204,7 +201,7 @@ export function DistributeWizard({
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -216,9 +213,9 @@ export function DistributeWizard({
       <div className="max-w-2xl mx-auto py-8">
         <div className="mb-6">
           <Button
-            variant="light"
+            variant="ghost"
             size="sm"
-            onPress={() => setSetupMode("choosing")}
+            onClick={() => setSetupMode("choosing")}
             className="text-gray-500"
           >
             ← Back to setup options
@@ -246,7 +243,7 @@ export function DistributeWizard({
       onComplete={handleComplete}
       onSave={handleSave}
       canProceed={canProceed()}
-      isLoading={isLoading}
+      disabled={isLoading}
     >
       {renderStep()}
     </WizardLayout>

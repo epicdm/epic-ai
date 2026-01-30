@@ -1,19 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Textarea,
-  Spinner,
-  Chip,
-  Avatar,
-  Checkbox,
-  Input,
-  Tooltip,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Send, Calendar, Sparkles, Wand2, RefreshCw, Lightbulb, MessageSquare } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/analytics";
@@ -174,7 +170,7 @@ export function PostComposer() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -201,7 +197,7 @@ export function PostComposer() {
 
       {!status?.hasBrand ? (
         <Card>
-          <CardBody className="py-16 text-center">
+          <CardContent className="py-16 text-center">
             <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-3xl">⚠️</span>
             </div>
@@ -211,14 +207,14 @@ export function PostComposer() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Create a brand first to start posting to social media.
             </p>
-            <Button as={Link} href="/dashboard/brand" color="primary">
+            <Button as={Link} href="/dashboard/brand" >
               Create Brand
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : activeAccounts.length === 0 ? (
         <Card>
-          <CardBody className="py-16 text-center">
+          <CardContent className="py-16 text-center">
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
@@ -228,10 +224,10 @@ export function PostComposer() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Connect Twitter, LinkedIn, or Meta to start posting.
             </p>
-            <Button as={Link} href="/dashboard/social" color="primary">
+            <Button as={Link} href="/dashboard/social" >
               Connect Accounts
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -241,12 +237,12 @@ export function PostComposer() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <h2 className="text-lg font-semibold">Compose</h2>
                 {status?.brandName && (
-                  <Chip size="sm" variant="flat" color="secondary" startContent={<MessageSquare className="w-3 h-3" />}>
+                  <Badge variant="secondary">
                     Posting as {status.brandName}
-                  </Chip>
+                  </Badge>
                 )}
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 {/* AI Generation Section */}
                 {status?.pillars && status.pillars.length > 0 && (
                   <div className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
@@ -260,17 +256,20 @@ export function PostComposer() {
                       <p className="text-xs text-default-500 mb-2">Choose a topic from your content pillars:</p>
                       <div className="flex flex-wrap gap-2">
                         {status.pillars.map((pillar) => (
-                          <Tooltip key={pillar.id} content={pillar.description || `Generate content about ${pillar.name}`}>
-                            <Chip
-                              variant={selectedPillar === pillar.name ? "solid" : "bordered"}
-                              color={selectedPillar === pillar.name ? "primary" : "default"}
-                              className="cursor-pointer"
-                              startContent={<Lightbulb className="w-3 h-3" />}
-                              onClick={() => setSelectedPillar(selectedPillar === pillar.name ? null : pillar.name)}
-                            >
-                              {pillar.name}
-                            </Chip>
-                          </Tooltip>
+                          <TooltipProvider key={pillar.id}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge
+                                  variant={selectedPillar === pillar.name ? "default" : "outline"}
+                                  className="cursor-pointer"
+                                  onClick={() => setSelectedPillar(selectedPillar === pillar.name ? null : pillar.name)}
+                                >
+                                  {pillar.name}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>{pillar.description || `Generate content about ${pillar.name}`}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         ))}
                       </div>
                     </div>
@@ -288,41 +287,36 @@ export function PostComposer() {
                         className="flex-1"
                       />
                       <Button
-                        color="primary"
                         size="sm"
-                        isLoading={generating}
-                        isDisabled={!selectedPillar && !customTopic}
-                        startContent={!generating && <Sparkles className="w-4 h-4" />}
-                        onPress={() => handleGenerateContent()}
+                        disabled={generating || (!selectedPillar && !customTopic)}
+                        onClick={() => handleGenerateContent()}
                       >
+                        {generating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                         Generate
                       </Button>
                     </div>
                   </div>
                 )}
 
-                <Textarea
-                  label="What's on your mind?"
-                  placeholder={status?.pillars?.length ? "Select a topic above and click Generate, or write your own..." : "Write your post content here..."}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  minRows={6}
-                  maxRows={12}
-                  endContent={
-                    content && (
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        className="absolute bottom-2 right-2"
-                        onPress={() => handleGenerateContent(content.split(' ').slice(0, 5).join(' '))}
-                        isLoading={generating}
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                    )
-                  }
-                />
+                <div className="relative">
+                  <Textarea
+                    placeholder={status?.pillars?.length ? "Select a topic above and click Generate, or write your own..." : "Write your post content here..."}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={8}
+                  />
+                  {content && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute bottom-2 right-2"
+                      onClick={() => handleGenerateContent(content.split(' ').slice(0, 5).join(' '))}
+                      disabled={generating}
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
 
                 {/* Platform selection */}
                 <div>
@@ -331,53 +325,37 @@ export function PostComposer() {
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {activeAccounts.map((account) => (
-                      <Chip
+                      <Badge
                         key={account.id}
-                        variant={
-                          selectedAccounts.includes(account.id)
-                            ? "solid"
-                            : "bordered"
-                        }
-                        color={
-                          selectedAccounts.includes(account.id)
-                            ? "primary"
-                            : "default"
-                        }
+                        variant={selectedAccounts.includes(account.id) ? "default" : "outline"}
                         className="cursor-pointer"
                         onClick={() => toggleAccount(account.id)}
-                        avatar={
-                          account.avatarUrl ? (
-                            <Avatar
-                              src={account.avatarUrl}
-                              size="sm"
-                              className="w-5 h-5"
-                            />
-                          ) : undefined
-                        }
                       >
+                        {account.avatarUrl && (
+                          <img src={account.avatarUrl} alt="" className="w-4 h-4 rounded-full mr-1" />
+                        )}
                         {account.displayName || account.platformUsername || account.platform}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
 
                 {/* Schedule options */}
                 <div className="flex items-center gap-4">
-                  <Checkbox
-                    isSelected={postNow}
-                    onValueChange={setPostNow}
-                    size="sm"
-                  >
-                    Post immediately
-                  </Checkbox>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="post-now"
+                      checked={postNow}
+                      onCheckedChange={setPostNow}
+                    />
+                    <Label htmlFor="post-now" className="text-sm">Post immediately</Label>
+                  </div>
                   {!postNow && (
                     <Input
                       type="datetime-local"
                       value={scheduleDate}
-                      onValueChange={setScheduleDate}
-                      size="sm"
+                      onChange={(e) => setScheduleDate(e.target.value)}
                       className="max-w-xs"
-                      label="Schedule for"
                     />
                   )}
                 </div>
@@ -387,30 +365,28 @@ export function PostComposer() {
                     {content.length} characters
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="bordered">Save Draft</Button>
+                    <Button variant="outline">Save Draft</Button>
                     <Button
-                      color="primary"
-                      onPress={handlePost}
-                      isLoading={posting}
-                      isDisabled={
+                      onClick={handlePost}
+                      disabled={
+                        posting ||
                         !content.trim() ||
                         selectedAccounts.length === 0 ||
                         (!postNow && !scheduleDate)
                       }
-                      startContent={
-                        !posting &&
-                        (postNow ? (
-                          <Send className="w-4 h-4" />
-                        ) : (
-                          <Calendar className="w-4 h-4" />
-                        ))
-                      }
                     >
+                      {posting ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : postNow ? (
+                        <Send className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Calendar className="w-4 h-4 mr-2" />
+                      )}
                       {postNow ? "Post Now" : "Schedule Post"}
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
 
@@ -420,14 +396,16 @@ export function PostComposer() {
               <CardHeader>
                 <h2 className="text-lg font-semibold">Connected Accounts</h2>
               </CardHeader>
-              <CardBody className="space-y-3">
+              <CardContent className="space-y-3">
                 {activeAccounts.map((account) => (
                   <div key={account.id} className="flex items-center gap-3">
-                    <Avatar
-                      src={account.avatarUrl}
-                      name={account.displayName || account.platform}
-                      size="sm"
-                    />
+                    {account.avatarUrl ? (
+                      <img src={account.avatarUrl} alt={account.displayName || account.platform} className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium">
+                        {(account.displayName || account.platform).charAt(0)}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {account.displayName || account.platformUsername}
@@ -439,13 +417,13 @@ export function PostComposer() {
                 <Button
                   as={Link}
                   href="/dashboard/social"
-                  variant="flat"
+                  variant="secondary"
                   size="sm"
                   className="w-full mt-2"
                 >
                   Manage Accounts
                 </Button>
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Brand Voice Card */}
@@ -457,7 +435,7 @@ export function PostComposer() {
                     Your Brand Voice
                   </h2>
                 </CardHeader>
-                <CardBody className="space-y-3">
+                <CardContent className="space-y-3">
                   {status.voice.tone && (
                     <div>
                       <p className="text-xs text-default-500 uppercase tracking-wide">Tone</p>
@@ -489,13 +467,13 @@ export function PostComposer() {
                   <Button
                     as={Link}
                     href="/dashboard/brand"
-                    variant="flat"
+                    variant="secondary"
                     size="sm"
                     className="w-full mt-2"
                   >
                     Edit Brand Voice
                   </Button>
-                </CardBody>
+                </CardContent>
               </Card>
             )}
 
@@ -505,7 +483,7 @@ export function PostComposer() {
                 <CardHeader>
                   <h2 className="text-lg font-semibold">Tips</h2>
                 </CardHeader>
-                <CardBody>
+                <CardContent>
                   <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                     <li className="flex items-start gap-2">
                       <span>•</span>
@@ -524,7 +502,7 @@ export function PostComposer() {
                       <span>Cross-post to multiple platforms</span>
                     </li>
                   </ul>
-                </CardBody>
+                </CardContent>
               </Card>
             )}
           </div>

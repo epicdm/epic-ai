@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button, Spinner } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { Wizard, type WizardStep } from "@/components/ui/wizard/wizard";
 import { WizardLayout } from "@/components/flywheel/shared/wizard-layout";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -121,7 +121,7 @@ export function FeatureWizardWrapper({
             onClick={handleQuickCreate}
             disabled={isLoading}
           >
-            {isLoading ? <Spinner /> : 'Use Default Settings'}
+            {isLoading ? <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" /> : 'Use Default Settings'}
           </Button>
         </div>
       </div>
@@ -151,14 +151,14 @@ export function FeatureWizardWrapper({
           onChangeStep={setCurrentStep}
           onComplete={handleComplete}
           onStepComplete={handleStepComplete}
-          isLoading={isLoading}
+          disabled={isLoading}
           previewMode={previewMode}
         />
       </WizardLayout>
       
       {showCelebration && (
-        <Celebration 
-          title="Setup Complete!" 
+        <Celebration
+          title="Setup Complete!"
           onClose={() => setShowCelebration(false)}
         />
       )}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Chip, Progress, Spinner, Tabs, Tab } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Sparkles, Volume2 } from "lucide-react";
 
 interface BrandBrain {
@@ -47,7 +49,7 @@ export default function BrandVoicePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -56,11 +58,11 @@ export default function BrandVoicePage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl">
         <Card>
-          <CardBody>
+          <CardContent>
             <p className="text-center text-gray-500">
               {error || "No brand brain found. Please set up your brand first."}
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -76,7 +78,7 @@ export default function BrandVoicePage() {
       </div>
 
       <Tabs aria-label="Voice settings tabs" className="w-full">
-        <Tab key="tone" title="Tone">
+        <TabsTrigger value="tone">
           <Card className="mt-4">
             <CardHeader className="flex gap-2">
               <Volume2 className="h-5 w-5" />
@@ -87,40 +89,38 @@ export default function BrandVoicePage() {
                 </p>
               </div>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Primary Tone</label>
                   <div className="flex items-center gap-2">
-                    <Chip color="secondary" variant="flat">
+                    <Badge variant="secondary" variant="secondary">
                       {brandBrain.voiceTone || "Professional"}
-                    </Chip>
+                    </Badge>
                     {brandBrain.voiceToneCustom && (
-                      <Chip variant="bordered">
+                      <Badge variant="outline">
                         {brandBrain.voiceToneCustom}
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Formality Level</label>
                   <div className="flex items-center gap-2">
-                    <Progress
-                      value={(brandBrain.formalityLevel || 3) * 20}
-                      className="flex-1"
-                      color="primary"
-                    />
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(brandBrain.formalityLevel || 3) * 20}%` }} />
+            </div>
                     <span className="text-sm text-gray-500">
                       {brandBrain.formalityLevel || 3}/5
                     </span>
                   </div>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsTrigger>
 
-        <Tab key="style" title="Writing Style">
+        <TabsTrigger value="style">
           <Card className="mt-4">
             <CardHeader className="flex gap-2">
               <MessageSquare className="h-5 w-5" />
@@ -131,7 +131,7 @@ export default function BrandVoicePage() {
                 </p>
               </div>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Style Description</label>
                 <p className="text-gray-500">
@@ -140,15 +140,15 @@ export default function BrandVoicePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">CTA Style</label>
-                <Chip color="secondary" variant="flat">
+                <Badge variant="secondary" variant="secondary">
                   {brandBrain.ctaStyle || "Direct"}
-                </Chip>
+                </Badge>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsTrigger>
 
-        <Tab key="preferences" title="Preferences">
+        <TabsTrigger value="preferences">
           <Card className="mt-4">
             <CardHeader className="flex gap-2">
               <Sparkles className="h-5 w-5" />
@@ -159,14 +159,14 @@ export default function BrandVoicePage() {
                 </p>
               </div>
             </CardHeader>
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Emoji Usage</label>
                   <div className="flex items-center gap-2">
-                    <Chip color={brandBrain.useEmojis ? "success" : "default"} variant="flat">
+                    <Badge color={brandBrain.useEmojis ? "success" : "default"} variant="secondary">
                       {brandBrain.useEmojis ? "Enabled" : "Disabled"}
-                    </Chip>
+                    </Badge>
                     {brandBrain.useEmojis && brandBrain.emojiFrequency && (
                       <span className="text-sm text-gray-500">
                         ({brandBrain.emojiFrequency} frequency)
@@ -177,9 +177,9 @@ export default function BrandVoicePage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Hashtag Usage</label>
                   <div className="flex items-center gap-2">
-                    <Chip color={brandBrain.useHashtags ? "success" : "default"} variant="flat">
+                    <Badge color={brandBrain.useHashtags ? "success" : "default"} variant="secondary">
                       {brandBrain.useHashtags ? "Enabled" : "Disabled"}
-                    </Chip>
+                    </Badge>
                     {brandBrain.hashtagStyle && (
                       <span className="text-sm text-gray-500">
                         ({brandBrain.hashtagStyle})
@@ -194,9 +194,9 @@ export default function BrandVoicePage() {
                   <label className="text-sm font-medium">Do Not Mention</label>
                   <div className="flex flex-wrap gap-2">
                     {brandBrain.doNotMention.map((item: string, i: number) => (
-                      <Chip key={i} color="danger" variant="flat" size="sm">
+                      <Badge key={i} variant="destructive" variant="secondary" >
                         {item}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -207,16 +207,16 @@ export default function BrandVoicePage() {
                   <label className="text-sm font-medium">Must Mention</label>
                   <div className="flex flex-wrap gap-2">
                     {brandBrain.mustMention.map((item: string, i: number) => (
-                      <Chip key={i} color="primary" variant="flat" size="sm">
+                      <Badge key={i}  variant="secondary" >
                         {item}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsTrigger>
       </Tabs>
     </div>
   );

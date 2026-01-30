@@ -1,6 +1,8 @@
 "use client";
 
-import { Card, CardBody, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Share2,
   CheckCircle,
@@ -86,7 +88,7 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Review your publishing setup before activating. You can always change
         these settings later from your dashboard.
       </p>
@@ -104,7 +106,7 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                   : "border-amber-200 dark:border-amber-800"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div
                     className={`p-2 rounded-lg ${
@@ -132,12 +134,12 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                         <XCircle className="w-4 h-4 text-amber-600" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       {item.detail}
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -146,7 +148,7 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
       {/* Connected Accounts Summary */}
       {connectedAccounts.length > 0 && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <Share2 className="w-4 h-4" />
               Connected Accounts
@@ -172,22 +174,22 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                       <span className="text-sm text-gray-500">@{account.handle}</span>
                     )}
                     {autoPost && (
-                      <Chip size="sm" color="success" variant="flat">
+                      <Badge variant="outline">
                         Auto
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                 );
               })}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Schedule Preview */}
       {hasSchedule && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Weekly Schedule Preview
@@ -203,9 +205,9 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                   </span>
                   <div className="flex gap-2">
                     {slots.map((slot) => (
-                      <Chip key={slot.time} size="sm" variant="flat">
+                      <Badge key={slot.time} variant="secondary">
                         {slot.time}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -214,19 +216,19 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">Total weekly posts:</span>
-                <Chip color="success" variant="flat">
+                <Badge variant="outline">
                   {totalWeeklySlots} posts/week
-                </Chip>
+                </Badge>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* First Post Summary */}
       {data.firstPostOption && data.firstPostOption !== "skip" && (
         <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-800">
                 <Send className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -242,31 +244,30 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
                 </p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Confirmation */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
-          <Checkbox
-            isSelected={data.confirmed}
-            onValueChange={(value) => updateData({ confirmed: value })}
-            classNames={{
-              label: "text-gray-700 dark:text-gray-300",
-            }}
-          >
-            <span>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="confirm-distribute"
+              checked={data.confirmed || false}
+              onCheckedChange={(checked) => updateData({ confirmed: checked === true })}
+            />
+            <label htmlFor="confirm-distribute" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
               I confirm that my publishing settings are correct and I&apos;m ready
               to start distributing content to my connected social accounts.
-            </span>
-          </Checkbox>
-        </CardBody>
+            </label>
+          </div>
+        </CardContent>
       </Card>
 
       {/* What's Next */}
       <Card className="border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">
             What happens next?
           </h5>
@@ -276,7 +277,7 @@ export function DistributeReviewStep({ data, updateData }: DistributeReviewStepP
             <li>• You can manage your queue from the Content page</li>
             <li>• Analytics will start tracking after your first post</li>
           </ul>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

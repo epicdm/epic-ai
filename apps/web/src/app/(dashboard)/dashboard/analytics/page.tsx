@@ -5,7 +5,7 @@
 
 import { getAuth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { NewAnalyticsDashboard } from '@/components/analytics/new-analytics-dashboard';
+import { NewAnalyticsDashboard } from '@/components/analytics/analytics-dashboard';
 
 // UAT bypass - allows testing without database when explicitly enabled
 function isUATBypassEnabled() {

@@ -1,23 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Select,
-  SelectItem,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   ArrowLeft,
@@ -84,7 +73,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const { isOpen: isMetricsOpen, onOpen: onMetricsOpen, onClose: onMetricsClose } = useDisclosure();
+  const [isMetricsOpen, setIsMetricsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Metrics form
@@ -144,7 +133,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(metricsForm),
       });
-      onMetricsClose();
+      setIsMetricsOpen(false);
       loadCampaign();
     } catch (error) {
       console.error("Error saving metrics:", error);
@@ -167,7 +156,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -175,7 +164,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
   if (!campaign) {
     return (
       <div className="text-center py-12">
-        <p className="text-default-500">Campaign not found</p>
+        <p className="text-muted-foreground">Campaign not found</p>
         <Link href="/dashboard/ads">
           <Button className="mt-4">Back to Ads</Button>
         </Link>
@@ -196,16 +185,16 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/ads">
-              <Button variant="bordered" startContent={<ArrowLeft className="w-4 h-4" />}>
+              <Button variant="outline" ><ArrowLeft className="w-4 h-4" /> 
                 Back
               </Button>
             </Link>
             <Button
-              color="danger"
-              variant="light"
-              startContent={<Trash2 className="w-4 h-4" />}
+              variant="destructive"
+              variant="ghost"
+              
               onClick={deleteCampaign}
-            >
+            ><Trash2 className="w-4 h-4" /> 
               Delete
             </Button>
           </div>
@@ -214,89 +203,88 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
 
       {/* Status and Actions */}
       <Card>
-        <CardBody className="flex flex-row items-center justify-between">
+        <CardContent className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-4">
-            <Chip
-              size="lg"
+            <Badge
+              
               color={campaign.status === "ACTIVE" ? "success" : campaign.status === "PAUSED" ? "warning" : "default"}
-              variant="flat"
+              variant="secondary"
             >
               {campaign.status}
-            </Chip>
-            <Select
-              size="sm"
-              className="w-40"
-              selectedKeys={[campaign.status]}
-              onSelectionChange={(keys) => updateStatus(Array.from(keys)[0] as string)}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
+            </Badge>
+            <Select value={campaign.status} onValueChange={updateStatus}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <Button
-            color="primary"
-            startContent={<Edit className="w-4 h-4" />}
-            onClick={onMetricsOpen}
-          >
+            
+            onClick={() => setIsMetricsOpen(true)}
+          ><Edit className="w-4 h-4" /> 
             Update Metrics
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Metrics Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-lg">
               <Eye className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Impressions</p>
+              <p className="text-sm text-muted-foreground">Impressions</p>
               <p className="text-2xl font-bold">{metrics?.impressions?.toLocaleString() || 0}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-success/10 rounded-lg">
               <MousePointer className="w-6 h-6 text-success" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Clicks</p>
+              <p className="text-sm text-muted-foreground">Clicks</p>
               <p className="text-2xl font-bold">{metrics?.clicks?.toLocaleString() || 0}</p>
-              <p className="text-xs text-default-400">{ctr.toFixed(2)}% CTR</p>
+              <p className="text-xs text-muted-foreground">{ctr.toFixed(2)}% CTR</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-warning/10 rounded-lg">
               <Users className="w-6 h-6 text-warning" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Leads</p>
+              <p className="text-sm text-muted-foreground">Leads</p>
               <p className="text-2xl font-bold">{metrics?.leads || 0}</p>
-              <p className="text-xs text-default-400">${cpl.toFixed(2)} CPL</p>
+              <p className="text-xs text-muted-foreground">${cpl.toFixed(2)} CPL</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-danger/10 rounded-lg">
               <DollarSign className="w-6 h-6 text-danger" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Spend</p>
+              <p className="text-sm text-muted-foreground">Spend</p>
               <p className="text-2xl font-bold">${Number(metrics?.spend || 0).toFixed(2)}</p>
-              <p className="text-xs text-default-400">${cpc.toFixed(2)} CPC</p>
+              <p className="text-xs text-muted-foreground">${cpc.toFixed(2)} CPC</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
@@ -306,24 +294,24 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
           <CardHeader>
             <h2 className="text-lg font-semibold">Campaign Details</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-default-500">Platform</p>
+                <p className="text-sm text-muted-foreground">Platform</p>
                 <p className="font-medium">{campaign.platform}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Objective</p>
+                <p className="text-sm text-muted-foreground">Objective</p>
                 <p className="font-medium">{campaign.objective.replace("_", " ")}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Daily Budget</p>
+                <p className="text-sm text-muted-foreground">Daily Budget</p>
                 <p className="font-medium">
                   {campaign.dailyBudget ? `$${campaign.dailyBudget}` : "Not set"}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Total Budget</p>
+                <p className="text-sm text-muted-foreground">Total Budget</p>
                 <p className="font-medium">
                   {campaign.totalBudget ? `$${campaign.totalBudget}` : "Not set"}
                 </p>
@@ -331,11 +319,11 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
             </div>
             {campaign.targeting?.audience && (
               <div>
-                <p className="text-sm text-default-500">Target Audience</p>
+                <p className="text-sm text-muted-foreground">Target Audience</p>
                 <p className="font-medium">{campaign.targeting.audience}</p>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Ad Creative */}
@@ -344,7 +332,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
             <CardHeader>
               <h2 className="text-lg font-semibold">Ad Creative</h2>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {campaign.adCreatives.map((creative) => (
                 <div key={creative.id} className="space-y-4">
                   {creative.imageUrl && (
@@ -356,14 +344,14 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
                   )}
                   <div>
                     <p className="font-bold text-lg">{creative.headline}</p>
-                    <p className="text-default-600 mt-2">{creative.primaryText}</p>
-                    <Button size="sm" color="primary" className="mt-4">
+                    <p className="text-muted-foreground mt-2">{creative.primaryText}</p>
+                    <Button size="sm" className="mt-4">
                       {creative.callToAction}
                     </Button>
                   </div>
                 </div>
               ))}
-            </CardBody>
+            </CardContent>
           </Card>
         )}
       </div>
@@ -377,7 +365,7 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
               <h2 className="text-lg font-semibold">Daily Performance</h2>
             </div>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -402,16 +390,16 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
                 </tbody>
               </table>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Update Metrics Modal */}
-      <Modal isOpen={isMetricsOpen} onClose={onMetricsClose}>
-        <ModalContent>
-          <ModalHeader>Update Campaign Metrics</ModalHeader>
-          <ModalBody className="space-y-4">
-            <p className="text-sm text-default-500">
+      <Dialog open={isMetricsOpen} onOpenChange={setIsMetricsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Update Campaign Metrics</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
               Enter the current metrics from your ad platform dashboard.
             </p>
             <Input
@@ -443,19 +431,17 @@ export function CampaignDetailPage({ campaignId }: CampaignDetailPageProps) {
               label="Spend ($)"
               value={metricsForm.spend.toString()}
               onChange={(e) => setMetricsForm({ ...metricsForm, spend: parseFloat(e.target.value) || 0 })}
-              startContent={<span className="text-default-400">$</span>}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onClick={onMetricsClose}>
+                          />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMetricsOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onClick={saveMetrics} isLoading={saving}>
+            <Button onClick={saveMetrics} disabled={saving}>
               Save Metrics
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
     </div>
   );
 }

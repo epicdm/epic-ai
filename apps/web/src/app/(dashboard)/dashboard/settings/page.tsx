@@ -1,7 +1,7 @@
 import { getAuthWithBypass, getCurrentOrganization } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@epic-ai/database";
-import { NewSettingsContent } from "@/components/settings/new-settings-content";
+import { NewSettingsContent } from "@/components/settings/settings-content";
 
 export const dynamic = 'force-dynamic';
 

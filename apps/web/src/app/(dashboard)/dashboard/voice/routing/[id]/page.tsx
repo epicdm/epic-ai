@@ -1,21 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback, use } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Chip,
-  Select,
-  SelectItem,
-  Textarea,
-  Spinner,
-  Switch,
-  Tabs,
-  Tab,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -271,7 +264,7 @@ export default function EditRoutingRulePage({
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -279,7 +272,7 @@ export default function EditRoutingRulePage({
   if (!rule) {
     return (
       <Card>
-        <CardBody className="text-center py-12">
+        <CardContent className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             Rule Not Found
           </h3>
@@ -287,9 +280,9 @@ export default function EditRoutingRulePage({
             The routing rule you're looking for doesn't exist.
           </p>
           <Link href="/dashboard/voice/routing">
-            <Button color="primary">Back to Rules</Button>
+            <Button >Back to Rules</Button>
           </Link>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -314,10 +307,10 @@ export default function EditRoutingRulePage({
           </h1>
         </div>
         <div className="flex gap-2">
-          <Button color="danger" variant="light" onPress={handleDelete}>
+          <Button variant="destructive" variant="ghost" onClick={handleDelete}>
             Delete
           </Button>
-          <Button color="primary" onPress={handleSave} isLoading={saving}>
+          <Button onClick={handleSave} disabled={saving}>
             Save Changes
           </Button>
         </div>
@@ -328,7 +321,7 @@ export default function EditRoutingRulePage({
         <CardHeader>
           <h2 className="text-lg font-semibold">Basic Information</h2>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Rule Name"
@@ -341,7 +334,7 @@ export default function EditRoutingRulePage({
             <Input
               type="number"
               label="Priority"
-              description="Higher priority rules are evaluated first"
+              
               min={0}
               max={100}
               value={formData.priority.toString()}
@@ -360,13 +353,13 @@ export default function EditRoutingRulePage({
 
           <div className="flex items-center gap-4">
             <Switch
-              isSelected={formData.isActive}
-              onValueChange={(value) => setFormData({ ...formData, isActive: value })}
+              checked={formData.isActive}
+              onCheckedChange={(value) => setFormData({ ...formData, isActive: value })}
             >
               Rule Active
             </Switch>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Target */}
@@ -374,19 +367,19 @@ export default function EditRoutingRulePage({
         <CardHeader>
           <h2 className="text-lg font-semibold">Route To</h2>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <Tabs
             selectedKey={formData.targetType}
             onSelectionChange={(key) =>
               setFormData({ ...formData, targetType: key as "group" | "agent" })
             }
           >
-            <Tab key="group" title="Agent Group">
+            <TabsTrigger value="group">
               <div className="mt-4">
                 <Select
                   label="Select Group"
                   placeholder="Choose a group"
-                  selectedKeys={formData.groupId ? [formData.groupId] : []}
+                  value={formData.groupId}
                   onChange={(e) => setFormData({ ...formData, groupId: e.target.value })}
                 >
                   {groups.map((group) => (
@@ -404,13 +397,13 @@ export default function EditRoutingRulePage({
                   </p>
                 )}
               </div>
-            </Tab>
-            <Tab key="agent" title="Specific Agent">
+            </TabsTrigger>
+            <TabsTrigger value="agent">
               <div className="mt-4">
                 <Select
                   label="Select Agent"
                   placeholder="Choose an agent"
-                  selectedKeys={formData.targetAgentId ? [formData.targetAgentId] : []}
+                  value={formData.targetAgentId}
                   onChange={(e) => setFormData({ ...formData, targetAgentId: e.target.value })}
                 >
                   {agents.map((agent) => (
@@ -420,9 +413,9 @@ export default function EditRoutingRulePage({
                   ))}
                 </Select>
               </div>
-            </Tab>
+            </TabsTrigger>
           </Tabs>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Conditions */}
@@ -431,11 +424,11 @@ export default function EditRoutingRulePage({
           <h2 className="text-lg font-semibold">
             Conditions ({formData.conditions.length})
           </h2>
-          <Button size="sm" variant="flat" onPress={addCondition}>
+          <Button size="sm" variant="secondary" onClick={addCondition}>
             + Add Condition
           </Button>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {formData.conditions.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
               No conditions set. Rule will always match.
@@ -447,7 +440,7 @@ export default function EditRoutingRulePage({
                   <Select
                     size="sm"
                     aria-label="Field"
-                    selectedKeys={[condition.field]}
+                    value={condition.field}
                     onChange={(e) => updateCondition(index, "field", e.target.value)}
                     className="w-40"
                   >
@@ -460,7 +453,7 @@ export default function EditRoutingRulePage({
                   <Select
                     size="sm"
                     aria-label="Operator"
-                    selectedKeys={[condition.operator]}
+                    value={condition.operator}
                     onChange={(e) => updateCondition(index, "operator", e.target.value)}
                     className="w-36"
                   >
@@ -480,10 +473,10 @@ export default function EditRoutingRulePage({
                   />
                   <Button
                     size="sm"
-                    color="danger"
-                    variant="light"
-                    isIconOnly
-                    onPress={() => removeCondition(index)}
+                    variant="destructive"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeCondition(index)}
                   >
                     ×
                   </Button>
@@ -491,7 +484,7 @@ export default function EditRoutingRulePage({
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Fallback Settings */}
@@ -499,11 +492,11 @@ export default function EditRoutingRulePage({
         <CardHeader>
           <h2 className="text-lg font-semibold">Fallback Settings</h2>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Fallback Action"
-              selectedKeys={[formData.fallbackAction]}
+              value={formData.fallbackAction}
               onChange={(e) => setFormData({ ...formData, fallbackAction: e.target.value })}
             >
               {FALLBACK_ACTIONS.map((action) => (
@@ -533,7 +526,7 @@ export default function EditRoutingRulePage({
               <Select
                 label="Fallback Agent"
                 placeholder="Select fallback agent"
-                selectedKeys={formData.fallbackAgentId ? [formData.fallbackAgentId] : []}
+                value={formData.fallbackAgentId}
                 onChange={(e) => setFormData({ ...formData, fallbackAgentId: e.target.value })}
               >
                 {agents.map((agent) => (
@@ -546,7 +539,7 @@ export default function EditRoutingRulePage({
               <Select
                 label="Fallback Group"
                 placeholder="Select fallback group"
-                selectedKeys={formData.fallbackGroupId ? [formData.fallbackGroupId] : []}
+                value={formData.fallbackGroupId}
                 onChange={(e) => setFormData({ ...formData, fallbackGroupId: e.target.value })}
               >
                 {groups.map((group) => (
@@ -573,7 +566,7 @@ export default function EditRoutingRulePage({
             value={formData.holdMusic}
             onChange={(e) => setFormData({ ...formData, holdMusic: e.target.value })}
           />
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Schedule (placeholder for now) */}
@@ -581,11 +574,11 @@ export default function EditRoutingRulePage({
         <CardHeader>
           <h2 className="text-lg font-semibold">Schedule</h2>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center gap-4">
             <Switch
-              isSelected={formData.scheduleEnabled}
-              onValueChange={(value) => setFormData({ ...formData, scheduleEnabled: value })}
+              checked={formData.scheduleEnabled}
+              onCheckedChange={(value) => setFormData({ ...formData, scheduleEnabled: value })}
             >
               Enable Schedule
             </Switch>
@@ -596,7 +589,7 @@ export default function EditRoutingRulePage({
               at all times when enabled.
             </p>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

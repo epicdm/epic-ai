@@ -1,6 +1,6 @@
 import { getAuth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { NewSocialDashboard } from "@/components/social/new-social-dashboard";
+import { NewSocialDashboard } from "@/components/social/social-dashboard";
 
 export const dynamic = 'force-dynamic';
 

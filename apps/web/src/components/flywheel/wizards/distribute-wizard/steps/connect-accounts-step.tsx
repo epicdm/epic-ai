@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Button, Chip, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Twitter, Linkedin, Facebook, Instagram, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import type { DistributeWizardData, ConnectedAccountData } from "@/lib/flywheel/types";
 
@@ -133,23 +135,19 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Connect your social media accounts to enable automatic publishing.
         You need at least one connected account to continue.
       </p>
 
       {/* Connection Status */}
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="text-sm text-muted-foreground">
           Connected accounts:
         </span>
-        <Chip
-          size="sm"
-          color={connectedCount > 0 ? "success" : "warning"}
-          variant="flat"
-        >
+        <Badge variant={connectedCount > 0 ? "default" : "secondary"}>
           {connectedCount} of {PLATFORMS.length}
-        </Chip>
+        </Badge>
       </div>
 
       {/* Platform Cards */}
@@ -169,7 +167,7 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
                   : "border-gray-200 dark:border-gray-700"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div
                     className="p-3 rounded-xl"
@@ -192,7 +190,7 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
                         <XCircle className="w-4 h-4 text-gray-400" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {platform.description}
                     </p>
 
@@ -205,15 +203,15 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
                     <div className="mt-3">
                       {connected ? (
                         <div className="flex gap-2">
-                          <Chip size="sm" color="success" variant="flat">
+                          <Badge variant="outline">
                             Connected
-                          </Chip>
+                          </Badge>
                           <Button
                             size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleDisconnect(platform.id)}
-                            isDisabled={loading}
+                            variant="ghost"
+                            onClick={() => handleDisconnect(platform.id)}
+                            disabled={loading}
+                            className="text-destructive hover:text-destructive"
                           >
                             Disconnect
                           </Button>
@@ -221,25 +219,22 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
                       ) : (
                         <Button
                           size="sm"
-                          color="primary"
-                          variant="flat"
-                          startContent={
-                            loading ? (
-                              <Spinner size="sm" color="current" />
-                            ) : (
-                              <ExternalLink className="w-3 h-3" />
-                            )
-                          }
-                          onPress={() => handleConnect(platform.id)}
-                          isDisabled={loading}
+                          variant="secondary"
+                          onClick={() => handleConnect(platform.id)}
+                          disabled={loading}
                         >
+                          {loading ? (
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          ) : (
+                            <ExternalLink className="mr-2 w-3 h-3" />
+                          )}
                           {loading ? "Connecting..." : "Connect"}
                         </Button>
                       )}
                     </div>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -255,15 +250,15 @@ export function ConnectAccountsStep({ data, updateData }: ConnectAccountsStepPro
 
       {/* Security Note */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Security Note
           </h5>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             We use secure OAuth to connect your accounts. We never store your
             passwords and you can revoke access at any time.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

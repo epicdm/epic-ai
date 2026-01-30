@@ -1,21 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Switch,
-  Select,
-  SelectItem,
-  Textarea,
-  Checkbox,
-  Input,
-  Divider,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Settings,
@@ -169,7 +164,7 @@ export function AutopilotSettings() {
   if (loading || !settings) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -180,10 +175,9 @@ export function AutopilotSettings() {
         <Button
           as={Link}
           href="/dashboard/social/suggestions"
-          variant="flat"
+          variant="secondary"
           size="sm"
-          startContent={<ArrowLeft className="w-4 h-4" />}
-        >
+                  >
           Back to Suggestions
         </Button>
       </div>
@@ -195,7 +189,7 @@ export function AutopilotSettings() {
 
       {/* Main Toggle */}
       <Card>
-        <CardBody className="flex flex-row items-center justify-between">
+        <CardContent className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${settings.enabled ? "bg-success/10" : "bg-default-100"}`}>
               <Zap className={`w-5 h-5 ${settings.enabled ? "text-success" : "text-default-400"}`} />
@@ -210,12 +204,12 @@ export function AutopilotSettings() {
             </div>
           </div>
           <Switch
-            isSelected={settings.enabled}
-            onValueChange={(enabled) => updateSettings({ enabled })}
+            checked={settings.enabled}
+            onCheckedChange={(enabled) => updateSettings({ enabled })}
             size="lg"
-            color="success"
+            className="bg-green-600 hover:bg-green-700 text-white"
           />
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Triggers */}
@@ -226,7 +220,7 @@ export function AutopilotSettings() {
             <h3 className="font-medium">Triggers</h3>
           </div>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <p className="text-sm text-default-500">
             Choose which events should trigger AI content generation
           </p>
@@ -240,9 +234,9 @@ export function AutopilotSettings() {
                 </p>
               </div>
               <Switch
-                isSelected={settings.onLeadConverted}
-                onValueChange={(onLeadConverted) => updateSettings({ onLeadConverted })}
-                isDisabled={!settings.enabled}
+                checked={settings.onLeadConverted}
+                onCheckedChange={(onLeadConverted) => updateSettings({ onLeadConverted })}
+                disabled={!settings.enabled}
               />
             </div>
 
@@ -254,9 +248,9 @@ export function AutopilotSettings() {
                 </p>
               </div>
               <Switch
-                isSelected={settings.onFiveStarCall}
-                onValueChange={(onFiveStarCall) => updateSettings({ onFiveStarCall })}
-                isDisabled={!settings.enabled}
+                checked={settings.onFiveStarCall}
+                onCheckedChange={(onFiveStarCall) => updateSettings({ onFiveStarCall })}
+                disabled={!settings.enabled}
               />
             </div>
 
@@ -268,46 +262,44 @@ export function AutopilotSettings() {
                 </p>
               </div>
               <Switch
-                isSelected={settings.onWeeklySchedule}
-                onValueChange={(onWeeklySchedule) => updateSettings({ onWeeklySchedule })}
-                isDisabled={!settings.enabled}
+                checked={settings.onWeeklySchedule}
+                onCheckedChange={(onWeeklySchedule) => updateSettings({ onWeeklySchedule })}
+                disabled={!settings.enabled}
               />
             </div>
 
             {settings.onWeeklySchedule && (
               <div className="flex gap-4 pl-4">
-                <Select
-                  label="Day"
-                  selectedKeys={[String(settings.weeklyScheduleDay)]}
-                  onSelectionChange={(keys) => {
-                    const day = Array.from(keys)[0];
-                    if (day) updateSettings({ weeklyScheduleDay: parseInt(day as string) });
-                  }}
-                  className="max-w-xs"
-                  isDisabled={!settings.enabled}
-                >
-                  {DAYS.map((day) => (
-                    <SelectItem key={day.key}>{day.label}</SelectItem>
-                  ))}
-                </Select>
-                <Select
-                  label="Time"
-                  selectedKeys={[String(settings.weeklyScheduleHour)]}
-                  onSelectionChange={(keys) => {
-                    const hour = Array.from(keys)[0];
-                    if (hour) updateSettings({ weeklyScheduleHour: parseInt(hour as string) });
-                  }}
-                  className="max-w-xs"
-                  isDisabled={!settings.enabled}
-                >
-                  {HOURS.map((hour) => (
-                    <SelectItem key={hour.key}>{hour.label}</SelectItem>
-                  ))}
-                </Select>
+                <div className="space-y-1">
+                  <Label>Day</Label>
+                  <Select value={String(settings.weeklyScheduleDay)} onValueChange={(v) => updateSettings({ weeklyScheduleDay: parseInt(v) })} disabled={!settings.enabled}>
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DAYS.map((day) => (
+                        <SelectItem key={day.key} value={day.key}>{day.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Time</Label>
+                  <Select value={String(settings.weeklyScheduleHour)} onValueChange={(v) => updateSettings({ weeklyScheduleHour: parseInt(v) })} disabled={!settings.enabled}>
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((hour) => (
+                        <SelectItem key={hour.key} value={hour.key}>{hour.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Approval Mode */}
@@ -318,7 +310,7 @@ export function AutopilotSettings() {
             <h3 className="font-medium">Approval Mode</h3>
           </div>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <p className="text-sm text-default-500">
             Choose how suggestions are handled after generation
           </p>
@@ -351,31 +343,35 @@ export function AutopilotSettings() {
 
           {settings.approvalMode !== "REVIEW" && (
             <div className="space-y-4 pt-4">
-              <Divider />
+              <div className="border-t my-4" />
               <p className="text-sm font-medium">Rate Limits</p>
               <div className="flex gap-4">
-                <Input
-                  type="number"
-                  label="Max posts per day"
-                  value={String(settings.maxPostsPerDay)}
-                  onValueChange={(v) => updateSettings({ maxPostsPerDay: parseInt(v) || 3 })}
-                  min={1}
-                  max={20}
-                  className="max-w-[150px]"
-                />
-                <Input
-                  type="number"
-                  label="Min hours between posts"
-                  value={String(settings.minHoursBetween)}
-                  onValueChange={(v) => updateSettings({ minHoursBetween: parseInt(v) || 4 })}
-                  min={1}
-                  max={24}
-                  className="max-w-[180px]"
-                />
+                <div className="space-y-1">
+                  <Label>Max posts per day</Label>
+                  <Input
+                    type="number"
+                    value={String(settings.maxPostsPerDay)}
+                    onChange={(e) => updateSettings({ maxPostsPerDay: parseInt(e.target.value) || 3 })}
+                    min={1}
+                    max={20}
+                    className="max-w-[150px]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Min hours between posts</Label>
+                  <Input
+                    type="number"
+                    value={String(settings.minHoursBetween)}
+                    onChange={(e) => updateSettings({ minHoursBetween: parseInt(e.target.value) || 4 })}
+                    min={1}
+                    max={24}
+                    className="max-w-[180px]"
+                  />
+                </div>
               </div>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Default Platforms */}
@@ -386,7 +382,7 @@ export function AutopilotSettings() {
             <h3 className="font-medium">Default Platforms</h3>
           </div>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <p className="text-sm text-default-500">
             Select which platforms to post to by default (for auto-post mode)
           </p>
@@ -398,7 +394,7 @@ export function AutopilotSettings() {
           ) : (
             <div className="flex flex-wrap gap-2">
               {availablePlatforms.map((platform) => (
-                <Chip
+                <Badge
                   key={platform}
                   className={`cursor-pointer transition-all ${
                     settings.defaultPlatforms.includes(platform)
@@ -408,11 +404,11 @@ export function AutopilotSettings() {
                   onClick={() => togglePlatform(platform)}
                 >
                   {PLATFORMS[platform]?.name || platform}
-                </Chip>
+                </Badge>
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Brand Voice */}
@@ -423,65 +419,71 @@ export function AutopilotSettings() {
             <h3 className="font-medium">Brand Voice</h3>
           </div>
         </CardHeader>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <p className="text-sm text-default-500">
             Customize how AI generates content for your brand
           </p>
 
-          <Select
-            label="Tone"
-            selectedKeys={[settings.defaultTone]}
-            onSelectionChange={(keys) => {
-              const tone = Array.from(keys)[0];
-              if (tone) updateSettings({ defaultTone: tone as string });
-            }}
-            className="max-w-xs"
-          >
-            {TONES.map((tone) => (
-              <SelectItem key={tone.key}>{tone.label}</SelectItem>
-            ))}
-          </Select>
-
-          <div className="flex flex-wrap gap-4">
-            <Checkbox
-              isSelected={settings.includeEmojis}
-              onValueChange={(includeEmojis) => updateSettings({ includeEmojis })}
-            >
-              Include emojis
-            </Checkbox>
-            <Checkbox
-              isSelected={settings.includeHashtags}
-              onValueChange={(includeHashtags) => updateSettings({ includeHashtags })}
-            >
-              Include hashtags
-            </Checkbox>
-            <Checkbox
-              isSelected={settings.includeCTA}
-              onValueChange={(includeCTA) => updateSettings({ includeCTA })}
-            >
-              Include call-to-action
-            </Checkbox>
+          <div className="space-y-2">
+            <Label>Tone</Label>
+            <Select value={settings.defaultTone} onValueChange={(v) => updateSettings({ defaultTone: v })}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TONES.map((tone) => (
+                  <SelectItem key={tone.key} value={tone.key}>{tone.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <Textarea
-            label="Brand Description (optional)"
-            placeholder="Describe your brand, target audience, and any specific guidelines for content generation..."
-            value={settings.brandDescription || ""}
-            onValueChange={(brandDescription) => updateSettings({ brandDescription })}
-            minRows={3}
-            maxRows={6}
-          />
-        </CardBody>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="include-emojis"
+                checked={settings.includeEmojis}
+                onCheckedChange={(includeEmojis) => updateSettings({ includeEmojis })}
+              />
+              <Label htmlFor="include-emojis">Include emojis</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="include-hashtags"
+                checked={settings.includeHashtags}
+                onCheckedChange={(includeHashtags) => updateSettings({ includeHashtags })}
+              />
+              <Label htmlFor="include-hashtags">Include hashtags</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="include-cta"
+                checked={settings.includeCTA}
+                onCheckedChange={(includeCTA) => updateSettings({ includeCTA })}
+              />
+              <Label htmlFor="include-cta">Include call-to-action</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Brand Description (optional)</Label>
+            <Textarea
+              placeholder="Describe your brand, target audience, and any specific guidelines for content generation..."
+              value={settings.brandDescription || ""}
+              onChange={(e) => updateSettings({ brandDescription: e.target.value })}
+              rows={4}
+            />
+          </div>
+        </CardContent>
       </Card>
 
       {/* Save Button */}
       <div className="flex justify-end">
         <Button
-          color="primary"
+         
           size="lg"
-          startContent={!saving && <Save className="w-5 h-5" />}
-          onPress={handleSave}
-          isLoading={saving}
+                    onClick={handleSave}
+          disabled={saving}
         >
           Save Settings
         </Button>

@@ -1,7 +1,11 @@
 "use client";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { Modal, Button } from "@heroui/react";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Search, X, Home, FilePlus, BarChart2, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -63,54 +67,55 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const filteredCommands = commands.filter((cmd) => 
+  const filteredCommands = commands.filter((cmd) =>
     cmd.title.toLowerCase().includes(search.toLowerCase()) ||
     cmd.category.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <Modal isOpen={open} onClose={() => setOpen(false)} size="xl">
-      <CommandPrimitive className="overflow-hidden rounded-lg border shadow-md">
-        <div className="flex items-center px-3 border-b">
-          <Search className="w-5 h-5 mr-2 text-muted-foreground" />
-          <CommandPrimitive.Input 
-            value={search}
-            onValueChange={setSearch}
-            className="flex-1 py-3 outline-none"
-            placeholder="Type a command or search..."
-          />
-          <Button 
-            isIconOnly 
-            variant="light" 
-            size="sm" 
-            onPress={() => setOpen(false)}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        <CommandPrimitive.List className="max-h-[300px] overflow-y-auto">
-          {filteredCommands.map((cmd) => (
-            <CommandPrimitive.Item 
-              key={cmd.id}
-              onSelect={() => {
-                cmd.action();
-                track("command_palette_action", { command: cmd.id });
-                setOpen(false);
-              }}
-              className="px-3 py-2 cursor-pointer hover:bg-default-100"
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="p-0 sm:max-w-xl">
+        <CommandPrimitive className="overflow-hidden rounded-lg border shadow-md">
+          <div className="flex items-center px-3 border-b">
+            <Search className="w-5 h-5 mr-2 text-muted-foreground" />
+            <CommandPrimitive.Input
+              value={search}
+              onValueChange={setSearch}
+              className="flex-1 py-3 outline-none bg-transparent"
+              placeholder="Type a command or search..."
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpen(false)}
             >
-              <div className="flex items-center">
-                {cmd.icon}
-                <span className="ml-2">{cmd.title}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {cmd.category}
-                </span>
-              </div>
-            </CommandPrimitive.Item>
-          ))}
-        </CommandPrimitive.List>
-      </CommandPrimitive>
-    </Modal>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <CommandPrimitive.List className="max-h-[300px] overflow-y-auto">
+            {filteredCommands.map((cmd) => (
+              <CommandPrimitive.Item
+                key={cmd.id}
+                onSelect={() => {
+                  cmd.action();
+                  track("command_palette_action", { command: cmd.id });
+                  setOpen(false);
+                }}
+                className="px-3 py-2 cursor-pointer hover:bg-muted"
+              >
+                <div className="flex items-center">
+                  {cmd.icon}
+                  <span className="ml-2">{cmd.title}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {cmd.category}
+                  </span>
+                </div>
+              </CommandPrimitive.Item>
+            ))}
+          </CommandPrimitive.List>
+        </CommandPrimitive>
+      </DialogContent>
+    </Dialog>
   );
 }

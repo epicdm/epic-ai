@@ -1,15 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Divider,
-  Progress,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   CheckCircle,
@@ -285,19 +279,18 @@ export function FlywheelTestPage() {
         actions={
           <div className="flex gap-2">
             <Button
-              variant="bordered"
-              startContent={<RefreshCw className="w-4 h-4" />}
-              onPress={resetTests}
-              isDisabled={isRunning}
-            >
+              variant="outline"
+              
+              onClick={resetTests}
+              disabled={isRunning}
+            ><RefreshCw className="w-4 h-4" /> 
               Reset
             </Button>
             <Button
-              color="primary"
-              startContent={<Play className="w-4 h-4" />}
-              onPress={runAllTests}
-              isLoading={isRunning}
-            >
+              
+              onClick={runAllTests}
+              disabled={isRunning}
+            ><Play className="w-4 h-4" /> 
               Run All Tests
             </Button>
           </div>
@@ -306,26 +299,28 @@ export function FlywheelTestPage() {
 
       {/* Progress */}
       <Card>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-500">Test Progress</span>
             <span className="text-sm font-medium">
               {passedCount + failedCount} / {tests.length}
             </span>
           </div>
-          <Progress value={progress} color="primary" className="mb-4" />
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+            </div>
           <div className="flex gap-4">
-            <Chip color="success" variant="flat">
+            <Badge variant="outline" variant="secondary">
               {passedCount} Passed
-            </Chip>
-            <Chip color="danger" variant="flat">
+            </Badge>
+            <Badge variant="destructive" variant="secondary">
               {failedCount} Failed
-            </Chip>
-            <Chip color="default" variant="flat">
+            </Badge>
+            <Badge  variant="secondary">
               {tests.length - passedCount - failedCount} Pending
-            </Chip>
+            </Badge>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Tests by Module */}
@@ -351,8 +346,8 @@ export function FlywheelTestPage() {
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody className="space-y-3">
+              <div className="border-t my-4" />
+              <CardContent className="space-y-3">
                 {moduleTests.map((test) => (
                   <div
                     key={test.id}
@@ -378,9 +373,9 @@ export function FlywheelTestPage() {
                         </p>
                       </div>
                     </div>
-                    <Chip
-                      size="sm"
-                      variant="flat"
+                    <Badge
+                      
+                      variant="secondary"
                       color={
                         test.status === "passed"
                           ? "success"
@@ -392,10 +387,10 @@ export function FlywheelTestPage() {
                       }
                     >
                       {test.status}
-                    </Chip>
+                    </Badge>
                   </div>
                 ))}
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -403,7 +398,7 @@ export function FlywheelTestPage() {
 
       {/* Instructions */}
       <Card>
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             Flywheel Flow
           </h3>
@@ -429,7 +424,7 @@ export function FlywheelTestPage() {
               <p className="text-xs text-gray-500">Connect everything</p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

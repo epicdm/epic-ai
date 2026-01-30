@@ -1,16 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  RadioGroup,
-  Radio,
-  Input,
-  Button,
-  Chip,
-} from "@heroui/react";
-import { Hash, Plus, Sparkles, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Hash, Plus, Sparkles, Loader2, X } from "lucide-react";
 import type { CreateWizardData } from "@/lib/flywheel/types";
 
 interface HashtagStepProps {
@@ -137,17 +134,16 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
                     ? "border-blue-400 dark:border-blue-600 bg-blue-50/50 dark:bg-blue-900/20"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }`}
-                isPressable
-                onPress={() =>
+                onClick={() =>
                   updateData({
                     hashtagStrategy: strategy.id as CreateWizardData["hashtagStrategy"],
                   })
                 }
               >
-                <CardBody className="p-4">
+                <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <Radio value={strategy.id} />
-                    <div className="flex-1">
+                    <RadioGroupItem value={strategy.id} id={`hashtag-${strategy.id}`} />
+                    <Label htmlFor={`hashtag-${strategy.id}`} className="flex-1 cursor-pointer">
                       <p className="font-medium text-gray-900 dark:text-white">
                         {strategy.label}
                       </p>
@@ -159,9 +155,9 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
                           {strategy.example}
                         </p>
                       )}
-                    </div>
+                    </Label>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -177,18 +173,15 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
             </h4>
             <Button
               size="sm"
-              variant="flat"
-              color="secondary"
-              startContent={
-                isGenerating ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3 h-3" />
-                )
-              }
-              onPress={generateHashtags}
-              isDisabled={isGenerating}
+              variant="secondary"
+              onClick={generateHashtags}
+              disabled={isGenerating}
             >
+              {isGenerating ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3 mr-1" />
+              )}
               AI Suggest
             </Button>
           </div>
@@ -201,22 +194,18 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
             <Input
               placeholder="Enter a hashtag..."
               value={newHashtag}
-              onValueChange={setNewHashtag}
+              onChange={(e) => setNewHashtag(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newHashtag.trim()) {
                   addHashtag(newHashtag);
                 }
               }}
-              startContent={<Hash className="w-4 h-4 text-gray-400" />}
-              classNames={{
-                input: "text-sm",
-              }}
+              className="text-sm"
             />
             <Button
-              color="primary"
-              variant="flat"
-              onPress={() => addHashtag(newHashtag)}
-              isDisabled={!newHashtag.trim()}
+              variant="secondary"
+              onClick={() => addHashtag(newHashtag)}
+              disabled={!newHashtag.trim()}
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -226,14 +215,19 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
           {savedHashtags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {savedHashtags.map((tag) => (
-                <Chip
+                <Badge
                   key={tag}
-                  variant="flat"
-                  color="primary"
-                  onClose={() => removeHashtag(tag)}
+                  variant="secondary"
+                  className="flex items-center gap-1"
                 >
                   {tag}
-                </Chip>
+                  <button
+                    onClick={() => removeHashtag(tag)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
               ))}
             </div>
           ) : (
@@ -246,17 +240,17 @@ export function HashtagStep({ data, updateData, brandId }: HashtagStepProps) {
 
       {/* Info Box */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Platform Tips
           </h5>
           <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <li>• <strong>Twitter/X:</strong> 1-2 hashtags work best</li>
-            <li>• <strong>LinkedIn:</strong> 3-5 hashtags for visibility</li>
-            <li>• <strong>Instagram:</strong> Up to 30 allowed, 5-10 recommended</li>
-            <li>• <strong>Facebook:</strong> 1-2 or none, less hashtag-focused</li>
+            <li>&#8226; <strong>Twitter/X:</strong> 1-2 hashtags work best</li>
+            <li>&#8226; <strong>LinkedIn:</strong> 3-5 hashtags for visibility</li>
+            <li>&#8226; <strong>Instagram:</strong> Up to 30 allowed, 5-10 recommended</li>
+            <li>&#8226; <strong>Facebook:</strong> 1-2 or none, less hashtag-focused</li>
           </ul>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

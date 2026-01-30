@@ -1,6 +1,9 @@
 "use client";
 
-import { Card, CardBody, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Zap,
   CheckCircle,
@@ -99,7 +102,7 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
                   : "border-amber-200 dark:border-amber-800"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div
                     className={`p-2 rounded-lg ${
@@ -132,7 +135,7 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -141,7 +144,7 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
       {/* Approval Mode Summary */}
       {approvalConfig && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Approval Mode
@@ -169,13 +172,13 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
                 );
               })()}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Content Mix Summary */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h4 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <PieChart className="w-4 h-4" />
             Content Mix
@@ -208,13 +211,13 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
               <p className="text-xs text-gray-500">Engaging</p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Frequency & Notifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Posting Frequency
@@ -225,34 +228,34 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
             <p className="text-sm text-gray-500 dark:text-gray-400">
               posts per week
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <Bell className="w-4 h-4" />
               Notifications
             </h4>
             <div className="flex flex-wrap gap-1">
               {enabledNotifications.slice(0, 3).map((notif) => (
-                <Chip key={notif} size="sm" variant="flat">
+                <Badge key={notif} variant="secondary">
                   {notif.replace(/([A-Z])/g, " $1").trim()}
-                </Chip>
+                </Badge>
               ))}
               {enabledNotifications.length > 3 && (
-                <Chip size="sm" variant="flat">
+                <Badge variant="secondary">
                   +{enabledNotifications.length - 3} more
-                </Chip>
+                </Badge>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Activation Notice */}
       <Card className="border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-800">
               <Rocket className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -268,25 +271,24 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Confirmation */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
-          <Checkbox
-            isSelected={data.confirmed}
-            onValueChange={(value) => updateData({ confirmed: value })}
-            classNames={{
-              label: "text-gray-700 dark:text-gray-300",
-            }}
-          >
-            <span>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="confirm-automate"
+              checked={data.confirmed || false}
+              onCheckedChange={(checked) => updateData({ confirmed: checked === true })}
+            />
+            <Label htmlFor="confirm-automate" className="text-gray-700 dark:text-gray-300 cursor-pointer">
               I confirm my automation settings and I&apos;m ready to activate the
               Epic AI flywheel.
-            </span>
-          </Checkbox>
-        </CardBody>
+            </Label>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

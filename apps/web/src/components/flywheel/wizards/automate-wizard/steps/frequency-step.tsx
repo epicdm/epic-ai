@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Slider, Chip, Switch } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Calendar, Clock, Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 import type { AutomateWizardData } from "@/lib/flywheel/types";
 
@@ -65,13 +67,13 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
   return (
     <div className="space-y-6">
       <p className="text-gray-600 dark:text-gray-400">
-        Set how often the AI should create and publish content. Start conservative—you
+        Set how often the AI should create and publish content. Start conservative&mdash;you
         can always increase later.
       </p>
 
       {/* Toggle: Overall vs Per Platform */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">
@@ -82,18 +84,17 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
               </p>
             </div>
             <Switch
-              isSelected={usePerPlatform}
-              onValueChange={setUsePerPlatform}
-              size="sm"
+              checked={usePerPlatform}
+              onCheckedChange={setUsePerPlatform}
             />
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {!usePerPlatform ? (
         /* Overall Frequency */
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900">
                 <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -111,20 +112,18 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-500">Posts per week</span>
-                <Chip color="primary" variant="flat">
-                  {data.postsPerWeek || 5} posts/week • {getFrequencyLabel(data.postsPerWeek || 5)}
-                </Chip>
+                <Badge variant="secondary">
+                  {data.postsPerWeek || 5} posts/week &bull; {getFrequencyLabel(data.postsPerWeek || 5)}
+                </Badge>
               </div>
-              <Slider
-                step={1}
-                minValue={1}
-                maxValue={21}
+              <input
+                type="range"
+                className="w-full accent-primary"
                 value={data.postsPerWeek || 5}
-                onChange={(val) => handleOverallChange(val as number)}
-                classNames={{
-                  track: "bg-gray-200 dark:bg-gray-700",
-                  filler: "bg-orange-500",
-                }}
+                onChange={(e) => handleOverallChange(Number(e.target.value))}
+                min={1}
+                max={21}
+                step={1}
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>1</span>
@@ -153,12 +152,12 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
                 </button>
               ))}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         /* Per-Platform Frequency */
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900">
@@ -173,9 +172,9 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
                   </p>
                 </div>
               </div>
-              <Chip color="secondary" variant="flat">
+              <Badge variant="secondary">
                 Total: {totalPerPlatform} posts/week
-              </Chip>
+              </Badge>
             </div>
 
             <div className="space-y-6">
@@ -199,31 +198,26 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
                         {value} posts/week
                       </span>
                     </div>
-                    <Slider
-                      size="sm"
-                      step={1}
-                      minValue={0}
-                      maxValue={platform.maxPosts}
+                    <input
+                      type="range"
+                      className="w-full accent-primary"
                       value={value}
-                      onChange={(val) =>
-                        handlePlatformChange(platform.id, val as number)
-                      }
-                      classNames={{
-                        track: "bg-gray-200 dark:bg-gray-700",
-                        filler: "bg-orange-500",
-                      }}
+                      onChange={(e) => handlePlatformChange(platform.id, Number(e.target.value))}
+                      min={0}
+                      max={platform.maxPosts}
+                      step={1}
                     />
                   </div>
                 );
               })}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Best Practices */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Platform Best Practices
           </h5>
@@ -245,7 +239,7 @@ export function FrequencyStep({ data, updateData }: FrequencyStepProps) {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

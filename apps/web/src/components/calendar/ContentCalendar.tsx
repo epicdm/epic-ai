@@ -6,17 +6,11 @@
  */
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Tabs,
-  Tab,
-  Tooltip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ChevronLeft,
   ChevronRight,
@@ -193,7 +187,7 @@ export function ContentCalendar({ orgId, brandId }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -201,12 +195,12 @@ export function ContentCalendar({ orgId, brandId }: Props) {
   if (error) {
     return (
       <Card>
-        <CardBody>
+        <CardContent>
           <div className="text-center text-red-500">
             <XCircle className="w-8 h-8 mx-auto mb-2" />
             <p>{error}</p>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -226,22 +220,19 @@ export function ContentCalendar({ orgId, brandId }: Props) {
 
           <div className="flex items-center gap-4">
             {/* View Toggle */}
-            <Tabs
-              selectedKey={view}
-              onSelectionChange={(key) => setView(key as "week" | "month")}
-              size="sm"
-            >
-              <Tab key="week" title="Week" />
-              <Tab key="month" title="Month" />
+            <Tabs value={view} onValueChange={(v) => setView(v as string)}>
+              <TabsList>
+                <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="month">Month</TabsTrigger>
+              </TabsList>
             </Tabs>
 
             {/* Navigation */}
             <div className="flex items-center gap-2">
               <Button
-                isIconOnly
-                variant="light"
+                variant="ghost"
                 size="sm"
-                onPress={() => navigate("prev")}
+                onClick={() => navigate("prev")}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -254,19 +245,18 @@ export function ContentCalendar({ orgId, brandId }: Props) {
                   : `${formatDate(days[0])} - ${formatDate(days[days.length - 1])}`}
               </span>
               <Button
-                isIconOnly
-                variant="light"
+                variant="ghost"
                 size="sm"
-                onPress={() => navigate("next")}
+                onClick={() => navigate("next")}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
 
             <Button
-              variant="flat"
+              variant="secondary"
               size="sm"
-              onPress={() => setCurrentDate(new Date())}
+              onClick={() => setCurrentDate(new Date())}
             >
               Today
             </Button>
@@ -278,49 +268,49 @@ export function ContentCalendar({ orgId, brandId }: Props) {
       {calendarData?.stats && (
         <div className="grid grid-cols-5 gap-4">
           <Card>
-            <CardBody className="py-3">
+            <CardContent className="py-3">
               <p className="text-xs text-gray-500">Total</p>
               <p className="text-xl font-bold">{calendarData.stats.total}</p>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardContent className="py-3">
               <p className="text-xs text-gray-500">Scheduled</p>
               <p className="text-xl font-bold text-blue-500">
                 {calendarData.stats.scheduled}
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardContent className="py-3">
               <p className="text-xs text-gray-500">Published</p>
               <p className="text-xl font-bold text-green-500">
                 {calendarData.stats.published}
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardContent className="py-3">
               <p className="text-xs text-gray-500">Failed</p>
               <p className="text-xl font-bold text-red-500">
                 {calendarData.stats.failed}
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
           <Card>
-            <CardBody className="py-3">
+            <CardContent className="py-3">
               <p className="text-xs text-gray-500">Draft</p>
               <p className="text-xl font-bold text-gray-500">
                 {calendarData.stats.draft}
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}
 
       {/* Calendar Grid */}
       <Card>
-        <CardBody>
+        <CardContent>
           <div
             className={`grid gap-2 ${
               view === "month" ? "grid-cols-7" : "grid-cols-7"
@@ -367,54 +357,56 @@ export function ContentCalendar({ orgId, brandId }: Props) {
                   {/* Content Items */}
                   <div className="space-y-1">
                     {items.slice(0, 4).map((item) => (
-                      <Tooltip
-                        key={item.id}
-                        content={
-                          <div className="p-2 max-w-xs">
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-xs text-gray-400">
-                              {new Date(item.scheduledFor).toLocaleTimeString(
-                                [],
-                                { hour: "2-digit", minute: "2-digit" }
-                              )}
-                            </p>
-                            <div className="flex gap-1 mt-1">
-                              {item.platforms.map((p) => (
-                                <Chip key={p} size="sm" variant="flat">
-                                  {getPlatformName(p)}
-                                </Chip>
-                              ))}
+                      <TooltipProvider key={item.id}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`p-1.5 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${
+                                item.status === "PUBLISHED"
+                                  ? "bg-green-100 dark:bg-green-900/30"
+                                  : item.status === "FAILED"
+                                  ? "bg-red-100 dark:bg-red-900/30"
+                                  : "bg-blue-100 dark:bg-blue-900/30"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1">
+                                {getStatusIcon(item.status)}
+                                <span className="truncate flex-1">
+                                  {item.title}
+                                </span>
+                              </div>
+                              <div className="flex gap-0.5 mt-0.5">
+                                {item.platforms.slice(0, 3).map((p) => (
+                                  <div
+                                    key={p}
+                                    className={`w-2 h-2 rounded-full ${getPlatformColor(
+                                      p
+                                    )}`}
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        }
-                      >
-                        <div
-                          className={`p-1.5 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${
-                            item.status === "PUBLISHED"
-                              ? "bg-green-100 dark:bg-green-900/30"
-                              : item.status === "FAILED"
-                              ? "bg-red-100 dark:bg-red-900/30"
-                              : "bg-blue-100 dark:bg-blue-900/30"
-                          }`}
-                        >
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(item.status)}
-                            <span className="truncate flex-1">
-                              {item.title}
-                            </span>
-                          </div>
-                          <div className="flex gap-0.5 mt-0.5">
-                            {item.platforms.slice(0, 3).map((p) => (
-                              <div
-                                key={p}
-                                className={`w-2 h-2 rounded-full ${getPlatformColor(
-                                  p
-                                )}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </Tooltip>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="p-2 max-w-xs">
+                              <p className="font-medium">{item.title}</p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(item.scheduledFor).toLocaleTimeString(
+                                  [],
+                                  { hour: "2-digit", minute: "2-digit" }
+                                )}
+                              </p>
+                              <div className="flex gap-1 mt-1">
+                                {item.platforms.map((p) => (
+                                  <Badge key={p} variant="secondary">
+                                    {getPlatformName(p)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ))}
                     {items.length > 4 && (
                       <div className="text-xs text-gray-500 text-center">
@@ -426,7 +418,7 @@ export function ContentCalendar({ orgId, brandId }: Props) {
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

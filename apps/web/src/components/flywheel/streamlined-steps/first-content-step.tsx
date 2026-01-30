@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Button,
-  Card,
-  CardBody,
-  Textarea,
-  Chip,
-  Spinner,
   Tooltip,
-} from "@heroui/react";
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Sparkles, RefreshCw, Edit2, Check, X, Linkedin, Twitter, Instagram } from "lucide-react";
 import type { StreamlinedWizardData } from "../streamlined-flywheel-wizard";
 
@@ -32,12 +33,6 @@ const PLATFORM_ICONS = {
   instagram: Instagram,
 };
 
-const PLATFORM_COLORS = {
-  linkedin: "primary",
-  twitter: "default",
-  instagram: "secondary",
-} as const;
-
 const CONTENT_TYPE_LABELS = {
   educational: "Educational",
   promotional: "Promotional",
@@ -47,7 +42,6 @@ const CONTENT_TYPE_LABELS = {
 export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPosts, setGeneratedPosts] = useState<GeneratedPost[]>(() => {
-    // Convert from StreamlinedWizardData format to GeneratedPost format
     if (data.generatedContent && data.generatedContent.length > 0) {
       return data.generatedContent.map((item, index) => ({
         id: item.id || `post-${index}`,
@@ -62,7 +56,6 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
 
-  // Auto-generate on first load if no content exists
   useEffect(() => {
     if (generatedPosts.length === 0) {
       handleGenerate();
@@ -70,7 +63,6 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
   }, []);
 
   useEffect(() => {
-    // Convert back to StreamlinedWizardData format
     updateData({
       generatedContent: generatedPosts.map((post) => ({
         id: post.id,
@@ -84,7 +76,6 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-
     try {
       const response = await fetch("/api/flywheel/phases/create/generate-samples", {
         method: "POST",
@@ -111,16 +102,13 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
             }))
           );
         } else {
-          // Use mock data if API returns empty
           generateMockPosts();
         }
       } else {
-        // Fallback to mock data
         generateMockPosts();
       }
     } catch (error) {
       console.error("Error generating content:", error);
-      // Fallback to mock data
       generateMockPosts();
     } finally {
       setIsGenerating(false);
@@ -130,225 +118,106 @@ export function FirstContentStep({ data, updateData }: FirstContentStepProps) {
   const generateMockPosts = () => {
     const brandName = data.brandName || "your brand";
     const industry = data.industry || "business";
-
     setGeneratedPosts([
-      {
-        id: `post-${Date.now()}-1`,
-        content: `🎯 5 ways ${brandName} is transforming the ${industry} industry:\n\n1. Innovative solutions\n2. Customer-first approach\n3. Data-driven decisions\n4. Continuous improvement\n5. Sustainable practices\n\nWhat strategies work best for you? Share below! 👇`,
-        platform: "linkedin",
-        contentType: "educational",
-        status: "draft",
-      },
-      {
-        id: `post-${Date.now()}-2`,
-        content: `Exciting news! 🚀 We're launching something that will change how you think about ${industry}. Stay tuned for the big reveal this week!\n\n#innovation #${industry.replace(/\s+/g, "")}`,
-        platform: "twitter",
-        contentType: "promotional",
-        status: "draft",
-      },
-      {
-        id: `post-${Date.now()}-3`,
-        content: `Quick question for our community: What's the biggest challenge you face in ${industry} right now?\n\n💭 Drop your thoughts below - we'd love to hear from you!\n\n#community #feedback`,
-        platform: "instagram",
-        contentType: "engaging",
-        status: "draft",
-      },
+      { id: `post-${Date.now()}-1`, content: `🎯 5 ways ${brandName} is transforming the ${industry} industry:\n\n1. Innovative solutions\n2. Customer-first approach\n3. Data-driven decisions\n4. Continuous improvement\n5. Sustainable practices\n\nWhat strategies work best for you? Share below! 👇`, platform: "linkedin", contentType: "educational", status: "draft" },
+      { id: `post-${Date.now()}-2`, content: `Exciting news! 🚀 We're launching something that will change how you think about ${industry}. Stay tuned for the big reveal this week!\n\n#innovation #${industry.replace(/\s+/g, "")}`, platform: "twitter", contentType: "promotional", status: "draft" },
+      { id: `post-${Date.now()}-3`, content: `Quick question for our community: What's the biggest challenge you face in ${industry} right now?\n\n💭 Drop your thoughts below - we'd love to hear from you!\n\n#community #feedback`, platform: "instagram", contentType: "engaging", status: "draft" },
     ]);
   };
 
   const handleRegenerate = async (postId: string) => {
     const post = generatedPosts.find((p) => p.id === postId);
     if (!post) return;
-
     setIsGenerating(true);
-
-    // Simulate regeneration - in production, call the API for a single post
     await new Promise((resolve) => setTimeout(resolve, 1000));
-
     const brandName = data.brandName || "your brand";
     const newContent = post.contentType === "educational"
       ? `📚 Pro tip: Successful ${data.industry || "businesses"} focus on continuous learning and adaptation. What's your secret to staying ahead? #${brandName.replace(/\s+/g, "")}`
       : post.contentType === "promotional"
       ? `Big things are coming! 🎉 ${brandName} is ready to take your experience to the next level. Are you ready? #excited`
       : `We want to hear from you! 🗣️ What's the one thing you wish ${brandName} would do differently? Your feedback shapes our future! 💡`;
-
-    setGeneratedPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, content: newContent, status: "draft" as const } : p
-      )
-    );
+    setGeneratedPosts((prev) => prev.map((p) => p.id === postId ? { ...p, content: newContent, status: "draft" as const } : p));
     setIsGenerating(false);
   };
 
-  const handleStartEdit = (post: GeneratedPost) => {
-    setEditingId(post.id);
-    setEditContent(post.content);
-  };
-
-  const handleSaveEdit = (postId: string) => {
-    setGeneratedPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, content: editContent, status: "draft" as const } : p
-      )
-    );
-    setEditingId(null);
-    setEditContent("");
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditContent("");
-  };
+  const handleStartEdit = (post: GeneratedPost) => { setEditingId(post.id); setEditContent(post.content); };
+  const handleSaveEdit = (postId: string) => { setGeneratedPosts((prev) => prev.map((p) => p.id === postId ? { ...p, content: editContent, status: "draft" as const } : p)); setEditingId(null); setEditContent(""); };
+  const handleCancelEdit = () => { setEditingId(null); setEditContent(""); };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Sample Content
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            AI-generated posts based on your brand voice. Review and edit as needed.
-          </p>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sample Content</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">AI-generated posts based on your brand voice. Review and edit as needed.</p>
+          </div>
+          <Button variant="secondary" onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Sparkles className="mr-2 w-4 h-4" />}
+            {isGenerating ? "Generating..." : "Regenerate All"}
+          </Button>
         </div>
-        <Button
-          color="primary"
-          variant="flat"
-          startContent={isGenerating ? <Spinner size="sm" /> : <Sparkles className="w-4 h-4" />}
-          onPress={handleGenerate}
-          isDisabled={isGenerating}
-        >
-          {isGenerating ? "Generating..." : "Regenerate All"}
-        </Button>
-      </div>
 
-      {isGenerating && generatedPosts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Spinner size="lg" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Creating sample posts based on your brand voice...
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {generatedPosts.map((post, index) => {
-            const PlatformIcon = PLATFORM_ICONS[post.platform];
-            const isEditing = editingId === post.id;
-
-            return (
-              <Card key={post.id} className="overflow-visible">
-                <CardBody className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-500">
-                        Post {index + 1}
-                      </span>
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={post.contentType === "educational" ? "primary" : post.contentType === "promotional" ? "warning" : "success"}
-                      >
-                        {CONTENT_TYPE_LABELS[post.contentType]}
-                      </Chip>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={PLATFORM_COLORS[post.platform]}
-                        startContent={<PlatformIcon className="w-3 h-3" />}
-                      >
+        {isGenerating && generatedPosts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Creating sample posts based on your brand voice...</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {generatedPosts.map((post, index) => {
+              const PlatformIcon = PLATFORM_ICONS[post.platform];
+              const isEditing = editingId === post.id;
+              return (
+                <Card key={post.id} className="overflow-visible">
+                  <CardContent className="space-y-4 py-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-500">Post {index + 1}</span>
+                        <Badge variant={post.contentType === "educational" ? "default" : post.contentType === "promotional" ? "secondary" : "outline"}>
+                          {CONTENT_TYPE_LABELS[post.contentType]}
+                        </Badge>
+                      </div>
+                      <Badge variant="secondary">
+                        <PlatformIcon className="w-3 h-3 mr-1" />
                         {post.platform.charAt(0).toUpperCase() + post.platform.slice(1)}
-                      </Chip>
+                      </Badge>
                     </div>
-                  </div>
 
-                  {/* Content */}
-                  {isEditing ? (
-                    <Textarea
-                      value={editContent}
-                      onValueChange={setEditContent}
-                      minRows={4}
-                      variant="bordered"
-                      classNames={{
-                        input: "text-sm",
-                      }}
-                    />
-                  ) : (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {post.content}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex justify-end gap-2">
                     {isEditing ? (
-                      <>
-                        <Tooltip content="Cancel">
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            isIconOnly
-                            onPress={handleCancelEdit}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Save">
-                          <Button
-                            size="sm"
-                            color="success"
-                            variant="flat"
-                            isIconOnly
-                            onPress={() => handleSaveEdit(post.id)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                      </>
+                      <Textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={4} className="text-sm" />
                     ) : (
-                      <>
-                        <Tooltip content="Edit">
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            isIconOnly
-                            onPress={() => handleStartEdit(post)}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Regenerate">
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            isIconOnly
-                            onPress={() => handleRegenerate(post.id)}
-                            isDisabled={isGenerating}
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                      </>
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{post.content}</p>
+                      </div>
                     )}
-                  </div>
-                </CardBody>
-              </Card>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Status */}
-      {generatedPosts.length > 0 && (
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {generatedPosts.length} post{generatedPosts.length !== 1 ? "s" : ""} ready •
-          Edit any post or continue to connect your accounts
-        </div>
-      )}
-    </div>
+                    <div className="flex justify-end gap-2">
+                      {isEditing ? (
+                        <>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="secondary" className="h-8 w-8" onClick={handleCancelEdit}><X className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent>Cancel</TooltipContent></Tooltip>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="secondary" className="h-8 w-8 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" onClick={() => handleSaveEdit(post.id)}><Check className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent>Save</TooltipContent></Tooltip>
+                        </>
+                      ) : (
+                        <>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => handleStartEdit(post)}><Edit2 className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                          <Tooltip><TooltipTrigger asChild><Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => handleRegenerate(post.id)} disabled={isGenerating}><RefreshCw className="w-4 h-4" /></Button></TooltipTrigger><TooltipContent>Regenerate</TooltipContent></Tooltip>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {generatedPosts.length > 0 && (
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+            {generatedPosts.length} post{generatedPosts.length !== 1 ? "s" : ""} ready • Edit any post or continue to connect your accounts
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

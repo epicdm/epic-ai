@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Chip, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CheckCircle2, ExternalLink, BarChart3, Calendar, Heart, MessageCircle, Share2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -58,7 +59,7 @@ export default function PublishedContentPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -67,9 +68,9 @@ export default function PublishedContentPage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-6xl">
         <Card>
-          <CardBody>
+          <CardContent>
             <p className="text-center text-gray-500">{error}</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -96,45 +97,45 @@ export default function PublishedContentPage() {
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-gray-500">Total Published</p>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
               <span className="text-2xl font-bold">{totalPublished}</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-gray-500">This Week</p>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-500" />
               <span className="text-2xl font-bold">{thisWeek}</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-gray-500">Total Impressions</p>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-purple-500" />
               <span className="text-2xl font-bold">{totalImpressions}</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <p className="text-sm font-medium text-gray-500">Avg. Engagement</p>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             <div className="flex items-center gap-2">
               <Heart className="h-5 w-5 text-red-500" />
               <span className="text-2xl font-bold">{avgEngagement}%</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
@@ -151,7 +152,7 @@ export default function PublishedContentPage() {
             </p>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {publishedItems.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -170,22 +171,22 @@ export default function PublishedContentPage() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Chip color="secondary" variant="flat" size="sm">
+                        <Badge variant="secondary" variant="secondary" >
                           {item.contentType}
-                        </Chip>
+                        </Badge>
                         {item.publishedPlatform && (
-                          <Chip variant="bordered" size="sm">
+                          <Badge variant="outline" >
                             {item.publishedPlatform}
-                          </Chip>
+                          </Badge>
                         )}
                         {item.category && (
-                          <Chip variant="bordered" size="sm">
+                          <Badge variant="outline" >
                             {item.category}
-                          </Chip>
+                          </Badge>
                         )}
-                        <Chip color="success" variant="flat" size="sm">
+                        <Badge variant="secondary" >
                           Published
-                        </Chip>
+                        </Badge>
                       </div>
                       {item.publishedAt && (
                         <p className="text-sm text-gray-500">
@@ -231,7 +232,7 @@ export default function PublishedContentPage() {
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

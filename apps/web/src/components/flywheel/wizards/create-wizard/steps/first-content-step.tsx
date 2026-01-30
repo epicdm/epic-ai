@@ -1,14 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Sparkles, RefreshCw, Check, Edit2 } from "lucide-react";
 import type { CreateWizardData, GeneratedContentData } from "@/lib/flywheel/types";
 
@@ -178,28 +174,23 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
         <Input
           placeholder="Enter a topic for AI to write about..."
           value={topic}
-          onValueChange={setTopic}
+          onChange={(e) => setTopic(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && topic.trim()) {
               generateContent();
             }
           }}
-          classNames={{
-            input: "text-base",
-          }}
+          className="text-base"
         />
         <Button
-          color="primary"
-          startContent={
-            isGenerating ? (
-              <Spinner size="sm" color="current" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )
-          }
-          onPress={generateContent}
-          isDisabled={!topic.trim() || isGenerating}
+          onClick={generateContent}
+          disabled={!topic.trim() || isGenerating}
         >
+          {isGenerating ? (
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
           Generate
         </Button>
       </div>
@@ -211,11 +202,11 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
             No content yet. Enter a topic or let AI create samples.
           </p>
           <Button
-            variant="bordered"
-            startContent={<Sparkles className="w-4 h-4" />}
-            onPress={generateSampleContent}
-            isLoading={isGenerating}
+            variant="outline"
+            onClick={generateSampleContent}
+            disabled={isGenerating}
           >
+            <Sparkles className="w-4 h-4 mr-2" />
             Generate Sample Content
           </Button>
         </div>
@@ -232,21 +223,20 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
                 : "border-gray-200 dark:border-gray-700"
             }`}
           >
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Chip size="sm" variant="flat" color="secondary">
+                  <Badge variant="secondary">
                     {content.platform}
-                  </Chip>
+                  </Badge>
                   <span className="text-sm text-gray-500">{content.topic}</span>
                 </div>
-                <Chip
-                  size="sm"
-                  variant="flat"
-                  color={content.status === "approved" ? "success" : "warning"}
+                <Badge
+                  variant={content.status === "approved" ? "default" : "secondary"}
+                  className={content.status === "approved" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"}
                 >
                   {content.status}
-                </Chip>
+                </Badge>
               </div>
 
               {editingId === content.id ? (
@@ -260,15 +250,14 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
                   <div className="flex gap-2 justify-end">
                     <Button
                       size="sm"
-                      variant="light"
-                      onPress={() => setEditingId(null)}
+                      variant="ghost"
+                      onClick={() => setEditingId(null)}
                     >
                       Cancel
                     </Button>
                     <Button
                       size="sm"
-                      color="primary"
-                      onPress={() => saveEdit(content.id!)}
+                      onClick={() => saveEdit(content.id!)}
                     >
                       Save
                     </Button>
@@ -284,26 +273,26 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant="light"
-                        startContent={<Edit2 className="w-3 h-3" />}
-                        onPress={() => startEdit(content)}
+                        variant="ghost"
+                        onClick={() => startEdit(content)}
                       >
+                        <Edit2 className="w-3 h-3 mr-1" />
                         Edit
                       </Button>
                       <Button
                         size="sm"
-                        variant="light"
-                        startContent={<RefreshCw className="w-3 h-3" />}
-                        onPress={() => regenerateContent(content.id!)}
-                        isDisabled={isGenerating}
+                        variant="ghost"
+                        onClick={() => regenerateContent(content.id!)}
+                        disabled={isGenerating}
                       >
+                        <RefreshCw className="w-3 h-3 mr-1" />
                         Regenerate
                       </Button>
                       <Button
                         size="sm"
-                        variant="light"
-                        color="danger"
-                        onPress={() => removeContent(content.id!)}
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeContent(content.id!)}
                       >
                         Remove
                       </Button>
@@ -312,17 +301,17 @@ export function FirstContentStep({ data, updateData, brandId }: FirstContentStep
                     {content.status !== "approved" && (
                       <Button
                         size="sm"
-                        color="success"
-                        startContent={<Check className="w-3 h-3" />}
-                        onPress={() => approveContent(content.id!)}
+                        variant="outline"
+                        onClick={() => approveContent(content.id!)}
                       >
+                        <Check className="w-3 h-3 mr-1" />
                         Approve
                       </Button>
                     )}
                   </div>
                 </>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>

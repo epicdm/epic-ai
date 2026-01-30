@@ -1,26 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Switch,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Input,
-  Tabs,
-  Tab,
-  Code,
-  Tooltip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Webhook,
@@ -120,16 +108,12 @@ export function WebhooksPage() {
   const [activeTab, setActiveTab] = useState("config");
 
   // Setup modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Test modal
-  const {
-    isOpen: isTestOpen,
-    onOpen: onTestOpen,
-    onClose: onTestClose,
-  } = useDisclosure();
+  const [isTestOpen, setIsTestOpen] = useState(false);
   const [testPlatform, setTestPlatform] = useState<string | null>(null);
   const [testData, setTestData] = useState({ email: "", name: "", phone: "", company: "" });
   const [testing, setTesting] = useState(false);
@@ -194,7 +178,7 @@ export function WebhooksPage() {
           }
           return [...prev, data.config];
         });
-        onClose();
+        setIsOpen(false);
       }
     } catch (error) {
       console.error("Error saving config:", error);
@@ -253,7 +237,7 @@ export function WebhooksPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -265,9 +249,11 @@ export function WebhooksPage() {
         description="Receive leads automatically from ad platforms."
       />
 
-      <Tabs selectedKey={activeTab} onSelectionChange={(k) => setActiveTab(k as string)}>
-        <Tab key="config" title="Configuration" />
-        <Tab key="logs" title={`Logs (${logCounts.total})`} />
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)}>
+        <TabsList>
+          <TabsTrigger value="config">Configuration</TabsTrigger>
+          <TabsTrigger value="logs">Logs ({logCounts.total})</TabsTrigger>
+        </TabsList>
       </Tabs>
 
       {activeTab === "config" && (
@@ -280,7 +266,7 @@ export function WebhooksPage() {
 
               return (
                 <Card key={platform.value}>
-                  <CardBody className="space-y-4">
+                  <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 ${platform.color} rounded-lg flex items-center justify-center`}>
@@ -289,7 +275,7 @@ export function WebhooksPage() {
                         <div>
                           <p className="font-medium">{platform.label}</p>
                           {config && (
-                            <p className="text-xs text-default-500">
+                            <p className="text-xs text-muted-foreground">
                               {config.leadsReceived} leads received
                             </p>
                           )}
@@ -297,16 +283,15 @@ export function WebhooksPage() {
                       </div>
                       {config ? (
                         <Switch
-                          isSelected={config.enabled}
-                          onValueChange={(v) => toggleWebhook(platform.value, v)}
+                          checked={config.enabled}
+                          onCheckedChange={(v) => toggleWebhook(platform.value, v)}
                         />
                       ) : (
                         <Button
                           size="sm"
-                          color="primary"
                           onClick={() => {
                             setSelectedPlatform(platform.value);
-                            onOpen();
+                            setIsOpen(true);
                           }}
                         >
                           Setup
@@ -318,58 +303,70 @@ export function WebhooksPage() {
                       <>
                         <div className="space-y-2">
                           <div>
-                            <p className="text-xs text-default-500 mb-1">Webhook URL</p>
+                            <p className="text-xs text-muted-foreground mb-1">Webhook URL</p>
                             <div className="flex gap-2">
-                              <Code className="flex-1 text-xs break-all">
+                              <code className="flex-1 text-xs break-all bg-muted px-2 py-1 rounded">
                                 {config.webhookUrl}
-                              </Code>
-                              <Tooltip content={copied === `url-${config.id}` ? "Copied!" : "Copy"}>
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  variant="light"
-                                  onClick={() => copyToClipboard(config.webhookUrl, `url-${config.id}`)}
-                                >
-                                  {copied === `url-${config.id}` ? (
-                                    <Check className="w-4 h-4" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              </Tooltip>
+                              </code>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => copyToClipboard(config.webhookUrl, `url-${config.id}`)}
+                                    >
+                                      {copied === `url-${config.id}` ? (
+                                        <Check className="w-4 h-4" />
+                                      ) : (
+                                        <Copy className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {copied === `url-${config.id}` ? "Copied!" : "Copy"}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </div>
 
                           {platform.value === "META" && (
                             <div>
-                              <p className="text-xs text-default-500 mb-1">Verify Token</p>
+                              <p className="text-xs text-muted-foreground mb-1">Verify Token</p>
                               <div className="flex gap-2">
-                                <Code className="flex-1 text-xs">{config.verifyToken}</Code>
-                                <Tooltip content={copied === `verify-${config.id}` ? "Copied!" : "Copy"}>
-                                  <Button
-                                    isIconOnly
-                                    size="sm"
-                                    variant="light"
-                                    onClick={() => copyToClipboard(config.verifyToken, `verify-${config.id}`)}
-                                  >
-                                    {copied === `verify-${config.id}` ? (
-                                      <Check className="w-4 h-4" />
-                                    ) : (
-                                      <Copy className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                </Tooltip>
+                                <code className="flex-1 text-xs bg-muted px-2 py-1 rounded">{config.verifyToken}</code>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => copyToClipboard(config.verifyToken, `verify-${config.id}`)}
+                                      >
+                                        {copied === `verify-${config.id}` ? (
+                                          <Check className="w-4 h-4" />
+                                        ) : (
+                                          <Copy className="w-4 h-4" />
+                                        )}
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {copied === `verify-${config.id}` ? "Copied!" : "Copy"}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </div>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-default-100">
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
                           <div className="flex items-center gap-2">
                             <Switch
                               size="sm"
-                              isSelected={config.autoTriggerVoiceAI}
-                              onValueChange={async (v) => {
+                              checked={config.autoTriggerVoiceAI}
+                              onCheckedChange={async (v) => {
                                 await fetch(`/api/webhooks/config/${platform.value.toLowerCase()}`, {
                                   method: "PUT",
                                   headers: { "Content-Type": "application/json" },
@@ -388,14 +385,14 @@ export function WebhooksPage() {
                           </div>
                           <Button
                             size="sm"
-                            variant="bordered"
-                            startContent={<Play className="w-3 h-3" />}
+                            variant="outline"
                             onClick={() => {
                               setTestPlatform(platform.value);
                               setTestResult(null);
-                              onTestOpen();
+                              setIsTestOpen(true);
                             }}
                           >
+                            <Play className="w-3 h-3 mr-1" />
                             Test
                           </Button>
                         </div>
@@ -407,7 +404,7 @@ export function WebhooksPage() {
                         )}
                       </>
                     )}
-                  </CardBody>
+                  </CardContent>
                 </Card>
               );
             })}
@@ -418,10 +415,10 @@ export function WebhooksPage() {
             <CardHeader>
               <h2 className="text-lg font-semibold">Setup Instructions</h2>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div>
                 <h3 className="font-medium mb-2">Meta (Facebook/Instagram)</h3>
-                <ol className="list-decimal list-inside text-sm text-default-600 space-y-1">
+                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
                   <li>Go to Meta Business Settings → Integrations → Leads Access</li>
                   <li>Click &quot;Assign CRMs&quot; and choose &quot;Connect a new CRM&quot;</li>
                   <li>Select &quot;Other CRM&quot; and paste your webhook URL</li>
@@ -432,7 +429,7 @@ export function WebhooksPage() {
 
               <div>
                 <h3 className="font-medium mb-2">Google Ads</h3>
-                <ol className="list-decimal list-inside text-sm text-default-600 space-y-1">
+                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
                   <li>Go to Google Ads → Tools → Data Manager → Linked Accounts</li>
                   <li>Click &quot;Link&quot; next to &quot;Webhook integration&quot;</li>
                   <li>Paste your webhook URL</li>
@@ -442,7 +439,7 @@ export function WebhooksPage() {
 
               <div>
                 <h3 className="font-medium mb-2">LinkedIn</h3>
-                <ol className="list-decimal list-inside text-sm text-default-600 space-y-1">
+                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
                   <li>Go to LinkedIn Campaign Manager → Account Assets → Lead Gen Forms</li>
                   <li>Click on your form → Integration Settings</li>
                   <li>Add a webhook endpoint with your URL</li>
@@ -451,13 +448,13 @@ export function WebhooksPage() {
 
               <div>
                 <h3 className="font-medium mb-2">Generic (Zapier, etc.)</h3>
-                <ol className="list-decimal list-inside text-sm text-default-600 space-y-1">
+                <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
                   <li>Use the Generic webhook URL in any service that sends leads</li>
                   <li>Send JSON with: email, first_name, last_name, phone, company</li>
                   <li>Optionally sign requests with x-webhook-signature header</li>
                 </ol>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </>
       )}
@@ -467,22 +464,22 @@ export function WebhooksPage() {
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Recent Webhook Activity</h2>
             <div className="flex gap-2">
-              <Chip size="sm" color="success" variant="flat">
+              <Badge  variant="outline" variant="secondary">
                 {logCounts.success} Success
-              </Chip>
-              <Chip size="sm" color="danger" variant="flat">
+              </Badge>
+              <Badge  variant="destructive" variant="secondary">
                 {logCounts.failed} Failed
-              </Chip>
-              <Chip size="sm" color="warning" variant="flat">
+              </Badge>
+              <Badge  variant="outline" variant="secondary">
                 {logCounts.duplicate} Duplicate
-              </Chip>
+              </Badge>
             </div>
           </CardHeader>
-          <CardBody>
+          <CardContent>
             {logs.length === 0 ? (
               <div className="text-center py-8">
-                <Webhook className="w-12 h-12 text-default-300 mx-auto mb-4" />
-                <p className="text-default-500">No webhook activity yet</p>
+                <Webhook className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No webhook activity yet</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -494,23 +491,23 @@ export function WebhooksPage() {
                   return (
                     <div
                       key={log.id}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-default-50"
+                      className="flex items-center gap-4 p-3 rounded-lg bg-muted/50"
                     >
                       <div className={`w-8 h-8 ${platform?.color || "bg-default-300"} rounded flex items-center justify-center`}>
                         <PlatformIcon className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Chip
-                            size="sm"
+                          <Badge
+                            
                             color={STATUS_COLORS[log.status]}
-                            variant="flat"
-                            startContent={<StatusIcon className="w-3 h-3" />}
+                            variant="secondary"
+                            
                           >
                             {log.status}
-                          </Chip>
+                          </Badge>
                           {log.leadId && (
-                            <span className="text-xs text-default-500">
+                            <span className="text-xs text-muted-foreground">
                               Lead: {log.leadId.slice(0, 8)}...
                             </span>
                           )}
@@ -519,7 +516,7 @@ export function WebhooksPage() {
                           <p className="text-xs text-danger mt-1">{log.error}</p>
                         )}
                       </div>
-                      <span className="text-xs text-default-400" suppressHydrationWarning>
+                      <span className="text-xs text-muted-foreground" suppressHydrationWarning>
                         {new Date(log.receivedAt).toLocaleString()}
                       </span>
                     </div>
@@ -527,43 +524,42 @@ export function WebhooksPage() {
                 })}
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Setup Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             Setup {PLATFORMS.find((p) => p.value === selectedPlatform)?.label} Webhook
-          </ModalHeader>
-          <ModalBody>
-            <p className="text-sm text-default-500">
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
               This will generate a unique webhook URL and verification token for receiving leads
               from {selectedPlatform?.toLowerCase()}.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onClick={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
               onClick={() => selectedPlatform && saveConfig(selectedPlatform, true, true)}
-              isLoading={saving}
+              disabled={saving}
             >
               Generate Webhook
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Test Modal */}
-      <Modal isOpen={isTestOpen} onClose={onTestClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Test Webhook</ModalHeader>
-          <ModalBody className="space-y-4">
-            <p className="text-sm text-default-500">
+      <Dialog open={isTestOpen} onOpenChange={setIsTestOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Test Webhook</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
               Send a test lead to verify your webhook is working correctly.
             </p>
 
@@ -607,22 +603,21 @@ export function WebhooksPage() {
                 )}
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="bordered" onClick={onTestClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTestOpen(false)}>
               Close
             </Button>
             <Button
-              color="primary"
               onClick={runTest}
-              isLoading={testing}
-              startContent={<Play className="w-4 h-4" />}
-            >
+              disabled={testing}
+              
+            ><Play className="w-4 h-4" /> 
               Send Test
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

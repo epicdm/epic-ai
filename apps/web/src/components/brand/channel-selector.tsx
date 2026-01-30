@@ -18,7 +18,11 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardBody, Button, Chip, Switch, Tooltip } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Phone,
   Share2,
@@ -207,10 +211,10 @@ export function ChannelSelector({
             Select the platforms where you want to publish content
           </p>
           <div className="flex gap-2">
-            <Button size="sm" variant="bordered" onPress={selectAll}>
+            <Button size="sm" variant="outline" onClick={selectAll}>
               Select All
             </Button>
-            <Button size="sm" variant="bordered" onPress={deselectAll}>
+            <Button size="sm" variant="outline" onClick={deselectAll}>
               Deselect All
             </Button>
           </div>
@@ -227,17 +231,15 @@ export function ChannelSelector({
           return (
             <Card
               key={channel.id}
-              isPressable
-              isHoverable
               className={cn(
                 "transition-all cursor-pointer",
                 isSelected
                   ? "border-2 border-brand-500 bg-brand-50 dark:bg-brand-900/20"
                   : "border border-gray-200 dark:border-gray-700 hover:border-brand-300"
               )}
-              onPress={() => handleChannelToggle(channel.id)}
+              onClick={() => handleChannelToggle(channel.id)}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   {/* Channel Icon & Info */}
                   <div className="flex items-start gap-3">
@@ -297,14 +299,12 @@ export function ChannelSelector({
                   {/* Selection Indicator */}
                   <div className="flex-shrink-0">
                     <Switch
-                      isSelected={isSelected}
-                      size="sm"
-                      color="success"
+                      checked={isSelected}
                       aria-label={`Toggle ${channel.name}`}
                     />
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -370,10 +370,9 @@ export function ChannelSelectorWrapper() {
                 ${!isAvailable ? "opacity-60" : "hover:shadow-md"}
                 ${recommendation?.priority === "high" && !isSelected ? "ring-2 ring-green-200 dark:ring-green-800" : ""}
               `}
-              isPressable={isAvailable}
-              onPress={() => isAvailable && toggleChannel(channel.id)}
+              onClick={() => isAvailable && toggleChannel(channel.id)}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div
@@ -402,32 +401,28 @@ export function ChannelSelectorWrapper() {
                         </h3>
                         {/* Recommendation badge with tooltip */}
                         {recommendation && (
-                          <Tooltip
-                            content={
-                              <div className="max-w-xs p-1">
-                                <p className="text-sm">{recommendation.reason}</p>
-                              </div>
-                            }
-                            placement="top"
-                          >
-                            <div className="flex items-center">
-                              {recommendation.priority === "high" && (
-                                <Chip
-                                  size="sm"
-                                  color="success"
-                                  variant="flat"
-                                  startContent={<Star className="w-3 h-3" />}
-                                >
-                                  Recommended
-                                </Chip>
-                              )}
-                              {recommendation.priority === "medium" && (
-                                <Chip size="sm" color="warning" variant="flat">
-                                  Good Fit
-                                </Chip>
-                              )}
-                            </div>
-                          </Tooltip>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center">
+                                  {recommendation.priority === "high" && (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                      <Star className="w-3 h-3 mr-1" />
+                                      Recommended
+                                    </Badge>
+                                  )}
+                                  {recommendation.priority === "medium" && (
+                                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                      Good Fit
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-sm max-w-xs">{recommendation.reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
@@ -477,7 +472,7 @@ export function ChannelSelectorWrapper() {
                     </button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -506,14 +501,13 @@ export function ChannelSelectorWrapper() {
       {showContinueButton && (
         <div className="flex justify-end">
           <Button
-            color="primary"
             size="lg"
-            isDisabled={selectedChannels.length === 0}
-            onPress={onComplete}
-            endContent={<ArrowRight className="w-5 h-5" />}
+            disabled={selectedChannels.length === 0}
+            onClick={onComplete}
           >
             Continue with {selectedChannels.length} Channel
             {selectedChannels.length !== 1 ? "s" : ""}
+            <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
       )}
@@ -560,9 +554,9 @@ export function ChannelToggle({ channel, enabled, onToggle, onSetup }: ChannelTo
             <div className="flex items-center gap-2">
               <h4 className="font-medium text-gray-900 dark:text-white">{channel.name}</h4>
               {!isAvailable && (
-                <Chip size="sm" variant="flat">
+                <Badge variant="secondary">
                   Coming Soon
-                </Chip>
+                </Badge>
               )}
             </div>
             <p className="text-sm text-gray-500">{channel.description}</p>
@@ -572,14 +566,13 @@ export function ChannelToggle({ channel, enabled, onToggle, onSetup }: ChannelTo
           {enabled && isAvailable && onSetup && (
             <Button
               size="sm"
-              variant="flat"
-              onPress={onSetup}
-              endContent={<ExternalLink className="w-3 h-3" />}
+              variant="secondary"
+              onClick={onSetup}
             >
-              Setup
+              Setup <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           )}
-          <Switch isSelected={enabled} onValueChange={onToggle} isDisabled={!isAvailable} />
+          <Switch checked={enabled} onCheckedChange={onToggle} disabled={!isAvailable} />
         </div>
       </div>
     </div>

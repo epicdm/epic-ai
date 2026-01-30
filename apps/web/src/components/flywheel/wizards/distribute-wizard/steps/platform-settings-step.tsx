@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Switch, Slider } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Twitter, Linkedin, Facebook, Instagram, LucideIcon } from "lucide-react";
 import type { DistributeWizardData, PlatformSettings } from "@/lib/flywheel/types";
 
@@ -58,7 +59,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
   if (connectedPlatforms.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-muted-foreground">
           No connected accounts. Please go back and connect at least one
           social account.
         </p>
@@ -68,7 +69,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Configure how Epic AI posts to each of your connected platforms. These
         settings can be changed at any time.
       </p>
@@ -87,7 +88,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
                   : "border-gray-200 dark:border-gray-800 opacity-60"
               }`}
             >
-              <CardBody className="p-4">
+              <CardContent className="p-4">
                 <div className="flex items-center gap-4 mb-4">
                   <div
                     className="p-2 rounded-lg"
@@ -103,15 +104,15 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
                       {platform.name}
                     </h4>
                   </div>
-                  <Switch
-                    isSelected={settings.enabled}
-                    onValueChange={(value) =>
-                      updatePlatformSettings(platform.id, { enabled: value })
-                    }
-                    size="sm"
-                  >
-                    Enabled
-                  </Switch>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Enabled</span>
+                    <Switch
+                      checked={settings.enabled}
+                      onCheckedChange={(value) =>
+                        updatePlatformSettings(platform.id, { enabled: value })
+                      }
+                    />
+                  </div>
                 </div>
 
                 {settings.enabled && (
@@ -122,16 +123,15 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           Auto-Post
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           Automatically publish scheduled content
                         </p>
                       </div>
                       <Switch
-                        isSelected={settings.autoPost}
-                        onValueChange={(value) =>
+                        checked={settings.autoPost}
+                        onCheckedChange={(value) =>
                           updatePlatformSettings(platform.id, { autoPost: value })
                         }
-                        size="sm"
                       />
                     </div>
 
@@ -145,21 +145,18 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
                           {settings.postingFrequency || 3}
                         </span>
                       </div>
-                      <Slider
-                        aria-label="Posts per week"
-                        step={1}
-                        minValue={1}
-                        maxValue={14}
+                      <input
+                        type="range"
+                        className="w-full accent-primary"
                         value={settings.postingFrequency || 3}
-                        onChange={(value) =>
+                        onChange={(e) =>
                           updatePlatformSettings(platform.id, {
-                            postingFrequency: value as number,
+                            postingFrequency: Number(e.target.value),
                           })
                         }
-                        classNames={{
-                          track: "bg-gray-200 dark:bg-gray-700",
-                          filler: `bg-[${platform.color}]`,
-                        }}
+                        min={1}
+                        max={14}
+                        step={1}
                       />
                       <div className="flex justify-between text-xs text-gray-400 mt-1">
                         <span>1/week</span>
@@ -168,7 +165,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
                     </div>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -176,7 +173,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
 
       {/* Info Box */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
             Posting Tips
           </h5>
@@ -186,7 +183,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
             <li>• <strong>Facebook:</strong> 1-2 posts/day for community building</li>
             <li>• <strong>Instagram:</strong> 1 post/day + stories for visibility</li>
           </ul>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

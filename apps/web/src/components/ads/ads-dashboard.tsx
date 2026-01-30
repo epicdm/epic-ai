@@ -1,14 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Plus,
@@ -122,7 +117,7 @@ export function AdsDashboard() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -137,7 +132,7 @@ export function AdsDashboard() {
         description="Manage your advertising campaigns across platforms."
         actions={
           <Link href="/dashboard/ads/create">
-            <Button color="primary" startContent={<Plus className="w-4 h-4" />}>
+            <Button ><Plus className="w-4 h-4" /> 
               Create Campaign
             </Button>
           </Link>
@@ -147,51 +142,51 @@ export function AdsDashboard() {
       {/* Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-lg">
               <DollarSign className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Total Spend</p>
+              <p className="text-sm text-muted-foreground">Total Spend</p>
               <p className="text-2xl font-bold">${totals.spend.toLocaleString()}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-success/10 rounded-lg">
               <Users className="w-6 h-6 text-success" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Leads</p>
+              <p className="text-sm text-muted-foreground">Leads</p>
               <p className="text-2xl font-bold">{totals.leads.toLocaleString()}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-warning/10 rounded-lg">
               <MousePointer className="w-6 h-6 text-warning" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Avg CPL</p>
+              <p className="text-sm text-muted-foreground">Avg CPL</p>
               <p className="text-2xl font-bold">${avgCPL.toFixed(2)}</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="flex flex-row items-center gap-4">
+          <CardContent className="flex flex-row items-center gap-4">
             <div className="p-3 bg-secondary/10 rounded-lg">
               <Eye className="w-6 h-6 text-secondary" />
             </div>
             <div>
-              <p className="text-sm text-default-500">Avg CTR</p>
+              <p className="text-sm text-muted-foreground">Avg CTR</p>
               <p className="text-2xl font-bold">{avgCTR.toFixed(2)}%</p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
@@ -205,13 +200,13 @@ export function AdsDashboard() {
             </div>
             <Button
               size="sm"
-              variant="light"
+              variant="ghost"
               onClick={() => fetch("/api/ads/recommendations", { method: "POST" }).then(loadData)}
             >
               Refresh
             </Button>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardContent className="space-y-3">
             {recommendations.slice(0, 3).map((rec) => (
               <div
                 key={rec.id}
@@ -221,20 +216,20 @@ export function AdsDashboard() {
                   <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
                   <div>
                     <p className="font-medium">{rec.title}</p>
-                    <p className="text-sm text-default-500">{rec.description}</p>
+                    <p className="text-sm text-muted-foreground">{rec.description}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="light"
+                    variant="ghost"
                     onClick={() => handleRecommendation(rec.id, "dismiss")}
                   >
                     Dismiss
                   </Button>
                   <Button
                     size="sm"
-                    color="warning"
+                    variant="outline"
                     onClick={() => handleRecommendation(rec.id, "apply")}
                   >
                     Apply
@@ -242,7 +237,7 @@ export function AdsDashboard() {
                 </div>
               </div>
             ))}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -252,22 +247,22 @@ export function AdsDashboard() {
           <h2 className="text-lg font-semibold">Campaigns</h2>
           <div className="flex gap-2">
             <Link href="/dashboard/ads/accounts">
-              <Button size="sm" variant="bordered">
+              <Button size="sm" variant="outline">
                 Ad Accounts
               </Button>
             </Link>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {campaigns.length === 0 ? (
             <div className="text-center py-12">
               <BarChart3 className="w-16 h-16 text-default-200 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No campaigns yet</h3>
-              <p className="text-default-500 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Create your first ad campaign to start driving leads.
               </p>
               <Link href="/dashboard/ads/create">
-                <Button color="primary" startContent={<Plus className="w-4 h-4" />}>
+                <Button ><Plus className="w-4 h-4" /> 
                   Create Campaign
                 </Button>
               </Link>
@@ -280,7 +275,7 @@ export function AdsDashboard() {
                   href={`/dashboard/ads/campaigns/${campaign.id}`}
                   className="block"
                 >
-                  <div className="flex items-center gap-4 p-4 rounded-lg border border-default-200 hover:border-primary hover:bg-primary/5 transition-colors">
+                  <div className="flex items-center gap-4 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors">
                     <div
                       className={`w-10 h-10 ${PLATFORM_COLORS[campaign.platform]} rounded-lg flex items-center justify-center text-white text-xs font-bold`}
                     >
@@ -290,15 +285,15 @@ export function AdsDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">{campaign.name}</p>
-                        <Chip
-                          size="sm"
+                        <Badge
+                          
                           color={STATUS_COLORS[campaign.status]}
-                          variant="flat"
+                          variant="secondary"
                         >
                           {campaign.status}
-                        </Chip>
+                        </Badge>
                       </div>
-                      <p className="text-sm text-default-500">
+                      <p className="text-sm text-muted-foreground">
                         {campaign.dailyBudget
                           ? `$${campaign.dailyBudget}/day`
                           : "No budget set"}
@@ -308,23 +303,23 @@ export function AdsDashboard() {
                     {campaign.metrics && (
                       <div className="hidden md:flex gap-6 text-sm">
                         <div className="text-center">
-                          <p className="text-default-500">Impressions</p>
+                          <p className="text-muted-foreground">Impressions</p>
                           <p className="font-medium">
                             {campaign.metrics.impressions.toLocaleString()}
                           </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-default-500">Clicks</p>
+                          <p className="text-muted-foreground">Clicks</p>
                           <p className="font-medium">
                             {campaign.metrics.clicks.toLocaleString()}
                           </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-default-500">Leads</p>
+                          <p className="text-muted-foreground">Leads</p>
                           <p className="font-medium">{campaign.metrics.leads}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-default-500">Spend</p>
+                          <p className="text-muted-foreground">Spend</p>
                           <p className="font-medium">
                             ${Number(campaign.metrics.spend).toFixed(2)}
                           </p>
@@ -336,44 +331,44 @@ export function AdsDashboard() {
               ))}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/dashboard/ads/create">
-          <Card isPressable className="h-full">
-            <CardBody className="flex flex-col items-center justify-center gap-2 py-6">
+          <Card className="cursor-pointer h-full">
+            <CardContent className="flex flex-col items-center justify-center gap-2 py-6">
               <Plus className="w-8 h-8 text-primary" />
               <span className="font-medium">New Campaign</span>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/ads/create">
-          <Card isPressable className="h-full">
-            <CardBody className="flex flex-col items-center justify-center gap-2 py-6">
+          <Card className="cursor-pointer h-full">
+            <CardContent className="flex flex-col items-center justify-center gap-2 py-6">
               <Zap className="w-8 h-8 text-warning" />
               <span className="font-medium">AI Ad Generator</span>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/ads/accounts">
-          <Card isPressable className="h-full">
-            <CardBody className="flex flex-col items-center justify-center gap-2 py-6">
+          <Card className="cursor-pointer h-full">
+            <CardContent className="flex flex-col items-center justify-center gap-2 py-6">
               <BarChart3 className="w-8 h-8 text-success" />
               <span className="font-medium">Ad Accounts</span>
-            </CardBody>
+            </CardContent>
           </Card>
         </Link>
 
-        <Card isPressable className="h-full opacity-50">
-          <CardBody className="flex flex-col items-center justify-center gap-2 py-6">
+        <Card className="cursor-pointer h-full opacity-50">
+          <CardContent className="flex flex-col items-center justify-center gap-2 py-6">
             <TrendingUp className="w-8 h-8 text-secondary" />
             <span className="font-medium">Analytics</span>
-            <span className="text-xs text-default-400">Coming Soon</span>
-          </CardBody>
+            <span className="text-xs text-muted-foreground">Coming Soon</span>
+          </CardContent>
         </Card>
       </div>
     </div>

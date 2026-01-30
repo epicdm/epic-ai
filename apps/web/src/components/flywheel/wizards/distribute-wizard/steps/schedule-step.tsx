@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, Button, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Plus, X, Sparkles, Loader2 } from "lucide-react";
 import type { DistributeWizardData, ScheduleData, TimeSlot } from "@/lib/flywheel/types";
 
@@ -126,7 +128,7 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
 
   return (
     <div className="space-y-6">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Set up your weekly posting schedule. Choose the days and times when
         content will be published.
       </p>
@@ -134,27 +136,24 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-2">
         <Button
-          variant="bordered"
+          variant="outline"
           size="sm"
-          startContent={<Clock className="w-4 h-4" />}
-          onPress={useDefaultSchedule}
+          onClick={useDefaultSchedule}
         >
+          <Clock className="mr-2 w-4 h-4" />
           Use Default Schedule
         </Button>
         <Button
-          variant="bordered"
+          variant="secondary"
           size="sm"
-          color="secondary"
-          startContent={
-            isGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )
-          }
-          onPress={generateOptimalSchedule}
-          isDisabled={isGenerating}
+          onClick={generateOptimalSchedule}
+          disabled={isGenerating}
         >
+          {isGenerating ? (
+            <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+          ) : (
+            <Sparkles className="mr-2 w-4 h-4" />
+          )}
           AI Optimal Times
         </Button>
       </div>
@@ -172,7 +171,7 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
                 className={`p-2 text-center rounded-lg text-sm font-medium transition-all ${
                   isSelected
                     ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    : "bg-gray-100 dark:bg-gray-800 text-muted-foreground hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
               >
                 {day.label}
@@ -189,7 +188,7 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
 
       {/* Selected Day Details */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-medium text-gray-900 dark:text-white capitalize">
               {selectedDay}
@@ -208,11 +207,10 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
               </select>
               <Button
                 size="sm"
-                color="primary"
-                variant="flat"
-                startContent={<Plus className="w-3 h-3" />}
-                onPress={() => addTimeSlot(selectedDay, selectedTime)}
+                variant="secondary"
+                onClick={() => addTimeSlot(selectedDay, selectedTime)}
               >
+                <Plus className="mr-1 w-3 h-3" />
                 Add
               </Button>
             </div>
@@ -232,18 +230,17 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
                     </span>
                     <div className="flex gap-1">
                       {slot.platforms.map((p) => (
-                        <Chip key={p} size="sm" variant="flat">
+                        <Badge key={p} variant="secondary">
                           {p}
-                        </Chip>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                   <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    color="danger"
-                    onPress={() => removeTimeSlot(selectedDay, slot.time)}
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeTimeSlot(selectedDay, slot.time)}
+                    className="text-destructive hover:text-destructive"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -251,21 +248,21 @@ export function ScheduleStep({ data, updateData }: ScheduleStepProps) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="text-sm text-muted-foreground text-center py-4">
               No posting times scheduled for {selectedDay}
             </p>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Summary */}
       <div className="flex items-center justify-center gap-4 text-sm">
-        <div className="text-gray-500 dark:text-gray-400">
+        <div className="text-muted-foreground">
           Total scheduled posts:
         </div>
-        <Chip color={totalSlots > 0 ? "success" : "warning"} variant="flat">
+        <Badge variant={totalSlots > 0 ? "default" : "secondary"}>
           {totalSlots} per week
-        </Chip>
+        </Badge>
       </div>
     </div>
   );

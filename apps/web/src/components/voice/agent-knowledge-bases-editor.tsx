@@ -1,25 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  Button,
-  Input,
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Switch,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Chip,
-  Slider,
-  Progress,
-} from "@heroui/react";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Plus,
   Trash2,
@@ -72,8 +73,8 @@ export function AgentKnowledgeBasesEditor({
   const [error, setError] = useState<string | null>(null);
   const [selectedKbId, setSelectedKbId] = useState<string>("");
   const [editingLink, setEditingLink] = useState<LinkedKnowledgeBase | null>(null);
-  const { isOpen: isLinkOpen, onOpen: onLinkOpen, onClose: onLinkClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   // New link settings
   const [linkPriority, setLinkPriority] = useState(0);
@@ -136,7 +137,7 @@ export function AgentKnowledgeBasesEditor({
       }
 
       await fetchLinkedKnowledgeBases();
-      onLinkClose();
+      setIsLinkOpen(false);
       setSelectedKbId("");
       setLinkPriority(0);
       setLinkMaxChunks(5);
@@ -191,7 +192,7 @@ export function AgentKnowledgeBasesEditor({
 
   const handleEditLink = (link: LinkedKnowledgeBase) => {
     setEditingLink({ ...link });
-    onEditOpen();
+    setIsEditOpen(true);
   };
 
   const handleSaveEdit = async () => {
@@ -215,7 +216,7 @@ export function AgentKnowledgeBasesEditor({
       if (!response.ok) throw new Error("Failed to update link");
 
       await fetchLinkedKnowledgeBases();
-      onEditClose();
+      setIsEditOpen(false);
       setEditingLink(null);
     } catch (err) {
       console.error("Error updating link:", err);
@@ -232,11 +233,11 @@ export function AgentKnowledgeBasesEditor({
   if (loading) {
     return (
       <Card>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -246,66 +247,61 @@ export function AgentKnowledgeBasesEditor({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">RAG Knowledge Bases</h3>
-          <p className="text-sm text-default-500">
+          <p className="text-sm text-muted-foreground">
             Link knowledge bases for context retrieval during calls
           </p>
         </div>
         <Button
-          color="primary"
-          startContent={<Link className="w-4 h-4" />}
-          onPress={onLinkOpen}
-          isDisabled={unlinkedKbs.length === 0}
+          onClick={() => setIsLinkOpen(true)}
+          disabled={unlinkedKbs.length === 0}
         >
           Link Knowledge Base
         </Button>
       </div>
 
       {error && (
-        <Card className="bg-danger-50 border border-danger-200">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2 text-danger">
+        <Card className="bg-destructive/10 border border-destructive/30">
+          <CardContent className="py-3">
+            <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">{error}</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {linkedKbs.length === 0 ? (
         <Card>
-          <CardBody className="py-12 text-center">
+          <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="p-3 rounded-full bg-default-100">
-                <Database className="w-8 h-8 text-default-400" />
+              <div className="p-3 rounded-full bg-muted">
+                <Database className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
                 <p className="font-medium">No knowledge bases linked</p>
-                <p className="text-sm text-default-500">
+                <p className="text-sm text-muted-foreground">
                   Link knowledge bases to enable RAG for this agent
                 </p>
               </div>
               {unlinkedKbs.length > 0 ? (
                 <Button
-                  color="primary"
-                  variant="flat"
-                  startContent={<Link className="w-4 h-4" />}
-                  onPress={onLinkOpen}
+                  variant="secondary"
+                  onClick={() => setIsLinkOpen(true)}
                 >
                   Link Your First Knowledge Base
                 </Button>
               ) : (
                 <Button
-                  as="a"
-                  href="/dashboard/voice/knowledge-bases"
-                  color="primary"
-                  variant="flat"
-                  startContent={<Plus className="w-4 h-4" />}
+                  variant="secondary"
+                  asChild
                 >
-                  Create Knowledge Base First
+                  <a href="/dashboard/voice/knowledge-bases">
+                    Create Knowledge Base First
+                  </a>
                 </Button>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -314,30 +310,30 @@ export function AgentKnowledgeBasesEditor({
               key={link.id}
               className={!link.isActive || !link.knowledgeBaseActive ? "opacity-60" : ""}
             >
-              <CardBody className="py-3">
+              <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary-100">
+                    <div className="p-2 rounded-lg bg-primary/10">
                       <BookOpen className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{link.name}</span>
-                        <Chip size="sm" variant="flat" color="primary">
+                        <Badge variant="secondary">
                           Priority: {link.priority}
-                        </Chip>
+                        </Badge>
                         {!link.isActive && (
-                          <Chip size="sm" variant="flat" color="default">
+                          <Badge variant="outline">
                             Disabled
-                          </Chip>
+                          </Badge>
                         )}
                         {!link.knowledgeBaseActive && (
-                          <Chip size="sm" variant="flat" color="warning">
+                          <Badge variant="destructive">
                             KB Inactive
-                          </Chip>
+                          </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-default-500">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <FileText className="w-3 h-3" />
                           {link.documentCount} docs
@@ -353,207 +349,194 @@ export function AgentKnowledgeBasesEditor({
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
-                      size="sm"
-                      isSelected={link.isActive}
-                      onValueChange={() => handleToggleActive(link)}
+                      checked={link.isActive}
+                      onCheckedChange={() => handleToggleActive(link)}
                     />
                     <Button
-                      size="sm"
-                      variant="flat"
-                      isIconOnly
-                      onPress={() => handleEditLink(link)}
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => handleEditLink(link)}
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
                     <Button
-                      size="sm"
-                      variant="flat"
-                      color="danger"
-                      isIconOnly
-                      onPress={() => handleUnlinkKnowledgeBase(link)}
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleUnlinkKnowledgeBase(link)}
                     >
                       <Unlink className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Link Knowledge Base Modal */}
-      <Modal isOpen={isLinkOpen} onClose={onLinkClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Link Knowledge Base</ModalHeader>
-          <ModalBody>
+      {/* Link Knowledge Base Dialog */}
+      <Dialog open={isLinkOpen} onOpenChange={setIsLinkOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Link Knowledge Base</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-6">
-              <Select
-                label="Select Knowledge Base"
-                placeholder="Choose a knowledge base to link"
-                selectedKeys={selectedKbId ? [selectedKbId] : []}
-                onSelectionChange={(keys) => setSelectedKbId(Array.from(keys)[0] as string)}
-              >
-                {unlinkedKbs.map((kb) => (
-                  <SelectItem
-                    key={kb.id}
-                    description={`${kb.documentCount} documents, ${kb.chunkCount} chunks`}
-                  >
-                    {kb.name}
-                  </SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Select Knowledge Base</Label>
+                <Select
+                  value={selectedKbId}
+                  onValueChange={setSelectedKbId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a knowledge base to link" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unlinkedKbs.map((kb) => (
+                      <SelectItem key={kb.id} value={kb.id}>
+                        {kb.name} ({kb.documentCount} documents, {kb.chunkCount} chunks)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Priority (higher = searched first)</label>
-                <Slider
-                  size="sm"
+                <Label>Priority (higher = searched first): {linkPriority}</Label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
                   step={1}
-                  minValue={0}
-                  maxValue={100}
                   value={linkPriority}
-                  onChange={(value) => setLinkPriority(value as number)}
-                  className="max-w-full"
-                  showTooltip
+                  onChange={(e) => setLinkPriority(Number(e.target.value))}
+                  className="w-full"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Max Results</label>
-                <Slider
-                  size="sm"
+                <Label>Max Results: {linkMaxChunks}</Label>
+                <input
+                  type="range"
+                  min={1}
+                  max={20}
                   step={1}
-                  minValue={1}
-                  maxValue={20}
                   value={linkMaxChunks}
-                  onChange={(value) => setLinkMaxChunks(value as number)}
-                  className="max-w-full"
-                  showTooltip
+                  onChange={(e) => setLinkMaxChunks(Number(e.target.value))}
+                  className="w-full"
                 />
-                <p className="text-xs text-default-500">
+                <p className="text-xs text-muted-foreground">
                   Maximum number of relevant chunks to retrieve
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
+                <Label>
                   Minimum Relevance Score ({(linkMinScore * 100).toFixed(0)}%)
-                </label>
-                <Slider
-                  size="sm"
-                  step={0.05}
-                  minValue={0}
-                  maxValue={1}
-                  value={linkMinScore}
-                  onChange={(value) => setLinkMinScore(value as number)}
-                  className="max-w-full"
-                  showTooltip
-                  formatOptions={{ style: "percent" }}
+                </Label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={Math.round(linkMinScore * 100)}
+                  onChange={(e) => setLinkMinScore(Number(e.target.value) / 100)}
+                  className="w-full"
                 />
-                <p className="text-xs text-default-500">
+                <p className="text-xs text-muted-foreground">
                   Only return results above this similarity threshold
                 </p>
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onLinkClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsLinkOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              startContent={<Link className="w-4 h-4" />}
-              onPress={handleLinkKnowledgeBase}
-              isLoading={saving}
-              isDisabled={!selectedKbId}
+              onClick={handleLinkKnowledgeBase}
+              disabled={saving || !selectedKbId}
             >
               Link Knowledge Base
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Edit Link Settings Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Edit Link Settings</ModalHeader>
-          <ModalBody>
+      {/* Edit Link Settings Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Link Settings</DialogTitle></DialogHeader>
+          <div className="py-4">
             {editingLink && (
               <div className="space-y-6">
-                <div className="p-3 rounded-lg bg-default-100">
+                <div className="p-3 rounded-lg bg-muted">
                   <p className="font-medium">{editingLink.name}</p>
-                  <p className="text-sm text-default-500">{editingLink.description}</p>
+                  <p className="text-sm text-muted-foreground">{editingLink.description}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Priority (higher = searched first)
-                  </label>
-                  <Slider
-                    size="sm"
+                  <Label>
+                    Priority (higher = searched first): {editingLink.priority}
+                  </Label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
                     step={1}
-                    minValue={0}
-                    maxValue={100}
                     value={editingLink.priority}
-                    onChange={(value) =>
-                      setEditingLink({ ...editingLink, priority: value as number })
+                    onChange={(e) =>
+                      setEditingLink({ ...editingLink, priority: Number(e.target.value) })
                     }
-                    className="max-w-full"
-                    showTooltip
+                    className="w-full"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Max Results</label>
-                  <Slider
-                    size="sm"
+                  <Label>Max Results: {editingLink.maxChunks}</Label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={20}
                     step={1}
-                    minValue={1}
-                    maxValue={20}
                     value={editingLink.maxChunks}
-                    onChange={(value) =>
-                      setEditingLink({ ...editingLink, maxChunks: value as number })
+                    onChange={(e) =>
+                      setEditingLink({ ...editingLink, maxChunks: Number(e.target.value) })
                     }
-                    className="max-w-full"
-                    showTooltip
+                    className="w-full"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                  <Label>
                     Minimum Relevance Score ({(editingLink.minScore * 100).toFixed(0)}%)
-                  </label>
-                  <Slider
-                    size="sm"
-                    step={0.05}
-                    minValue={0}
-                    maxValue={1}
-                    value={editingLink.minScore}
-                    onChange={(value) =>
-                      setEditingLink({ ...editingLink, minScore: value as number })
+                  </Label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={Math.round(editingLink.minScore * 100)}
+                    onChange={(e) =>
+                      setEditingLink({ ...editingLink, minScore: Number(e.target.value) / 100 })
                     }
-                    className="max-w-full"
-                    showTooltip
-                    formatOptions={{ style: "percent" }}
+                    className="w-full"
                   />
                 </div>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onEditClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsEditOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              onPress={handleSaveEdit}
-              isLoading={saving}
+              onClick={handleSaveEdit}
+              disabled={saving}
             >
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

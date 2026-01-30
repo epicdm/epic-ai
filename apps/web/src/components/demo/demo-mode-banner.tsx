@@ -1,6 +1,7 @@
 "use client";
 
-import { Button, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { FlaskConical as BeakerIcon, X as XMarkIcon, Sparkles as SparklesIcon } from "lucide-react";
 import { useDemo } from "@/lib/demo/demo-context";
 import { cn } from "@/lib/utils";
@@ -30,13 +31,13 @@ export function DemoModeBanner({ className }: DemoModeBannerProps) {
             <BeakerIcon className="w-5 h-5" />
             <span className="font-semibold text-sm">Demo Mode</span>
           </div>
-          <Chip
-            size="sm"
-            variant="flat"
+          <Badge
+            
+            variant="secondary"
             className="bg-white/20 text-white border-white/30"
           >
             {brandName}
-          </Chip>
+          </Badge>
           <span className="text-sm text-white/90">
             Exploring with sample data • No real actions
           </span>
@@ -45,22 +46,23 @@ export function DemoModeBanner({ className }: DemoModeBannerProps) {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant="flat"
+            variant="secondary"
             className="bg-white/20 text-white hover:bg-white/30"
-            startContent={<SparklesIcon className="w-4 h-4" />}
-            onPress={() => {
+            
+            onClick={() => {
               window.location.href = "/onboarding?from=demo";
             }}
           >
+            <SparklesIcon className="w-4 h-4" />
             Start for Real
           </Button>
           <Button
             size="sm"
-            variant="flat"
+            variant="secondary"
             className="bg-white/20 text-white hover:bg-white/30"
-            startContent={<XMarkIcon className="w-4 h-4" />}
-            onPress={exitDemoMode}
-          >
+            
+            onClick={exitDemoMode}
+          ><XMarkIcon className="w-4 h-4" /> 
             Exit Demo
           </Button>
         </div>
@@ -79,9 +81,9 @@ export function DemoModeBanner({ className }: DemoModeBannerProps) {
           <div className="flex items-center gap-1 flex-shrink-0">
             <Button
               size="sm"
-              variant="flat"
+              variant="secondary"
               className="bg-white/20 text-white hover:bg-white/30 min-w-0 px-2"
-              onPress={() => {
+              onClick={() => {
                 window.location.href = "/onboarding?from=demo";
               }}
             >
@@ -89,9 +91,9 @@ export function DemoModeBanner({ className }: DemoModeBannerProps) {
             </Button>
             <Button
               size="sm"
-              variant="flat"
+              variant="secondary"
               className="bg-white/20 text-white hover:bg-white/30 min-w-0 px-2"
-              onPress={exitDemoMode}
+              onClick={exitDemoMode}
             >
               <XMarkIcon className="w-4 h-4" />
             </Button>
@@ -111,13 +113,10 @@ export function DemoIndicator({ label }: { label?: string }) {
   }
 
   return (
-    <Chip
-      size="sm"
-      color="warning"
-      variant="flat"
-      startContent={<BeakerIcon className="w-3 h-3" />}
+    <Badge
+      variant="secondary"
     >
       {label || "Demo Data"}
-    </Chip>
+    </Badge>
   );
 }

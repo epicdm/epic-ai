@@ -5,7 +5,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { NewDashboardContent } from "@/components/dashboard/new-dashboard-content";
+import { NewDashboardContent } from "@/components/dashboard/dashboard-content";
 
 // UAT bypass - allows testing without auth when explicitly enabled
 // Supports both UAT_AUTH_BYPASS (canonical) and E2E_UAT_BYPASS (for Playwright E2E tests)

@@ -1,7 +1,12 @@
 "use client";
 
 import { Sparkles, HelpCircle } from "lucide-react";
-import { Tooltip, Badge } from "@heroui/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { WhyExplanationModal } from "@/components/ui/why-explanation-modal";
@@ -171,9 +176,14 @@ export function AIBadge({
   // Wrap in tooltip if reason is provided
   return (
     <>
-      <Tooltip content={reason}>
-        <div className="inline-flex">{badgeContent}</div>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-flex">{badgeContent}</div>
+          </TooltipTrigger>
+          <TooltipContent>{reason}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {analysisData && (
         <WhyExplanationModal

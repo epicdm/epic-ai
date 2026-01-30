@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { getPublicHref } from "@/lib/routes/public";
 import {
   Zap as BoltIcon,
@@ -158,7 +158,7 @@ export function LandingHero() {
             <Button
               as={Link}
               href={getPublicHref("/sign-in")}
-              variant="light"
+              variant="ghost"
               className="text-white"
             >
               Sign In
@@ -166,7 +166,6 @@ export function LandingHero() {
             <Button
               as={Link}
               href={getPublicHref("/sign-up")}
-              color="primary"
               className="bg-white text-purple-700"
             >
               Get Started
@@ -213,7 +212,7 @@ export function LandingHero() {
               as={Link}
               href={getPublicHref("/demo")}
               size="lg"
-              variant="bordered"
+              variant="outline"
               className="border-white/40 text-white"
             >
               Watch 60-Second Demo
@@ -328,7 +327,6 @@ export function LandingHero() {
         <Button
           as={Link}
           href={getPublicHref("/sign-up")}
-          color="primary"
           size="lg"
           className="mt-10"
         >
@@ -391,7 +389,6 @@ export function LandingHero() {
               <Button
                 as={Link}
                 href={getPublicHref("/sign-up")}
-                color="primary"
                 className={`mt-6 w-full ${
                   plan.highlighted ? "bg-white text-purple-700" : ""
                 }`}
@@ -413,7 +410,6 @@ export function LandingHero() {
             <Button
               as={Link}
               href={getPublicHref("/sign-up")}
-              color="primary"
               className="bg-white text-purple-700"
             >
               Talk to AI Agent
@@ -421,7 +417,7 @@ export function LandingHero() {
             <Button
               as={Link}
               href={getPublicHref("/sign-up")}
-              variant="bordered"
+              variant="outline"
               className="border-white/40 text-white"
             >
               Get Started Free

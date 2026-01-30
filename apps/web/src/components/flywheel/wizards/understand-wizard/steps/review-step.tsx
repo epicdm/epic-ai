@@ -1,6 +1,9 @@
 "use client";
 
-import { Card, CardBody, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Building2,
   Users,
@@ -47,12 +50,12 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
             <strong>{data.brandName || "Not set"}</strong>
           </p>
           {data.brandDescription && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {data.brandDescription}
             </p>
           )}
           {data.mission && (
-            <p className="text-sm text-gray-500 dark:text-gray-500 italic">
+            <p className="text-sm text-muted-foreground italic">
               Mission: {data.mission}
             </p>
           )}
@@ -71,9 +74,9 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
           </p>
           <div className="flex flex-wrap gap-1">
             {personalityTraits.map((trait) => (
-              <Chip key={trait.id} size="sm" variant="flat" color="secondary">
+              <Badge key={trait.id} variant="secondary">
                 {trait.emoji} {trait.label}
-              </Chip>
+              </Badge>
             ))}
           </div>
           <p className="text-sm">
@@ -96,14 +99,14 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
               >
                 <p className="font-medium">{audience.name}</p>
                 {audience.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     {audience.description}
                   </p>
                 )}
               </div>
             ))
           ) : (
-            <p className="text-gray-500">No audiences defined</p>
+            <p className="text-muted-foreground">No audiences defined</p>
           )}
         </div>
       ),
@@ -116,12 +119,12 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
         <div className="flex flex-wrap gap-2">
           {data.contentPillars?.length ? (
             data.contentPillars.map((pillar) => (
-              <Chip key={pillar.id} variant="flat" color="primary">
+              <Badge key={pillar.id} variant="secondary">
                 {pillar.name}
-              </Chip>
+              </Badge>
             ))
           ) : (
-            <p className="text-gray-500">No pillars defined</p>
+            <p className="text-muted-foreground">No pillars defined</p>
           )}
         </div>
       ),
@@ -134,12 +137,12 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
         <div className="flex flex-wrap gap-2">
           {data.competitors?.length ? (
             data.competitors.map((competitor) => (
-              <Chip key={competitor.id} variant="bordered">
+              <Badge key={competitor.id} variant="outline">
                 {competitor.name}
-              </Chip>
+              </Badge>
             ))
           ) : (
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               No competitors added (optional)
             </p>
           )}
@@ -158,7 +161,7 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Review Your Brand Brain
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-muted-foreground mt-1">
           Confirm the information below is correct before saving.
         </p>
       </div>
@@ -178,12 +181,12 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
               {section.isComplete ? (
                 <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
               ) : (
-                <span className="text-xs text-gray-400">{index + 1}</span>
+                <span className="text-xs text-muted-foreground">{index + 1}</span>
               )}
             </div>
           ))}
         </div>
-        <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+        <span className="text-sm text-muted-foreground ml-2">
           {completedCount}/{sections.length} complete
         </span>
       </div>
@@ -199,7 +202,7 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
                 : "border-gray-200 dark:border-gray-700"
             }`}
           >
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div
                   className={`p-2 rounded-lg ${
@@ -222,24 +225,25 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
                   <div className="text-sm">{section.content}</div>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Confirmation Checkbox */}
       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-        <Checkbox
-          isSelected={data.confirmed}
-          onValueChange={(value) => updateData({ confirmed: value })}
-          color="secondary"
-          isDisabled={!requiredComplete}
-        >
-          <span className="text-sm">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="confirm-review"
+            checked={data.confirmed || false}
+            onCheckedChange={(checked) => updateData({ confirmed: checked === true })}
+            disabled={!requiredComplete}
+          />
+          <Label htmlFor="confirm-review" className="text-sm cursor-pointer">
             I confirm this information is correct and ready to save as my Brand
             Brain.
-          </span>
-        </Checkbox>
+          </Label>
+        </div>
 
         {!requiredComplete && (
           <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2 ml-6">
@@ -254,7 +258,7 @@ export function ReviewStep({ data, updateData }: ReviewStepProps) {
             Your Brand Brain is ready to be saved.
           </p>
           <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-            Click "Complete" to save and proceed to the next phase.
+            Click &quot;Complete&quot; to save and proceed to the next phase.
           </p>
         </div>
       )}

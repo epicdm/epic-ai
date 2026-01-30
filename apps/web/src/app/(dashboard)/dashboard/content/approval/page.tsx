@@ -1,4 +1,4 @@
-import { NewContentQueue } from "@/components/content/new-content-queue";
+import { NewContentQueue } from "@/components/content/content-queue-page";
 
 export const dynamic = 'force-dynamic';
 

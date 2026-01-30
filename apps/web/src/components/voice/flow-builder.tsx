@@ -20,27 +20,26 @@ import {
   NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Textarea,
-  Chip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Spinner,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-} from "@heroui/react";
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 // Type definitions
@@ -117,17 +116,17 @@ const nodeTypeConfig: Record<
   FlowNodeType,
   { icon: string; color: string; label: string }
 > = {
-  START: { icon: "🚀", color: "#22c55e", label: "Start" },
-  MESSAGE: { icon: "💬", color: "#3b82f6", label: "Message" },
-  INPUT: { icon: "🎤", color: "#8b5cf6", label: "Input" },
-  CONDITION: { icon: "🔀", color: "#f59e0b", label: "Condition" },
-  INTENT: { icon: "🎯", color: "#ec4899", label: "Intent" },
-  TOOL_CALL: { icon: "🔧", color: "#06b6d4", label: "Tool Call" },
-  TRANSFER: { icon: "📞", color: "#ef4444", label: "Transfer" },
-  HANDOFF: { icon: "🔄", color: "#ef4444", label: "Handoff" },
-  WAIT: { icon: "⏳", color: "#6b7280", label: "Wait" },
-  SET_VARIABLE: { icon: "📝", color: "#10b981", label: "Set Variable" },
-  END: { icon: "🏁", color: "#dc2626", label: "End" },
+  START: { icon: "\u{1F680}", color: "#22c55e", label: "Start" },
+  MESSAGE: { icon: "\u{1F4AC}", color: "#3b82f6", label: "Message" },
+  INPUT: { icon: "\u{1F3A4}", color: "#8b5cf6", label: "Input" },
+  CONDITION: { icon: "\u{1F500}", color: "#f59e0b", label: "Condition" },
+  INTENT: { icon: "\u{1F3AF}", color: "#ec4899", label: "Intent" },
+  TOOL_CALL: { icon: "\u{1F527}", color: "#06b6d4", label: "Tool Call" },
+  TRANSFER: { icon: "\u{1F4DE}", color: "#ef4444", label: "Transfer" },
+  HANDOFF: { icon: "\u{1F504}", color: "#ef4444", label: "Handoff" },
+  WAIT: { icon: "\u{23F3}", color: "#6b7280", label: "Wait" },
+  SET_VARIABLE: { icon: "\u{1F4DD}", color: "#10b981", label: "Set Variable" },
+  END: { icon: "\u{1F3C1}", color: "#dc2626", label: "End" },
 };
 
 // Custom Node Component
@@ -224,12 +223,8 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
     null
   );
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isNodeEditorOpen,
-    onOpen: onNodeEditorOpen,
-    onClose: onNodeEditorClose,
-  } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isNodeEditorOpen, setIsNodeEditorOpen] = useState(false);
 
   // Node editor state
   const [editingNode, setEditingNode] = useState<Node<FlowNodeData> | null>(
@@ -386,10 +381,10 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
       };
 
       setNodes((nds) => [...nds, newNode]);
-      onClose();
+      setIsOpen(false);
       toast.success(`Added ${config.label} node`);
     },
-    [nodes.length, setNodes, onClose]
+    [nodes.length, setNodes]
   );
 
   // Handle node click for editing
@@ -400,9 +395,9 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
       setNodeLabel(node.data.label);
       setNodeContent(node.data.content || "");
       setNodeConfig(node.data.config || {});
-      onNodeEditorOpen();
+      setIsNodeEditorOpen(true);
     },
-    [onNodeEditorOpen]
+    []
   );
 
   // Save node edits
@@ -426,9 +421,9 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
       })
     );
 
-    onNodeEditorClose();
+    setIsNodeEditorOpen(false);
     toast.success("Node updated");
-  }, [editingNode, nodeLabel, nodeContent, nodeConfig, setNodes, onNodeEditorClose]);
+  }, [editingNode, nodeLabel, nodeContent, nodeConfig, setNodes]);
 
   // Delete selected node
   const deleteNode = useCallback(() => {
@@ -445,9 +440,9 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
         (e) => e.source !== editingNode.id && e.target !== editingNode.id
       )
     );
-    onNodeEditorClose();
+    setIsNodeEditorOpen(false);
     toast.success("Node deleted");
-  }, [editingNode, setNodes, setEdges, onNodeEditorClose]);
+  }, [editingNode, setNodes, setEdges]);
 
   // Save flow
   const saveFlow = useCallback(async () => {
@@ -549,7 +544,7 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[600px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -580,405 +575,433 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
 
         {/* Top toolbar */}
         <Panel position="top-left" className="flex gap-2">
-          <Button color="primary" size="sm" onPress={onOpen}>
+          <Button size="sm" onClick={() => setIsOpen(true)}>
             + Add Node
           </Button>
           <Button
-            color="success"
+            className="bg-green-600 hover:bg-green-700 text-white"
             size="sm"
-            onPress={saveFlow}
-            isLoading={saving}
+            onClick={saveFlow}
+            disabled={saving}
           >
             Save Flow
           </Button>
           {flow?.isPublished ? (
-            <Chip color="success" variant="flat">
+            <Badge className="bg-green-100 text-green-800 border-green-200">
               Published
-            </Chip>
+            </Badge>
           ) : (
-            <Chip color="warning" variant="flat">
+            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
               Draft
-            </Chip>
+            </Badge>
           )}
         </Panel>
 
         {/* Flow info */}
         <Panel position="top-right">
           <Card className="max-w-xs">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="text-sm font-medium">
                 {flow?.name || "New Flow"}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 {nodes.length} nodes, {edges.length} edges
               </div>
               {flow?.agent && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   Agent: {flow.agent.name}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
         </Panel>
       </ReactFlow>
 
       {/* Add Node Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
-        <ModalContent>
-          <ModalHeader>Add Node</ModalHeader>
-          <ModalBody>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Add Node</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="grid grid-cols-2 gap-3">
               {(Object.entries(nodeTypeConfig) as [FlowNodeType, typeof nodeTypeConfig[FlowNodeType]][]).map(
                 ([type, config]) => (
                   <Card
                     key={type}
-                    isPressable
-                    onPress={() => addNode(type)}
-                    className="hover:border-blue-500 border-2 border-transparent transition-colors"
+                    className="cursor-pointer hover:border-blue-500 border-2 border-transparent transition-colors"
+                    onClick={() => addNode(type)}
                   >
-                    <CardBody className="p-4">
+                    <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{config.icon}</span>
                         <div>
                           <div className="font-medium">{config.label}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {getNodeDescription(type)}
                           </div>
                         </div>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 )
               )}
             </div>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Node Editor Modal */}
-      <Modal
-        isOpen={isNodeEditorOpen}
-        onClose={onNodeEditorClose}
-        size="lg"
+      <Dialog
+        open={isNodeEditorOpen}
+        onOpenChange={setIsNodeEditorOpen}
       >
-        <ModalContent>
-          <ModalHeader>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             {editingNode && (
               <div className="flex items-center gap-2">
                 <span>{nodeTypeConfig[editingNode.data.type].icon}</span>
                 Edit {nodeTypeConfig[editingNode.data.type].label} Node
               </div>
             )}
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
-              <Input
-                label="Label"
-                value={nodeLabel}
-                onValueChange={setNodeLabel}
-                description="A short name for this node"
-              />
+              <div className="space-y-2">
+                <Label>Label</Label>
+                <Input
+                  value={nodeLabel}
+                  onChange={(e) => setNodeLabel(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">A short name for this node</p>
+              </div>
 
               {editingNode?.data.type === "MESSAGE" && (
-                <Textarea
-                  label="Message Content"
-                  value={nodeContent}
-                  onValueChange={setNodeContent}
-                  minRows={3}
-                  description="The message the agent will speak"
-                />
+                <div className="space-y-2">
+                  <Label>Message Content</Label>
+                  <Textarea
+                    value={nodeContent}
+                    onChange={(e) => setNodeContent(e.target.value)}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">The message the agent will speak</p>
+                </div>
               )}
 
               {editingNode?.data.type === "INPUT" && (
                 <>
-                  <Input
-                    label="Variable Name"
-                    value={(nodeConfig.variable as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, variable: v })
-                    }
-                    description="Store the user's response in this variable"
-                  />
-                  <Textarea
-                    label="Prompt"
-                    value={nodeContent}
-                    onValueChange={setNodeContent}
-                    minRows={2}
-                    description="What to ask the user"
-                  />
+                  <div className="space-y-2">
+                    <Label>Variable Name</Label>
+                    <Input
+                      value={(nodeConfig.variable as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, variable: e.target.value })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">Store the user&apos;s response in this variable</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prompt</Label>
+                    <Textarea
+                      value={nodeContent}
+                      onChange={(e) => setNodeContent(e.target.value)}
+                      rows={2}
+                    />
+                    <p className="text-xs text-muted-foreground">What to ask the user</p>
+                  </div>
                 </>
               )}
 
               {editingNode?.data.type === "CONDITION" && (
                 <>
-                  <Input
-                    label="Variable"
-                    value={(nodeConfig.variable as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, variable: v })
-                    }
-                    description="Variable to check"
-                  />
-                  <Select
-                    label="Operator"
-                    selectedKeys={
-                      nodeConfig.operator ? [nodeConfig.operator as string] : []
-                    }
-                    onSelectionChange={(keys) =>
-                      setNodeConfig({
-                        ...nodeConfig,
-                        operator: Array.from(keys)[0],
-                      })
-                    }
-                  >
-                    <SelectItem key="equals">Equals</SelectItem>
-                    <SelectItem key="contains">Contains</SelectItem>
-                    <SelectItem key="startsWith">Starts With</SelectItem>
-                    <SelectItem key="endsWith">Ends With</SelectItem>
-                    <SelectItem key="greaterThan">Greater Than</SelectItem>
-                    <SelectItem key="lessThan">Less Than</SelectItem>
-                  </Select>
-                  <Input
-                    label="Value"
-                    value={(nodeConfig.value as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, value: v })
-                    }
-                    description="Value to compare against"
-                  />
+                  <div className="space-y-2">
+                    <Label>Variable</Label>
+                    <Input
+                      value={(nodeConfig.variable as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, variable: e.target.value })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">Variable to check</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Operator</Label>
+                    <Select
+                      value={(nodeConfig.operator as string) || ""}
+                      onValueChange={(val) =>
+                        setNodeConfig({
+                          ...nodeConfig,
+                          operator: val,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select operator" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="equals">Equals</SelectItem>
+                        <SelectItem value="contains">Contains</SelectItem>
+                        <SelectItem value="startsWith">Starts With</SelectItem>
+                        <SelectItem value="endsWith">Ends With</SelectItem>
+                        <SelectItem value="greaterThan">Greater Than</SelectItem>
+                        <SelectItem value="lessThan">Less Than</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Value</Label>
+                    <Input
+                      value={(nodeConfig.value as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, value: e.target.value })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">Value to compare against</p>
+                  </div>
                 </>
               )}
 
               {editingNode?.data.type === "TRANSFER" && (
                 <>
-                  <Select
-                    label="Transfer Type"
-                    selectedKeys={
-                      nodeConfig.transferType
-                        ? [nodeConfig.transferType as string]
-                        : ["phone"]
-                    }
-                    onSelectionChange={(keys) => {
-                      const type = Array.from(keys)[0] as string;
-                      setNodeConfig({
-                        ...nodeConfig,
-                        transferType: type,
-                        // Clear other fields when type changes
-                        destination: type === "phone" ? (nodeConfig.destination || "") : undefined,
-                        agentId: type === "agent" ? (nodeConfig.agentId || "") : undefined,
-                        groupId: type === "group" ? (nodeConfig.groupId || "") : undefined,
-                        routingRuleId: type === "rule" ? (nodeConfig.routingRuleId || "") : undefined,
-                      });
-                    }}
-                  >
-                    <SelectItem key="phone">Phone Number</SelectItem>
-                    <SelectItem key="agent">Voice Agent</SelectItem>
-                    <SelectItem key="group">Agent Group</SelectItem>
-                    <SelectItem key="rule">Routing Rule</SelectItem>
-                  </Select>
+                  <div className="space-y-2">
+                    <Label>Transfer Type</Label>
+                    <Select
+                      value={(nodeConfig.transferType as string) || "phone"}
+                      onValueChange={(val) => {
+                        setNodeConfig({
+                          ...nodeConfig,
+                          transferType: val,
+                          // Clear other fields when type changes
+                          destination: val === "phone" ? (nodeConfig.destination || "") : undefined,
+                          agentId: val === "agent" ? (nodeConfig.agentId || "") : undefined,
+                          groupId: val === "group" ? (nodeConfig.groupId || "") : undefined,
+                          routingRuleId: val === "rule" ? (nodeConfig.routingRuleId || "") : undefined,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select transfer type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="phone">Phone Number</SelectItem>
+                        <SelectItem value="agent">Voice Agent</SelectItem>
+                        <SelectItem value="group">Agent Group</SelectItem>
+                        <SelectItem value="rule">Routing Rule</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   {loadingTransferOptions ? (
                     <div className="flex items-center justify-center py-4">
-                      <Spinner size="sm" />
-                      <span className="ml-2 text-sm text-gray-500">Loading options...</span>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span className="ml-2 text-sm text-muted-foreground">Loading options...</span>
                     </div>
                   ) : (
                     <>
                       {/* Phone number input */}
                       {(!nodeConfig.transferType || nodeConfig.transferType === "phone") && (
-                        <Input
-                          label="Phone Number"
-                          value={(nodeConfig.destination as string) || ""}
-                          onValueChange={(v) =>
-                            setNodeConfig({ ...nodeConfig, destination: v })
-                          }
-                          placeholder="+1234567890"
-                          description="Phone number to transfer the call to"
-                        />
+                        <div className="space-y-2">
+                          <Label>Phone Number</Label>
+                          <Input
+                            value={(nodeConfig.destination as string) || ""}
+                            onChange={(e) =>
+                              setNodeConfig({ ...nodeConfig, destination: e.target.value })
+                            }
+                            placeholder="+1234567890"
+                          />
+                          <p className="text-xs text-muted-foreground">Phone number to transfer the call to</p>
+                        </div>
                       )}
 
                       {/* Agent selection */}
                       {nodeConfig.transferType === "agent" && (
-                        <Select
-                          label="Select Agent"
-                          selectedKeys={
-                            nodeConfig.agentId ? [nodeConfig.agentId as string] : []
-                          }
-                          onSelectionChange={(keys) =>
-                            setNodeConfig({
-                              ...nodeConfig,
-                              agentId: Array.from(keys)[0],
-                            })
-                          }
-                          description="Transfer to another voice agent"
-                        >
-                          {transferAgents.map((agent) => (
-                            <SelectItem
-                              key={agent.id}
-                              textValue={agent.name}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span>{agent.name}</span>
-                                {!agent.isActive && (
-                                  <Chip size="sm" color="warning" variant="flat">Inactive</Chip>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </Select>
+                        <div className="space-y-2">
+                          <Label>Select Agent</Label>
+                          <Select
+                            value={(nodeConfig.agentId as string) || ""}
+                            onValueChange={(val) =>
+                              setNodeConfig({
+                                ...nodeConfig,
+                                agentId: val,
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an agent" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {transferAgents.map((agent) => (
+                                <SelectItem
+                                  key={agent.id}
+                                  value={agent.id}
+                                >
+                                  {agent.name}{!agent.isActive ? " (Inactive)" : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Transfer to another voice agent</p>
+                        </div>
                       )}
 
                       {/* Group selection */}
                       {nodeConfig.transferType === "group" && (
-                        <Select
-                          label="Select Agent Group"
-                          selectedKeys={
-                            nodeConfig.groupId ? [nodeConfig.groupId as string] : []
-                          }
-                          onSelectionChange={(keys) =>
-                            setNodeConfig({
-                              ...nodeConfig,
-                              groupId: Array.from(keys)[0],
-                            })
-                          }
-                          description="Transfer to a group of agents (uses group's routing strategy)"
-                        >
-                          {agentGroups.map((group) => (
-                            <SelectItem
-                              key={group.id}
-                              textValue={group.name}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span>{group.name}</span>
-                                <Chip size="sm" variant="flat" color="primary">
-                                  {group.routingStrategy.replace(/_/g, " ")}
-                                </Chip>
-                                {!group.isActive && (
-                                  <Chip size="sm" color="warning" variant="flat">Inactive</Chip>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </Select>
+                        <div className="space-y-2">
+                          <Label>Select Agent Group</Label>
+                          <Select
+                            value={(nodeConfig.groupId as string) || ""}
+                            onValueChange={(val) =>
+                              setNodeConfig({
+                                ...nodeConfig,
+                                groupId: val,
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a group" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {agentGroups.map((group) => (
+                                <SelectItem
+                                  key={group.id}
+                                  value={group.id}
+                                >
+                                  {group.name} ({group.routingStrategy.replace(/_/g, " ")}){!group.isActive ? " - Inactive" : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Transfer to a group of agents (uses group&apos;s routing strategy)</p>
+                        </div>
                       )}
 
                       {/* Routing rule selection */}
                       {nodeConfig.transferType === "rule" && (
-                        <Select
-                          label="Select Routing Rule"
-                          selectedKeys={
-                            nodeConfig.routingRuleId ? [nodeConfig.routingRuleId as string] : []
-                          }
-                          onSelectionChange={(keys) =>
-                            setNodeConfig({
-                              ...nodeConfig,
-                              routingRuleId: Array.from(keys)[0],
-                            })
-                          }
-                          description="Apply a routing rule to determine destination"
-                        >
-                          {routingRules.map((rule) => (
-                            <SelectItem
-                              key={rule.id}
-                              textValue={rule.name}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span>{rule.name}</span>
-                                {!rule.isActive && (
-                                  <Chip size="sm" color="warning" variant="flat">Inactive</Chip>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </Select>
+                        <div className="space-y-2">
+                          <Label>Select Routing Rule</Label>
+                          <Select
+                            value={(nodeConfig.routingRuleId as string) || ""}
+                            onValueChange={(val) =>
+                              setNodeConfig({
+                                ...nodeConfig,
+                                routingRuleId: val,
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a routing rule" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {routingRules.map((rule) => (
+                                <SelectItem
+                                  key={rule.id}
+                                  value={rule.id}
+                                >
+                                  {rule.name}{!rule.isActive ? " (Inactive)" : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Apply a routing rule to determine destination</p>
+                        </div>
                       )}
                     </>
                   )}
 
-                  <Textarea
-                    label="Transfer Message"
-                    value={nodeContent}
-                    onValueChange={setNodeContent}
-                    minRows={2}
-                    placeholder="Please hold while I transfer you..."
-                    description="Message to say before transferring"
-                  />
+                  <div className="space-y-2">
+                    <Label>Transfer Message</Label>
+                    <Textarea
+                      value={nodeContent}
+                      onChange={(e) => setNodeContent(e.target.value)}
+                      rows={2}
+                      placeholder="Please hold while I transfer you..."
+                    />
+                    <p className="text-xs text-muted-foreground">Message to say before transferring</p>
+                  </div>
 
-                  <Input
-                    label="Hold Music URL (Optional)"
-                    value={(nodeConfig.holdMusicUrl as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, holdMusicUrl: v || undefined })
-                    }
-                    placeholder="https://example.com/music.mp3"
-                    description="Audio file to play while transferring"
-                  />
+                  <div className="space-y-2">
+                    <Label>Hold Music URL (Optional)</Label>
+                    <Input
+                      value={(nodeConfig.holdMusicUrl as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, holdMusicUrl: e.target.value || undefined })
+                      }
+                      placeholder="https://example.com/music.mp3"
+                    />
+                    <p className="text-xs text-muted-foreground">Audio file to play while transferring</p>
+                  </div>
                 </>
               )}
 
               {editingNode?.data.type === "HANDOFF" && (
                 <>
-                  <Select
-                    label="Target Source"
-                    selectedKeys={
-                      nodeConfig.targetSource
-                        ? [nodeConfig.targetSource as string]
-                        : ["default"]
-                    }
-                    onSelectionChange={(keys) => {
-                      const source = Array.from(keys)[0] as string;
-                      setNodeConfig({
-                        ...nodeConfig,
-                        targetSource: source,
-                        // Clear explicit target fields when switching to default
-                        ...(source === "default" ? {
-                          targetContext: undefined,
-                          targetExten: undefined,
-                          targetPriority: undefined,
-                        } : {}),
-                      });
-                    }}
-                    description="Use governance default or specify an explicit target"
-                  >
-                    <SelectItem key="default">Use Governance Default</SelectItem>
-                    <SelectItem key="explicit">Explicit Target</SelectItem>
-                  </Select>
+                  <div className="space-y-2">
+                    <Label>Target Source</Label>
+                    <Select
+                      value={(nodeConfig.targetSource as string) || "default"}
+                      onValueChange={(val) => {
+                        setNodeConfig({
+                          ...nodeConfig,
+                          targetSource: val,
+                          // Clear explicit target fields when switching to default
+                          ...(val === "default" ? {
+                            targetContext: undefined,
+                            targetExten: undefined,
+                            targetPriority: undefined,
+                          } : {}),
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select target source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Use Governance Default</SelectItem>
+                        <SelectItem value="explicit">Explicit Target</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Use governance default or specify an explicit target</p>
+                  </div>
 
                   {nodeConfig.targetSource === "explicit" && (
                     <>
-                      <Input
-                        label="Context"
-                        value={(nodeConfig.targetContext as string) || ""}
-                        onValueChange={(v) =>
-                          setNodeConfig({ ...nodeConfig, targetContext: v })
-                        }
-                        placeholder="sales_queue"
-                        description="Dialplan context name"
-                      />
+                      <div className="space-y-2">
+                        <Label>Context</Label>
+                        <Input
+                          value={(nodeConfig.targetContext as string) || ""}
+                          onChange={(e) =>
+                            setNodeConfig({ ...nodeConfig, targetContext: e.target.value })
+                          }
+                          placeholder="sales_queue"
+                        />
+                        <p className="text-xs text-muted-foreground">Dialplan context name</p>
+                      </div>
 
-                      <Input
-                        label="Extension"
-                        value={(nodeConfig.targetExten as string) || ""}
-                        onValueChange={(v) =>
-                          setNodeConfig({ ...nodeConfig, targetExten: v })
-                        }
-                        placeholder="1"
-                        description="Extension number within the context"
-                      />
+                      <div className="space-y-2">
+                        <Label>Extension</Label>
+                        <Input
+                          value={(nodeConfig.targetExten as string) || ""}
+                          onChange={(e) =>
+                            setNodeConfig({ ...nodeConfig, targetExten: e.target.value })
+                          }
+                          placeholder="1"
+                        />
+                        <p className="text-xs text-muted-foreground">Extension number within the context</p>
+                      </div>
 
-                      <Input
-                        label="Priority"
-                        type="number"
-                        min={1}
-                        value={String(nodeConfig.targetPriority || 1)}
-                        onValueChange={(v) =>
-                          setNodeConfig({
-                            ...nodeConfig,
-                            targetPriority: parseInt(v) || 1,
-                          })
-                        }
-                        description="Priority level for the dialplan"
-                      />
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={String(nodeConfig.targetPriority || 1)}
+                          onChange={(e) =>
+                            setNodeConfig({
+                              ...nodeConfig,
+                              targetPriority: parseInt(e.target.value) || 1,
+                            })
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground">Priority level for the dialplan</p>
+                      </div>
                     </>
                   )}
 
@@ -989,91 +1012,106 @@ export function FlowBuilder({ flowId, agentId, onSave }: FlowBuilderProps) {
                     </div>
                   )}
 
-                  <Textarea
-                    label="Pre-Transfer Message"
-                    value={nodeContent}
-                    onValueChange={setNodeContent}
-                    minRows={2}
-                    placeholder="Please hold while I connect you to a human..."
-                    description="Message to speak before handoff (optional)"
-                  />
+                  <div className="space-y-2">
+                    <Label>Pre-Transfer Message</Label>
+                    <Textarea
+                      value={nodeContent}
+                      onChange={(e) => setNodeContent(e.target.value)}
+                      rows={2}
+                      placeholder="Please hold while I connect you to a human..."
+                    />
+                    <p className="text-xs text-muted-foreground">Message to speak before handoff (optional)</p>
+                  </div>
 
-                  <Input
-                    label="Escalation Reason"
-                    value={(nodeConfig.escalationReason as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, escalationReason: v })
-                    }
-                    placeholder="User requested human agent"
-                    description="Reason for escalation (tracked in session)"
-                  />
+                  <div className="space-y-2">
+                    <Label>Escalation Reason</Label>
+                    <Input
+                      value={(nodeConfig.escalationReason as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, escalationReason: e.target.value })
+                      }
+                      placeholder="User requested human agent"
+                    />
+                    <p className="text-xs text-muted-foreground">Reason for escalation (tracked in session)</p>
+                  </div>
                 </>
               )}
 
               {editingNode?.data.type === "WAIT" && (
-                <Input
-                  label="Duration (seconds)"
-                  type="number"
-                  value={String(nodeConfig.duration || 5)}
-                  onValueChange={(v) =>
-                    setNodeConfig({ ...nodeConfig, duration: parseInt(v) || 5 })
-                  }
-                  description="How long to wait"
-                />
+                <div className="space-y-2">
+                  <Label>Duration (seconds)</Label>
+                  <Input
+                    type="number"
+                    value={String(nodeConfig.duration || 5)}
+                    onChange={(e) =>
+                      setNodeConfig({ ...nodeConfig, duration: parseInt(e.target.value) || 5 })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">How long to wait</p>
+                </div>
               )}
 
               {editingNode?.data.type === "SET_VARIABLE" && (
                 <>
-                  <Input
-                    label="Variable Name"
-                    value={(nodeConfig.variable as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, variable: v })
-                    }
-                  />
-                  <Input
-                    label="Value"
-                    value={(nodeConfig.value as string) || ""}
-                    onValueChange={(v) =>
-                      setNodeConfig({ ...nodeConfig, value: v })
-                    }
-                  />
+                  <div className="space-y-2">
+                    <Label>Variable Name</Label>
+                    <Input
+                      value={(nodeConfig.variable as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, variable: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Value</Label>
+                    <Input
+                      value={(nodeConfig.value as string) || ""}
+                      onChange={(e) =>
+                        setNodeConfig({ ...nodeConfig, value: e.target.value })
+                      }
+                    />
+                  </div>
                 </>
               )}
 
               {editingNode?.data.type === "END" && (
-                <Select
-                  label="Call Outcome"
-                  selectedKeys={
-                    nodeConfig.outcome ? [nodeConfig.outcome as string] : []
-                  }
-                  onSelectionChange={(keys) =>
-                    setNodeConfig({
-                      ...nodeConfig,
-                      outcome: Array.from(keys)[0],
-                    })
-                  }
-                >
-                  <SelectItem key="completed">Completed</SelectItem>
-                  <SelectItem key="transferred">Transferred</SelectItem>
-                  <SelectItem key="voicemail">Voicemail</SelectItem>
-                  <SelectItem key="failed">Failed</SelectItem>
-                </Select>
+                <div className="space-y-2">
+                  <Label>Call Outcome</Label>
+                  <Select
+                    value={(nodeConfig.outcome as string) || ""}
+                    onValueChange={(val) =>
+                      setNodeConfig({
+                        ...nodeConfig,
+                        outcome: val,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select outcome" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="transferred">Transferred</SelectItem>
+                      <SelectItem value="voicemail">Voicemail</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
-          </ModalBody>
-          <ModalFooter>
+          </div>
+          <DialogFooter>
             {editingNode?.data.type !== "START" && (
-              <Button color="danger" variant="light" onPress={deleteNode}>
+              <Button variant="destructive" onClick={deleteNode}>
                 Delete Node
               </Button>
             )}
-            <Button color="primary" onPress={saveNodeEdits}>
+            <Button onClick={saveNodeEdits}>
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

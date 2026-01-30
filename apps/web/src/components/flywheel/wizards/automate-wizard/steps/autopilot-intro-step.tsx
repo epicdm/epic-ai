@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Zap,
   Bot,
@@ -80,7 +81,7 @@ export function AutopilotIntroStep({ data, updateData }: AutopilotIntroStepProps
 
       {/* Automation Levels Preview */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <h4 className="font-medium text-gray-900 dark:text-white mb-4">
             Choose Your Automation Level
           </h4>
@@ -111,12 +112,12 @@ export function AutopilotIntroStep({ data, updateData }: AutopilotIntroStepProps
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Benefits */}
       <Card className="border border-gray-200 dark:border-gray-700">
-        <CardBody className="p-6">
+        <CardContent className="p-6">
           <h4 className="font-medium text-gray-900 dark:text-white mb-4">
             Why Automate?
           </h4>
@@ -140,12 +141,12 @@ export function AutopilotIntroStep({ data, updateData }: AutopilotIntroStepProps
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* How It Works */}
       <Card className="border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="font-medium text-orange-900 dark:text-orange-100 mb-2">
             The Flywheel in Motion
           </h5>
@@ -171,16 +172,14 @@ export function AutopilotIntroStep({ data, updateData }: AutopilotIntroStepProps
               <span>Learning loop improves everything</span>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* CTA */}
       <div className="text-center">
         <Button
-          color="primary"
           size="lg"
-          endContent={<ArrowRight className="w-4 h-4" />}
-          onPress={handleContinue}
+          onClick={handleContinue}
           className={data.seenIntro ? "bg-green-600" : "bg-orange-600"}
         >
           {data.seenIntro ? "Let's Configure" : "I'm Ready to Automate"}

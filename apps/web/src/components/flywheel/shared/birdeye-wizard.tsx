@@ -1,26 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Textarea,
-  Progress,
-  Accordion,
-  AccordionItem,
-  Chip,
-  Spinner,
-  Divider,
-  Slider,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-} from "@heroui/react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sparkles,
   Globe,
@@ -369,10 +356,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button
-          variant="light"
-          startContent={<ArrowLeft className="w-4 h-4" />}
-          onPress={handleBack}
-        >
+          variant="ghost"
+          
+          onClick={handleBack}
+        ><ArrowLeft className="w-4 h-4" /> 
           Back to Setup
         </Button>
       </div>
@@ -402,7 +389,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               Connect your data sources and let AI build your marketing flywheel
             </p>
           </CardHeader>
-          <CardBody className="gap-4">
+          <CardContent className="gap-4">
             {/* Dual-Source Selection - Toggle cards */}
             <div className="space-y-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -483,12 +470,11 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                   ) : (
                     <Button
                       size="sm"
-                      color="primary"
-                      variant="flat"
-                      isLoading={isConnectingFacebook}
-                      onPress={handleConnectFacebook}
-                      startContent={!isConnectingFacebook && <Facebook className="w-4 h-4" />}
-                    >
+                      variant="secondary"
+                      disabled={isConnectingFacebook}
+                      onClick={handleConnectFacebook}
+                      
+                    >!isConnectingFacebook && <Facebook className="w-4 h-4" /> 
                       {isConnectingFacebook ? "Connecting..." : "Connect"}
                     </Button>
                   )}
@@ -517,7 +503,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               )}
             </div>
 
-            <Divider className="my-2" />
+            <div className="border-t my-4" />
 
             {/* Website URL Input - show if website source enabled */}
             {useWebsite && (
@@ -525,9 +511,8 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 label="Website URL"
                 placeholder="https://yourcompany.com"
                 value={websiteUrl}
-                onValueChange={setWebsiteUrl}
-                startContent={<Globe className="w-4 h-4 text-gray-400" />}
-                isRequired
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWebsiteUrl(e.target.value)}
+                                isRequired
                 description={initialWebsiteUrl ? "Pre-filled from onboarding - you can change it" : "We'll analyze your website to understand your brand"}
               />
             )}
@@ -536,8 +521,8 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
               label="Industry (Optional)"
               placeholder="e.g., SaaS, E-commerce, Healthcare"
               value={industry}
-              onValueChange={setIndustry}
-              description="Helps AI tailor recommendations to your market"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIndustry(e.target.value)}
+              
             />
 
             {error && (
@@ -545,23 +530,22 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             )}
 
             <Button
-              color="primary"
               size="lg"
               className="w-full mt-2"
-              startContent={<Sparkles className="w-5 h-5" />}
-              onPress={handleAnalyze}
-              isDisabled={(!useWebsite && !useFacebook) || (useWebsite && !websiteUrl) || (useFacebook && !connectedFacebookPage)}
-            >
+              
+              onClick={handleAnalyze}
+              disabled={(!useWebsite && !useFacebook) || (useWebsite && !websiteUrl) || (useFacebook && !connectedFacebookPage)}
+            ><Sparkles className="w-5 h-5" /> 
               {useFacebook && useWebsite ? "Analyze Both Sources" : useFacebook ? "Analyze Facebook Page" : "Analyze Website"}
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Step: Analyzing - Enhanced Animation */}
       {step === "analyzing" && (
         <Card className="max-w-xl mx-auto">
-          <CardBody className="py-12 text-center">
+          <CardContent className="py-12 text-center">
             {/* Animated spinner with gradient */}
             <div className="relative w-20 h-20 mx-auto mb-6">
               <div
@@ -601,15 +585,15 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 const Icon = phase.icon;
                 const isAnalyzed = i < analysisProgress;
                 return (
-                  <Chip
+                  <Badge
                     key={phase.key}
-                    size="sm"
-                    variant="flat"
+                    
+                    variant="secondary"
                     color={isAnalyzed ? "success" : "default"}
-                    startContent={isAnalyzed ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+                    
                   >
                     {phase.title}
-                  </Chip>
+                  </Badge>
                 );
               })}
             </div>
@@ -617,7 +601,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <p className="text-xs text-gray-400">
               Estimated time remaining: {Math.max(0, 60 - analysisProgress * 12)} seconds
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -626,7 +610,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
         <div className="space-y-6">
           {/* Analysis Complete Card */}
           <Card className="border-2 border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center">
@@ -642,19 +626,18 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                   </div>
                 </div>
                 <Button
-                  color="primary"
-                  endContent={<Rocket className="w-4 h-4" />}
-                  onPress={handleApplyAll}
+                  
+                  onClick={handleApplyAll}
                 >
                   Apply All Phases
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Time Savings Banner */}
           <Card className="border-2 border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
-            <CardBody className="p-4">
+            <CardContent className="p-4">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                   <Zap className="w-6 h-6 text-white" />
@@ -667,25 +650,25 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     Manual setup would take 30-45 minutes. AI configured your entire flywheel in just {analysisTime || 60} seconds.
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <Chip size="sm" variant="flat" color="success" startContent={<Check className="w-3 h-3" />}>
+                    <Badge  variant="secondary" variant="outline" >
                       Brand Brain
-                    </Chip>
-                    <Chip size="sm" variant="flat" color="success" startContent={<Check className="w-3 h-3" />}>
+                    </Badge>
+                    <Badge  variant="secondary" variant="outline" >
                       Content Factory
-                    </Chip>
-                    <Chip size="sm" variant="flat" color="success" startContent={<Check className="w-3 h-3" />}>
+                    </Badge>
+                    <Badge  variant="secondary" variant="outline" >
                       Publishing
-                    </Chip>
-                    <Chip size="sm" variant="flat" color="success" startContent={<Check className="w-3 h-3" />}>
+                    </Badge>
+                    <Badge  variant="secondary" variant="outline" >
                       Analytics
-                    </Chip>
-                    <Chip size="sm" variant="flat" color="success" startContent={<Check className="w-3 h-3" />}>
+                    </Badge>
+                    <Badge  variant="secondary" variant="outline" >
                       Autopilot
-                    </Chip>
+                    </Badge>
                   </div>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Accordion variant="bordered" selectionMode="multiple" defaultExpandedKeys={["understand"]}>
@@ -693,11 +676,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <AccordionItem
               key="understand"
               aria-label="Understand Phase"
-              startContent={<Brain className="w-5 h-5 text-purple-500" />}
-              title={
+                            title={
                 <div className="flex items-center gap-2">
                   <span>Understand</span>
-                  <Chip size="sm" color="secondary" variant="flat">Brand Brain</Chip>
+                  <Badge  variant="secondary" variant="secondary">Brand Brain</Badge>
                 </div>
               }
               subtitle="Brand identity, voice & audiences"
@@ -731,12 +713,12 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <p className="text-xs text-gray-500 uppercase mb-1">Personality Traits</p>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {editedConfig.understand.personality?.map((trait, i) => (
-                          <Chip key={i} size="sm" variant="flat">{trait}</Chip>
+                          <Badge key={i}  variant="secondary">{trait}</Badge>
                         )) || "—"}
                       </div>
                     </div>
 
-                    <Divider />
+                    <div className="border-t my-4" />
 
                     <div>
                       <p className="text-xs text-gray-500 uppercase mb-2">Target Audiences ({editedConfig.understand.audiences?.length || 0})</p>
@@ -754,9 +736,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <p className="text-xs text-gray-500 uppercase mb-2">Content Pillars ({editedConfig.understand.contentPillars?.length || 0})</p>
                       <div className="flex flex-wrap gap-2">
                         {editedConfig.understand.contentPillars?.map((pillar, i) => (
-                          <Chip key={i} size="sm" color="secondary" variant="flat">
+                          <Badge key={i} variant="secondary">
                             {pillar.name} ({pillar.frequency}%)
-                          </Chip>
+                          </Badge>
                         ))}
                       </div>
                     </div>
@@ -765,10 +747,11 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     <div className="flex justify-end pt-2">
                       <Button
                         size="sm"
-                        variant="light"
-                        startContent={<Edit className="w-4 h-4" />}
-                        onPress={() => setEditingPhase("understand")}
+                        variant="ghost"
+                        
+                        onClick={() => setEditingPhase("understand")}
                       >
+                        <Edit className="w-4 h-4" />
                         Edit Phase
                       </Button>
                     </div>
@@ -779,47 +762,52 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     <Input
                       label="Brand Name"
                       value={editedConfig.understand.brandName || ""}
-                      onValueChange={(v) => updateEditedConfig("understand", "brandName", v)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = e.target.value; updateEditedConfig("understand", "brandName", v); }}
                     />
 
-                    <Textarea
-                      label="Description"
-                      value={editedConfig.understand.brandDescription || ""}
-                      onValueChange={(v) => updateEditedConfig("understand", "brandDescription", v)}
-                      minRows={2}
-                    />
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Description</label>
+                      <Textarea
+                        value={editedConfig.understand.brandDescription || ""}
+                        onChange={(e) => { const v = e.target.value; updateEditedConfig("understand", "brandDescription", v); }}
+                        rows={2}
+                      />
+                    </div>
 
-                    <Input
-                      label="Industry"
-                      value={editedConfig.understand.industry || ""}
-                      onValueChange={(v) => updateEditedConfig("understand", "industry", v)}
-                    />
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Industry</label>
+                      <Input
+                        value={editedConfig.understand.industry || ""}
+                        onChange={(e) => { const v = e.target.value; updateEditedConfig("understand", "industry", v); }}
+                      />
+                    </div>
 
-                    <Textarea
-                      label="Mission"
-                      value={editedConfig.understand.mission || ""}
-                      onValueChange={(v) => updateEditedConfig("understand", "mission", v)}
-                      minRows={2}
-                    />
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Mission</label>
+                      <Textarea
+                        value={editedConfig.understand.mission || ""}
+                        onChange={(e) => { const v = e.target.value; updateEditedConfig("understand", "mission", v); }}
+                        rows={2}
+                      />
+                    </div>
 
                     <div className="flex gap-2 justify-end pt-2">
                       <Button
                         size="sm"
-                        variant="light"
-                        startContent={<X className="w-4 h-4" />}
-                        onPress={() => {
+                        variant="ghost"
+                        onClick={() => {
                           setEditedConfig(configuration); // Reset
                           setEditingPhase(null);
                         }}
                       >
+                        <X className="w-4 h-4 mr-1" />
                         Cancel
                       </Button>
                       <Button
                         size="sm"
-                        color="primary"
-                        startContent={<Check className="w-4 h-4" />}
-                        onPress={() => setEditingPhase(null)}
+                        onClick={() => setEditingPhase(null)}
                       >
+                        <Check className="w-4 h-4 mr-1" />
                         Save Changes
                       </Button>
                     </div>
@@ -827,7 +815,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 )}
 
                 {/* Confidence Indicator */}
-                <Divider className="my-4" />
+                <div className="border-t my-4" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <Sparkles className="w-4 h-4 text-purple-500" />
@@ -836,14 +824,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     </span>
                   </div>
 
-                  <Progress
-                    value={editedConfig.understand.confidence * 100}
-                    size="sm"
-                    className="flex-1 max-w-[200px]"
-                    classNames={{
-                      indicator: getConfidenceColor(editedConfig.understand.confidence),
-                    }}
-                  />
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${editedConfig.understand.confidence * 100}%` }} />
+            </div>
 
                   <span
                     className="text-sm font-bold"
@@ -859,11 +842,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <AccordionItem
               key="create"
               aria-label="Create Phase"
-              startContent={<Palette className="w-5 h-5 text-blue-500" />}
-              title={
+                            title={
                 <div className="flex items-center gap-2">
                   <span>Create</span>
-                  <Chip size="sm" color="primary" variant="flat">Content Factory</Chip>
+                  <Badge   variant="secondary">Content Factory</Badge>
                 </div>
               }
               subtitle="Content types & generation settings"
@@ -873,7 +855,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                   <p className="text-xs text-gray-500 uppercase mb-2">Enabled Content Types</p>
                   <div className="flex flex-wrap gap-2">
                     {editedConfig.create.enabledTypes?.map((type, i) => (
-                      <Chip key={i} size="sm" variant="flat">{type}</Chip>
+                      <Badge key={i}  variant="secondary">{type}</Badge>
                     ))}
                   </div>
                 </div>
@@ -893,7 +875,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
 
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Hashtag Strategy</p>
-                  <Chip size="sm" variant="flat">{editedConfig.create.hashtagStrategy || "moderate"}</Chip>
+                  <Badge  variant="secondary">{editedConfig.create.hashtagStrategy || "moderate"}</Badge>
                 </div>
 
                 {editedConfig.create.savedHashtags && editedConfig.create.savedHashtags.length > 0 && (
@@ -901,14 +883,14 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     <p className="text-xs text-gray-500 uppercase mb-2">Saved Hashtags</p>
                     <div className="flex flex-wrap gap-1">
                       {editedConfig.create.savedHashtags.map((tag, i) => (
-                        <Chip key={i} size="sm" variant="flat" color="primary">{tag}</Chip>
+                        <Badge key={i}  variant="secondary" >{tag}</Badge>
                       ))}
                     </div>
                   </div>
                 )}
 
                 {/* Confidence Indicator */}
-                <Divider className="my-4" />
+                <div className="border-t my-4" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <Sparkles className="w-4 h-4 text-blue-500" />
@@ -916,14 +898,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       AI Confidence
                     </span>
                   </div>
-                  <Progress
-                    value={editedConfig.create.confidence * 100}
-                    size="sm"
-                    className="flex-1 max-w-[200px]"
-                    classNames={{
-                      indicator: getConfidenceColor(editedConfig.create.confidence),
-                    }}
-                  />
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${editedConfig.create.confidence * 100}%` }} />
+            </div>
                   <span
                     className="text-sm font-bold"
                     style={{ color: getConfidenceTextColor(editedConfig.create.confidence) }}
@@ -938,11 +915,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <AccordionItem
               key="distribute"
               aria-label="Distribute Phase"
-              startContent={<Share2 className="w-5 h-5 text-green-500" />}
-              title={
+                            title={
                 <div className="flex items-center gap-2">
                   <span>Distribute</span>
-                  <Chip size="sm" color="success" variant="flat">Publishing</Chip>
+                  <Badge  variant="outline" variant="secondary">Publishing</Badge>
                 </div>
               }
               subtitle="Schedule & platform settings"
@@ -966,9 +942,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div key={platform} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <span className="font-medium capitalize">{platform}</span>
                         <div className="flex items-center gap-2">
-                          <Chip size="sm" color={settings.enabled ? "success" : "default"} variant="flat">
+                          <Badge  color={settings.enabled ? "success" : "default"} variant="secondary">
                             {settings.enabled ? "Enabled" : "Disabled"}
-                          </Chip>
+                          </Badge>
                           <span className="text-sm text-gray-500">
                             {settings.postingFrequency} posts/week
                           </span>
@@ -979,7 +955,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 </div>
 
                 {/* Confidence Indicator */}
-                <Divider className="my-4" />
+                <div className="border-t my-4" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <Sparkles className="w-4 h-4 text-green-500" />
@@ -987,14 +963,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       AI Confidence
                     </span>
                   </div>
-                  <Progress
-                    value={editedConfig.distribute.confidence * 100}
-                    size="sm"
-                    className="flex-1 max-w-[200px]"
-                    classNames={{
-                      indicator: getConfidenceColor(editedConfig.distribute.confidence),
-                    }}
-                  />
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${editedConfig.distribute.confidence * 100}%` }} />
+            </div>
                   <span
                     className="text-sm font-bold"
                     style={{ color: getConfidenceTextColor(editedConfig.distribute.confidence) }}
@@ -1009,11 +980,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <AccordionItem
               key="learn"
               aria-label="Learn Phase"
-              startContent={<BarChart3 className="w-5 h-5 text-amber-500" />}
-              title={
+                            title={
                 <div className="flex items-center gap-2">
                   <span>Learn</span>
-                  <Chip size="sm" color="warning" variant="flat">Analytics</Chip>
+                  <Badge  variant="outline" variant="secondary">Analytics</Badge>
                 </div>
               }
               subtitle="Metrics & reporting"
@@ -1023,9 +993,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                   <p className="text-xs text-gray-500 uppercase mb-2">Priority Metrics</p>
                   <div className="flex flex-wrap gap-2">
                     {editedConfig.learn.priorityMetrics?.map((metric, i) => (
-                      <Chip key={i} size="sm" color={i === 0 ? "warning" : "default"} variant="flat">
+                      <Badge key={i}  color={i === 0 ? "warning" : "default"} variant="secondary">
                         {metric}
-                      </Chip>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -1046,21 +1016,21 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     <p className="text-xs text-gray-500 uppercase mb-2">Optimization Goals</p>
                     <div className="flex flex-wrap gap-2">
                       {editedConfig.learn.optimizationGoals.map((goal, i) => (
-                        <Chip
+                        <Badge
                           key={i}
-                          size="sm"
+                          
                           color={goal.priority === "high" ? "warning" : "default"}
-                          variant="flat"
+                          variant="secondary"
                         >
                           {goal.metric} ({goal.priority})
-                        </Chip>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                 )}
 
                 {/* Confidence Indicator */}
-                <Divider className="my-4" />
+                <div className="border-t my-4" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <Sparkles className="w-4 h-4 text-amber-500" />
@@ -1068,14 +1038,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       AI Confidence
                     </span>
                   </div>
-                  <Progress
-                    value={editedConfig.learn.confidence * 100}
-                    size="sm"
-                    className="flex-1 max-w-[200px]"
-                    classNames={{
-                      indicator: getConfidenceColor(editedConfig.learn.confidence),
-                    }}
-                  />
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${editedConfig.learn.confidence * 100}%` }} />
+            </div>
                   <span
                     className="text-sm font-bold"
                     style={{ color: getConfidenceTextColor(editedConfig.learn.confidence) }}
@@ -1090,11 +1055,10 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
             <AccordionItem
               key="automate"
               aria-label="Automate Phase"
-              startContent={<Zap className="w-5 h-5 text-pink-500" />}
-              title={
+                            title={
                 <div className="flex items-center gap-2">
                   <span>Automate</span>
-                  <Chip size="sm" color="danger" variant="flat">AI Autopilot</Chip>
+                  <Badge  variant="destructive" variant="secondary">AI Autopilot</Badge>
                 </div>
               }
               subtitle="Automation & notifications"
@@ -1103,9 +1067,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500 uppercase mb-1">Approval Mode</p>
-                    <Chip size="sm" variant="flat" className="capitalize">
+                    <Badge  variant="secondary" className="capitalize">
                       {editedConfig.automate.approvalMode?.replace("_", " ") || "Review"}
-                    </Chip>
+                    </Badge>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 uppercase mb-1">Posts Per Week</p>
@@ -1126,7 +1090,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 </div>
 
                 {/* Confidence Indicator */}
-                <Divider className="my-4" />
+                <div className="border-t my-4" />
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <Sparkles className="w-4 h-4 text-pink-500" />
@@ -1134,14 +1098,9 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       AI Confidence
                     </span>
                   </div>
-                  <Progress
-                    value={editedConfig.automate.confidence * 100}
-                    size="sm"
-                    className="flex-1 max-w-[200px]"
-                    classNames={{
-                      indicator: getConfidenceColor(editedConfig.automate.confidence),
-                    }}
-                  />
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${editedConfig.automate.confidence * 100}%` }} />
+            </div>
                   <span
                     className="text-sm font-bold"
                     style={{ color: getConfidenceTextColor(editedConfig.automate.confidence) }}
@@ -1156,21 +1115,20 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
           {/* Action Buttons */}
           <div className="flex flex-col items-center gap-4 pt-4">
             <Button
-              color="primary"
               size="lg"
-              endContent={<Rocket className="w-5 h-5" />}
-              onPress={handleApplyAll}
+              
+              onClick={handleApplyAll}
             >
               Apply All Phases & Activate
             </Button>
 
             {/* Escape Hatch Button */}
             <Button
-              variant="light"
-              color="default"
-              startContent={<Settings2 className="w-4 h-4" />}
-              onPress={handleSwitchToGuided}
-            >
+              variant="ghost"
+              variant="outline"
+              
+              onClick={handleSwitchToGuided}
+            ><Settings2 className="w-4 h-4" /> 
               Customize Manually Instead
             </Button>
           </div>
@@ -1180,7 +1138,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
       {/* Step: Applying - Enhanced with percentage */}
       {step === "applying" && (
         <Card className="max-w-xl mx-auto">
-          <CardBody className="py-8">
+          <CardContent className="py-8">
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold">
                 Applying Configuration...
@@ -1220,7 +1178,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       {isApplied ? (
                         <Check className="w-4 h-4 text-white" />
                       ) : isApplying ? (
-                        <Spinner size="sm" color="white" />
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                       ) : (
                         <Icon className="w-4 h-4 text-gray-500" />
                       )}
@@ -1232,31 +1190,25 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <p className="text-xs text-gray-500">{phase.description}</p>
                     </div>
                     {isApplying && (
-                      <Chip size="sm" color="secondary" variant="flat" className="animate-pulse">
+                      <Badge  variant="secondary" variant="secondary" className="animate-pulse">
                         Applying...
-                      </Chip>
+                      </Badge>
                     )}
                     {isApplied && (
-                      <Chip size="sm" color="success" variant="flat">
+                      <Badge  variant="outline" variant="secondary">
                         <Check className="w-3 h-3 mr-1" />
                         Done
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            <Progress
-              size="md"
-              value={(appliedPhases.length / phaseInfo.length) * 100}
-              className="mt-6"
-              classNames={{
-                indicator: "bg-gradient-to-r from-purple-500 to-pink-500",
-                track: "h-3",
-              }}
-            />
-          </CardBody>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(appliedPhases.length / phaseInfo.length) * 100}%` }} />
+            </div>
+          </CardContent>
         </Card>
       )}
 
@@ -1265,7 +1217,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
         <div className="space-y-6">
           {/* Success Card */}
           <Card className="max-w-xl mx-auto border-2 border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20">
-            <CardBody className="py-12 text-center">
+            <CardContent className="py-12 text-center">
               {/* Animated Success Icon */}
               <div className="relative w-20 h-20 mx-auto mb-6">
                 <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-25" />
@@ -1299,52 +1251,47 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 {phaseInfo.map((phase) => {
                   const Icon = phase.icon;
                   return (
-                    <Chip
+                    <Badge
                       key={phase.key}
-                      size="sm"
-                      variant="flat"
-                      color="success"
-                      startContent={<Icon className="w-3 h-3" />}
+                      
+                      variant="secondary"
+                      variant="outline"
+                      
                     >
                       {phase.title}
-                    </Chip>
+                    </Badge>
                   );
                 })}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
-                  variant="flat"
-                  startContent={<Eye className="w-4 h-4" />}
-                  onPress={() => setShowSummary(true)}
+                  variant="secondary"
+                  
+                  onClick={() => setShowSummary(true)}
                 >
+                  <Eye className="w-4 h-4 mr-1" />
                   Review All Changes
                 </Button>
                 <Button
-                  color="success"
+                  variant="outline"
                   size="lg"
-                  endContent={<ChevronRight className="w-4 h-4" />}
-                  onPress={handleComplete}
+                  
+                  onClick={handleComplete}
                 >
                   Go to Dashboard
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}
 
       {/* Summary Modal */}
-      <Modal
-        isOpen={showSummary}
-        onOpenChange={setShowSummary}
-        size="3xl"
-        scrollBehavior="inside"
-      >
-        <ModalContent>
-          {(onClose) => (
+      <Dialog open={showSummary} onOpenChange={setShowSummary}>
+        <DialogContent>
             <>
-              <ModalHeader className="flex flex-col gap-1">
+              <DialogHeader className="flex flex-col gap-1"><DialogTitle>
                 <div className="flex items-center gap-2">
                   <Eye className="w-5 h-5 text-purple-500" />
                   <span>Configuration Summary</span>
@@ -1352,8 +1299,8 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 <p className="text-sm font-normal text-gray-500">
                   Review all changes applied by AI to your flywheel
                 </p>
-              </ModalHeader>
-              <ModalBody>
+              </DialogTitle></DialogHeader>
+              <div className="py-4">
                 {editedConfig && (
                   <div className="space-y-6">
                     {/* Understand Phase Summary */}
@@ -1361,7 +1308,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div className="flex items-center gap-2 mb-3">
                         <Brain className="w-5 h-5 text-purple-500" />
                         <h3 className="font-semibold">Understand (Brand Brain)</h3>
-                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                        <Badge variant="outline">Applied</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
@@ -1388,7 +1335,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div className="flex items-center gap-2 mb-3">
                         <Palette className="w-5 h-5 text-blue-500" />
                         <h3 className="font-semibold">Create (Content Factory)</h3>
-                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                        <Badge variant="outline">Applied</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="col-span-2">
@@ -1411,7 +1358,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div className="flex items-center gap-2 mb-3">
                         <Share2 className="w-5 h-5 text-green-500" />
                         <h3 className="font-semibold">Distribute (Publishing)</h3>
-                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                        <Badge variant="outline">Applied</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
@@ -1435,7 +1382,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div className="flex items-center gap-2 mb-3">
                         <BarChart3 className="w-5 h-5 text-amber-500" />
                         <h3 className="font-semibold">Learn (Analytics)</h3>
-                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                        <Badge variant="outline">Applied</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="col-span-2">
@@ -1454,7 +1401,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <div className="flex items-center gap-2 mb-3">
                         <Zap className="w-5 h-5 text-pink-500" />
                         <h3 className="font-semibold">Automate (AI Autopilot)</h3>
-                        <Chip size="sm" color="success" variant="flat">Applied</Chip>
+                        <Badge variant="outline">Applied</Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
@@ -1469,29 +1416,27 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     </div>
                   </div>
                 )}
-              </ModalBody>
-              <ModalFooter>
+              </div>
+              <DialogFooter>
                 <Button
-                  variant="light"
-                  onPress={onClose}
+                  variant="ghost"
+                  onClick={() => setIsOpen(false)}
                 >
                   Close
                 </Button>
                 <Button
-                  color="primary"
-                  startContent={<Settings2 className="w-4 h-4" />}
-                  onPress={() => {
-                    onClose();
+                  onClick={() => {
+                    setIsOpen(false);
                     router.push("/setup");
                   }}
                 >
+                  <Settings2 className="w-4 h-4 mr-1" />
                   Edit in Expert Mode
                 </Button>
-              </ModalFooter>
+              </DialogFooter>
             </>
-          )}
-        </ModalContent>
-      </Modal>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }

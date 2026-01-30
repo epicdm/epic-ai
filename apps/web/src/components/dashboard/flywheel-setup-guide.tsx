@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Progress,
-  Chip,
   Accordion,
+  AccordionContent,
   AccordionItem,
-  Divider,
-} from "@heroui/react";
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Brain,
   Share2,
@@ -224,21 +222,21 @@ export function FlywheelSetupGuide({
   if (loading) {
     return (
       <Card className="animate-pulse">
-        <CardBody className="h-32" />
+        <CardContent className="h-32" />
       </Card>
     );
   }
 
   if (isComplete && compact) {
     return (
-      <Card className="bg-gradient-to-r from-success-500/10 to-success-400/10 border border-success-500/30">
-        <CardBody className="p-4">
+      <Card className="bg-gradient-to-r from-green-500/10 to-green-400/10 border border-green-500/30">
+        <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-success-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
               <Trophy className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-success-700 dark:text-success-400">
+              <p className="font-semibold text-green-700 dark:text-green-400">
                 Flywheel Active!
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -246,7 +244,7 @@ export function FlywheelSetupGuide({
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -254,7 +252,7 @@ export function FlywheelSetupGuide({
   if (compact) {
     return (
       <Card className="bg-gradient-to-r from-brand-500/10 to-purple-500/10 border border-brand-500/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center">
@@ -270,26 +268,22 @@ export function FlywheelSetupGuide({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Progress
-                value={progress}
-                color="primary"
-                className="w-24"
-                size="sm"
-              />
+              <div className="h-1.5 w-24 rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
               {currentStep && (
-                <Link href={currentStep.href}>
-                  <Button
-                    color="primary"
-                    size="sm"
-                    endContent={<ArrowRight className="w-4 h-4" />}
-                  >
-                    Continue
-                  </Button>
-                </Link>
+                <Button asChild size="sm">
+                  <Link href={currentStep.href}>
+                    Continue <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
               )}
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -315,31 +309,33 @@ export function FlywheelSetupGuide({
             <div className="text-2xl font-bold text-brand-600 dark:text-brand-400">
               {progress}%
             </div>
-            <Progress
-              value={progress}
-              color="primary"
-              className="w-32"
-              size="sm"
-            />
+            <div className="h-1.5 w-32 rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardBody className="p-0">
-        <Accordion variant="splitted" className="gap-0 px-4 py-2">
+      <CardContent className="p-0">
+        <Accordion type="single" collapsible className="px-4 py-2">
           {steps.map((step, index) => {
             const isCurrent = !step.done && steps.slice(0, index).every((s) => s.done);
 
             return (
               <AccordionItem
                 key={step.id}
-                aria-label={step.title}
-                title={
+                value={step.id}
+                className={`${isCurrent ? "ring-2 ring-brand-500/30 bg-brand-50/50 dark:bg-brand-900/10 rounded-lg" : ""}`}
+              >
+                <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         step.done
-                          ? "bg-success-500 text-white"
+                          ? "bg-green-500 text-white"
                           : isCurrent
                           ? "bg-brand-500 text-white ring-2 ring-brand-500/30"
                           : "bg-gray-200 dark:bg-gray-700 text-gray-500"
@@ -351,11 +347,11 @@ export function FlywheelSetupGuide({
                         <span className="text-sm font-bold">{step.number}</span>
                       )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-left">
                       <div
                         className={`font-medium flex items-center ${
                           step.done
-                            ? "text-success-700 dark:text-success-400"
+                            ? "text-green-700 dark:text-green-400"
                             : isCurrent
                             ? "text-gray-900 dark:text-white"
                             : "text-gray-500"
@@ -363,70 +359,68 @@ export function FlywheelSetupGuide({
                       >
                         <span>{step.title}</span>
                         {step.done && (
-                          <Chip size="sm" color="success" variant="flat" className="ml-2">
+                          <Badge variant="secondary" className="ml-2">
                             Done
-                          </Chip>
+                          </Badge>
                         )}
                         {isCurrent && (
-                          <Chip size="sm" color="primary" variant="flat" className="ml-2">
+                          <Badge className="ml-2">
                             Current
-                          </Chip>
+                          </Badge>
                         )}
                       </div>
                       <p className="text-sm text-gray-500">{step.description}</p>
                     </div>
                   </div>
-                }
-                classNames={{
-                  base: `${isCurrent ? "ring-2 ring-brand-500/30 bg-brand-50/50 dark:bg-brand-900/10" : ""}`,
-                }}
-              >
-                <div className="pb-4 pl-11">
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    {step.detailedDescription}
-                  </p>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="pb-4 pl-11">
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {step.detailedDescription}
+                    </p>
 
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Lightbulb className="w-4 h-4 text-warning-500" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Pro Tips
-                      </span>
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Pro Tips
+                        </span>
+                      </div>
+                      <ul className="space-y-1">
+                        {step.tips.map((tip, i) => (
+                          <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                            <span className="text-brand-500 mt-1">&#x2022;</span>
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="space-y-1">
-                      {step.tips.map((tip, i) => (
-                        <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                          <span className="text-brand-500 mt-1">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
 
-                  {!step.done && (
-                    <Link href={step.href}>
+                    {!step.done && (
                       <Button
-                        color={isCurrent ? "primary" : "default"}
-                        variant={isCurrent ? "solid" : "flat"}
-                        startContent={step.icon}
-                        endContent={<ChevronRight className="w-4 h-4" />}
+                        asChild
+                        variant={isCurrent ? "default" : "secondary"}
                       >
-                        {step.action}
+                        <Link href={step.href}>
+                          {step.icon}
+                          <span className="ml-2">{step.action}</span>
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Link>
                       </Button>
-                    </Link>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </AccordionContent>
               </AccordionItem>
             );
           })}
         </Accordion>
 
         {isComplete && (
-          <div className="px-4 py-6 bg-gradient-to-r from-success-500/10 to-success-400/10 border-t">
+          <div className="px-4 py-6 bg-gradient-to-r from-green-500/10 to-green-400/10 border-t">
             <div className="flex items-center justify-center gap-4">
-              <Trophy className="w-12 h-12 text-success-500" />
+              <Trophy className="w-12 h-12 text-green-500" />
               <div className="text-center">
-                <h4 className="text-xl font-bold text-success-700 dark:text-success-400">
+                <h4 className="text-xl font-bold text-green-700 dark:text-green-400">
                   Congratulations! Your Flywheel is Active!
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -436,14 +430,14 @@ export function FlywheelSetupGuide({
             </div>
             {onDismiss && (
               <div className="flex justify-center mt-4">
-                <Button variant="flat" onPress={onDismiss}>
+                <Button variant="secondary" onClick={onDismiss}>
                   Dismiss Guide
                 </Button>
               </div>
             )}
           </div>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

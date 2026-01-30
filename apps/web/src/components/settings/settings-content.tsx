@@ -1,281 +1,223 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardBody, CardHeader, Divider, Button, Checkbox } from "@heroui/react";
-import { RefreshCw, AlertTriangle } from "lucide-react";
-import { SettingsForm } from "./settings-form";
-import { BrandsList } from "./brands-list";
+import React from "react";
+import Link from "next/link";
+import {
+  Building2,
+  Globe,
+  Mail,
+  Calendar,
+  CreditCard,
+  Webhook,
+  ExternalLink,
+} from "lucide-react";
 
-interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  createdAt: string;
-}
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { SectionCard } from "@/components/ui/section-card";
 
-interface Brand {
-  id: string;
-  name: string;
-  website: string | null;
-  createdAt: string;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-interface Subscription {
-  id: string;
-  plan: string;
-  status: string;
-  trialEnd: string | null;
-  currentPeriodEnd: string | null;
-}
-
-interface SettingsContentProps {
-  organization: Organization;
-  brands: Brand[];
-  subscription: Subscription | null;
+interface NewSettingsContentProps {
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    createdAt: string;
+  };
+  brands: Array<{
+    id: string;
+    name: string;
+    website: string | null;
+    createdAt: string;
+  }>;
+  subscription: {
+    plan: string;
+    status: string;
+    trialEnd: string | null;
+    currentPeriodEnd: string | null;
+  } | null;
   userEmail: string | null;
 }
 
-export function SettingsContent({
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="text-muted-foreground">{icon}</div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function NewSettingsContent({
   organization,
   brands,
   subscription,
   userEmail,
-}: SettingsContentProps) {
-  const [resettingOnboarding, setResettingOnboarding] = useState(false);
-  const [resetMessage, setResetMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [removeBrandOnReset, setRemoveBrandOnReset] = useState(false);
-  const [removeOrganizationOnReset, setRemoveOrganizationOnReset] = useState(false);
-
-  const handleResetOnboarding = async () => {
-    let confirmMessage = "Are you sure you want to reset onboarding? You will see the onboarding wizard again on next page load.";
-
-    if (removeOrganizationOnReset) {
-      confirmMessage = "⚠️ FULL RESET: This will DELETE your organization, all brands, all data, and reset the 5-phase wizard. You will start completely from scratch. This CANNOT be undone. Are you absolutely sure?";
-    } else if (removeBrandOnReset) {
-      confirmMessage = "Are you sure you want to reset onboarding AND delete all brands? This cannot be undone.";
-    }
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    setResettingOnboarding(true);
-    setResetMessage(null);
-
-    const payload = {
-      removeBrand: removeBrandOnReset,
-      removeOrganization: removeOrganizationOnReset,
-    };
-    console.log("[Reset UI] Sending payload:", payload);
-
-    try {
-      const response = await fetch("/api/onboarding/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      console.log("[Reset UI] Response:", { ok: response.ok, status: response.status, data });
-
-      if (response.ok) {
-        console.log("[Reset UI] Success! Full response data:", data);
-        const debugInfo = data.organizationDeleted
-          ? `Org deleted: ${data.deletedOrgId}, Remaining memberships: ${data.remainingMemberships}`
-          : "No organization deleted";
-        console.log("[Reset UI]", debugInfo);
-        setResetMessage({ type: "success", text: data.message || "Reset complete! Redirecting..." });
-        // Redirect to appropriate page based on reset type:
-        // - Full reset (org deleted): /setup → which will redirect to /onboarding (no org)
-        // - Brand reset OR simple reset: /onboarding?force=true → show full wizard
-        setTimeout(() => {
-          if (removeOrganizationOnReset) {
-            window.location.href = "/setup";
-          } else {
-            // Force onboarding wizard with Facebook option for all resets
-            window.location.href = "/onboarding?force=true";
-          }
-        }, 1500);
-      } else {
-        console.error("[Reset UI] Error response:", data);
-        setResetMessage({ type: "error", text: data.error || "Failed to reset onboarding" });
-      }
-    } catch {
-      setResetMessage({ type: "error", text: "Failed to reset onboarding" });
-    } finally {
-      setResettingOnboarding(false);
-    }
-  };
-
-  const isTrialing = subscription?.status === "trialing";
-  const trialDaysLeft = subscription?.trialEnd
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(subscription.trialEnd).getTime() - Date.now()) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : 0;
-
+}: NewSettingsContentProps) {
   return (
     <div className="space-y-8">
-      {/* Page Header */}
+      {/* Page heading */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Settings
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your organization and brands
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account, organization, and integrations
         </p>
       </div>
 
-      {/* Subscription Status */}
-      {isTrialing && (
-        <Card className="border-brand-500 bg-brand-50 dark:bg-brand-900/20">
-          <CardBody className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🎉</span>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Free Trial Active
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {trialDaysLeft} days remaining in your trial
-                  </p>
-                </div>
-              </div>
-              <span className="px-3 py-1 bg-brand-500 text-white text-sm font-medium rounded-full">
-                Trial
-              </span>
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Organization Settings */}
-      <Card>
-        <CardHeader className="pb-0">
-          <h2 className="text-lg font-semibold">Organization</h2>
-        </CardHeader>
-        <CardBody>
-          <SettingsForm organization={organization} />
-        </CardBody>
-      </Card>
-
-      {/* Brands */}
-      <Card>
-        <CardHeader className="pb-0 flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Brands</h2>
-        </CardHeader>
-        <CardBody>
-          <BrandsList
-            brands={brands}
-            organizationId={organization.id}
+      {/* Organization */}
+      <SectionCard title="Organization" description="Your organization details">
+        <div className="space-y-4">
+          <InfoRow
+            icon={<Building2 className="h-4 w-4" />}
+            label="Name"
+            value={organization.name}
           />
-        </CardBody>
-      </Card>
+          <InfoRow
+            icon={<Globe className="h-4 w-4" />}
+            label="Slug"
+            value={organization.slug}
+          />
+          <InfoRow
+            icon={<Mail className="h-4 w-4" />}
+            label="Account Email"
+            value={userEmail ?? "–"}
+          />
+          <InfoRow
+            icon={<Calendar className="h-4 w-4" />}
+            label="Created"
+            value={new Date(organization.createdAt).toLocaleDateString()}
+          />
+        </div>
+      </SectionCard>
 
-      {/* Account Info */}
-      <Card>
-        <CardHeader className="pb-0">
-          <h2 className="text-lg font-semibold">Account</h2>
-        </CardHeader>
-        <CardBody>
+      {/* Subscription */}
+      <SectionCard
+        title="Subscription"
+        description="Your current plan and billing"
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/settings/usage">View Usage</Link>
+          </Button>
+        }
+      >
+        {subscription ? (
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
-              <p className="font-medium text-gray-900 dark:text-white">
-                {userEmail || "Not available"}
-              </p>
-            </div>
-            <Divider />
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Member since
-              </p>
-              <p className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
-                {new Date(organization.createdAt).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Developer Tools */}
-      <Card className="border-warning-200 dark:border-warning-800">
-        <CardHeader className="pb-0">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-warning" />
-            <h2 className="text-lg font-semibold">Developer Tools</h2>
-          </div>
-        </CardHeader>
-        <CardBody>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Reset your onboarding to test the setup flow again. This will show
-                the onboarding wizard on your next page load.
-              </p>
-              <div className="space-y-2 mb-3">
-                <Checkbox
-                  isSelected={removeBrandOnReset}
-                  onValueChange={(checked) => {
-                    setRemoveBrandOnReset(checked);
-                    if (!checked) setRemoveOrganizationOnReset(false);
-                  }}
-                  color="danger"
-                  size="sm"
-                >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Also remove all brands (start completely fresh)
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium capitalize">
+                    {subscription.plan}
                   </span>
-                </Checkbox>
-                <Checkbox
-                  isSelected={removeOrganizationOnReset}
-                  onValueChange={(checked) => {
-                    setRemoveOrganizationOnReset(checked);
-                    if (checked) setRemoveBrandOnReset(true);
-                  }}
-                  color="danger"
-                  size="sm"
-                  isDisabled={!removeBrandOnReset}
-                  className="ml-4"
-                >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Also remove organization (full reset - restart 5-phase wizard)
-                  </span>
-                </Checkbox>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  color={removeOrganizationOnReset ? "danger" : removeBrandOnReset ? "danger" : "warning"}
-                  variant={removeOrganizationOnReset ? "solid" : "flat"}
-                  startContent={<RefreshCw className={`w-4 h-4 ${resettingOnboarding ? "animate-spin" : ""}`} />}
-                  isLoading={resettingOnboarding}
-                  onPress={handleResetOnboarding}
-                >
-                  {removeOrganizationOnReset
-                    ? "Full Reset (Delete Everything)"
-                    : removeBrandOnReset
-                      ? "Reset & Delete Brands"
-                      : "Reset Onboarding"}
-                </Button>
-                {resetMessage && (
-                  <span className={`text-sm ${resetMessage.type === "success" ? "text-success" : "text-danger"}`}>
-                    {resetMessage.text}
-                  </span>
+                  <Badge
+                    variant={
+                      subscription.status === "active" ? "default" : "secondary"
+                    }
+                    className="capitalize"
+                  >
+                    {subscription.status}
+                  </Badge>
+                </div>
+                {subscription.currentPeriodEnd && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Renews{" "}
+                    {new Date(
+                      subscription.currentPeriodEnd
+                    ).toLocaleDateString()}
+                  </p>
                 )}
               </div>
             </div>
           </div>
-        </CardBody>
-      </Card>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No active subscription
+          </p>
+        )}
+      </SectionCard>
+
+      {/* Brands */}
+      <SectionCard
+        title="Brands"
+        description={`${brands.length} brand${brands.length !== 1 ? "s" : ""} configured`}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/brand">Manage Brands</Link>
+          </Button>
+        }
+      >
+        {brands.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No brands configured yet
+          </p>
+        ) : (
+          <div className="divide-y">
+            {brands.map((brand) => (
+              <div
+                key={brand.id}
+                className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+              >
+                <div>
+                  <p className="text-sm font-medium">{brand.name}</p>
+                  {brand.website && (
+                    <p className="text-xs text-muted-foreground">
+                      {brand.website}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(brand.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Integrations & Webhooks */}
+      <SectionCard
+        title="Integrations & Webhooks"
+        description="Connect external services"
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button variant="outline" asChild className="justify-start gap-2">
+            <Link href="/dashboard/settings/webhooks">
+              <Webhook className="h-4 w-4" />
+              Webhooks
+              <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="justify-start gap-2">
+            <Link href="/dashboard/settings/publishing">
+              <ExternalLink className="h-4 w-4" />
+              Publishing Settings
+              <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground" />
+            </Link>
+          </Button>
+        </div>
+      </SectionCard>
     </div>
   );
 }

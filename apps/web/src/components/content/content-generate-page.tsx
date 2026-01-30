@@ -2,22 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Input,
-  Textarea,
   Select,
+  SelectContent,
   SelectItem,
-  Checkbox,
-  CheckboxGroup,
-  Slider,
-  Progress,
-  Avatar,
-} from "@heroui/react";
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader } from "@/components/layout/page-header";
 import { trackEvent } from "@/lib/analytics/analytics";
 import {
@@ -33,6 +31,7 @@ import {
   FileText,
   Video,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { AIConfidence } from "@/components/ui/ai-confidence";
 
@@ -278,9 +277,9 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
           {/* Content Type */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold">Content Type</h3>
+              <CardTitle>Content Type</CardTitle>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {CONTENT_TYPES.map((type) => {
                   const Icon = type.icon;
@@ -302,151 +301,170 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
                   );
                 })}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           {/* Platforms */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold">Target Platforms</h3>
+              <CardTitle>Target Platforms</CardTitle>
             </CardHeader>
-            <CardBody>
-              <CheckboxGroup
-                orientation="horizontal"
-                value={platforms}
-                onChange={(value) => setPlatforms(value as string[])}
-              >
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
                 {PLATFORMS.map((platform) => {
                   const Icon = platform.icon;
                   const hasAccount = socialAccounts.some((a) => a.platform === platform.key);
                   return (
-                    <Checkbox
-                      key={platform.key}
-                      value={platform.key}
-                      isDisabled={!hasAccount}
-                    >
-                      <div className="flex items-center gap-2">
+                    <div key={platform.key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`platform-${platform.key}`}
+                        checked={platforms.includes(platform.key)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setPlatforms([...platforms, platform.key]);
+                          } else {
+                            setPlatforms(platforms.filter((p) => p !== platform.key));
+                          }
+                        }}
+                        disabled={!hasAccount}
+                      />
+                      <label
+                        htmlFor={`platform-${platform.key}`}
+                        className="flex items-center gap-2 text-sm"
+                      >
                         <Icon className="w-4 h-4" />
                         {platform.label}
                         {!hasAccount && (
-                          <Chip size="sm" variant="flat" color="warning">
-                            Not connected
-                          </Chip>
+                          <Badge variant="outline">Not connected</Badge>
                         )}
-                      </div>
-                    </Checkbox>
+                      </label>
+                    </div>
                   );
                 })}
-              </CheckboxGroup>
-            </CardBody>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Topic & Prompt */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold">Content Topic</h3>
+              <CardTitle>Content Topic</CardTitle>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               {brain?.contentPillars && brain.contentPillars.length > 0 && (
                 <div>
                   <p className="text-sm text-gray-500 mb-2">Quick select from your content pillars:</p>
                   <div className="flex flex-wrap gap-2">
                     {brain.contentPillars.map((pillar) => (
-                      <Chip
+                      <button
                         key={pillar}
-                        variant={topic === pillar ? "solid" : "bordered"}
-                        color={topic === pillar ? "primary" : "default"}
-                        className="cursor-pointer"
                         onClick={() => setTopic(pillar)}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium border transition-colors ${
+                          topic === pillar
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-input hover:bg-accent"
+                        }`}
                       >
                         {pillar}
-                      </Chip>
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <Input
-                label="Topic"
-                placeholder="What should the content be about?"
-                value={topic}
-                onValueChange={setTopic}
-              />
+              <div className="space-y-2">
+                <Label>Topic</Label>
+                <Input
+                  placeholder="What should the content be about?"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                />
+              </div>
 
-              <Textarea
-                label="Custom Instructions (Optional)"
-                placeholder="Any specific instructions for the AI..."
-                value={customPrompt}
-                onValueChange={setCustomPrompt}
-                minRows={2}
-              />
-            </CardBody>
+              <div className="space-y-2">
+                <Label>Custom Instructions (Optional)</Label>
+                <Textarea
+                  placeholder="Any specific instructions for the AI..."
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </CardContent>
           </Card>
 
           {/* Settings */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold">Generation Settings</h3>
+              <CardTitle>Generation Settings</CardTitle>
             </CardHeader>
-            <CardBody className="space-y-6">
-              <Select
-                label="Tone"
-                selectedKeys={[tone]}
-                onSelectionChange={(keys) => setTone(Array.from(keys)[0] as string)}
-              >
-                {TONES.map((t) => (
-                  <SelectItem key={t.key}>
-                    <div className="flex items-center gap-2">
-                      <span>{t.label}</span>
-                      {(() => {
-                        const recommendations = getRecommendedTones(brain?.voiceTone);
-                        const recommendation = recommendations.find(r => r.toneKey === t.key);
-                        return recommendation ? (
-                          <AIConfidence
-                            score={recommendation.confidence}
-                            variant="dots"
-                          />
-                        ) : null;
-                      })()}
-                    </div>
-                  </SelectItem>
-                ))}
-              </Select>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Tone</Label>
+                <Select value={tone} onValueChange={setTone}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TONES.map((t) => {
+                      const recommendations = getRecommendedTones(brain?.voiceTone ?? null);
+                      const recommendation = recommendations.find((r) => r.toneKey === t.key);
+                      return (
+                        <SelectItem key={t.key} value={t.key}>
+                          <div className="flex items-center gap-2">
+                            <span>{t.label}</span>
+                            {recommendation ? (
+                              <AIConfidence
+                                score={recommendation.confidence}
+                                variant="dots"
+                              />
+                            ) : null}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <div>
-                <p className="text-sm font-medium mb-2">Number of variations: {count}</p>
-                <Slider
-                  size="sm"
+              <div className="space-y-2">
+                <Label>Number of variations: {count}</Label>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
                   step={1}
-                  minValue={1}
-                  maxValue={10}
                   value={count}
-                  onChange={(v) => setCount(v as number)}
-                  className="max-w-md"
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  className="w-full max-w-md accent-primary"
                 />
               </div>
 
-              <Checkbox
-                isSelected={includeImage}
-                onValueChange={setIncludeImage}
-              >
-                <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="include-image"
+                  checked={includeImage}
+                  onCheckedChange={(checked) => setIncludeImage(checked === true)}
+                />
+                <label htmlFor="include-image" className="flex items-center gap-2 text-sm">
                   <Image className="w-4 h-4" />
                   Generate image suggestions
-                </div>
-              </Checkbox>
-            </CardBody>
+                </label>
+              </div>
+            </CardContent>
           </Card>
 
           <div className="flex justify-end">
             <Button
-              color="primary"
               size="lg"
-              startContent={generating ? undefined : <Wand2 className="w-5 h-5" />}
-              onPress={handleGenerate}
-              isLoading={generating}
-              isDisabled={!topic.trim() || platforms.length === 0}
+              onClick={handleGenerate}
+              disabled={generating || !topic.trim() || platforms.length === 0}
             >
+              {generating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2 className="mr-2 h-5 w-5" />
+              )}
               Generate Content
             </Button>
           </div>
@@ -458,8 +476,8 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Button
-              variant="flat"
-              onPress={() => setStep(1)}
+              variant="secondary"
+              onClick={() => setStep(1)}
             >
               Back to Settings
             </Button>
@@ -468,14 +486,13 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
                 {selectedContent.length} of {generatedContent.length} selected
               </span>
               <Button
-                color="primary"
-                onPress={() => {
+                onClick={() => {
                   if (selectedContent.length > 0) setStep(3);
                 }}
-                isDisabled={selectedContent.length === 0}
-                endContent={<ArrowRight className="w-4 h-4" />}
+                disabled={selectedContent.length === 0}
               >
                 Continue
+                <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -484,28 +501,34 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
             {generatedContent.map((content, index) => (
               <Card
                 key={content.id || index}
-                isPressable
-                onPress={() => toggleContentSelection(content.id)}
-                className={`transition-all ${
+                className={`cursor-pointer transition-all ${
                   selectedContent.includes(content.id)
                     ? "ring-2 ring-primary"
                     : ""
                 }`}
+                onClick={() => toggleContentSelection(content.id)}
               >
-                <CardBody className="p-4 space-y-3">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <Checkbox
-                      isSelected={selectedContent.includes(content.id)}
-                      onValueChange={() => toggleContentSelection(content.id)}
+                      checked={selectedContent.includes(content.id)}
+                      onCheckedChange={() => toggleContentSelection(content.id)}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      onPress={() => handleRegenerate(index)}
-                      isLoading={generating}
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRegenerate(index);
+                      }}
+                      disabled={generating}
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      {generating ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
 
@@ -526,7 +549,7 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
                       Image: {content.imagePrompt}
                     </p>
                   )}
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -537,7 +560,7 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
       {step === 3 && (
         <div className="max-w-2xl mx-auto">
           <Card>
-            <CardBody className="py-12 text-center space-y-6">
+            <CardContent className="py-12 text-center space-y-6">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8 text-primary" />
               </div>
@@ -551,18 +574,18 @@ export function ContentGeneratePage({ brandId, brain, socialAccounts }: ContentG
               </div>
 
               <div className="flex justify-center gap-4">
-                <Button variant="flat" onPress={() => setStep(2)}>
+                <Button variant="secondary" onClick={() => setStep(2)}>
                   Back to Review
                 </Button>
                 <Button
-                  color="primary"
-                  onPress={handleSaveSelected}
-                  isLoading={saving}
+                  onClick={handleSaveSelected}
+                  disabled={saving}
                 >
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save to Queue
                 </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

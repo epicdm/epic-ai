@@ -1,18 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CardFooter,
-  Input,
-  Avatar,
-  Chip,
-  Spinner,
-  Tooltip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sparkles as SparklesIcon,
   X as XMarkIcon,
@@ -96,23 +89,25 @@ export function AIAssistant() {
   // Floating button when closed
   if (!state.isOpen) {
     return (
-      <Tooltip content="AI Assistant" placement="left">
-        <Button
-          isIconOnly
-          size={isMobile ? "md" : "lg"}
-          color="primary"
-          variant="shadow"
-          className={cn(
-            "fixed z-50 rounded-full",
-            isMobile
-              ? "bottom-4 right-4 w-12 h-12"
-              : "bottom-6 right-6 w-14 h-14"
-          )}
-          onPress={toggle}
-        >
-          <SparklesIcon className={cn(isMobile ? "w-5 h-5" : "w-6 h-6")} />
-        </Button>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className={cn(
+                "fixed z-50 rounded-full shadow-lg",
+                isMobile
+                  ? "bottom-4 right-4 w-12 h-12"
+                  : "bottom-6 right-6 w-14 h-14"
+              )}
+              onClick={toggle}
+            >
+              <SparklesIcon className={cn(isMobile ? "w-5 h-5" : "w-6 h-6")} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">AI Assistant</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
@@ -127,20 +122,17 @@ export function AIAssistant() {
         onClick={maximize}
       >
         <Card className={cn("shadow-lg", isMobile ? "w-full" : "w-64")}>
-          <CardBody className="py-3 px-4 flex flex-row items-center gap-3">
-            <Avatar
-              icon={<SparklesIcon className="w-4 h-4" />}
-              size="sm"
-              color="primary"
-            />
+          <CardContent className="py-3 px-4 flex flex-row items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <SparklesIcon className="w-4 h-4 text-primary" />
+            </div>
             <div className="flex-1">
               <p className="text-sm font-medium">AI Assistant</p>
-              <p className="text-xs text-default-500">Click to expand</p>
+              <p className="text-xs text-muted-foreground">Click to expand</p>
             </div>
             <Button
-              isIconOnly
-              size="sm"
-              variant="light"
+              size="icon"
+              variant="ghost"
               onClick={(e) => {
                 e.stopPropagation();
                 close();
@@ -148,7 +140,7 @@ export function AIAssistant() {
             >
               <XMarkIcon className="w-4 h-4" />
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );
@@ -182,44 +174,56 @@ export function AIAssistant() {
           )}
         >
           {/* Header */}
-          <CardHeader className="flex flex-row items-center gap-3 border-b border-divider py-3 px-4 flex-shrink-0">
-            <Avatar
-              icon={<SparklesIcon className="w-5 h-5" />}
-              color="primary"
-              size="sm"
-            />
+          <CardHeader className="flex flex-row items-center gap-3 border-b border-border py-3 px-4 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <SparklesIcon className="w-5 h-5 text-primary" />
+            </div>
             <div className="flex-1">
               <h3 className="font-semibold text-sm">AI Assistant</h3>
-              <p className="text-xs text-default-500">Powered by GPT-4o</p>
+              <p className="text-xs text-muted-foreground">Powered by GPT-4o</p>
             </div>
             <div className="flex items-center gap-1">
-              <Tooltip content="Clear chat">
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  onPress={clearMessages}
-                >
-                  <ArrowPathIcon className="w-4 h-4" />
-                </Button>
-              </Tooltip>
-              {!isMobile && (
-                <Tooltip content="Minimize">
-                  <Button isIconOnly size="sm" variant="light" onPress={minimize}>
-                    <MinusIcon className="w-4 h-4" />
-                  </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={clearMessages}
+                    >
+                      <ArrowPathIcon className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Clear chat</TooltipContent>
                 </Tooltip>
+              </TooltipProvider>
+              {!isMobile && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="ghost" onClick={minimize}>
+                        <MinusIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Minimize</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
-              <Tooltip content="Close">
-                <Button isIconOnly size="sm" variant="light" onPress={close}>
-                  <XMarkIcon className="w-4 h-4" />
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="icon" variant="ghost" onClick={close}>
+                      <XMarkIcon className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Close</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </CardHeader>
 
           {/* Messages */}
-          <CardBody className="flex-1 overflow-y-auto p-4 space-y-4">
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
             {state.messages.length === 0 ? (
               <EmptyState
                 suggestions={state.suggestions}
@@ -235,18 +239,18 @@ export function AIAssistant() {
                   <MessageBubble key={message.id} message={message} />
                 ))}
                 {state.isLoading && (
-                  <div className="flex items-center gap-2 text-default-500">
-                    <Spinner size="sm" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <span className="text-sm">Thinking...</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </>
             )}
-          </CardBody>
+          </CardContent>
 
           {/* Input */}
-          <CardFooter className="border-t border-divider p-3 flex-shrink-0">
+          <CardFooter className="border-t border-border p-3 flex-shrink-0">
             <div className="flex items-center gap-2 w-full">
               <Input
                 ref={inputRef}
@@ -258,15 +262,14 @@ export function AIAssistant() {
                 size={isMobile ? "md" : "sm"}
                 className="flex-1"
                 startContent={
-                  <ChatBubbleLeftRightIcon className="w-4 h-4 text-default-400" />
+                  <ChatBubbleLeftRightIcon className="w-4 h-4 text-muted-foreground" />
                 }
               />
               <Button
-                isIconOnly
-                color="primary"
+                size="icon"
                 size={isMobile ? "md" : "sm"}
-                onPress={handleSend}
-                isDisabled={!input.trim() || state.isLoading}
+                onClick={handleSend}
+                disabled={!input.trim() || state.isLoading}
               >
                 <PaperAirplaneIcon className="w-4 h-4" />
               </Button>
@@ -306,7 +309,7 @@ function EmptyState({
       <h3 className={cn("font-semibold mb-2", isMobile ? "text-xl" : "text-lg")}>
         Hi! I'm your AI Assistant
       </h3>
-      <p className={cn("text-default-500 mb-4", isMobile ? "text-base" : "text-sm")}>
+      <p className={cn("text-muted-foreground mb-4", isMobile ? "text-base" : "text-sm")}>
         {welcomeMessage || "I can help you with creating content, setting up voice agents, and understanding your analytics."}
       </p>
 
@@ -321,14 +324,14 @@ function EmptyState({
       )}
 
       <div className="space-y-2 w-full max-w-sm">
-        <p className="text-xs text-default-400 uppercase font-medium">
+        <p className="text-xs text-muted-foreground uppercase font-medium">
           Try asking:
         </p>
         {suggestions.map((suggestion, i) => (
           <button
             key={i}
             className={cn(
-              "w-full text-left rounded-xl bg-default-100 hover:bg-default-200 active:scale-[0.98] transition-all",
+              "w-full text-left rounded-xl bg-muted hover:bg-default-200 active:scale-[0.98] transition-all",
               isMobile ? "text-base p-4" : "text-sm p-3"
             )}
             onClick={() => onSuggestionClick(suggestion)}
@@ -341,8 +344,8 @@ function EmptyState({
       {/* Tips section */}
       {tips && tips.length > 0 && (
         <div className={cn("mt-4 w-full max-w-sm text-left", isMobile ? "text-xs" : "text-[10px]")}>
-          <p className="text-default-400 uppercase font-medium mb-1">💡 Tips for this page:</p>
-          <ul className="text-default-400 space-y-0.5">
+          <p className="text-muted-foreground uppercase font-medium mb-1">💡 Tips for this page:</p>
+          <ul className="text-muted-foreground space-y-0.5">
             {tips.slice(0, 2).map((tip, i) => (
               <li key={i}>• {tip}</li>
             ))}
@@ -373,16 +376,16 @@ function MessageBubble({ message }: { message: AssistantMessage }) {
           "rounded-2xl px-4 py-2 max-w-[85%] sm:max-w-[80%]",
           isUser
             ? "bg-primary text-primary-foreground rounded-tr-sm"
-            : "bg-default-100 rounded-tl-sm"
+            : "bg-muted rounded-tl-sm"
         )}
       >
         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         {message.metadata?.suggestions && (
           <div className="mt-3 flex flex-wrap gap-1">
             {message.metadata.suggestions.map((s, i) => (
-              <Chip key={i} size="sm" variant="flat" color="primary">
+              <Badge key={i}  variant="secondary" >
                 {s}
-              </Chip>
+              </Badge>
             ))}
           </div>
         )}

@@ -1,18 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Input,
-  Select,
-  SelectItem,
-  Switch,
-  Chip,
-  Spinner,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { AlertCircle, Plus, Trash2, ChevronDown } from "lucide-react";
 
 interface HandoffReasonRule {
@@ -185,9 +179,9 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
   if (loading) {
     return (
       <Card>
-        <CardBody className="flex items-center justify-center py-8">
-          <Spinner size="sm" />
-        </CardBody>
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </CardContent>
       </Card>
     );
   }
@@ -197,7 +191,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
       <CardHeader className="flex gap-3 justify-between">
         <div className="flex flex-col gap-1">
           <p className="text-lg font-semibold">Reason → Target Routing Policy</p>
-          <p className="text-sm text-default-500">
+          <p className="text-sm text-muted-foreground">
             Define routing rules that automatically select handoff targets based on escalation reason
           </p>
         </div>
@@ -205,12 +199,12 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
           <span className="text-sm">Policy Enabled</span>
           <Switch
             checked={policy.enabled}
-            onValueChange={(enabled) => setPolicy({ ...policy, enabled })}
+            onCheckedChange={(enabled) => setPolicy({ ...policy, enabled })}
           />
         </div>
       </CardHeader>
 
-      <CardBody className="gap-6">
+      <CardContent className="gap-6">
         {error && (
           <div className="rounded-lg bg-danger-50 border border-danger-200 p-3 flex gap-2">
             <AlertCircle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
@@ -224,7 +218,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
         <div className="space-y-2">
           <label className="text-sm font-medium">Policy Fallback Target</label>
           <Select
-            selectedKeys={policy.fallback_target_id ? [policy.fallback_target_id] : []}
+            value={policy.fallback_target_id}
             onSelectionChange={(keys) => {
               const key = Array.from(keys)[0];
               setPolicy({
@@ -250,29 +244,28 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
           <Button
             onClick={addRule}
             size="sm"
-            color="primary"
-            isDisabled={!policy.enabled}
-            startContent={<Plus className="h-4 w-4" />}
-          >
+            disabled={!policy.enabled}
+            
+          ><Plus className="h-4 w-4" /> 
             Add Rule
           </Button>
         </div>
 
         {/* Rules List */}
         {policy.reason_rules.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-default-300 p-8 text-center">
-            <p className="text-sm text-default-500">No rules configured. Add one to get started.</p>
+          <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+            <p className="text-sm text-muted-foreground">No rules configured. Add one to get started.</p>
           </div>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {policy.reason_rules.map((rule, index) => (
-              <Card key={index} className="bg-default-50">
-                <CardBody className="gap-3 py-3">
+              <Card key={index} className="bg-muted/50">
+                <CardContent className="gap-3 py-3">
                   {/* Header Row */}
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={rule.enabled}
-                      onValueChange={(enabled) =>
+                      onCheckedChange={(enabled) =>
                         updateRule(index, { enabled })
                       }
                       size="sm"
@@ -285,7 +278,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                       onChange={(e) =>
                         updateRule(index, { reason: e.target.value })
                       }
-                      className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-default-300 bg-white"
+                      className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white"
                     />
                     <datalist id={`reasons-${index}`}>
                       {COMMON_REASONS.map((reason) => (
@@ -294,7 +287,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                     </datalist>
 
                     <Select
-                      selectedKeys={rule.target_id ? [rule.target_id] : []}
+                      value={rule.target_id}
                       onSelectionChange={(keys) => {
                         const key = Array.from(keys)[0];
                         updateRule(index, { target_id: key ? String(key) : "" });
@@ -311,9 +304,9 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
 
                     <div className="flex items-center gap-1">
                       <Button
-                        isIconOnly
+                        size="icon"
                         size="sm"
-                        variant="light"
+                        variant="ghost"
                         onClick={() =>
                           setExpandedRuleId(expandedRuleId === index ? null : index)
                         }
@@ -325,10 +318,10 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                         />
                       </Button>
                       <Button
-                        isIconOnly
+                        size="icon"
                         size="sm"
-                        variant="light"
-                        color="danger"
+                        variant="ghost"
+                        variant="destructive"
                         onClick={() => removeRule(index)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -354,7 +347,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
 
                   {/* Expanded Details */}
                   {expandedRuleId === index && (
-                    <div className="space-y-3 pt-3 border-t border-default-300">
+                    <div className="space-y-3 pt-3 border-t border-gray-300 dark:border-gray-600">
                       {/* Channel Filter */}
                       <div>
                         <p className="text-xs font-medium mb-1">Channel Filter</p>
@@ -391,7 +384,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                       <div>
                         <p className="text-xs font-medium mb-1">Min Severity</p>
                         <Select
-                          selectedKeys={rule.when?.min_severity ? [rule.when.min_severity] : []}
+                          value={rule.when.min_severity}
                           onSelectionChange={(keys) => {
                             const key = Array.from(keys)[0];
                             updateRule(index, {
@@ -415,25 +408,30 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                       {/* Tags */}
                       <div>
                         <p className="text-xs font-medium mb-1">Tags (Any Match)</p>
-                        <div className="flex flex-wrap gap-1 p-2 border border-default-300 rounded-lg min-h-8 bg-white">
+                        <div className="flex flex-wrap gap-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg min-h-8 bg-white">
                           {rule.when?.tags_any?.map((tag, i) => (
-                            <Chip
-                              key={i}
-                              onClose={() => {
-                                const newTags = rule.when?.tags_any?.filter(
-                                  (_, idx) => idx !== i
-                                );
-                                updateRule(index, {
-                                  when: {
-                                    ...rule.when,
-                                    tags_any: newTags && newTags.length > 0 ? newTags : undefined,
-                                  },
-                                });
-                              }}
-                              size="sm"
-                            >
-                              {tag}
-                            </Chip>
+                            <span key={i} className="inline-flex items-center gap-1">
+                              <Badge variant="secondary">
+                                {tag}
+                              </Badge>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  const newTags = rule.when?.tags_any?.filter(
+                                    (_, idx) => idx !== i
+                                  );
+                                  updateRule(index, {
+                                    when: {
+                                      ...rule.when,
+                                      tags_any: newTags && newTags.length > 0 ? newTags : undefined,
+                                    },
+                                  });
+                                }}
+                              >
+                                &times;
+                              </button>
+                            </span>
                           ))}
                           <input
                             type="text"
@@ -453,7 +451,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                                 e.currentTarget.value = "";
                               }
                             }}
-                            className="flex-1 min-w-20 border-0 bg-transparent text-xs placeholder:text-default-400 focus:outline-none"
+                            className="flex-1 min-w-20 border-0 bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none"
                           />
                         </div>
                       </div>
@@ -461,25 +459,30 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                       {/* Tags All */}
                       <div>
                         <p className="text-xs font-medium mb-1">Tags (All Must Match)</p>
-                        <div className="flex flex-wrap gap-1 p-2 border border-default-300 rounded-lg min-h-8 bg-white">
+                        <div className="flex flex-wrap gap-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg min-h-8 bg-white">
                           {rule.when?.tags_all?.map((tag, i) => (
-                            <Chip
-                              key={i}
-                              onClose={() => {
-                                const newTags = rule.when?.tags_all?.filter(
-                                  (_, idx) => idx !== i
-                                );
-                                updateRule(index, {
-                                  when: {
-                                    ...rule.when,
-                                    tags_all: newTags && newTags.length > 0 ? newTags : undefined,
-                                  },
-                                });
-                              }}
-                              size="sm"
-                            >
-                              {tag}
-                            </Chip>
+                            <span key={i} className="inline-flex items-center gap-1">
+                              <Badge variant="secondary">
+                                {tag}
+                              </Badge>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  const newTags = rule.when?.tags_all?.filter(
+                                    (_, idx) => idx !== i
+                                  );
+                                  updateRule(index, {
+                                    when: {
+                                      ...rule.when,
+                                      tags_all: newTags && newTags.length > 0 ? newTags : undefined,
+                                    },
+                                  });
+                                }}
+                              >
+                                &times;
+                              </button>
+                            </span>
                           ))}
                           <input
                             type="text"
@@ -499,13 +502,13 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                                 e.currentTarget.value = "";
                               }
                             }}
-                            className="flex-1 min-w-20 border-0 bg-transparent text-xs placeholder:text-default-400 focus:outline-none"
+                            className="flex-1 min-w-20 border-0 bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none"
                           />
                         </div>
                       </div>
                     </div>
                   )}
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -515,13 +518,12 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button
             onClick={savePolicy}
-            isLoading={saving}
-            color="primary"
-          >
+            disabled={saving}
+            >
             Save Policy
           </Button>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

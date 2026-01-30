@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { BarChart3, Wand2, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { WizardLayout } from "../../shared/wizard-layout";
 import { AIQuickSetup } from "../../shared/ai-quick-setup";
 import { LEARN_STEPS } from "@/lib/flywheel/constants";
@@ -153,11 +154,9 @@ export function LearnWizard({
 
         <div className="grid gap-4">
           <Card
-            isPressable
-            onPress={() => setSetupMode("ai_quick")}
-            className="border-2 border-pink-200 dark:border-pink-800 hover:border-pink-400 dark:hover:border-pink-600 transition-colors"
+            className="cursor-pointer border-2 border-pink-200 dark:border-pink-800 hover:border-pink-400 dark:hover:border-pink-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("ai_quick")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-pink-100 dark:bg-pink-900/30">
                   <Wand2 className="w-6 h-6 text-pink-600 dark:text-pink-400" />
@@ -170,19 +169,17 @@ export function LearnWizard({
                     Tell us your primary goal and AI will set up the right metrics, reports, and optimization targets for you.
                   </p>
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-400">
-                    Recommended • ~30 seconds
+                    Recommended &bull; ~30 seconds
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card
-            isPressable
-            onPress={() => setSetupMode("manual")}
-            className="border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+            className="cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
           >
-            <CardBody className="p-6">
+            <CardContent className="p-6" onClick={() => setSetupMode("manual")}>
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 p-3 rounded-xl bg-gray-100 dark:bg-gray-800">
                   <Settings2 className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -199,7 +196,7 @@ export function LearnWizard({
                   </span>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -211,12 +208,12 @@ export function LearnWizard({
       <div className="max-w-2xl mx-auto py-8">
         <div className="mb-6">
           <Button
-            variant="light"
+            variant="ghost"
             size="sm"
-            onPress={() => setSetupMode("choosing")}
+            onClick={() => setSetupMode("choosing")}
             className="text-gray-500"
           >
-            ← Back to setup options
+            &larr; Back to setup options
           </Button>
         </div>
         <AIQuickSetup
@@ -241,7 +238,7 @@ export function LearnWizard({
       onComplete={handleComplete}
       onSave={handleSave}
       canProceed={canProceed()}
-      isLoading={isLoading}
+      disabled={isLoading}
     >
       {renderStep()}
     </WizardLayout>

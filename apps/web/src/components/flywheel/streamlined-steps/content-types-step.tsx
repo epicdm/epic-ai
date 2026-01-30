@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardBody, Checkbox, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Image, Layers, Video, Clock, MessageSquare } from "lucide-react";
 import type { StreamlinedWizardData } from "../streamlined-flywheel-wizard";
 
@@ -103,19 +105,18 @@ export function ContentTypesStep({ data, updateData }: ContentTypesStepProps) {
           return (
             <Card
               key={type.id}
-              isPressable
-              className={`transition-all ${
+              className={`cursor-pointer transition-all ${
                 isSelected
                   ? "border-2 border-primary bg-primary/5"
                   : "border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700"
               }`}
-              onPress={() => handleToggle(type.id)}
+              onClick={() => handleToggle(type.id)}
             >
-              <CardBody className="flex flex-row items-center gap-4 py-4">
+              <CardContent className="flex flex-row items-center gap-4 py-4 px-4">
                 <Checkbox
-                  isSelected={isSelected}
-                  onValueChange={() => handleToggle(type.id)}
-                  size="lg"
+                  checked={isSelected}
+                  onCheckedChange={() => handleToggle(type.id)}
+                  className="h-5 w-5"
                 />
                 <div className={`p-2 rounded-lg ${isSelected ? "bg-primary/10" : "bg-gray-100 dark:bg-gray-800"}`}>
                   <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-gray-500"}`} />
@@ -126,16 +127,16 @@ export function ContentTypesStep({ data, updateData }: ContentTypesStepProps) {
                       {type.label}
                     </p>
                     {type.recommended && (
-                      <Chip size="sm" color="primary" variant="flat">
+                      <Badge variant="secondary">
                         Recommended
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {type.description}
                   </p>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -147,7 +148,7 @@ export function ContentTypesStep({ data, updateData }: ContentTypesStepProps) {
           {selectedTypes.length} type{selectedTypes.length !== 1 ? "s" : ""} selected
         </span>
         {!isValid && (
-          <span className="text-sm text-danger">
+          <span className="text-sm text-red-600 dark:text-red-400">
             Select at least one content type
           </span>
         )}

@@ -1,25 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-  useDisclosure,
-  Spinner,
-  Tooltip,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Plus,
@@ -62,7 +53,9 @@ const SOURCE_TYPES = [
 export function ContextSourcesPage({ brandId, sources: initialSources }: ContextSourcesPageProps) {
   const [sources, setSources] = useState(initialSources);
   const [refreshing, setRefreshing] = useState<string | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -148,11 +141,8 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
         title="Context Sources"
         description="Add sources for your AI to learn from and reference when generating content."
         actions={
-          <Button
-            color="primary"
-            startContent={<Plus className="w-4 h-4" />}
-            onPress={onOpen}
-          >
+          <Button onClick={onOpen}>
+            <Plus className="w-4 h-4 mr-2" />
             Add Source
           </Button>
         }
@@ -164,17 +154,17 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
           const Icon = type.icon;
           const count = sources.filter((s) => s.type === type.key).length;
           return (
-            <Card key={type.key} isPressable onPress={() => {
+            <Card key={type.key} onClick={() => {
               setFormData({ ...formData, type: type.key });
               onOpen();
             }}>
-              <CardBody className="flex flex-col items-center text-center py-6">
+              <CardContent className="flex flex-col items-center text-center py-6">
                 <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center mb-3">
                   <Icon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                 </div>
                 <p className="font-medium">{type.label}</p>
                 <p className="text-xs text-gray-500">{count} source{count !== 1 ? "s" : ""}</p>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -185,7 +175,7 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
         <CardHeader>
           <h2 className="text-lg font-semibold">All Sources</h2>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           {sources.length === 0 ? (
             <div className="text-center py-12">
               <Globe className="w-16 h-16 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
@@ -193,7 +183,7 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
               <p className="text-gray-500 mb-6">
                 Add your website, documents, or RSS feeds to train your AI.
               </p>
-              <Button color="primary" onPress={onOpen}>
+              <Button  onClick={onOpen}>
                 Add Your First Source
               </Button>
             </div>
@@ -213,22 +203,18 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">{source.name}</p>
-                        <Chip
-                          size="sm"
-                          variant="flat"
-                          color={
-                            source.status === "ACTIVE" ? "success" :
-                            source.status === "PROCESSING" ? "warning" :
-                            source.status === "ERROR" ? "danger" : "default"
+                        <Badge
+                          variant={
+                            source.status === "ACTIVE" ? "default" :
+                            source.status === "PROCESSING" ? "secondary" :
+                            source.status === "ERROR" ? "destructive" : "outline"
                           }
-                          startContent={
-                            source.status === "ACTIVE" ? <CheckCircle2 className="w-3 h-3" /> :
-                            source.status === "PROCESSING" ? <Clock className="w-3 h-3" /> :
-                            source.status === "ERROR" ? <AlertCircle className="w-3 h-3" /> : undefined
-                          }
+                          className="flex items-center gap-1"
                         >
+                          {source.status === "ACTIVE" && <CheckCircle2 className="w-3 h-3" />}
+                          {source.status === "PROCESSING" && <Clock className="w-3 h-3" />}
                           {source.status}
-                        </Chip>
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         {source.config?.url && (
@@ -251,85 +237,97 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Tooltip content="Refresh source">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="flat"
-                          onPress={() => handleRefresh(source.id)}
-                          isLoading={refreshing === source.id}
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
-                      <Tooltip content="Delete source">
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="flat"
-                          color="danger"
-                          onPress={() => handleDelete(source.id)}
-                          isLoading={deleting === source.id}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="secondary"
+                              onClick={() => handleRefresh(source.id)}
+                              disabled={refreshing === source.id}
+                            >
+                              {refreshing === source.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Refresh source</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              onClick={() => handleDelete(source.id)}
+                              disabled={deleting === source.id}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete source</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Add Source Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Add Context Source</ModalHeader>
-          <ModalBody className="space-y-4">
-            <Select
-              label="Source Type"
-              selectedKeys={[formData.type]}
-              onSelectionChange={(keys) => {
-                const type = Array.from(keys)[0] as string;
-                setFormData({ ...formData, type, url: "", content: "" });
-              }}
-            >
-              {SOURCE_TYPES.map((type) => (
-                <SelectItem key={type.key} description={type.description}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </Select>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Context Source</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Source Type</Label>
+              <Select value={formData.type} onValueChange={(type) => setFormData({ ...formData, type, url: "", content: "" })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_TYPES.map((type) => (
+                    <SelectItem key={type.key} value={type.key}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Input
-              label="Name"
-              placeholder="e.g., Company Website, Blog RSS"
-              value={formData.name}
-              onValueChange={(v) => setFormData({ ...formData, name: v })}
-              isRequired
-            />
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input
+                placeholder="e.g., Company Website, Blog RSS"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
 
             {(formData.type === "WEBSITE" || formData.type === "RSS") && (
-              <Input
-                label="URL"
-                placeholder={formData.type === "WEBSITE" ? "https://example.com" : "https://example.com/feed.xml"}
-                value={formData.url}
-                onValueChange={(v) => setFormData({ ...formData, url: v })}
-                isRequired
-              />
+              <div className="space-y-2">
+                <Label>URL</Label>
+                <Input
+                  placeholder={formData.type === "WEBSITE" ? "https://example.com" : "https://example.com/feed.xml"}
+                  value={formData.url}
+                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  required
+                />
+              </div>
             )}
 
             {formData.type === "DOCUMENT" && (
-              <Textarea
-                label="Content"
-                placeholder="Paste your document content here..."
-                value={formData.content}
-                onValueChange={(v) => setFormData({ ...formData, content: v })}
-                minRows={6}
-                description="Paste text content directly, or upload a file"
-              />
+              <div className="space-y-2">
+                <Label>Content</Label>
+                <Textarea
+                  placeholder="Paste your document content here..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={6}
+                />
+                <p className="text-xs text-gray-500">Paste text content directly, or upload a file</p>
+              </div>
             )}
 
             {formData.type === "EMAIL" && (
@@ -348,25 +346,25 @@ export function ContextSourcesPage({ brandId, sources: initialSources }: Context
                 {selectedSourceType.description}
               </p>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              onPress={handleCreate}
-              isLoading={creating}
-              isDisabled={
+              onClick={handleCreate}
+              disabled={
+                creating ||
                 !formData.name.trim() ||
                 ((formData.type === "WEBSITE" || formData.type === "RSS") && !formData.url.trim())
               }
             >
+              {creating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Add Source
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

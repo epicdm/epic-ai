@@ -6,7 +6,8 @@
  * Pre-fills voice, tone, pillars, and audience settings based on industry.
  */
 
-import { Card, CardBody, Chip } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   WizardStepContainer,
@@ -82,15 +83,15 @@ interface TemplateCardProps {
 function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
   return (
     <Card
-      isPressable
-      isHoverable
+     
+     
       className={cn(
         "transition-all cursor-pointer",
         isSelected && "ring-2 ring-primary border-primary bg-primary/5"
       )}
-      onPress={() => onSelect(template)}
+      onClick={() => onSelect(template)}
     >
-      <CardBody className="p-4 gap-3">
+      <CardContent className="p-4 gap-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{template.icon}</span>
@@ -99,21 +100,21 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
             </div>
           </div>
           {isSelected && (
-            <Chip color="primary" size="sm" variant="solid">
+            <Badge  size="sm" variant="default">
               Selected
-            </Chip>
+            </Badge>
           )}
         </div>
 
         <p className="text-sm text-default-500">{template.description}</p>
 
         <div className="flex flex-wrap gap-1 mt-2">
-          <Chip size="sm" variant="flat" color="secondary">
+          <Badge variant="secondary">
             {template.voiceTone}
-          </Chip>
-          <Chip size="sm" variant="flat">
+          </Badge>
+          <Badge size="sm" variant="secondary">
             {template.emojiStyle} emoji
-          </Chip>
+          </Badge>
         </div>
 
         {template.contentPillars.length > 0 && (
@@ -121,19 +122,19 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
             <p className="text-xs text-default-400 mb-1">Content Pillars:</p>
             <div className="flex flex-wrap gap-1">
               {template.contentPillars.slice(0, 3).map((pillar) => (
-                <Chip key={pillar} size="sm" variant="dot" color="default">
+                <Badge key={pillar} variant="outline">
                   {pillar}
-                </Chip>
+                </Badge>
               ))}
               {template.contentPillars.length > 3 && (
-                <Chip size="sm" variant="flat" color="default">
+                <Badge variant="secondary">
                   +{template.contentPillars.length - 3}
-                </Chip>
+                </Badge>
               )}
             </div>
           </div>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

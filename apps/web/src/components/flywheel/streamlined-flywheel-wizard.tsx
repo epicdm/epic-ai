@@ -10,15 +10,9 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Progress,
-  Button,
-  Link,
-  Chip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useWizardAutoSave, getSaveStatusText } from "@/hooks/use-wizard-autosave";
 import {
   ChevronLeft,
@@ -505,9 +499,9 @@ export function StreamlinedFlywheelWizard({
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Guided Setup
               </h1>
-              <Chip
-                size="sm"
-                variant="flat"
+              <Badge
+                
+                variant="secondary"
                 color={
                   phaseColor === "purple"
                     ? "secondary"
@@ -521,7 +515,7 @@ export function StreamlinedFlywheelWizard({
                 }
               >
                 {currentPhase}
-              </Chip>
+              </Badge>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               12 steps to activate your AI marketing flywheel
@@ -547,9 +541,9 @@ export function StreamlinedFlywheelWizard({
           )}
 
           <Button
-            isIconOnly
-            variant="light"
-            onPress={handleClose}
+            size="icon"
+            variant="ghost"
+            onClick={handleClose}
             aria-label="Close wizard"
           >
             <X className="w-5 h-5" />
@@ -559,7 +553,7 @@ export function StreamlinedFlywheelWizard({
 
       {/* Progress Card */}
       <Card className="mb-6">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Step {currentStep + 1} of {totalSteps}
@@ -570,14 +564,9 @@ export function StreamlinedFlywheelWizard({
               {progressPercent}%
             </span>
           </div>
-          <Progress
-            size="sm"
-            value={progressPercent}
-            classNames={{
-              indicator: `bg-${phaseColor}-500`,
-              track: "bg-gray-100 dark:bg-gray-800",
-            }}
-          />
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
 
           {/* Phase Progress Indicators */}
           <div className="flex items-center justify-between mt-4 gap-1 overflow-x-auto pb-2">
@@ -626,7 +615,7 @@ export function StreamlinedFlywheelWizard({
               );
             })}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Current Step Content */}
@@ -647,36 +636,35 @@ export function StreamlinedFlywheelWizard({
             {currentStepInfo.description}
           </p>
         </CardHeader>
-        <CardBody className="pt-4">{renderStepContent()}</CardBody>
+        <CardContent className="pt-4">{renderStepContent()}</CardContent>
       </Card>
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
-          variant="flat"
-          startContent={<ChevronLeft className="w-4 h-4" />}
-          onPress={handleBack}
-          isDisabled={currentStep === 0 || isSaving || isActivating}
-        >
+          variant="secondary"
+          
+          onClick={handleBack}
+          disabled={currentStep === 0 || isSaving || isActivating}
+        ><ChevronLeft className="w-4 h-4" /> 
           Back
         </Button>
 
         <div className="flex items-center gap-3">
           {currentStep === totalSteps - 1 ? (
             <Button
-              color="success"
-              endContent={<Check className="w-4 h-4" />}
-              onPress={handleActivate}
-              isLoading={isActivating}
+              variant="outline"
+              
+              onClick={handleActivate}
+              disabled={isActivating}
             >
               Activate Flywheel
             </Button>
           ) : (
             <Button
-              color="primary"
-              endContent={<ChevronRight className="w-4 h-4" />}
-              onPress={handleNext}
-              isLoading={isSaving}
+              
+              onClick={handleNext}
+              disabled={isSaving}
             >
               {isSaving ? "Saving..." : "Next"}
             </Button>

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
-import { Button, Card, CardBody, Slider, Select, SelectItem, Textarea } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/lib/analytics";
 
@@ -20,20 +23,16 @@ export function ContentBatchWizard({ brandId }: { brandId: string }) {
 
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Content Batch Size</h3>
-          <Slider 
-            label="Number of posts"
-            defaultValue={count}
-            onChange={handleCountChange}
-            minValue={5}
-            maxValue={30}
-            step={5}
-          />
-          <Button onPress={() => onComplete({ count })}>
+          <div>
+              <label className="text-sm font-medium">Number of posts</label>
+              <input type="range" className="w-full" value={count} onChange={(e) => handleCountChange(Number(e.target.value))} min={5} max={30} step={5} />
+            </div>
+          <Button onClick={() => onComplete({ count })}>
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -60,33 +59,24 @@ export function ContentBatchWizard({ brandId }: { brandId: string }) {
 
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Content Mix</h3>
-          <Slider 
-            label="Educational Content %"
-            defaultValue={mix.education}
-            onChange={handleEducationChange}
-            minValue={0}
-            maxValue={100}
-          />
-          <Slider 
-            label="Engagement Content %"
-            defaultValue={mix.engagement}
-            onChange={handleEngagementChange}
-            minValue={0}
-            maxValue={100}
-          />
-          <Slider 
-            label="Promotional Content %"
-            defaultValue={mix.promo}
-            onChange={handlePromoChange}
-            minValue={0}
-            maxValue={100}
-          />
-          <Button onPress={() => onComplete({ mix })}>
+          <div>
+              <label className="text-sm font-medium">Educational Content %</label>
+              <input type="range" className="w-full" value={mix.education} onChange={(e) => handleEducationChange(Number(e.target.value))} min={0} max={100} step={1} />
+            </div>
+          <div>
+              <label className="text-sm font-medium">Engagement Content %</label>
+              <input type="range" className="w-full" value={mix.engagement} onChange={(e) => handleEngagementChange(Number(e.target.value))} min={0} max={100} step={1} />
+            </div>
+          <div>
+              <label className="text-sm font-medium">Promotional Content %</label>
+              <input type="range" className="w-full" value={mix.promo} onChange={(e) => handlePromoChange(Number(e.target.value))} min={0} max={100} step={1} />
+            </div>
+          <Button onClick={() => onComplete({ mix })}>
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -95,20 +85,22 @@ export function ContentBatchWizard({ brandId }: { brandId: string }) {
   const ReviewStep = ({ onComplete }: { onComplete: (data: any) => void }) => {
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Review & Schedule</h3>
-          <Select 
-            label="Schedule Option"
-            defaultSelectedKeys={["auto"]}
-          >
-            <SelectItem key="auto">Auto-schedule optimally</SelectItem>
-            <SelectItem key="manual">Schedule manually</SelectItem>
-            <SelectItem key="draft">Save as drafts</SelectItem>
+          <Select defaultValue="auto">
+            <SelectTrigger>
+              <SelectValue placeholder="Schedule Option" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto-schedule optimally</SelectItem>
+              <SelectItem value="manual">Schedule manually</SelectItem>
+              <SelectItem value="draft">Save as drafts</SelectItem>
+            </SelectContent>
           </Select>
-          <Button onPress={() => onComplete({ schedule: "auto" })}>
+          <Button onClick={() => onComplete({ schedule: "auto" })}>
             Generate & Schedule
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };

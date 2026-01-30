@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, CardBody, Tooltip } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Info, ArrowRight, Sparkles, Lock } from "lucide-react";
 import { AIBadge, AIConfidenceDots } from "@/components/ui/ai-badge";
 import { trackEvent } from "@/lib/analytics";
@@ -47,10 +54,9 @@ export function FeatureHighlightCard({
   };
 
   return (
-    <Card 
-      className={`relative overflow-hidden ${status === "locked" ? "opacity-60" : ""}`}
-      isPressable={status !== "locked" && !!quickAction}
-      onPress={handleQuickAction}
+    <Card
+      className={`relative overflow-hidden ${status === "locked" ? "opacity-60" : ""} ${status !== "locked" && quickAction ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+      onClick={status !== "locked" && quickAction ? handleQuickAction : undefined}
     >
       {/* Status indicators */}
       <div className="absolute top-2 right-2 flex gap-1">
@@ -58,16 +64,16 @@ export function FeatureHighlightCard({
           <AIBadge type="new" size="sm" position="corner" />
         )}
         {confidence && (
-          <AIConfidenceDots 
-            confidence={confidence} 
+          <AIConfidenceDots
+            confidence={confidence}
             variant={confidence >= 85 ? "purple" : "blue"}
           />
         )}
       </div>
 
-      <CardBody className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg flex-shrink-0 ${status === "locked" ? "bg-default-100" : "bg-primary/10 text-primary"}`}>
+          <div className={`p-2 rounded-lg flex-shrink-0 ${status === "locked" ? "bg-muted" : "bg-primary/10 text-primary"}`}>
             {status === "locked" ? <Lock className="w-4 h-4" /> : icon}
           </div>
 
@@ -75,29 +81,36 @@ export function FeatureHighlightCard({
             <div className="flex items-center gap-2">
               <h3 className="font-medium">{title}</h3>
               {learnMoreContent && (
-                <Tooltip content="Learn more">
-                  <Button 
-                    isIconOnly 
-                    variant="light" 
-                    size="sm" 
-                    onPress={handleLearnMore}
-                  >
-                    <Info className="w-3 h-3" />
-                  </Button>
-                </Tooltip>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLearnMore();
+                        }}
+                      >
+                        <Info className="w-3 h-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Learn more</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
-            
+
             <p className="text-sm text-muted-foreground">{description}</p>
-            
+
             {showLearnMore && learnMoreContent && (
-              <div className="mt-2 text-xs bg-default-50 rounded-lg p-2">
+              <div className="mt-2 text-xs bg-muted rounded-lg p-2">
                 {learnMoreContent}
               </div>
             )}
 
             {status === "locked" && unlockRequirement && (
-              <p className="text-xs text-warning mt-1">
+              <p className="text-xs text-yellow-600 mt-1">
                 Unlock by: {unlockRequirement}
               </p>
             )}
@@ -105,17 +118,20 @@ export function FeatureHighlightCard({
         </div>
 
         {quickAction && status !== "locked" && (
-          <Button 
-            variant="flat" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             className="mt-2 w-full"
-            endContent={<ArrowRight className="w-3 h-3" />}
-            onPress={handleQuickAction}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleQuickAction();
+            }}
           >
             Try it now
+            <ArrowRight className="w-3 h-3 ml-2" />
           </Button>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

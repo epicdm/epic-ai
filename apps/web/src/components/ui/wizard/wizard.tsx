@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Card, CardBody, Progress } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { WizardProvider, WizardStep, useWizard } from "./wizard-context";
 import { CheckIcon } from "lucide-react";
@@ -72,13 +72,12 @@ function WizardContent({
     return (
       <div className={cn("w-full", className)}>
         {showProgress && (
-          <Progress
-            value={progress}
-            className="mb-6"
-            color="primary"
-            size="sm"
-            aria-label="Wizard progress"
-          />
+          <div className="h-2 w-full rounded-full bg-muted mb-6" aria-label="Wizard progress">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: progress + "%" }}
+            />
+          </div>
         )}
         {children}
       </div>
@@ -88,7 +87,6 @@ function WizardContent({
   if (variant === "full") {
     return (
       <div className={cn("flex gap-8 w-full max-w-5xl mx-auto", className)}>
-        {/* Sidebar with steps */}
         <div className="w-64 flex-shrink-0">
           <nav className="space-y-1" aria-label="Wizard steps">
             {steps.map((step, index) => (
@@ -103,26 +101,23 @@ function WizardContent({
           </nav>
         </div>
 
-        {/* Main content */}
         <Card className="flex-1">
-          <CardBody className="p-6 md:p-8">{children}</CardBody>
+          <CardContent className="p-6 md:p-8">{children}</CardContent>
         </Card>
       </div>
     );
   }
 
-  // Default variant
   return (
     <Card className={cn("w-full max-w-lg mx-auto", className)}>
-      <CardBody className="p-6 md:p-8">
+      <CardContent className="p-6 md:p-8">
         {showProgress && (
-          <Progress
-            value={progress}
-            className="mb-6"
-            color="primary"
-            size="sm"
-            aria-label="Wizard progress"
-          />
+          <div className="h-2 w-full rounded-full bg-muted mb-6" aria-label="Wizard progress">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: progress + "%" }}
+            />
+          </div>
         )}
 
         {showStepIndicator && (
@@ -139,7 +134,7 @@ function WizardContent({
         )}
 
         {children}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }
@@ -163,7 +158,7 @@ function StepDot({ index, currentStep, title }: StepDotProps) {
         !isComplete && !isCurrent && "bg-gray-300 dark:bg-gray-600"
       )}
       title={title}
-      aria-label={`Step ${index + 1}: ${title}${isComplete ? " (complete)" : isCurrent ? " (current)" : ""}`}
+      aria-label={"Step " + (index + 1) + ": " + title + (isComplete ? " (complete)" : isCurrent ? " (current)" : "")}
     />
   );
 }
@@ -222,6 +217,5 @@ function StepIndicator({ step, index, currentStep, showIcon = false }: StepIndic
   );
 }
 
-// Re-export useful items
 export { useWizard } from "./wizard-context";
 export type { WizardStep } from "./wizard-context";

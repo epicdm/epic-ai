@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardBody, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function EmptyStateSocial() {
   return (
@@ -18,7 +19,7 @@ export function EmptyStateSocial() {
 
       {/* Empty State */}
       <Card className="max-w-2xl mx-auto">
-        <CardBody className="py-16 text-center">
+        <CardContent className="py-16 text-center">
           <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">📱</span>
           </div>
@@ -37,7 +38,6 @@ export function EmptyStateSocial() {
             <Button
               as={Link}
               href="/dashboard/social/accounts"
-              color="primary"
               size="lg"
             >
               Connect Accounts
@@ -45,7 +45,7 @@ export function EmptyStateSocial() {
             <Button
               as={Link}
               href="/dashboard/content/generate"
-              variant="bordered"
+              variant="outline"
               size="lg"
             >
               Create Post
@@ -84,7 +84,7 @@ export function EmptyStateSocial() {
               </p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

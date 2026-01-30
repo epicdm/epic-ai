@@ -10,16 +10,11 @@
  */
 
 import { useCallback } from "react";
-import {
-  Slider,
-  CheckboxGroup,
-  Checkbox,
-  RadioGroup,
-  Radio,
-  Card,
-  CardBody,
-  Chip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Check } from "lucide-react";
 import type { StreamlinedWizardData } from "../streamlined-flywheel-wizard";
 import {
@@ -43,13 +38,17 @@ export function VoiceToneStep({ data, updateData }: VoiceToneStepProps) {
   );
 
   const handlePersonalityChange = useCallback(
-    (values: string[]) => {
-      // Limit to 4 traits
-      if (values.length <= 4) {
-        updateData({ personality: values });
+    (traitId: string, checked: boolean) => {
+      const current = data.personality || [];
+      if (checked) {
+        if (current.length < 4) {
+          updateData({ personality: [...current, traitId] });
+        }
+      } else {
+        updateData({ personality: current.filter((id) => id !== traitId) });
       }
     },
-    [updateData]
+    [data.personality, updateData]
   );
 
   const handleWritingStyleChange = useCallback(
@@ -71,29 +70,27 @@ export function VoiceToneStep({ data, updateData }: VoiceToneStepProps) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Formality Level
           </label>
-          <Chip size="sm" variant="flat" color="primary">
+          <Badge variant="secondary">
             {currentFormality.label}
-          </Chip>
+          </Badge>
         </div>
 
-        <Slider
-          value={data.formality || 3}
-          onChange={handleFormalityChange}
-          minValue={1}
-          maxValue={5}
-          step={1}
-          showSteps
-          marks={FORMALITY_LEVELS.map((level) => ({
-            value: level.value,
-            label: level.label,
-          }))}
-          classNames={{
-            track: "bg-gray-200 dark:bg-gray-700",
-            filler: "bg-primary",
-            thumb: "bg-primary border-2 border-white shadow-md",
-            mark: "text-xs text-gray-500",
-          }}
-        />
+        <div className="space-y-2">
+          <input
+            type="range"
+            className="w-full accent-primary"
+            min={1}
+            max={5}
+            step={1}
+            value={data.formality || 3}
+            onChange={(e) => handleFormalityChange(Number(e.target.value))}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {FORMALITY_LEVELS.map((level) => (
+              <span key={level.value}>{level.label}</span>
+            ))}
+          </div>
+        </div>
 
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
           {currentFormality.description}
@@ -111,53 +108,44 @@ export function VoiceToneStep({ data, updateData }: VoiceToneStepProps) {
           </span>
         </div>
 
-        <CheckboxGroup
-          value={data.personality || []}
-          onValueChange={handlePersonalityChange}
-          classNames={{
-            wrapper: "grid grid-cols-2 sm:grid-cols-3 gap-2",
-          }}
-        >
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {PERSONALITY_TRAITS.map((trait) => {
             const isSelected = data.personality?.includes(trait.id);
-            const isDisabled =
-              !isSelected && (data.personality?.length || 0) >= 4;
+            const isDisabled = !isSelected && (data.personality?.length || 0) >= 4;
 
             return (
-              <Checkbox
+              <label
                 key={trait.id}
-                value={trait.id}
-                isDisabled={isDisabled}
-                classNames={{
-                  base: `max-w-full m-0 p-0 ${isDisabled ? "opacity-50" : ""}`,
-                  wrapper: "hidden",
-                  label: "w-full",
-                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/10 text-primary"
+                    : isDisabled
+                    ? "border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed"
+                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                }`}
               >
-                <div
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
-                >
-                  <span className="text-lg">{trait.emoji}</span>
-                  <span className="text-sm font-medium">{trait.label}</span>
-                  {isSelected && <Check className="w-4 h-4 ml-auto" />}
-                </div>
-              </Checkbox>
+                <Checkbox
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onCheckedChange={(checked) => handlePersonalityChange(trait.id, checked === true)}
+                  className="sr-only"
+                />
+                <span className="text-lg">{trait.emoji}</span>
+                <span className="text-sm font-medium">{trait.label}</span>
+                {isSelected && <Check className="w-4 h-4 ml-auto" />}
+              </label>
             );
           })}
-        </CheckboxGroup>
+        </div>
 
         {(data.personality?.length || 0) > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {data.personality?.map((traitId) => {
               const trait = PERSONALITY_TRAITS.find((t) => t.id === traitId);
               return trait ? (
-                <Chip key={traitId} size="sm" variant="flat" color="primary">
+                <Badge key={traitId} variant="default">
                   {trait.emoji} {trait.label}
-                </Chip>
+                </Badge>
               ) : null;
             })}
           </div>
@@ -173,46 +161,42 @@ export function VoiceToneStep({ data, updateData }: VoiceToneStepProps) {
         <RadioGroup
           value={data.writingStyle || "conversational"}
           onValueChange={handleWritingStyleChange}
-          classNames={{
-            wrapper: "grid grid-cols-1 sm:grid-cols-2 gap-3",
-          }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
         >
           {WRITING_STYLES.map((style) => (
-            <Radio
-              key={style.id}
-              value={style.id}
-              classNames={{
-                base: "max-w-full m-0 p-0",
-                labelWrapper: "w-full",
-                label: "w-full",
-              }}
-            >
-              <Card
-                className={`cursor-pointer transition-all ${
-                  data.writingStyle === style.id
-                    ? "border-2 border-primary ring-2 ring-primary/20"
-                    : "border border-gray-200 dark:border-gray-700 hover:border-primary/50"
-                }`}
-                isPressable
-                onPress={() => handleWritingStyleChange(style.id)}
-              >
-                <CardBody className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {style.label}
-                      </span>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {style.description}
-                      </p>
+            <div key={style.id}>
+              <RadioGroupItem
+                value={style.id}
+                id={`style-${style.id}`}
+                className="sr-only"
+              />
+              <Label htmlFor={`style-${style.id}`} className="cursor-pointer">
+                <Card
+                  className={`cursor-pointer transition-all ${
+                    data.writingStyle === style.id
+                      ? "border-2 border-primary ring-2 ring-primary/20"
+                      : "border border-gray-200 dark:border-gray-700 hover:border-primary/50"
+                  }`}
+                  onClick={() => handleWritingStyleChange(style.id)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {style.label}
+                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {style.description}
+                        </p>
+                      </div>
+                      {data.writingStyle === style.id && (
+                        <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                      )}
                     </div>
-                    {data.writingStyle === style.id && (
-                      <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                    )}
-                  </div>
-                </CardBody>
-              </Card>
-            </Radio>
+                  </CardContent>
+                </Card>
+              </Label>
+            </div>
           ))}
         </RadioGroup>
       </div>

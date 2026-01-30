@@ -11,7 +11,9 @@
  */
 
 import { useRouter } from "next/navigation";
-import { Card, CardBody, Button, Progress, Chip } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   CheckCircle,
   ArrowRight,
@@ -137,20 +139,14 @@ export function SetupDashboard({
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Setup Hub
             </h1>
-            <Chip
-              size="lg"
-              variant="flat"
+            <Badge
+              
+              variant="secondary"
               color={currentMode === "guided" ? "primary" : "default"}
-              startContent={
-                currentMode === "guided" ? (
-                  <Sparkles className="w-4 h-4" />
-                ) : (
-                  <Settings2 className="w-4 h-4" />
-                )
-              }
+              
             >
               {currentMode === "guided" ? "Guided Mode" : "Expert Mode"}
-            </Chip>
+            </Badge>
           </div>
 
           <ModeSwitcher currentMode={currentMode} />
@@ -172,10 +168,10 @@ export function SetupDashboard({
                   let AI do the heavy lifting with our Express Setup.
                 </p>
                 <Button
-                  color="secondary"
+                  variant="secondary"
                   size="sm"
-                  endContent={<ArrowRight className="w-4 h-4" />}
-                  onPress={() => router.push("/setup/ai")}
+                  
+                  onClick={() => router.push("/setup/ai")}
                 >
                   Try AI Express Setup
                 </Button>
@@ -186,7 +182,7 @@ export function SetupDashboard({
 
         {/* Overall Progress Card */}
         <Card className="mb-6 border-2 border-purple-200 dark:border-purple-800">
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -207,16 +203,9 @@ export function SetupDashboard({
               </div>
             </div>
 
-            <Progress
-              value={overallProgress}
-              size="lg"
-              className="mb-4"
-              classNames={{
-                indicator:
-                  "bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500",
-                track: "bg-gray-200 dark:bg-gray-700",
-              }}
-            />
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${overallProgress}%` }} />
+            </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -228,10 +217,9 @@ export function SetupDashboard({
 
               {overallProgress < 100 && nextPhase && (
                 <Button
-                  color="primary"
                   size="sm"
-                  endContent={<ArrowRight className="w-4 h-4" />}
-                  onPress={handleContinueSetup}
+                  
+                  onClick={handleContinueSetup}
                 >
                   Continue Setup
                 </Button>
@@ -239,22 +227,22 @@ export function SetupDashboard({
 
               {overallProgress === 100 && !flywheelState.flywheelActive && (
                 <Button
-                  color="success"
+                  variant="outline"
                   size="sm"
-                  endContent={<Rocket className="w-4 h-4" />}
-                  onPress={handleActivateFlywheel}
+                  
+                  onClick={handleActivateFlywheel}
                 >
                   Activate Flywheel
                 </Button>
               )}
 
               {flywheelState.flywheelActive && (
-                <Chip color="success" variant="flat" startContent={<Rocket className="w-3 h-3" />}>
+                <Badge variant="outline" variant="secondary" >
                   Flywheel Active
-                </Chip>
+                </Badge>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* Phase Status Cards */}
@@ -280,7 +268,7 @@ export function SetupDashboard({
 
         {/* Help Section */}
         <Card className="bg-gray-100 dark:bg-gray-800">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                 <HelpCircle className="w-4 h-4 text-blue-600" />
@@ -296,15 +284,15 @@ export function SetupDashboard({
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="flat"
-                    color="secondary"
-                    onPress={() => router.push("/setup/ai")}
+                    variant="secondary"
+                    variant="secondary"
+                    onClick={() => router.push("/setup/ai")}
                   >
                     Try AI Express
                   </Button>
                   <Button
                     size="sm"
-                    variant="flat"
+                    variant="secondary"
                     as={Link}
                     href="/docs/setup"
                   >
@@ -313,7 +301,7 @@ export function SetupDashboard({
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>

@@ -1,26 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Spinner,
-  Textarea,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Checkbox,
-  Select,
-  SelectItem,
-  Tabs,
-  Tab,
-  useDisclosure,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   Sparkles,
@@ -85,8 +75,8 @@ export function SuggestionsPage() {
   const [editedContent, setEditedContent] = useState("");
   const [posting, setPosting] = useState(false);
 
-  const postModal = useDisclosure();
-  const editModal = useDisclosure();
+  const [postModalOpen, setPostModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const fetchSuggestions = useCallback(async () => {
     try {
@@ -132,13 +122,13 @@ export function SuggestionsPage() {
   const openPostModal = (suggestion: Suggestion) => {
     setSelectedSuggestion(suggestion);
     setSelectedPlatforms(suggestion.suggestedPlatforms);
-    postModal.onOpen();
+    setPostModalOpen(true);
   };
 
   const openEditModal = (suggestion: Suggestion) => {
     setSelectedSuggestion(suggestion);
     setEditedContent(suggestion.content);
-    editModal.onOpen();
+    setEditModalOpen(true);
   };
 
   const handlePost = async () => {
@@ -156,7 +146,7 @@ export function SuggestionsPage() {
       });
 
       if (response.ok) {
-        postModal.onClose();
+        setPostModalOpen(false);
         await fetchSuggestions();
       } else {
         const error = await response.json();
@@ -180,7 +170,7 @@ export function SuggestionsPage() {
       });
 
       if (response.ok) {
-        editModal.onClose();
+        setEditModalOpen(false);
         await fetchSuggestions();
       } else {
         console.error("Failed to update suggestion");
@@ -209,13 +199,13 @@ export function SuggestionsPage() {
   const getStatusChip = (status: string) => {
     switch (status) {
       case "PENDING":
-        return <Chip color="warning" variant="flat" size="sm">Pending Review</Chip>;
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Pending Review</Badge>;
       case "APPROVED":
-        return <Chip color="primary" variant="flat" size="sm">Approved</Chip>;
+        return <Badge variant="secondary">Approved</Badge>;
       case "POSTED":
-        return <Chip color="success" variant="flat" size="sm">Posted</Chip>;
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Posted</Badge>;
       case "DISMISSED":
-        return <Chip color="default" variant="flat" size="sm">Dismissed</Chip>;
+        return <Badge variant="secondary">Dismissed</Badge>;
       default:
         return null;
     }
@@ -229,7 +219,7 @@ export function SuggestionsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -242,54 +232,47 @@ export function SuggestionsPage() {
       />
 
       <div className="flex justify-between items-center">
-        <Tabs
-          selectedKey={selectedTab}
-          onSelectionChange={(key) => setSelectedTab(key as string)}
-          variant="underlined"
-        >
-          <Tab key="pending" title="Pending" />
-          <Tab key="posted" title="Posted" />
-          <Tab key="dismissed" title="Dismissed" />
-          <Tab key="all" title="All" />
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="posted">Posted</TabsTrigger>
+            <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
         </Tabs>
 
         <div className="flex gap-2">
           <Button
-            variant="flat"
-            startContent={<RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />}
-            onPress={handleRefresh}
-            isDisabled={refreshing}
+            variant="secondary"
+            onClick={handleRefresh}
+            disabled={refreshing}
           >
+            {refreshing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Refresh
           </Button>
-          <Button
-            as={Link}
-            href="/dashboard/social/settings"
-            variant="flat"
-            startContent={<Settings className="w-4 h-4" />}
-          >
-            Autopilot Settings
-          </Button>
+          <Link href="/dashboard/social/settings">
+            <Button variant="secondary">
+              <Settings className="w-4 h-4 mr-1" />
+              Autopilot Settings
+            </Button>
+          </Link>
         </div>
       </div>
 
       {suggestions.length === 0 ? (
         <Card>
-          <CardBody className="py-12 text-center">
-            <Lightbulb className="w-12 h-12 mx-auto text-default-300 mb-4" />
+          <CardContent className="py-12 text-center">
+            <Lightbulb className="w-12 h-12 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium mb-2">No suggestions yet</h3>
-            <p className="text-default-500 mb-4">
+            <p className="text-gray-500 mb-4">
               Suggestions are generated automatically when leads convert or calls are completed.
             </p>
-            <Button
-              as={Link}
-              href="/dashboard/social/settings"
-              color="primary"
-              variant="flat"
-            >
-              Configure Autopilot
-            </Button>
-          </CardBody>
+            <Link href="/dashboard/social/settings">
+              <Button variant="secondary">
+                Configure Autopilot
+              </Button>
+            </Link>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -297,31 +280,31 @@ export function SuggestionsPage() {
             <Card key={suggestion.id}>
               <CardHeader className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  <Chip size="sm" variant="flat" color="secondary">
+                  <Badge variant="secondary">
                     {TRIGGER_LABELS[suggestion.triggerType] || suggestion.triggerType}
-                  </Chip>
+                  </Badge>
                   {getStatusChip(suggestion.status)}
                   {suggestion.suggestedPlatforms.map((platform) => (
-                    <Chip
+                    <Badge
                       key={platform}
-                      size="sm"
+                      variant="secondary"
                       className={`text-white ${PLATFORMS[platform]?.color || "bg-gray-500"}`}
                     >
                       {PLATFORMS[platform]?.name || platform}
-                    </Chip>
+                    </Badge>
                   ))}
                 </div>
-                <span className="text-sm text-default-400">
+                <span className="text-sm text-gray-400">
                   {new Date(suggestion.createdAt).toLocaleDateString()}
                 </span>
               </CardHeader>
-              <CardBody className="pt-0">
-                <p className="text-default-700 whitespace-pre-wrap mb-4">
+              <CardContent className="pt-0">
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-4">
                   {suggestion.content}
                 </p>
 
                 {suggestion.status === "POSTED" && suggestion.postedAt && (
-                  <p className="text-sm text-success flex items-center gap-1">
+                  <p className="text-sm text-green-600 flex items-center gap-1">
                     <CheckCircle className="w-4 h-4" />
                     Posted on {new Date(suggestion.postedAt).toLocaleDateString()}
                     {suggestion.postPlatforms && ` to ${suggestion.postPlatforms.join(", ")}`}
@@ -331,111 +314,112 @@ export function SuggestionsPage() {
                 {suggestion.status === "PENDING" && (
                   <div className="flex gap-2 mt-2">
                     <Button
-                      color="primary"
-                      startContent={<Send className="w-4 h-4" />}
-                      onPress={() => openPostModal(suggestion)}
-                      isDisabled={availablePlatforms.length === 0}
+                      onClick={() => openPostModal(suggestion)}
+                      disabled={availablePlatforms.length === 0}
                     >
+                      <Send className="w-4 h-4 mr-1" />
                       Post Now
                     </Button>
                     <Button
-                      variant="flat"
-                      startContent={<Edit3 className="w-4 h-4" />}
-                      onPress={() => openEditModal(suggestion)}
+                      variant="secondary"
+                      onClick={() => openEditModal(suggestion)}
                     >
+                      <Edit3 className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
                     <Button
-                      variant="flat"
-                      color="danger"
-                      startContent={<XCircle className="w-4 h-4" />}
-                      onPress={() => handleDismiss(suggestion)}
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDismiss(suggestion)}
                     >
+                      <X className="w-4 h-4 mr-1" />
                       Dismiss
                     </Button>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
       {/* Post Modal */}
-      <Modal isOpen={postModal.isOpen} onClose={postModal.onClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Post to Social Media</ModalHeader>
-          <ModalBody>
+      <Dialog open={postModalOpen} onOpenChange={setPostModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Post to Social Media</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-default-500 mb-2">Content Preview:</p>
-                <div className="p-3 bg-default-100 rounded-lg">
+                <p className="text-sm text-gray-500 mb-2">Content Preview:</p>
+                <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
                   <p className="whitespace-pre-wrap">{selectedSuggestion?.content}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-default-500 mb-2">Select platforms:</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="text-sm text-gray-500 mb-2">Select platforms:</p>
+                <div className="flex flex-wrap gap-3">
                   {availablePlatforms.map((platform) => (
-                    <Checkbox
-                      key={platform}
-                      isSelected={selectedPlatforms.includes(platform)}
-                      onValueChange={(checked) => {
-                        if (checked) {
-                          setSelectedPlatforms([...selectedPlatforms, platform]);
-                        } else {
-                          setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platform));
-                        }
-                      }}
-                    >
-                      {PLATFORMS[platform]?.name || platform}
-                    </Checkbox>
+                    <div key={platform} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`platform-${platform}`}
+                        checked={selectedPlatforms.includes(platform)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedPlatforms([...selectedPlatforms, platform]);
+                          } else {
+                            setSelectedPlatforms(selectedPlatforms.filter((p) => p !== platform));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`platform-${platform}`}>
+                        {PLATFORMS[platform]?.name || platform}
+                      </Label>
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={postModal.onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setPostModalOpen(false)}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              onPress={handlePost}
-              isLoading={posting}
-              isDisabled={selectedPlatforms.length === 0}
-              startContent={!posting && <Send className="w-4 h-4" />}
+              onClick={handlePost}
+              disabled={posting || selectedPlatforms.length === 0}
             >
+              {posting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Post Now
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
-      <Modal isOpen={editModal.isOpen} onClose={editModal.onClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Edit Suggestion</ModalHeader>
-          <ModalBody>
-            <Textarea
-              label="Content"
-              value={editedContent}
-              onValueChange={setEditedContent}
-              minRows={4}
-              maxRows={10}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={editModal.onClose}>
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Suggestion</DialogTitle></DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label>Content</Label>
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={6}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleSaveEdit}>
+            <Button onClick={handleSaveEdit}>
               Save Changes
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

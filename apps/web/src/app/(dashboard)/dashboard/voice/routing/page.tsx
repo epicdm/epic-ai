@@ -1,31 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Chip,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Select,
-  SelectItem,
-  Textarea,
-  Spinner,
-  Switch,
-  Tabs,
-  Tab,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -98,7 +82,7 @@ export default function RoutingRulesPage() {
   const [groups, setGroups] = useState<AgentGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -200,7 +184,7 @@ export default function RoutingRulesPage() {
       }
 
       toast.success("Routing rule created successfully");
-      onClose();
+      setIsOpen(false);
       resetForm();
       fetchRules();
     } catch (error) {
@@ -289,7 +273,7 @@ export default function RoutingRulesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size="lg" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -308,9 +292,9 @@ export default function RoutingRulesPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/voice/groups">
-            <Button variant="light">Manage Groups</Button>
+            <Button variant="ghost">Manage Groups</Button>
           </Link>
-          <Button color="primary" onPress={onOpen}>
+          <Button onClick={() => setIsOpen(true)}>
             + Create Rule
           </Button>
         </div>
@@ -319,7 +303,7 @@ export default function RoutingRulesPage() {
       {/* Rules List */}
       {rules.length === 0 ? (
         <Card>
-          <CardBody className="text-center py-12">
+          <CardContent className="text-center py-12">
             <div className="text-4xl mb-4">🔀</div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No Routing Rules Yet
@@ -327,10 +311,10 @@ export default function RoutingRulesPage() {
             <p className="text-gray-500 mb-4">
               Create rules to intelligently route incoming calls
             </p>
-            <Button color="primary" onPress={onOpen}>
+            <Button onClick={() => setIsOpen(true)}>
               Create Your First Rule
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -338,7 +322,7 @@ export default function RoutingRulesPage() {
             .sort((a, b) => b.priority - a.priority)
             .map((rule) => (
               <Card key={rule.id} className="hover:shadow-md transition-shadow">
-                <CardBody className="p-6">
+                <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -348,16 +332,16 @@ export default function RoutingRulesPage() {
                         >
                           {rule.name}
                         </Link>
-                        <Chip
-                          size="sm"
+                        <Badge
+                          
                           color={rule.isActive ? "success" : "default"}
-                          variant="flat"
+                          variant="secondary"
                         >
                           {rule.isActive ? "Active" : "Inactive"}
-                        </Chip>
-                        <Chip size="sm" variant="flat" color="primary">
+                        </Badge>
+                        <Badge  variant="secondary" >
                           Priority: {rule.priority}
-                        </Chip>
+                        </Badge>
                       </div>
                       {rule.description && (
                         <p className="text-gray-500 text-sm mb-3">
@@ -389,12 +373,12 @@ export default function RoutingRulesPage() {
                     <div className="flex items-center gap-2">
                       <Switch
                         size="sm"
-                        isSelected={rule.isActive}
-                        onValueChange={() => toggleRuleStatus(rule)}
+                        checked={rule.isActive}
+                        onCheckedChange={() => toggleRuleStatus(rule)}
                       />
                       <Dropdown>
                         <DropdownTrigger>
-                          <Button size="sm" variant="light" isIconOnly>
+                          <Button size="sm" variant="ghost" size="icon">
                             ⋮
                           </Button>
                         </DropdownTrigger>
@@ -409,7 +393,7 @@ export default function RoutingRulesPage() {
                             key="delete"
                             className="text-danger"
                             color="danger"
-                            onPress={() => handleDeleteRule(rule.id)}
+                            onClick={() => handleDeleteRule(rule.id)}
                           >
                             Delete Rule
                           </DropdownItem>
@@ -417,17 +401,17 @@ export default function RoutingRulesPage() {
                       </Dropdown>
                     </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
         </div>
       )}
 
       {/* Create Rule Modal */}
-      <Modal size="3xl" isOpen={isOpen} onClose={onClose} scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>Create Routing Rule</ModalHeader>
-          <ModalBody>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Routing Rule</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="space-y-4">
@@ -449,7 +433,7 @@ export default function RoutingRulesPage() {
                 <Input
                   type="number"
                   label="Priority"
-                  description="Higher priority rules are evaluated first"
+                  
                   min={0}
                   max={100}
                   value={formData.priority.toString()}
@@ -468,7 +452,7 @@ export default function RoutingRulesPage() {
                     setFormData(prev => ({ ...prev, targetType: key as "group" | "agent" }))
                   }
                 >
-                  <Tab key="group" title="Agent Group">
+                  <TabsTrigger value="group">
                     <Select
                       label="Select Group"
                       placeholder="Choose a group"
@@ -494,8 +478,8 @@ export default function RoutingRulesPage() {
                         </SelectItem>
                       ))}
                     </Select>
-                  </Tab>
-                  <Tab key="agent" title="Specific Agent">
+                  </TabsTrigger>
+                  <TabsTrigger value="agent">
                     <Select
                       label="Select Agent"
                       placeholder="Choose an agent"
@@ -516,7 +500,7 @@ export default function RoutingRulesPage() {
                         </SelectItem>
                       ))}
                     </Select>
-                  </Tab>
+                  </TabsTrigger>
                 </Tabs>
               </div>
 
@@ -524,7 +508,7 @@ export default function RoutingRulesPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">Conditions (Optional)</h3>
-                  <Button size="sm" variant="flat" onPress={addCondition}>
+                  <Button size="sm" variant="secondary" onClick={addCondition}>
                     + Add Condition
                   </Button>
                 </div>
@@ -580,10 +564,10 @@ export default function RoutingRulesPage() {
                         />
                         <Button
                           size="sm"
-                          color="danger"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => removeCondition(index)}
+                          variant="destructive"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeCondition(index)}
                         >
                           ×
                         </Button>
@@ -652,24 +636,23 @@ export default function RoutingRulesPage() {
               {/* Status */}
               <div className="flex items-center gap-4">
                 <Switch
-                  isSelected={formData.isActive}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, isActive: value }))}
+                  checked={formData.isActive}
+                  onCheckedChange={(value) => setFormData(prev => ({ ...prev, isActive: value }))}
                 >
                   Rule Active
                 </Switch>
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button color="primary" onPress={handleCreateRule} isLoading={saving}>
+            <Button onClick={handleCreateRule} disabled={saving}>
               Create Rule
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
     </div>
   );
 }

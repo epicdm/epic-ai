@@ -1,28 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Progress,
-  Chip,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-  Slider,
-  Switch,
-  Tabs,
-  Tab,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { TemplatePickerButton } from "@/components/brand/template-picker";
 import {
@@ -233,10 +222,10 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
   const [newBannedHashtag, setNewBannedHashtag] = useState("");
 
   // Modal states
-  const audienceModal = useDisclosure();
-  const pillarModal = useDisclosure();
-  const competitorModal = useDisclosure();
-  const aiSetupModal = useDisclosure();
+  const [audienceModalOpen, setAudienceModalOpen] = useState(false);
+  const [pillarModalOpen, setPillarModalOpen] = useState(false);
+  const [competitorModalOpen, setCompetitorModalOpen] = useState(false);
+  const [aiSetupModalOpen, setAiSetupModalOpen] = useState(false);
 
   const [editingAudience, setEditingAudience] = useState<Partial<Audience> | null>(null);
   const [editingPillar, setEditingPillar] = useState<Partial<Pillar> | null>(null);
@@ -332,7 +321,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
         } else {
           setAudiences([...audiences, result.audience]);
         }
-        audienceModal.onClose();
+        setAudienceModalOpen(false);
         setEditingAudience(null);
       }
     } catch (error) {
@@ -374,7 +363,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
         } else {
           setPillars([...pillars, result.pillar]);
         }
-        pillarModal.onClose();
+        setPillarModalOpen(false);
         setEditingPillar(null);
       }
     } catch (error) {
@@ -415,7 +404,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
         } else {
           setCompetitors([...competitors, result.competitor]);
         }
-        competitorModal.onClose();
+        setCompetitorModalOpen(false);
         setEditingCompetitor(null);
       }
     } catch (error) {
@@ -467,29 +456,24 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
         actions={
           <div className="flex items-center gap-2">
             {message && (
-              <Chip
-                color={message.type === "success" ? "success" : "danger"}
-                variant="flat"
-                startContent={message.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-              >
+              <Badge variant={message.type === "success" ? "default" : "destructive"} className={message.type === "success" ? "bg-green-100 text-green-800" : ""}>
+                {message.type === "success" ? <CheckCircle2 className="w-4 h-4 mr-1" /> : <AlertCircle className="w-4 h-4 mr-1" />}
                 {message.text}
-              </Chip>
+              </Badge>
             )}
             <Button
-              variant="flat"
-              color="secondary"
-              startContent={<Wand2 className="w-4 h-4" />}
-              onPress={aiSetupModal.onOpen}
+              variant="secondary"
+              onClick={() => setAiSetupModalOpen(true)}
             >
+              <Wand2 className="w-4 h-4 mr-2" />
               AI Auto-Setup
             </Button>
             <TemplatePickerButton brandId={brandId} onTemplateApplied={refetchBrain} />
             <Button
-              color="primary"
-              startContent={<Save className="w-4 h-4" />}
-              onPress={handleSave}
-              isLoading={saving}
+              onClick={handleSave}
+              disabled={saving}
             >
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Save Changes
             </Button>
           </div>
@@ -498,7 +482,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
 
       {/* Completeness Progress */}
       <Card>
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <Brain className="w-8 h-8 text-purple-500" />
             <div className="flex-1">
@@ -506,70 +490,95 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                 <span className="text-sm font-medium">Brain Training Progress</span>
                 <span className="text-sm text-gray-500">{completeness}%</span>
               </div>
-              <Progress
-                value={completeness}
-                color={completeness >= 80 ? "success" : completeness >= 50 ? "warning" : "danger"}
-                size="sm"
-              />
+              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${completeness >= 80 ? "bg-green-500" : completeness >= 50 ? "bg-yellow-500" : "bg-red-500"}`}
+                  style={{ width: `${completeness}%` }}
+                />
+              </div>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Tabs */}
-      <Tabs
-        selectedKey={activeTab}
-        onSelectionChange={(key) => setActiveTab(key as string)}
-        color="primary"
-        variant="underlined"
-      >
-        <Tab
-          key="profile"
-          title={
-            <div className="flex items-center gap-2">
-              <Building className="w-4 h-4" />
-              <span>Profile</span>
-            </div>
-          }
-        >
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="profile">
+            <Building className="w-4 h-4 mr-2" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="voice">
+            <Mic className="w-4 h-4 mr-2" />
+            Voice & Tone
+          </TabsTrigger>
+          <TabsTrigger value="audiences">
+            <Users className="w-4 h-4 mr-2" />
+            Audiences
+          </TabsTrigger>
+          <TabsTrigger value="pillars">
+            <Target className="w-4 h-4 mr-2" />
+            Content Pillars
+          </TabsTrigger>
+          <TabsTrigger value="competitors">
+            <Swords className="w-4 h-4 mr-2" />
+            Competitors
+          </TabsTrigger>
+          <TabsTrigger value="summary">
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Summary
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
           <Card className="mt-4">
-            <CardBody className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Company Name"
-                  value={profile.companyName}
-                  onValueChange={(v) => setProfile({ ...profile, companyName: v })}
-                />
-                <Input
-                  label="Industry"
-                  value={profile.industry}
-                  onValueChange={(v) => setProfile({ ...profile, industry: v })}
+                <div className="space-y-2">
+                  <Label>Company Name</Label>
+                  <Input
+                    value={profile.companyName}
+                    onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Industry</Label>
+                  <Input
+                    value={profile.industry}
+                    onChange={(e) => setProfile({ ...profile, industry: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  placeholder="What does your company do?"
+                  value={profile.description}
+                  onChange={(e) => setProfile({ ...profile, description: e.target.value })}
+                  rows={3}
                 />
               </div>
 
-              <Textarea
-                label="Description"
-                placeholder="What does your company do?"
-                value={profile.description}
-                onValueChange={(v) => setProfile({ ...profile, description: v })}
-                minRows={3}
-              />
+              <div className="space-y-2">
+                <Label>Mission Statement</Label>
+                <Textarea
+                  placeholder="What is your company's mission?"
+                  value={profile.mission}
+                  onChange={(e) => setProfile({ ...profile, mission: e.target.value })}
+                  rows={2}
+                />
+              </div>
 
-              <Textarea
-                label="Mission Statement"
-                placeholder="What is your company's mission?"
-                value={profile.mission}
-                onValueChange={(v) => setProfile({ ...profile, mission: v })}
-                minRows={2}
-              />
-
-              <Textarea
-                label="Target Market"
-                placeholder="Who are your ideal customers?"
-                value={profile.targetMarket}
-                onValueChange={(v) => setProfile({ ...profile, targetMarket: v })}
-                minRows={2}
-              />
+              <div className="space-y-2">
+                <Label>Target Market</Label>
+                <Textarea
+                  placeholder="Who are your ideal customers?"
+                  value={profile.targetMarket}
+                  onChange={(e) => setProfile({ ...profile, targetMarket: e.target.value })}
+                  rows={2}
+                />
+              </div>
 
               {/* Values */}
               <div>
@@ -578,7 +587,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   <Input
                     placeholder="Add a value..."
                     value={newValue}
-                    onValueChange={setNewValue}
+                    onChange={(e) => setNewValue(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addToArray(newValue, (v) => setProfile({ ...profile, values: typeof v === "function" ? v(profile.values) : v }), setNewValue);
@@ -586,20 +595,18 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                     }}
                   />
                   <Button
-                    isIconOnly
-                    onPress={() => addToArray(newValue, (v) => setProfile({ ...profile, values: typeof v === "function" ? v(profile.values) : v }), setNewValue)}
+                    size="icon"
+                    onClick={() => addToArray(newValue, (v) => setProfile({ ...profile, values: typeof v === "function" ? v(profile.values) : v }), setNewValue)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {profile.values.map((value, i) => (
-                    <Chip
-                      key={i}
-                      onClose={() => setProfile({ ...profile, values: profile.values.filter((_, idx) => idx !== i) })}
-                    >
+                    <Badge key={i} variant="secondary" className="gap-1">
                       {value}
-                    </Chip>
+                      <button onClick={() => setProfile({ ...profile, values: profile.values.filter((_, idx) => idx !== i) })} className="ml-1 hover:text-destructive">&times;</button>
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -611,7 +618,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   <Input
                     placeholder="Add a USP..."
                     value={newUSP}
-                    onValueChange={setNewUSP}
+                    onChange={(e) => setNewUSP(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addToArray(newUSP, (v) => setProfile({ ...profile, uniqueSellingPoints: typeof v === "function" ? v(profile.uniqueSellingPoints) : v }), setNewUSP);
@@ -619,138 +626,147 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                     }}
                   />
                   <Button
-                    isIconOnly
-                    onPress={() => addToArray(newUSP, (v) => setProfile({ ...profile, uniqueSellingPoints: typeof v === "function" ? v(profile.uniqueSellingPoints) : v }), setNewUSP)}
+                    size="icon"
+                    onClick={() => addToArray(newUSP, (v) => setProfile({ ...profile, uniqueSellingPoints: typeof v === "function" ? v(profile.uniqueSellingPoints) : v }), setNewUSP)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {profile.uniqueSellingPoints.map((usp, i) => (
-                    <Chip
-                      key={i}
-                      onClose={() => setProfile({ ...profile, uniqueSellingPoints: profile.uniqueSellingPoints.filter((_, idx) => idx !== i) })}
-                    >
+                    <Badge key={i} variant="secondary" className="gap-1">
                       {usp}
-                    </Chip>
+                      <button onClick={() => setProfile({ ...profile, uniqueSellingPoints: profile.uniqueSellingPoints.filter((_, idx) => idx !== i) })} className="ml-1 hover:text-destructive">&times;</button>
+                    </Badge>
                   ))}
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="voice"
-          title={
-            <div className="flex items-center gap-2">
-              <Mic className="w-4 h-4" />
-              <span>Voice & Tone</span>
-            </div>
-          }
-        >
+        <TabsContent value="voice">
           <Card className="mt-4">
-            <CardBody className="space-y-6">
-              <Select
-                label="Voice Tone"
-                selectedKeys={[voice.voiceTone]}
-                onSelectionChange={(keys) => setVoice({ ...voice, voiceTone: Array.from(keys)[0] as string })}
-              >
-                {VOICE_TONES.map((tone) => (
-                  <SelectItem key={tone.key} textValue={tone.label}>
-                    <div>
-                      <p className="font-medium">{tone.label}</p>
-                      <p className="text-xs text-gray-500">{tone.description}</p>
-                    </div>
-                  </SelectItem>
-                ))}
-              </Select>
+            <CardContent className="space-y-6 pt-6">
+              <div className="space-y-2">
+                <Label>Voice Tone</Label>
+                <Select value={voice.voiceTone} onValueChange={(v) => setVoice({ ...voice, voiceTone: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VOICE_TONES.map((tone) => (
+                      <SelectItem key={tone.key} value={tone.key}>
+                        {tone.label} - {tone.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Input
-                label="Custom Voice Description (Optional)"
-                placeholder="Additional details about your brand voice..."
-                value={voice.voiceToneCustom || ""}
-                onValueChange={(v) => setVoice({ ...voice, voiceToneCustom: v })}
-              />
+              <div className="space-y-2">
+                <Label>Custom Voice Description (Optional)</Label>
+                <Input
+                  placeholder="Additional details about your brand voice..."
+                  value={voice.voiceToneCustom || ""}
+                  onChange={(e) => setVoice({ ...voice, voiceToneCustom: e.target.value })}
+                />
+              </div>
 
               <div>
                 <label className="text-sm font-medium mb-2 block">
                   Formality Level: {voice.formalityLevel}/5
                 </label>
-                <Slider
-                  step={1}
-                  minValue={1}
-                  maxValue={5}
-                  value={voice.formalityLevel}
-                  onChange={(v) => setVoice({ ...voice, formalityLevel: v as number })}
-                  marks={[
-                    { value: 1, label: "Very Casual" },
-                    { value: 3, label: "Balanced" },
-                    { value: 5, label: "Very Formal" },
-                  ]}
-                  className="max-w-md"
+                <div className="flex items-center gap-4 max-w-md">
+                  <span className="text-xs text-gray-500">Casual</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={voice.formalityLevel}
+                    onChange={(e) => setVoice({ ...voice, formalityLevel: parseInt(e.target.value) })}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-gray-500">Formal</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Writing Style Guidelines</Label>
+                <Textarea
+                  placeholder="Describe how content should be written..."
+                  value={voice.writingStyle || ""}
+                  onChange={(e) => setVoice({ ...voice, writingStyle: e.target.value })}
+                  rows={3}
                 />
               </div>
 
-              <Textarea
-                label="Writing Style Guidelines"
-                placeholder="Describe how content should be written..."
-                value={voice.writingStyle || ""}
-                onValueChange={(v) => setVoice({ ...voice, writingStyle: v })}
-                minRows={3}
-              />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-4">
-                  <Switch
-                    isSelected={voice.useEmojis}
-                    onValueChange={(v) => setVoice({ ...voice, useEmojis: v })}
-                  >
-                    Use Emojis
-                  </Switch>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={voice.useEmojis}
+                      onCheckedChange={(v) => setVoice({ ...voice, useEmojis: v })}
+                    />
+                    <Label>Use Emojis</Label>
+                  </div>
                   {voice.useEmojis && (
-                    <Select
-                      label="Emoji Frequency"
-                      selectedKeys={[voice.emojiFrequency]}
-                      onSelectionChange={(keys) => setVoice({ ...voice, emojiFrequency: Array.from(keys)[0] as string })}
-                    >
-                      {EMOJI_FREQUENCIES.map((freq) => (
-                        <SelectItem key={freq.key}>{freq.label}</SelectItem>
-                      ))}
-                    </Select>
+                    <div className="space-y-2">
+                      <Label>Emoji Frequency</Label>
+                      <Select value={voice.emojiFrequency} onValueChange={(v) => setVoice({ ...voice, emojiFrequency: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {EMOJI_FREQUENCIES.map((freq) => (
+                            <SelectItem key={freq.key} value={freq.key}>{freq.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-4">
-                  <Switch
-                    isSelected={voice.useHashtags}
-                    onValueChange={(v) => setVoice({ ...voice, useHashtags: v })}
-                  >
-                    Use Hashtags
-                  </Switch>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={voice.useHashtags}
+                      onCheckedChange={(v) => setVoice({ ...voice, useHashtags: v })}
+                    />
+                    <Label>Use Hashtags</Label>
+                  </div>
                   {voice.useHashtags && (
-                    <Select
-                      label="Hashtag Style"
-                      selectedKeys={[voice.hashtagStyle]}
-                      onSelectionChange={(keys) => setVoice({ ...voice, hashtagStyle: Array.from(keys)[0] as string })}
-                    >
-                      {HASHTAG_STYLES.map((style) => (
-                        <SelectItem key={style.key}>{style.label}</SelectItem>
-                      ))}
-                    </Select>
+                    <div className="space-y-2">
+                      <Label>Hashtag Style</Label>
+                      <Select value={voice.hashtagStyle} onValueChange={(v) => setVoice({ ...voice, hashtagStyle: v })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {HASHTAG_STYLES.map((style) => (
+                            <SelectItem key={style.key} value={style.key}>{style.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <Select
-                label="Call-to-Action Style"
-                selectedKeys={[voice.ctaStyle]}
-                onSelectionChange={(keys) => setVoice({ ...voice, ctaStyle: Array.from(keys)[0] as string })}
-              >
-                {CTA_STYLES.map((style) => (
-                  <SelectItem key={style.key}>{style.label}</SelectItem>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Label>Call-to-Action Style</Label>
+                <Select value={voice.ctaStyle} onValueChange={(v) => setVoice({ ...voice, ctaStyle: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CTA_STYLES.map((style) => (
+                      <SelectItem key={style.key} value={style.key}>{style.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Must Mention */}
               <div>
@@ -759,7 +775,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   <Input
                     placeholder="Add a key message..."
                     value={newMustMention}
-                    onValueChange={setNewMustMention}
+                    onChange={(e) => setNewMustMention(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addToArray(newMustMention, (v) => setVoice({ ...voice, mustMention: typeof v === "function" ? v(voice.mustMention) : v }), setNewMustMention);
@@ -767,22 +783,21 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                     }}
                   />
                   <Button
-                    isIconOnly
-                    onPress={() => addToArray(newMustMention, (v) => setVoice({ ...voice, mustMention: typeof v === "function" ? v(voice.mustMention) : v }), setNewMustMention)}
+                    size="icon"
+                    onClick={() => addToArray(newMustMention, (v) => setVoice({ ...voice, mustMention: typeof v === "function" ? v(voice.mustMention) : v }), setNewMustMention)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {voice.mustMention.map((item, i) => (
-                    <Chip
+                    <Badge
                       key={i}
-                      color="success"
-                      variant="flat"
-                      onClose={() => setVoice({ ...voice, mustMention: voice.mustMention.filter((_, idx) => idx !== i) })}
+                      className="bg-green-600 hover:bg-green-700 text-white gap-1"
                     >
                       {item}
-                    </Chip>
+                      <button onClick={() => setVoice({ ...voice, mustMention: voice.mustMention.filter((_, idx) => idx !== i) })} className="ml-1">&times;</button>
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -794,7 +809,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   <Input
                     placeholder="Add topic to avoid..."
                     value={newDoNotMention}
-                    onValueChange={setNewDoNotMention}
+                    onChange={(e) => setNewDoNotMention(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         addToArray(newDoNotMention, (v) => setVoice({ ...voice, doNotMention: typeof v === "function" ? v(voice.doNotMention) : v }), setNewDoNotMention);
@@ -802,54 +817,44 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                     }}
                   />
                   <Button
-                    isIconOnly
-                    onPress={() => addToArray(newDoNotMention, (v) => setVoice({ ...voice, doNotMention: typeof v === "function" ? v(voice.doNotMention) : v }), setNewDoNotMention)}
+                    size="icon"
+                    onClick={() => addToArray(newDoNotMention, (v) => setVoice({ ...voice, doNotMention: typeof v === "function" ? v(voice.doNotMention) : v }), setNewDoNotMention)}
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {voice.doNotMention.map((item, i) => (
-                    <Chip
+                    <Badge
                       key={i}
-                      color="danger"
-                      variant="flat"
-                      onClose={() => setVoice({ ...voice, doNotMention: voice.doNotMention.filter((_, idx) => idx !== i) })}
+                      variant="destructive"
+                      className="gap-1"
                     >
                       {item}
-                    </Chip>
+                      <button onClick={() => setVoice({ ...voice, doNotMention: voice.doNotMention.filter((_, idx) => idx !== i) })} className="ml-1">&times;</button>
+                    </Badge>
                   ))}
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="audiences"
-          title={
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>Audiences</span>
-            </div>
-          }
-        >
+        <TabsContent value="audiences">
           <Card className="mt-4">
             <CardHeader className="flex justify-between items-center">
               <h3 className="font-semibold">Target Audiences</h3>
               <Button
-                color="primary"
                 size="sm"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                onClick={() => {
                   setEditingAudience({ name: "", description: "", interests: [], painPoints: [], goals: [] });
-                  audienceModal.onOpen();
+                  setAudienceModalOpen(true);
                 }}
               >
                 Add Audience
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {audiences.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
                   No audiences defined yet. Add your target audiences to improve content relevance.
@@ -868,7 +873,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{audience.name}</p>
                           {audience.isPrimary && (
-                            <Chip size="sm" color="primary" variant="flat">Primary</Chip>
+                            <Badge variant="secondary">Primary</Badge>
                           )}
                         </div>
                         {audience.description && (
@@ -877,29 +882,27 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                         {audience.painPoints.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {audience.painPoints.slice(0, 3).map((point, i) => (
-                              <Chip key={i} size="sm" variant="bordered">{point}</Chip>
+                              <Badge key={i} variant="outline">{point}</Badge>
                             ))}
                           </div>
                         )}
                       </div>
                       <div className="flex gap-1">
                         <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          onPress={() => {
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
                             setEditingAudience(audience);
-                            audienceModal.onOpen();
+                            setAudienceModalOpen(true);
                           }}
                         >
                           <RefreshCw className="w-4 h-4" />
                         </Button>
                         <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleDeleteAudience(audience.id)}
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => handleDeleteAudience(audience.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -908,35 +911,25 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   ))}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="pillars"
-          title={
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              <span>Content Pillars</span>
-            </div>
-          }
-        >
+        <TabsContent value="pillars">
           <Card className="mt-4">
             <CardHeader className="flex justify-between items-center">
               <h3 className="font-semibold">Content Pillars</h3>
               <Button
-                color="primary"
                 size="sm"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                onClick={() => {
                   setEditingPillar({ name: "", description: "", topics: [], frequency: 20 });
-                  pillarModal.onOpen();
+                  setPillarModalOpen(true);
                 }}
               >
                 Add Pillar
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {pillars.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
                   No content pillars defined yet. Add pillars to guide your content strategy.
@@ -958,66 +951,54 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                         </div>
                         <div className="flex gap-1">
                           <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            onPress={() => {
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
                               setEditingPillar(pillar);
-                              pillarModal.onOpen();
+                              setPillarModalOpen(true);
                             }}
                           >
                             <RefreshCw className="w-4 h-4" />
                           </Button>
                           <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleDeletePillar(pillar.id)}
+                            size="icon"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => handleDeletePillar(pillar.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        <Chip size="sm" variant="flat">{pillar.frequency}% of content</Chip>
+                        <Badge variant="secondary">{pillar.frequency}% of content</Badge>
                         {!pillar.isActive && (
-                          <Chip size="sm" color="warning" variant="flat">Inactive</Chip>
+                          <Badge variant="outline">Inactive</Badge>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="competitors"
-          title={
-            <div className="flex items-center gap-2">
-              <Swords className="w-4 h-4" />
-              <span>Competitors</span>
-            </div>
-          }
-        >
+        <TabsContent value="competitors">
           <Card className="mt-4">
             <CardHeader className="flex justify-between items-center">
               <h3 className="font-semibold">Competitors</h3>
               <Button
-                color="primary"
                 size="sm"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                onClick={() => {
                   setEditingCompetitor({ name: "", website: "", strengths: [], weaknesses: [], differentiators: [] });
-                  competitorModal.onOpen();
+                  setCompetitorModalOpen(true);
                 }}
               >
                 Add Competitor
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {competitors.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
                   No competitors defined yet. Add competitors for differentiation insights.
@@ -1042,7 +1023,7 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                             <p className="text-xs text-gray-500 mb-1">How we differ:</p>
                             <div className="flex flex-wrap gap-1">
                               {competitor.differentiators.map((diff, i) => (
-                                <Chip key={i} size="sm" color="success" variant="flat">{diff}</Chip>
+                                <Badge key={i} className="bg-green-600 hover:bg-green-700 text-white">{diff}</Badge>
                               ))}
                             </div>
                           </div>
@@ -1050,22 +1031,20 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                       </div>
                       <div className="flex gap-1">
                         <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          onPress={() => {
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
                             setEditingCompetitor(competitor);
-                            competitorModal.onOpen();
+                            setCompetitorModalOpen(true);
                           }}
                         >
                           <RefreshCw className="w-4 h-4" />
                         </Button>
                         <Button
-                          isIconOnly
-                          size="sm"
-                          variant="light"
-                          color="danger"
-                          onPress={() => handleDeleteCompetitor(competitor.id)}
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => handleDeleteCompetitor(competitor.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1074,32 +1053,23 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                   ))}
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
 
-        <Tab
-          key="summary"
-          title={
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              <span>AI Summary</span>
-            </div>
-          }
-        >
+        <TabsContent value="summary">
           <Card className="mt-4">
             <CardHeader className="flex justify-between items-center">
               <h3 className="font-semibold">AI-Generated Brand Summary</h3>
               <Button
-                color="primary"
-                startContent={<Sparkles className="w-4 h-4" />}
-                onPress={handleGenerateSummary}
-                isLoading={generating}
+                onClick={handleGenerateSummary}
+                disabled={generating}
               >
+                {generating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Generate Summary
               </Button>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               {brain?.brandSummary ? (
                 <div className="prose dark:prose-invert max-w-none">
                   <div className="whitespace-pre-wrap text-sm">{brain.brandSummary}</div>
@@ -1112,160 +1082,174 @@ export function BrandBrainPage({ brandId, brandName, initialBrain }: BrandBrainP
                     Generate an AI summary based on your brand profile, voice settings, audiences, and pillars.
                   </p>
                   <Button
-                    color="primary"
-                    startContent={<Sparkles className="w-4 h-4" />}
-                    onPress={handleGenerateSummary}
-                    isLoading={generating}
+                    onClick={handleGenerateSummary}
+                    disabled={generating}
                   >
+                    {generating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Generate Summary
                   </Button>
                 </div>
               )}
-            </CardBody>
+            </CardContent>
           </Card>
-        </Tab>
+        </TabsContent>
       </Tabs>
 
       {/* Audience Modal */}
-      <Modal isOpen={audienceModal.isOpen} onClose={audienceModal.onClose} size="2xl">
-        <ModalContent>
-          <ModalHeader>{editingAudience?.id ? "Edit Audience" : "Add Audience"}</ModalHeader>
-          <ModalBody className="space-y-4">
-            <Input
-              label="Audience Name"
-              placeholder="e.g., Small Business Owners"
-              value={editingAudience?.name || ""}
-              onValueChange={(v) => setEditingAudience({ ...editingAudience, name: v })}
-              isRequired
-            />
-            <Textarea
-              label="Description"
-              placeholder="Describe this audience segment..."
-              value={editingAudience?.description || ""}
-              onValueChange={(v) => setEditingAudience({ ...editingAudience, description: v })}
-            />
-            <Switch
-              isSelected={editingAudience?.isPrimary || false}
-              onValueChange={(v) => setEditingAudience({ ...editingAudience, isPrimary: v })}
-            >
-              Primary Audience
-            </Switch>
-            <Input
-              label="Age Range"
-              placeholder="e.g., 25-45"
-              value={editingAudience?.ageRange || ""}
-              onValueChange={(v) => setEditingAudience({ ...editingAudience, ageRange: v })}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={audienceModal.onClose}>Cancel</Button>
-            <Button color="primary" onPress={handleSaveAudience}>Save</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Dialog open={audienceModalOpen} onOpenChange={setAudienceModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingAudience?.id ? "Edit Audience" : "Add Audience"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Audience Name</Label>
+              <Input
+                placeholder="e.g., Small Business Owners"
+                value={editingAudience?.name || ""}
+                onChange={(e) => setEditingAudience({ ...editingAudience, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Describe this audience segment..."
+                value={editingAudience?.description || ""}
+                onChange={(e) => setEditingAudience({ ...editingAudience, description: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={editingAudience?.isPrimary || false}
+                onCheckedChange={(v) => setEditingAudience({ ...editingAudience, isPrimary: v })}
+              />
+              <Label>Primary Audience</Label>
+            </div>
+            <div className="space-y-2">
+              <Label>Age Range</Label>
+              <Input
+                placeholder="e.g., 25-45"
+                value={editingAudience?.ageRange || ""}
+                onChange={(e) => setEditingAudience({ ...editingAudience, ageRange: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setAudienceModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAudience}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Pillar Modal */}
-      <Modal isOpen={pillarModal.isOpen} onClose={pillarModal.onClose} size="2xl">
-        <ModalContent>
-          <ModalHeader>{editingPillar?.id ? "Edit Content Pillar" : "Add Content Pillar"}</ModalHeader>
-          <ModalBody className="space-y-4">
-            <Input
-              label="Pillar Name"
-              placeholder="e.g., Product Updates"
-              value={editingPillar?.name || ""}
-              onValueChange={(v) => setEditingPillar({ ...editingPillar, name: v })}
-              isRequired
-            />
-            <Textarea
-              label="Description"
-              placeholder="What content falls under this pillar?"
-              value={editingPillar?.description || ""}
-              onValueChange={(v) => setEditingPillar({ ...editingPillar, description: v })}
-            />
-            <Input
-              label="Color"
-              type="color"
-              value={editingPillar?.color || "#7C3AED"}
-              onValueChange={(v) => setEditingPillar({ ...editingPillar, color: v })}
-            />
+      <Dialog open={pillarModalOpen} onOpenChange={setPillarModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingPillar?.id ? "Edit Content Pillar" : "Add Content Pillar"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Pillar Name</Label>
+              <Input
+                placeholder="e.g., Product Updates"
+                value={editingPillar?.name || ""}
+                onChange={(e) => setEditingPillar({ ...editingPillar, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="What content falls under this pillar?"
+                value={editingPillar?.description || ""}
+                onChange={(e) => setEditingPillar({ ...editingPillar, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <Input
+                type="color"
+                value={editingPillar?.color || "#7C3AED"}
+                onChange={(e) => setEditingPillar({ ...editingPillar, color: e.target.value })}
+              />
+            </div>
             <div>
               <label className="text-sm font-medium mb-2 block">
                 Content Frequency: {editingPillar?.frequency || 20}%
               </label>
-              <Slider
+              <input
+                type="range"
+                min={0}
+                max={100}
                 step={5}
-                minValue={0}
-                maxValue={100}
                 value={editingPillar?.frequency || 20}
-                onChange={(v) => setEditingPillar({ ...editingPillar, frequency: v as number })}
-                className="max-w-md"
+                onChange={(e) => setEditingPillar({ ...editingPillar, frequency: parseInt(e.target.value) })}
+                className="w-full max-w-md"
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={pillarModal.onClose}>Cancel</Button>
-            <Button color="primary" onPress={handleSavePillar}>Save</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setPillarModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSavePillar}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Competitor Modal */}
-      <Modal isOpen={competitorModal.isOpen} onClose={competitorModal.onClose} size="2xl">
-        <ModalContent>
-          <ModalHeader>{editingCompetitor?.id ? "Edit Competitor" : "Add Competitor"}</ModalHeader>
-          <ModalBody className="space-y-4">
-            <Input
-              label="Competitor Name"
-              placeholder="e.g., Acme Corp"
-              value={editingCompetitor?.name || ""}
-              onValueChange={(v) => setEditingCompetitor({ ...editingCompetitor, name: v })}
-              isRequired
-            />
-            <Input
-              label="Website"
-              placeholder="https://competitor.com"
-              value={editingCompetitor?.website || ""}
-              onValueChange={(v) => setEditingCompetitor({ ...editingCompetitor, website: v })}
-            />
-            <Textarea
-              label="Description"
-              placeholder="Brief description of this competitor..."
-              value={editingCompetitor?.description || ""}
-              onValueChange={(v) => setEditingCompetitor({ ...editingCompetitor, description: v })}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={competitorModal.onClose}>Cancel</Button>
-            <Button color="primary" onPress={handleSaveCompetitor}>Save</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Dialog open={competitorModalOpen} onOpenChange={setCompetitorModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editingCompetitor?.id ? "Edit Competitor" : "Add Competitor"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Competitor Name</Label>
+              <Input
+                placeholder="e.g., Acme Corp"
+                value={editingCompetitor?.name || ""}
+                onChange={(e) => setEditingCompetitor({ ...editingCompetitor, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Website</Label>
+              <Input
+                placeholder="https://competitor.com"
+                value={editingCompetitor?.website || ""}
+                onChange={(e) => setEditingCompetitor({ ...editingCompetitor, website: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Brief description of this competitor..."
+                value={editingCompetitor?.description || ""}
+                onChange={(e) => setEditingCompetitor({ ...editingCompetitor, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setCompetitorModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveCompetitor}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* AI Auto-Setup Modal */}
-      <Modal
-        isOpen={aiSetupModal.isOpen}
-        onClose={aiSetupModal.onClose}
-        size="3xl"
-        scrollBehavior="inside"
-      >
-        <ModalContent>
-          <ModalHeader className="flex items-center gap-2">
+      <Dialog open={aiSetupModalOpen} onOpenChange={setAiSetupModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-purple-500" />
             AI Auto-Setup
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             <AIBrandSetup
               brandId={brandId}
               onComplete={() => {
-                aiSetupModal.onClose();
+                setAiSetupModalOpen(false);
                 refetchBrain();
               }}
-              onSkip={aiSetupModal.onClose}
+              onSkip={() => setAiSetupModalOpen(false)}
               showSkip={true}
             />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

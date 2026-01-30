@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -77,15 +78,15 @@ export function SettingsForm({ organization }: SettingsFormProps) {
           label="Organization Name"
           placeholder="Acme Inc."
           {...register("name")}
-          isInvalid={!!errors.name}
-          errorMessage={errors.name?.message}
+          
+          
         />
 
         <Input
           label="Organization Slug"
           value={organization.slug}
-          isDisabled
-          description="Used in URLs"
+          disabled
+          
         />
       </div>
 
@@ -100,9 +101,8 @@ export function SettingsForm({ organization }: SettingsFormProps) {
       <div className="flex justify-end">
         <Button
           type="submit"
-          color="primary"
-          isLoading={isLoading}
-          isDisabled={!isDirty}
+          disabled={isLoading}
+          disabled={!isDirty}
         >
           Save Changes
         </Button>

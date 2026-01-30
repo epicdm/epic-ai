@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { FeatureWizardWrapper } from "./feature-wizard-wrapper";
-import { Button, Card, CardBody, Input, Select, SelectItem, Slider, Textarea } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@/lib/analytics";
 
@@ -22,24 +26,23 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Ad Platform</h3>
-          <Select 
-            label="Select platform"
-            selectedKeys={[platform]}
-            onSelectionChange={(keys) => setPlatform(Array.from(keys)[0] as string)}
-          >
-            <SelectItem key="facebook">Facebook & Instagram</SelectItem>
-            <SelectItem key="google">Google Ads</SelectItem>
-            <SelectItem key="linkedin">LinkedIn</SelectItem>
-          </Select>
+          <Select value={platform} onValueChange={(v: string) => setPlatform(v)}>
+              <SelectTrigger><SelectValue placeholder="Select platform" /></SelectTrigger>
+              <SelectContent>
+            <SelectItem value="facebook">Facebook & Instagram</SelectItem>
+            <SelectItem value="google">Google Ads</SelectItem>
+            <SelectItem value="linkedin">LinkedIn</SelectItem>
+          </SelectContent>
+            </Select>
           <Button 
-            onPress={() => onComplete({ platform })}
-            isDisabled={!platform}
+            onClick={() => onComplete({ platform })}
+            disabled={!platform}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -50,7 +53,7 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Ad Account</h3>
           <Input 
             label="Account ID" 
@@ -58,12 +61,12 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
             onChange={(e) => setAccountId(e.target.value)} 
           />
           <Button 
-            onPress={() => onComplete({ accountId })}
-            isDisabled={!accountId}
+            onClick={() => onComplete({ accountId })}
+            disabled={!accountId}
           >
             Connect Account
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -74,24 +77,23 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
     
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Campaign Objective</h3>
-          <Select 
-            label="Select objective"
-            selectedKeys={[objective]}
-            onSelectionChange={(keys) => setObjective(Array.from(keys)[0] as string)}
-          >
-            <SelectItem key="traffic">Website Traffic</SelectItem>
-            <SelectItem key="leads">Lead Generation</SelectItem>
-            <SelectItem key="conversions">Conversions</SelectItem>
-          </Select>
+          <Select value={objective} onValueChange={(v: string) => setObjective(v)}>
+              <SelectTrigger><SelectValue placeholder="Select objective" /></SelectTrigger>
+              <SelectContent>
+            <SelectItem value="traffic">Website Traffic</SelectItem>
+            <SelectItem value="leads">Lead Generation</SelectItem>
+            <SelectItem value="conversions">Conversions</SelectItem>
+          </SelectContent>
+            </Select>
           <Button 
-            onPress={() => onComplete({ objective })}
-            isDisabled={!objective}
+            onClick={() => onComplete({ objective })}
+            disabled={!objective}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -114,34 +116,26 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
 
     return (
       <Card>
-        <CardBody className="space-y-4">
+        <CardContent className="space-y-4">
           <h3 className="font-medium">Budget & Schedule</h3>
-          <Slider 
-            label="Daily Budget ($)"
-            value={budget}
-            onChange={handleBudgetChange}
-            minValue={5}
-            maxValue={500}
-            step={5}
-            color={isValid ? "primary" : "danger"}
-          />
+          <div>
+              <label className="text-sm font-medium">Daily Budget ($)</label>
+              <input type="range" className="w-full" value={budget} onChange={(e) => handleBudgetChange(Number(e.target.value))} min={5} max={500} step={5} />
+            </div>
           {!isValid && (
             <p className="text-danger-500 text-sm">Minimum budget is $5/day</p>
           )}
-          <Slider 
-            label="Duration (days)"
-            value={duration}
-            onChange={handleDurationChange}
-            minValue={1}
-            maxValue={30}
-          />
+          <div>
+              <label className="text-sm font-medium">Duration (days)</label>
+              <input type="range" className="w-full" value={duration} onChange={(e) => handleDurationChange(Number(e.target.value))} min={1} max={30} step={1} />
+            </div>
           <Button 
-            onPress={() => onComplete({ budget, duration })}
-            isDisabled={!isValid}
+            onClick={() => onComplete({ budget, duration })}
+            disabled={!isValid}
           >
             Continue
           </Button>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   };
@@ -151,7 +145,7 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardBody className="space-y-4">
+          <CardContent className="space-y-4">
             <h3 className="font-medium">Campaign Summary</h3>
             <div className="space-y-2">
               <p><strong>Platform:</strong> {wizardData.platform}</p>
@@ -163,21 +157,21 @@ export function AdCampaignWizard({ brandId }: { brandId: string }) {
               label="Notes" 
               placeholder="Add any campaign notes..."
             />
-            <Button onPress={() => onComplete({ status: "active" })}>
+            <Button onClick={() => onComplete({ status: "active" })}>
               Launch Campaign
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody>
+          <CardContent>
             <h3 className="font-medium mb-4">Creative Preview</h3>
-            <div className="bg-default-100 p-4 rounded-lg">
+            <div className="bg-muted p-4 rounded-lg">
               <p className="text-muted-foreground text-sm">
                 Ad preview will appear here based on your creative assets
               </p>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     );

@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Card,
-  CardBody,
-  Button,
-  Progress,
-  Chip,
-} from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Sparkles,
   Zap,
@@ -126,7 +122,7 @@ export function ContentEmptyState({
     <div className="space-y-6">
       {/* Hero CTA Section */}
       <Card className="bg-gradient-to-br from-brand-500/10 via-purple-500/10 to-pink-500/10 border-2 border-brand-500/30">
-        <CardBody className="p-8">
+        <CardContent className="p-8">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Left side - Main CTA */}
             <div className="flex-1 text-center lg:text-left">
@@ -159,24 +155,20 @@ export function ContentEmptyState({
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  color="primary"
                   size="lg"
                   className="font-semibold"
-                  startContent={<Zap className="w-5 h-5" />}
-                  endContent={<ArrowRight className="w-5 h-5" />}
-                  onPress={onQuickGenerate}
-                  isLoading={generating}
-                  isDisabled={!isOnContentStep && !flywheelStatus.socialConnected}
+                  onClick={onQuickGenerate}
+                  disabled={generating || (!isOnContentStep && !flywheelStatus.socialConnected)}
                 >
                   {generating ? "Generating..." : "Quick Generate 3 Posts"}
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
 
                 <Link href="/dashboard/content/generate">
                   <Button
-                    variant="bordered"
+                    variant="outline"
                     size="lg"
-                    startContent={<Plus className="w-5 h-5" />}
-                  >
+                                      >
                     Custom Generate
                   </Button>
                 </Link>
@@ -197,22 +189,22 @@ export function ContentEmptyState({
             {/* Right side - Flywheel Progress */}
             <div className="w-full lg:w-80 shrink-0">
               <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur">
-                <CardBody className="p-4">
+                <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                       Flywheel Setup
                     </span>
-                    <Chip size="sm" color={progress === 100 ? "success" : "primary"} variant="flat">
+                    <Badge variant="secondary" className={progress === 100 ? "bg-green-100 text-green-800" : ""}>
                       {completedSteps}/{flywheelSteps.length}
-                    </Chip>
+                    </Badge>
                   </div>
 
-                  <Progress
-                    value={progress}
-                    color={progress === 100 ? "success" : "primary"}
-                    className="mb-4"
-                    size="sm"
-                  />
+                  <div className="mb-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${progress === 100 ? "bg-green-500" : "bg-primary"}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
 
                   <div className="space-y-2">
                     {flywheelSteps.map((step, index) => (
@@ -264,17 +256,17 @@ export function ContentEmptyState({
                       </Link>
                     ))}
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* How it works section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4 text-center">
+          <CardContent className="p-4 text-center">
             <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mx-auto mb-3">
               <span className="text-lg font-bold text-brand-600">1</span>
             </div>
@@ -284,11 +276,11 @@ export function ContentEmptyState({
             <p className="text-sm text-gray-500">
               Using your Brand Brain settings, AI creates content matching your voice
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4 text-center">
+          <CardContent className="p-4 text-center">
             <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
               <span className="text-lg font-bold text-purple-600">2</span>
             </div>
@@ -298,11 +290,11 @@ export function ContentEmptyState({
             <p className="text-sm text-gray-500">
               Quick review each post, edit if needed, then approve for publishing
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card className="bg-gray-50 dark:bg-gray-800/50">
-          <CardBody className="p-4 text-center">
+          <CardContent className="p-4 text-center">
             <div className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center mx-auto mb-3">
               <span className="text-lg font-bold text-pink-600">3</span>
             </div>
@@ -312,7 +304,7 @@ export function ContentEmptyState({
             <p className="text-sm text-gray-500">
               Content is posted automatically, and the AI learns from results
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>

@@ -5,7 +5,8 @@
  * Shows setup progress for new users
  */
 
-import { Card, CardBody, Button, Progress } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
   Brain,
@@ -100,24 +101,29 @@ export function OnboardingChecklist({
 
   return (
     <Card className="border-2 border-primary/20">
-      <CardBody className="space-y-4">
+      <CardContent className="space-y-4">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-semibold">Getting Started</h3>
-            <p className="text-sm text-default-500">
+            <p className="text-sm text-muted-foreground">
               Complete these steps to unlock the full power of Epic AI
             </p>
           </div>
           {onDismiss && (
-            <Button isIconOnly size="sm" variant="light" onPress={onDismiss}>
+            <Button size="icon" variant="ghost" onClick={onDismiss}>
               <X className="w-4 h-4" />
             </Button>
           )}
         </div>
 
         <div className="flex items-center gap-3">
-          <Progress value={progress} className="flex-1" color="primary" />
-          <span className="text-sm text-default-500">
+          <div className="flex-1 h-2 rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-sm text-muted-foreground">
             {completedCount}/{steps.length}
           </span>
         </div>
@@ -134,36 +140,36 @@ export function OnboardingChecklist({
                 className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
                   step.isComplete
                     ? "bg-success/5"
-                    : "bg-default-50 hover:bg-default-100 cursor-pointer"
+                    : "bg-muted/50 hover:bg-muted cursor-pointer"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <StatusIcon
                     className={`w-5 h-5 ${
-                      step.isComplete ? "text-success" : "text-default-300"
+                      step.isComplete ? "text-green-500" : "text-muted-foreground/50"
                     }`}
                   />
                   <div>
                     <p
                       className={`text-sm font-medium ${
-                        step.isComplete ? "text-default-400 line-through" : ""
+                        step.isComplete ? "text-muted-foreground line-through" : ""
                       }`}
                     >
                       {step.title}
                     </p>
-                    <p className="text-xs text-default-400">
+                    <p className="text-xs text-muted-foreground">
                       {step.description}
                     </p>
                   </div>
                 </div>
                 {!step.isComplete && (
-                  <ArrowRight className="w-4 h-4 text-default-400" />
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
             );
           })}
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

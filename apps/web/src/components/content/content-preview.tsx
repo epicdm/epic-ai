@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, Tabs, Tab, Button, Spinner, Textarea } from "@heroui/react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 import { useContentGeneration } from "@/hooks/use-content-generation";
 import { useBrandVoice } from "@/hooks/use-brand-voice";
 
@@ -14,31 +18,32 @@ export function ContentPreview({ brandId }: { brandId: string }) {
 
   return (
     <Card className="p-4 min-h-[400px]" data-testid="content-preview">
-      <CardBody className="space-y-4">
+      <CardContent className="space-y-4">
         <h3 className="font-medium">Content Preview</h3>
         
-        <Textarea 
-          label="Content Topic"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          className="min-h-[100px]"
-        />
-        
-        <Tabs 
-          selectedKey={platform}
-          onSelectionChange={(key) => setPlatform(key as any)}
-        >
-          <Tab key="twitter" title="Twitter" />
-          <Tab key="linkedin" title="LinkedIn" />
-          <Tab key="facebook" title="Facebook" />
-          <Tab key="instagram" title="Instagram" />
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Content Topic</label>
+          <Textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="min-h-[100px]"
+          />
+        </div>
+
+        <Tabs value={platform} onValueChange={(v) => setPlatform(v as typeof platform)}>
+          <TabsList>
+            <TabsTrigger value="twitter">Twitter</TabsTrigger>
+            <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+            <TabsTrigger value="facebook">Facebook</TabsTrigger>
+            <TabsTrigger value="instagram">Instagram</TabsTrigger>
+          </TabsList>
         </Tabs>
-        
-        <Button 
-          onPress={() => generate({ topic, brandVoice, platforms: [platform] })}
-          isDisabled={!topic || isLoading}
-          endContent={isLoading ? <Spinner /> : null}
+
+        <Button
+          onClick={() => generate({ topic, brandVoice, platforms: [platform] })}
+          disabled={!topic || isLoading}
         >
+          {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Generate Preview
         </Button>
         
@@ -48,7 +53,7 @@ export function ContentPreview({ brandId }: { brandId: string }) {
             <p className="whitespace-pre-line">{content.find(c => c.platform === platform)?.content}</p>
           </div>
         )}
-      </CardBody>
+      </CardContent>
     </Card>
   );
 }

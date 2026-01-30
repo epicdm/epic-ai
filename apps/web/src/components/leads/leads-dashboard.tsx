@@ -1,26 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Card,
-  CardBody,
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Chip,
-  Spinner,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Pagination,
-} from "@heroui/react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { apiClient, endpoints, queryKeys } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
 import {
   Users,
   Plus,
@@ -44,6 +48,11 @@ interface Lead {
   createdAt: string;
   brand: { id: string; name: string } | null;
   _count: { activities: number; calls: number };
+}
+
+interface LeadsResponse {
+  leads: Lead[];
+  total: number;
 }
 
 interface Stats {
@@ -78,73 +87,64 @@ const SOURCE_OPTIONS = [
   { key: "OTHER", label: "Other" },
 ];
 
-const getStatusColor = (
+const getStatusVariant = (
   status: string
-): "default" | "primary" | "secondary" | "success" | "warning" | "danger" => {
-  const colors: Record<
+): "default" | "secondary" | "destructive" | "outline" => {
+  const variants: Record<
     string,
-    "default" | "primary" | "secondary" | "success" | "warning" | "danger"
+    "default" | "secondary" | "destructive" | "outline"
   > = {
-    NEW: "primary",
+    NEW: "default",
     CONTACTED: "secondary",
-    QUALIFIED: "warning",
-    PROPOSAL: "warning",
-    NEGOTIATION: "warning",
-    CONVERTED: "success",
-    LOST: "danger",
+    QUALIFIED: "outline",
+    PROPOSAL: "outline",
+    NEGOTIATION: "outline",
+    CONVERTED: "default",
+    LOST: "destructive",
   };
-  return colors[status] || "default";
+  return variants[status] || "secondary";
 };
 
 export function LeadsDashboard() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    fetchLeads();
-    fetchStats();
-  }, [search, statusFilter, sourceFilter, page]);
+  const filters = { search, status: statusFilter, source: sourceFilter, page };
 
-  async function fetchLeads() {
-    try {
-      const params = new URLSearchParams({
-        limit: limit.toString(),
-        offset: ((page - 1) * limit).toString(),
+  const { data: leadsData, isLoading } = useQuery({
+    queryKey: queryKeys.leads.list(filters),
+    queryFn: async () => {
+      const params: Record<string, string | number | boolean | undefined> = {
+        limit,
+        offset: (page - 1) * limit,
+      };
+      if (search) params.search = search;
+      if (statusFilter !== "all") params.status = statusFilter;
+      if (sourceFilter !== "all") params.source = sourceFilter;
+
+      const res = await apiClient.get<LeadsResponse>(endpoints.leads.list(), {
+        params,
       });
-      if (search) params.set("search", search);
-      if (statusFilter !== "all") params.set("status", statusFilter);
-      if (sourceFilter !== "all") params.set("source", sourceFilter);
+      if (res.error) throw new Error(res.error.message);
+      return res.data;
+    },
+  });
 
-      const response = await fetch(`/api/leads?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
-      setLeads(data.leads);
-      setTotal(data.total);
-    } catch (error) {
-      console.error("Error fetching leads:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: stats } = useQuery({
+    queryKey: queryKeys.leads.stats(),
+    queryFn: async () => {
+      const res = await apiClient.get<Stats>(endpoints.leads.stats());
+      if (res.error) throw new Error(res.error.message);
+      return res.data;
+    },
+  });
 
-  async function fetchStats() {
-    try {
-      const response = await fetch("/api/leads/stats");
-      if (!response.ok) throw new Error("Failed to fetch stats");
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  }
-
+  const leads = leadsData?.leads ?? [];
+  const total = leadsData?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -153,13 +153,11 @@ export function LeadsDashboard() {
         title="Leads"
         description="Manage and track your sales leads."
         actions={
-          <Button
-            as={Link}
-            href="/dashboard/leads/new"
-            color="primary"
-            startContent={<Plus className="w-4 h-4" />}
-          >
-            Add Lead
+          <Button asChild>
+            <Link href="/dashboard/leads/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Lead
+            </Link>
           </Button>
         }
       />
@@ -167,7 +165,7 @@ export function LeadsDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -179,11 +177,11 @@ export function LeadsDashboard() {
                 <p className="text-sm text-gray-500">Total Leads</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                 <UserPlus className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -195,11 +193,11 @@ export function LeadsDashboard() {
                 <p className="text-sm text-gray-500">This Week</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -211,11 +209,11 @@ export function LeadsDashboard() {
                 <p className="text-sm text-gray-500">Conversion Rate</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
@@ -227,54 +225,75 @@ export function LeadsDashboard() {
                 <p className="text-sm text-gray-500">Pipeline Value</p>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <Input
-              placeholder="Search leads..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              startContent={<Search className="w-4 h-4 text-gray-400" />}
-              className="md:max-w-xs"
-            />
+            <div className="relative md:max-w-xs w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search leads..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-9"
+              />
+            </div>
             <Select
-              placeholder="Status"
-              selectedKeys={[statusFilter]}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="md:max-w-[180px]"
+              value={statusFilter}
+              onValueChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+              }}
             >
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
-              ))}
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.key} value={option.key}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             <Select
-              placeholder="Source"
-              selectedKeys={[sourceFilter]}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="md:max-w-[180px]"
+              value={sourceFilter}
+              onValueChange={(val) => {
+                setSourceFilter(val);
+                setPage(1);
+              }}
             >
-              {SOURCE_OPTIONS.map((option) => (
-                <SelectItem key={option.key}>{option.label}</SelectItem>
-              ))}
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent>
+                {SOURCE_OPTIONS.map((option) => (
+                  <SelectItem key={option.key} value={option.key}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Leads Table */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-[300px]">
-          <Spinner size="lg" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : leads.length === 0 ? (
         search || statusFilter !== "all" || sourceFilter !== "all" ? (
           <Card>
-            <CardBody className="py-16 text-center">
+            <CardContent className="py-16 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Users className="w-8 h-8 text-gray-400" />
               </div>
@@ -284,107 +303,125 @@ export function LeadsDashboard() {
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Try adjusting your search or filters
               </p>
-            </CardBody>
+            </CardContent>
           </Card>
         ) : (
-          <EmptyState
-            icon={<Magnet className="w-full h-full" />}
-            title="No Leads Yet - Let's Change That"
-            description="Connect your forms, chatbots, or voice agents to start capturing leads automatically."
-            features={[
-              "Website contact forms",
-              "Facebook Lead Ads",
-              "Voice AI conversations",
-              "Landing page signups",
-            ]}
-            actions={[
-              {
-                label: "Add Lead Manually",
-                variant: "primary",
-                onClick: () => window.location.href = "/dashboard/leads/new",
-              },
-              {
-                label: "Learn More",
-                variant: "secondary",
-                onClick: () => window.location.href = "/dashboard/settings",
-              },
-            ]}
-            variant="card"
-          />
+          <Card>
+            <CardContent className="py-16 text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Magnet className="w-8 h-8 text-gray-400" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No Leads Yet - Let&apos;s Change That
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
+                Connect your forms, chatbots, or voice agents to start capturing
+                leads automatically.
+              </p>
+              <ul className="text-sm text-gray-500 dark:text-gray-400 mb-6 space-y-1">
+                <li>Website contact forms</li>
+                <li>Facebook Lead Ads</li>
+                <li>Voice AI conversations</li>
+                <li>Landing page signups</li>
+              </ul>
+              <div className="flex items-center justify-center gap-3">
+                <Button asChild>
+                  <Link href="/dashboard/leads/new">Add Lead Manually</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard/settings">Learn More</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )
       ) : (
         <Card>
-          <CardBody className="p-0">
-            <Table aria-label="Leads table">
-              <TableHeader>
-                <TableColumn>Name</TableColumn>
-                <TableColumn>Contact</TableColumn>
-                <TableColumn>Company</TableColumn>
-                <TableColumn>Status</TableColumn>
-                <TableColumn>Source</TableColumn>
-                <TableColumn>Value</TableColumn>
-                <TableColumn>Created</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {leads.map((lead) => (
-                  <TableRow
-                    key={lead.id}
-                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-                    onClick={() =>
-                      (window.location.href = `/dashboard/leads/${lead.id}`)
-                    }
-                  >
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {lead.firstName} {lead.lastName || ""}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {leads.map((lead) => (
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/dashboard/leads/${lead.id}`)}
+                >
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {lead.firstName} {lead.lastName || ""}
+                      </p>
+                      {lead.brand && (
+                        <p className="text-xs text-gray-500">
+                          {lead.brand.name}
                         </p>
-                        {lead.brand && (
-                          <p className="text-xs text-gray-500">
-                            {lead.brand.name}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {lead.email && <p>{lead.email}</p>}
-                        {lead.phone && (
-                          <p className="text-gray-500">{lead.phone}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{lead.company || "-"}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="sm"
-                        color={getStatusColor(lead.status)}
-                        variant="flat"
-                      >
-                        {lead.status}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-500">
-                        {lead.source.replace("_", " ")}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {lead.estimatedValue
-                        ? `$${lead.estimatedValue.toLocaleString()}`
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {new Date(lead.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardBody>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {lead.email && <p>{lead.email}</p>}
+                      {lead.phone && (
+                        <p className="text-gray-500">{lead.phone}</p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{lead.company || "-"}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(lead.status)}>
+                      {lead.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-500">
+                      {lead.source.replace("_", " ")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {lead.estimatedValue
+                      ? `$${lead.estimatedValue.toLocaleString()}`
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {new Date(lead.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
           {totalPages > 1 && (
-            <div className="flex justify-center p-4 border-t border-gray-200 dark:border-gray-800">
-              <Pagination total={totalPages} page={page} onChange={setPage} />
+            <div className="flex items-center justify-between border-t px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </Card>

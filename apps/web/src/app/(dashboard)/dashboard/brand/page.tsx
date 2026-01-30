@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuth } from "@/lib/auth";
-import { NewBrandOverview } from "@/components/brand/new-brand-overview";
+import { NewBrandOverview } from "@/components/brand/brand-overview";
 
 export const dynamic = 'force-dynamic';
 

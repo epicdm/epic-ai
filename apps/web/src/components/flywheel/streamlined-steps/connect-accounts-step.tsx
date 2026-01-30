@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button, Card, CardBody, Chip, Spinner } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Twitter,
   Linkedin,
@@ -213,13 +215,13 @@ export function ConnectAccountsStep({
 
       {/* AI Suggestion Display */}
       {aiSuggestion && (
-        <div className="p-4 bg-secondary-50 dark:bg-secondary-950/30 border border-secondary-200 dark:border-secondary-800 rounded-lg">
+        <div className="p-4 bg-secondary/10 border border-secondary/30 rounded-lg">
           <p className="text-sm text-foreground">{aiSuggestion}</p>
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg text-danger text-sm">
+        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
@@ -237,11 +239,11 @@ export function ConnectAccountsStep({
               key={platform.id}
               className={`transition-all ${
                 connected
-                  ? "border-2 border-success bg-success/5"
+                  ? "border-2 border-green-500 bg-green-500/5"
                   : "border-2 border-transparent"
               }`}
             >
-              <CardBody className="flex flex-row items-center gap-4 py-4">
+              <CardContent className="flex flex-row items-center gap-4 py-4 px-4">
                 <div className={`p-3 rounded-lg ${platform.bgColor}`}>
                   <Icon className={`w-6 h-6 ${platform.color}`} />
                 </div>
@@ -252,13 +254,14 @@ export function ConnectAccountsStep({
                       {platform.name}
                     </p>
                     {connected && (
-                      <Chip size="sm" color="success" variant="flat" startContent={<Check className="w-3 h-3" />}>
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <Check className="w-3 h-3 mr-1" />
                         Connected
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                   {connected && account ? (
-                    <p className="text-sm text-success truncate">
+                    <p className="text-sm text-green-600 dark:text-green-400 truncate">
                       @{account.handle}
                     </p>
                   ) : (
@@ -272,32 +275,28 @@ export function ConnectAccountsStep({
                   {connected ? (
                     <Button
                       size="sm"
-                      variant="flat"
-                      color="danger"
-                      onPress={() => handleDisconnect(platform.id)}
+                      variant="destructive"
+                      onClick={() => handleDisconnect(platform.id)}
                     >
                       Disconnect
                     </Button>
                   ) : (
                     <Button
                       size="sm"
-                      color="primary"
-                      variant={isConnecting ? "flat" : "solid"}
-                      endContent={
-                        isConnecting ? (
-                          <Spinner size="sm" />
-                        ) : (
-                          <ExternalLink className="w-4 h-4" />
-                        )
-                      }
-                      onPress={() => handleConnect(platform.id)}
-                      isDisabled={isConnecting}
+                      variant={isConnecting ? "secondary" : "default"}
+                      onClick={() => handleConnect(platform.id)}
+                      disabled={isConnecting}
                     >
                       {isConnecting ? "Connecting..." : "Connect"}
+                      {isConnecting ? (
+                        <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        <ExternalLink className="ml-2 w-4 h-4" />
+                      )}
                     </Button>
                   )}
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           );
         })}
@@ -310,7 +309,7 @@ export function ConnectAccountsStep({
           {connectedAccounts.length !== 1 ? "s" : ""} connected
         </span>
         {!hasAtLeastOneConnection && (
-          <span className="text-sm text-warning">
+          <span className="text-sm text-amber-600 dark:text-amber-400">
             Connect at least one account to continue
           </span>
         )}

@@ -8,13 +8,14 @@
  */
 
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-} from "@heroui/react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Brain,
   Sparkles,
@@ -27,7 +28,6 @@ import {
   Target,
   Zap,
   TrendingUp,
-  X,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -55,8 +55,8 @@ function FlywheelGraphic() {
       <div className="absolute inset-0 animate-spin" style={{ animationDuration: "15s" }}>
         {/* Voice */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1">
-          <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center border-2 border-success">
-            <Phone className="w-5 h-5 text-success" />
+          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500">
+            <Phone className="w-5 h-5 text-green-500" />
           </div>
         </div>
         {/* Social */}
@@ -67,8 +67,8 @@ function FlywheelGraphic() {
         </div>
         {/* Email */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1">
-          <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center border-2 border-warning">
-            <Mail className="w-5 h-5 text-warning" />
+          <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center border-2 border-yellow-500">
+            <Mail className="w-5 h-5 text-yellow-500" />
           </div>
         </div>
         {/* Chat */}
@@ -80,7 +80,7 @@ function FlywheelGraphic() {
       </div>
 
       {/* Connecting Lines (static circle) */}
-      <div className="absolute inset-4 rounded-full border-2 border-dashed border-default-300 opacity-50" />
+      <div className="absolute inset-4 rounded-full border-2 border-dashed border-muted-foreground/30 opacity-50" />
     </div>
   );
 }
@@ -98,13 +98,13 @@ function FeatureHighlight({
   description: string;
 }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-default-50 hover:bg-default-100 transition-colors">
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
       <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
         {icon}
       </div>
       <div>
-        <h4 className="font-medium text-default-800 text-sm">{title}</h4>
-        <p className="text-xs text-default-500">{description}</p>
+        <h4 className="font-medium text-foreground text-sm">{title}</h4>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
     </div>
   );
@@ -124,154 +124,128 @@ export function WelcomeModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="2xl"
-      scrollBehavior="inside"
-      classNames={{
-        backdrop: "bg-gradient-to-t from-primary/10 to-secondary/10 backdrop-blur-sm",
-        base: "border border-default-200",
-      }}
-      hideCloseButton
-    >
-      <ModalContent>
-        {() => (
-          <>
-            <ModalHeader className="flex flex-col gap-1 items-center text-center pt-6 pb-0">
-              <div className="absolute top-3 right-3">
-                <Button
-                  isIconOnly
-                  variant="light"
-                  size="sm"
-                  onPress={onClose}
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-col gap-1 items-center text-center pt-2 pb-0">
+          <DialogTitle className="text-2xl font-bold">
+            Welcome to Your Marketing Flywheel
+          </DialogTitle>
+          {companyName && (
+            <DialogDescription className="text-lg font-normal text-muted-foreground mt-1">
+              {companyName}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        <div className="py-4">
+          {!showFeatures ? (
+            <>
+              {/* Animated Flywheel */}
+              <FlywheelGraphic />
+
+              {/* Core Concept */}
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                  &quot;One Brain, Many Voices&quot;
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Your brand speaks consistently across all channels, powered by AI.
+                  Voice calls, social posts, emails, and chat messages all share the
+                  same intelligence.
+                </p>
               </div>
 
-              <h2 className="text-2xl font-bold">
-                Welcome to Your Marketing Flywheel
-                {companyName && (
-                  <span className="block text-lg font-normal text-default-500 mt-1">
-                    {companyName}
+              {/* Self-Improving Badge */}
+              <div className="bg-gradient-to-r from-green-500/10 to-primary/10 rounded-xl p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <RefreshCw className="w-5 h-5 text-green-500" />
+                  <span className="font-semibold text-foreground">
+                    Self-Improving System
                   </span>
-                )}
-              </h2>
-            </ModalHeader>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  The more you use it, the smarter it gets. Every interaction teaches
+                  the AI about your brand and customers.
+                </p>
+              </div>
 
-            <ModalBody className="py-4">
-              {!showFeatures ? (
-                <>
-                  {/* Animated Flywheel */}
-                  <FlywheelGraphic />
-
-                  {/* Core Concept */}
-                  <div className="text-center mb-4">
-                    <h3 className="text-xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-                      &quot;One Brain, Many Voices&quot;
-                    </h3>
-                    <p className="text-default-600 max-w-md mx-auto">
-                      Your brand speaks consistently across all channels, powered by AI.
-                      Voice calls, social posts, emails, and chat messages all share the
-                      same intelligence.
-                    </p>
-                  </div>
-
-                  {/* Self-Improving Badge */}
-                  <div className="bg-gradient-to-r from-success/10 to-primary/10 rounded-xl p-4 text-center">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <RefreshCw className="w-5 h-5 text-success" />
-                      <span className="font-semibold text-default-800">
-                        Self-Improving System
-                      </span>
-                    </div>
-                    <p className="text-sm text-default-600">
-                      The more you use it, the smarter it gets. Every interaction teaches
-                      the AI about your brand and customers.
-                    </p>
-                  </div>
-
-                  <Button
-                    variant="light"
-                    className="mx-auto mt-4"
-                    size="sm"
-                    onPress={() => setShowFeatures(true)}
-                  >
-                    Learn more about features
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {/* Feature Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FeatureHighlight
-                      icon={<Brain className="w-4 h-4" />}
-                      title="Brand Brain"
-                      description="Your brand's personality, voice, and values in one place"
-                    />
-                    <FeatureHighlight
-                      icon={<Share2 className="w-4 h-4" />}
-                      title="Multi-Channel Publishing"
-                      description="Post to all platforms with platform-optimized content"
-                    />
-                    <FeatureHighlight
-                      icon={<Phone className="w-4 h-4" />}
-                      title="AI Voice Agents"
-                      description="Handle calls with your brand's personality"
-                    />
-                    <FeatureHighlight
-                      icon={<Target className="w-4 h-4" />}
-                      title="Lead Management"
-                      description="Track and nurture prospects across channels"
-                    />
-                    <FeatureHighlight
-                      icon={<Zap className="w-4 h-4" />}
-                      title="Automations"
-                      description="Set up cross-channel workflows that run automatically"
-                    />
-                    <FeatureHighlight
-                      icon={<TrendingUp className="w-4 h-4" />}
-                      title="Analytics & Learning"
-                      description="AI analyzes results and improves over time"
-                    />
-                  </div>
-
-                  <Button
-                    variant="light"
-                    className="mx-auto mt-4"
-                    size="sm"
-                    onPress={() => setShowFeatures(false)}
-                  >
-                    Back to overview
-                  </Button>
-                </>
-              )}
-            </ModalBody>
-
-            <ModalFooter className="flex flex-col sm:flex-row gap-2 justify-center pb-6">
-              <Button
-                variant="bordered"
-                onPress={onClose}
-                className="min-w-[150px]"
-              >
-                Skip, I&apos;ll Explore
-              </Button>
-              {onStartTour && (
+              <div className="flex justify-center mt-4">
                 <Button
-                  color="primary"
-                  onPress={handleStartTour}
-                  endContent={<ArrowRight className="w-4 h-4" />}
-                  className="min-w-[150px]"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFeatures(true)}
                 >
-                  Start Quick Tour
+                  Learn more about features
                 </Button>
-              )}
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Feature Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <FeatureHighlight
+                  icon={<Brain className="w-4 h-4" />}
+                  title="Brand Brain"
+                  description="Your brand's personality, voice, and values in one place"
+                />
+                <FeatureHighlight
+                  icon={<Share2 className="w-4 h-4" />}
+                  title="Multi-Channel Publishing"
+                  description="Post to all platforms with platform-optimized content"
+                />
+                <FeatureHighlight
+                  icon={<Phone className="w-4 h-4" />}
+                  title="AI Voice Agents"
+                  description="Handle calls with your brand's personality"
+                />
+                <FeatureHighlight
+                  icon={<Target className="w-4 h-4" />}
+                  title="Lead Management"
+                  description="Track and nurture prospects across channels"
+                />
+                <FeatureHighlight
+                  icon={<Zap className="w-4 h-4" />}
+                  title="Automations"
+                  description="Set up cross-channel workflows that run automatically"
+                />
+                <FeatureHighlight
+                  icon={<TrendingUp className="w-4 h-4" />}
+                  title="Analytics & Learning"
+                  description="AI analyzes results and improves over time"
+                />
+              </div>
+
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFeatures(false)}
+                >
+                  Back to overview
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 justify-center pb-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="min-w-[150px]"
+          >
+            Skip, I&apos;ll Explore
+          </Button>
+          {onStartTour && (
+            <Button
+              onClick={handleStartTour}
+              className="min-w-[150px]"
+            >
+              Start Quick Tour <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,34 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Spinner,
-  Chip,
-  Divider,
-  Tabs,
-  Tab,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Input,
-  Textarea,
-  Select,
-  SelectItem,
-  Tooltip,
-} from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Server,
   Phone,
@@ -259,11 +241,11 @@ export function LiveKitPanel() {
   const [sipValidationsLoading, setSipValidationsLoading] = useState(false);
 
   // Modal states
-  const { isOpen: isCreateTrunkOpen, onOpen: onOpenCreateTrunk, onClose: onCloseCreateTrunk } = useDisclosure();
-  const { isOpen: isCreateRuleOpen, onOpen: onOpenCreateRule, onClose: onCloseCreateRule } = useDisclosure();
-  const { isOpen: isRoomDetailOpen, onOpen: onOpenRoomDetail, onClose: onCloseRoomDetail } = useDisclosure();
-  const { isOpen: isCallDetailOpen, onOpen: onOpenCallDetail, onClose: onCloseCallDetail } = useDisclosure();
-  const { isOpen: isDeleteConfirmOpen, onOpen: onOpenDeleteConfirm, onClose: onCloseDeleteConfirm } = useDisclosure();
+  const [isCreateTrunkOpen, setIsCreateTrunkOpen] = useState(false);
+  const [isCreateRuleOpen, setIsCreateRuleOpen] = useState(false);
+  const [isRoomDetailOpen, setIsRoomDetailOpen] = useState(false);
+  const [isCallDetailOpen, setIsCallDetailOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const [createTrunkType, setCreateTrunkType] = useState<"inbound" | "outbound">("inbound");
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: string; name: string } | null>(null);
@@ -814,7 +796,7 @@ export function LiveKitPanel() {
       {/* Alert Messages */}
       {(success || error) && (
         <Card className={error ? "bg-danger-50" : "bg-success-50"}>
-          <CardBody className="flex flex-row items-center gap-2 py-2">
+          <CardContent className="flex flex-row items-center gap-2 py-2">
             {error ? (
               <AlertCircle className="w-4 h-4 text-danger" />
             ) : (
@@ -823,51 +805,58 @@ export function LiveKitPanel() {
             <span className={error ? "text-danger" : "text-success"}>
               {error || success}
             </span>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
-      <Tabs
-        selectedKey={selectedTab}
-        onSelectionChange={(key) => setSelectedTab(key as string)}
-        aria-label="LiveKit management sections"
-      >
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as string)}>
+        
+        <TabsList>
+          <TabsTrigger value="trunks">Trunks</TabsTrigger>
+          <TabsTrigger value="dispatch">Dispatch Rules</TabsTrigger>
+          <TabsTrigger value="rooms">Rooms</TabsTrigger>
+          <TabsTrigger value="calls">Call History</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="agents">Agents</TabsTrigger>
+          <TabsTrigger value="test-call">Test Call</TabsTrigger>
+          <TabsTrigger value="sip">SIP/Magnus</TabsTrigger>
+        </TabsList>
+
         {/* Trunks Tab */}
-        <Tab key="trunks" title={<div className="flex items-center gap-2"><Phone className="w-4 h-4" />Trunks</div>}>
+        <TabsContent value="trunks">
           <div className="mt-4 space-y-6">
             {/* Actions */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="flat"
-                startContent={<RefreshCw className="w-4 h-4" />}
-                onPress={fetchTrunks}
-                isLoading={trunksLoading}
-              >
+                variant="secondary"
+                
+                onClick={fetchTrunks}
+                disabled={trunksLoading}
+              ><RefreshCw className="w-4 h-4" /> 
                 Refresh
               </Button>
               <Button
                 size="sm"
-                color="primary"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                onClick={() => {
                   setCreateTrunkType("inbound");
                   resetTrunkForm();
                   onOpenCreateTrunk();
                 }}
               >
+                <Plus className="w-4 h-4" />
                 Add Inbound Trunk
               </Button>
               <Button
                 size="sm"
-                color="secondary"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                variant="secondary"
+                onClick={() => {
                   setCreateTrunkType("outbound");
                   resetTrunkForm();
                   onOpenCreateTrunk();
                 }}
               >
+                <Plus className="w-4 h-4" />
                 Add Outbound Trunk
               </Button>
             </div>
@@ -877,20 +866,20 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <PhoneIncoming className="w-5 h-5 text-success" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Inbound Trunks</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Inbound Trunks</p>
+                  <p className="text-sm text-muted-foreground">
                     {inboundTrunks.length} trunk(s) configured
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {trunksLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : inboundTrunks.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No inbound trunks configured</p>
+                  <p className="text-center text-muted-foreground py-4">No inbound trunks configured</p>
                 ) : (
                   <Table aria-label="Inbound trunks">
                     <TableHeader>
@@ -907,10 +896,10 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                isIconOnly
+                                size="icon"
                                 size="sm"
-                                variant="light"
-                                onPress={() => copyToClipboard(trunk.sip_trunk_id)}
+                                variant="ghost"
+                                onClick={() => copyToClipboard(trunk.sip_trunk_id)}
                               >
                                 <Copy className="w-3 h-3" />
                               </Button>
@@ -920,24 +909,24 @@ export function LiveKitPanel() {
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {trunk.numbers?.map((num, i) => (
-                                <Chip key={i} size="sm" variant="flat">{num}</Chip>
+                                <Badge key={i}  variant="secondary">{num}</Badge>
                               ))}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {trunk.allowed_addresses?.map((addr, i) => (
-                                <Chip key={i} size="sm" variant="flat" color="secondary">{addr}</Chip>
+                                <Badge key={i}  variant="secondary" variant="secondary">{addr}</Badge>
                               ))}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              color="danger"
-                              variant="light"
-                              onPress={() => confirmDelete("inbound-trunk", trunk.sip_trunk_id, trunk.name || "Inbound trunk")}
+                              variant="destructive"
+                              variant="ghost"
+                              onClick={() => confirmDelete("inbound-trunk", trunk.sip_trunk_id, trunk.name || "Inbound trunk")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -947,7 +936,7 @@ export function LiveKitPanel() {
                     </TableBody>
                   </Table>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Outbound Trunks */}
@@ -955,20 +944,20 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <PhoneOutgoing className="w-5 h-5 text-primary" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Outbound Trunks</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Outbound Trunks</p>
+                  <p className="text-sm text-muted-foreground">
                     {outboundTrunks.length} trunk(s) configured
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {trunksLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : outboundTrunks.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No outbound trunks configured</p>
+                  <p className="text-center text-muted-foreground py-4">No outbound trunks configured</p>
                 ) : (
                   <Table aria-label="Outbound trunks">
                     <TableHeader>
@@ -986,10 +975,10 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                isIconOnly
+                                size="icon"
                                 size="sm"
-                                variant="light"
-                                onPress={() => copyToClipboard(trunk.sip_trunk_id)}
+                                variant="ghost"
+                                onClick={() => copyToClipboard(trunk.sip_trunk_id)}
                               >
                                 <Copy className="w-3 h-3" />
                               </Button>
@@ -998,22 +987,22 @@ export function LiveKitPanel() {
                           <TableCell>{trunk.name || "Unnamed"}</TableCell>
                           <TableCell><code className="text-xs">{trunk.address}</code></TableCell>
                           <TableCell>
-                            <Chip size="sm" variant="flat">{trunk.transport?.toUpperCase() || "UDP"}</Chip>
+                            <Badge  variant="secondary">{trunk.transport?.toUpperCase() || "UDP"}</Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {trunk.numbers?.map((num, i) => (
-                                <Chip key={i} size="sm" variant="flat">{num}</Chip>
+                                <Badge key={i}  variant="secondary">{num}</Badge>
                               ))}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              color="danger"
-                              variant="light"
-                              onPress={() => confirmDelete("outbound-trunk", trunk.sip_trunk_id, trunk.name || "Outbound trunk")}
+                              variant="destructive"
+                              variant="ghost"
+                              onClick={() => confirmDelete("outbound-trunk", trunk.sip_trunk_id, trunk.name || "Outbound trunk")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -1023,34 +1012,33 @@ export function LiveKitPanel() {
                     </TableBody>
                   </Table>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Dispatch Rules Tab */}
-        <Tab key="dispatch" title={<div className="flex items-center gap-2"><Route className="w-4 h-4" />Dispatch Rules</div>}>
+        <TabsContent value="dispatch">
           <div className="mt-4 space-y-6">
             {/* Actions */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="flat"
-                startContent={<RefreshCw className="w-4 h-4" />}
-                onPress={fetchDispatchRules}
-                isLoading={rulesLoading}
-              >
+                variant="secondary"
+                
+                onClick={fetchDispatchRules}
+                disabled={rulesLoading}
+              ><RefreshCw className="w-4 h-4" /> 
                 Refresh
               </Button>
               <Button
                 size="sm"
-                color="primary"
-                startContent={<Plus className="w-4 h-4" />}
-                onPress={() => {
+                onClick={() => {
                   resetRuleForm();
                   onOpenCreateRule();
                 }}
               >
+                <Plus className="w-4 h-4" />
                 Add Dispatch Rule
               </Button>
             </div>
@@ -1060,20 +1048,20 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <Route className="w-5 h-5" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Dispatch Rules</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Dispatch Rules</p>
+                  <p className="text-sm text-muted-foreground">
                     {dispatchRules.length} rule(s) configured
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {rulesLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : dispatchRules.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No dispatch rules configured</p>
+                  <p className="text-center text-muted-foreground py-4">No dispatch rules configured</p>
                 ) : (
                   <Table aria-label="Dispatch rules">
                     <TableHeader>
@@ -1091,10 +1079,10 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{rule.sip_dispatch_rule_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                isIconOnly
+                                size="icon"
                                 size="sm"
-                                variant="light"
-                                onPress={() => copyToClipboard(rule.sip_dispatch_rule_id)}
+                                variant="ghost"
+                                onClick={() => copyToClipboard(rule.sip_dispatch_rule_id)}
                               >
                                 <Copy className="w-3 h-3" />
                               </Button>
@@ -1104,9 +1092,9 @@ export function LiveKitPanel() {
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {rule.trunk_ids?.map((id, i) => (
-                                <Chip key={i} size="sm" variant="flat">
+                                <Badge key={i}  variant="secondary">
                                   {id?.slice(0, 8) || "N/A"}...
-                                </Chip>
+                                </Badge>
                               ))}
                             </div>
                           </TableCell>
@@ -1117,18 +1105,18 @@ export function LiveKitPanel() {
                           </TableCell>
                           <TableCell>
                             {rule.rule?.dispatchRuleIndividual?.pin ? (
-                              <Chip size="sm" color="warning" variant="flat">PIN Set</Chip>
+                              <Badge  variant="outline" variant="secondary">PIN Set</Badge>
                             ) : (
-                              <span className="text-default-400">None</span>
+                              <span className="text-muted-foreground">None</span>
                             )}
                           </TableCell>
                           <TableCell>
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              color="danger"
-                              variant="light"
-                              onPress={() => confirmDelete("dispatch-rule", rule.sip_dispatch_rule_id, rule.name || "Dispatch rule")}
+                              variant="destructive"
+                              variant="ghost"
+                              onClick={() => confirmDelete("dispatch-rule", rule.sip_dispatch_rule_id, rule.name || "Dispatch rule")}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -1138,23 +1126,23 @@ export function LiveKitPanel() {
                     </TableBody>
                   </Table>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Rooms Tab */}
-        <Tab key="rooms" title={<div className="flex items-center gap-2"><Users className="w-4 h-4" />Rooms</div>}>
+        <TabsContent value="rooms">
           <div className="mt-4 space-y-6">
             {/* Actions */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="flat"
-                startContent={<RefreshCw className="w-4 h-4" />}
-                onPress={fetchRooms}
-                isLoading={roomsLoading}
-              >
+                variant="secondary"
+                
+                onClick={fetchRooms}
+                disabled={roomsLoading}
+              ><RefreshCw className="w-4 h-4" /> 
                 Refresh
               </Button>
             </div>
@@ -1164,20 +1152,20 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <Radio className="w-5 h-5" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Active Rooms</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Active Rooms</p>
+                  <p className="text-sm text-muted-foreground">
                     {rooms.length} active room(s), {rooms.reduce((sum, r) => sum + (r.participants?.length || 0), 0)} total participants
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {roomsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : rooms.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No active rooms</p>
+                  <p className="text-center text-muted-foreground py-4">No active rooms</p>
                 ) : (
                   <Table aria-label="Active rooms">
                     <TableHeader>
@@ -1195,10 +1183,10 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{room.sid?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                isIconOnly
+                                size="icon"
                                 size="sm"
-                                variant="light"
-                                onPress={() => copyToClipboard(room.sid)}
+                                variant="ghost"
+                                onClick={() => copyToClipboard(room.sid)}
                               >
                                 <Copy className="w-3 h-3" />
                               </Button>
@@ -1208,16 +1196,15 @@ export function LiveKitPanel() {
                             <span className="font-medium">{room.name}</span>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              size="sm"
-                              color={room.participants?.length > 0 ? "success" : "default"}
-                              variant="flat"
+                            <Badge
+                              variant="secondary"
+                              className={room.participants?.length > 0 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : ""}
                             >
                               {room.participants?.length || 0} / {room.maxParticipants || "∞"}
-                            </Chip>
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <span className="text-xs text-default-500">
+                            <span className="text-xs text-muted-foreground">
                               {formatTimestamp(room.creationTime)}
                             </span>
                           </TableCell>
@@ -1229,27 +1216,35 @@ export function LiveKitPanel() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
-                              <Tooltip content="View Details">
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  variant="light"
-                                  onPress={() => openRoomDetails(room)}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip content="Close Room">
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  color="danger"
-                                  variant="light"
-                                  onPress={() => confirmDelete("room", room.name, room.name)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => openRoomDetails(room)}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>View Details</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="text-destructive hover:text-destructive"
+                                      onClick={() => confirmDelete("room", room.name, room.name)}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Close Room</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1257,49 +1252,49 @@ export function LiveKitPanel() {
                     </TableBody>
                   </Table>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Calls Tab */}
-        <Tab key="calls" title={<div className="flex items-center gap-2"><History className="w-4 h-4" />Call History</div>}>
+        <TabsContent value="calls">
           <div className="mt-4 space-y-6">
             {/* Stats Cards */}
             {callsStats && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
-                  <CardBody className="flex flex-row items-center gap-3">
+                  <CardContent className="flex flex-row items-center gap-3">
                     <div className="p-2 bg-primary-100 rounded-lg">
                       <Phone className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-default-500">Total Calls</p>
+                      <p className="text-xs text-muted-foreground">Total Calls</p>
                       <p className="text-lg font-semibold">{callsStats.totalCalls}</p>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
                 <Card>
-                  <CardBody className="flex flex-row items-center gap-3">
+                  <CardContent className="flex flex-row items-center gap-3">
                     <div className="p-2 bg-success-100 rounded-lg">
                       <Clock className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-xs text-default-500">Avg Duration</p>
+                      <p className="text-xs text-muted-foreground">Avg Duration</p>
                       <p className="text-lg font-semibold">{formatDuration(callsStats.avgDuration)}</p>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
                 <Card>
-                  <CardBody className="flex flex-row items-center gap-3">
+                  <CardContent className="flex flex-row items-center gap-3">
                     <div className="p-2 bg-warning-100 rounded-lg">
                       <History className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                      <p className="text-xs text-default-500">Total Minutes</p>
+                      <p className="text-xs text-muted-foreground">Total Minutes</p>
                       <p className="text-lg font-semibold">{callsStats.totalMinutes}</p>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               </div>
             )}
@@ -1313,22 +1308,22 @@ export function LiveKitPanel() {
                 </div>
                 <Button
                   size="sm"
-                  variant="flat"
-                  startContent={<RefreshCw className="w-4 h-4" />}
-                  onPress={fetchCalls}
-                  isLoading={callsLoading}
-                >
+                  variant="secondary"
+                  
+                  onClick={fetchCalls}
+                  disabled={callsLoading}
+                ><RefreshCw className="w-4 h-4" /> 
                   Refresh
                 </Button>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {callsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   </div>
                 ) : calls.length === 0 ? (
-                  <div className="text-center py-8 text-default-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     No call history found
                   </div>
                 ) : (
@@ -1347,28 +1342,24 @@ export function LiveKitPanel() {
                       {calls.map((call) => (
                         <TableRow key={call.id}>
                           <TableCell>
-                            <Chip
-                              size="sm"
-                              variant="flat"
+                            <Badge
+                              
+                              variant="secondary"
                               color={call.direction === "inbound" ? "primary" : "secondary"}
-                              startContent={
-                                call.direction === "inbound"
-                                  ? <ArrowDownLeft className="w-3 h-3" />
-                                  : <ArrowUpRight className="w-3 h-3" />
-                              }
+                              
                             >
                               {call.direction}
-                            </Chip>
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              size="sm"
-                              variant="flat"
+                            <Badge
+                              
+                              variant="secondary"
                               color={getCallStatusColor(call.status) as "default" | "primary" | "secondary" | "success" | "warning" | "danger"}
-                              startContent={getCallStatusIcon(call.status)}
+                              
                             >
                               {call.status}
-                            </Chip>
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <span className="text-xs font-mono">{call.fromNumber || "N/A"}</span>
@@ -1383,50 +1374,53 @@ export function LiveKitPanel() {
                             <span className="text-xs">{formatDuration(call.duration)}</span>
                           </TableCell>
                           <TableCell>
-                            <span className="text-xs text-default-500">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(call.createdAt).toLocaleString()}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Tooltip content="View Details">
-                              <Button
-                                isIconOnly
-                                size="sm"
-                                variant="light"
-                                onPress={() => openCallDetails(call)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => openCallDetails(call)}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>View Details</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Logs Tab */}
-        <Tab key="logs" title={<div className="flex items-center gap-2"><FileText className="w-4 h-4" />Logs</div>}>
+        <TabsContent value="logs">
           <div className="mt-4 space-y-6">
             {/* Log Filters */}
             <Card>
-              <CardBody>
+              <CardContent>
                 <div className="flex flex-wrap gap-4 items-end">
-                  <Select
-                    label="Log Level"
-                    size="sm"
-                    className="w-32"
-                    selectedKeys={[logLevel]}
-                    onChange={(e) => setLogLevel(e.target.value)}
-                  >
-                    <SelectItem key="debug">Debug</SelectItem>
-                    <SelectItem key="info">Info</SelectItem>
-                    <SelectItem key="warning">Warning</SelectItem>
-                    <SelectItem key="error">Error</SelectItem>
+                  <Select value={logLevel} onValueChange={setLogLevel}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Log Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="debug">Debug</SelectItem>
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
+                    </SelectContent>
                   </Select>
                   <Input
                     label="Room Filter"
@@ -1435,19 +1429,18 @@ export function LiveKitPanel() {
                     placeholder="Filter by room name"
                     value={logRoomFilter}
                     onChange={(e) => setLogRoomFilter(e.target.value)}
-                    startContent={<Filter className="w-4 h-4 text-default-400" />}
-                  />
+                                      />
                   <Button
                     size="sm"
-                    variant="flat"
-                    startContent={<RefreshCw className="w-4 h-4" />}
-                    onPress={fetchLogs}
-                    isLoading={logsLoading}
-                  >
+                    variant="secondary"
+                    
+                    onClick={fetchLogs}
+                    disabled={logsLoading}
+                  ><RefreshCw className="w-4 h-4" /> 
                     Refresh
                   </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Logs Display */}
@@ -1457,18 +1450,18 @@ export function LiveKitPanel() {
                   <Activity className="w-5 h-5" />
                   <span className="font-semibold">Voice Service Logs</span>
                 </div>
-                <Chip size="sm" variant="flat">
+                <Badge  variant="secondary">
                   {logs.length} entries
-                </Chip>
+                </Badge>
               </CardHeader>
-              <Divider />
-              <CardBody className="max-h-[500px] overflow-auto">
+              <div className="border-t my-4" />
+              <CardContent className="max-h-[500px] overflow-auto">
                 {logsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   </div>
                 ) : logs.length === 0 ? (
-                  <div className="text-center py-8 text-default-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
                     <p>No logs available</p>
                     <p className="text-sm mt-1">Logs endpoint may not be available in voice service</p>
@@ -1481,35 +1474,35 @@ export function LiveKitPanel() {
                         className={`p-2 rounded ${
                           log.level === "error" ? "bg-danger-50 text-danger" :
                           log.level === "warning" ? "bg-warning-50 text-warning-700" :
-                          log.level === "debug" ? "bg-default-50 text-default-500" :
-                          "bg-default-100"
+                          log.level === "debug" ? "bg-muted/50 text-muted-foreground" :
+                          "bg-muted"
                         }`}
                       >
-                        <span className="text-default-400">[{log.timestamp}]</span>
+                        <span className="text-muted-foreground">[{log.timestamp}]</span>
                         {" "}
                         <span className={`font-semibold uppercase ${
                           log.level === "error" ? "text-danger" :
                           log.level === "warning" ? "text-warning-600" :
-                          log.level === "debug" ? "text-default-400" :
+                          log.level === "debug" ? "text-muted-foreground" :
                           "text-primary"
                         }`}>
                           {log.level}
                         </span>
                         {log.room && <span className="text-secondary ml-2">[{log.room}]</span>}
-                        {log.source && <span className="text-default-400 ml-2">({log.source})</span>}
+                        {log.source && <span className="text-muted-foreground ml-2">({log.source})</span>}
                         {": "}
                         <span>{log.message}</span>
                       </div>
                     ))}
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Agents Tab */}
-        <Tab key="agents" title={<div className="flex items-center gap-2"><Bot className="w-4 h-4" />Agents</div>}>
+        <TabsContent value="agents">
           <div className="mt-4 space-y-6">
             {/* Agents Header */}
             <div className="flex justify-between items-center">
@@ -1519,24 +1512,24 @@ export function LiveKitPanel() {
               </div>
               <Button
                 size="sm"
-                variant="flat"
-                startContent={<RefreshCw className="w-4 h-4" />}
-                onPress={fetchAgents}
-                isLoading={agentsLoading}
-              >
+                variant="secondary"
+                
+                onClick={fetchAgents}
+                disabled={agentsLoading}
+              ><RefreshCw className="w-4 h-4" /> 
                 Refresh
               </Button>
             </div>
 
             {/* Agents List */}
             <Card>
-              <CardBody>
+              <CardContent>
                 {agentsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   </div>
                 ) : agents.length === 0 ? (
-                  <div className="text-center py-8 text-default-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Bot className="w-12 h-12 mx-auto mb-2 opacity-50" />
                     <p>No agents registered</p>
                     <p className="text-sm mt-1">Agents will appear here when the voice service registers them</p>
@@ -1544,24 +1537,24 @@ export function LiveKitPanel() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {agents.map((agent) => (
-                      <Card key={agent.id} className="bg-default-50">
-                        <CardBody>
+                      <Card key={agent.id} className="bg-muted/50">
+                        <CardContent>
                           <div className="flex items-start justify-between">
                             <div>
                               <div className="flex items-center gap-2 mb-2">
                                 <Bot className="w-5 h-5" />
                                 <span className="font-medium">{agent.name}</span>
                               </div>
-                              <div className="space-y-1 text-xs text-default-500">
+                              <div className="space-y-1 text-xs text-muted-foreground">
                                 <p>ID: <code>{agent.id}</code></p>
                                 {agent.job_count !== undefined && (
                                   <p>Jobs: {agent.job_count}</p>
                                 )}
                               </div>
                             </div>
-                            <Chip
-                              size="sm"
-                              variant="flat"
+                            <Badge
+                              
+                              variant="secondary"
                               color={
                                 agent.status === "available" ? "success" :
                                 agent.status === "busy" ? "warning" :
@@ -1569,77 +1562,74 @@ export function LiveKitPanel() {
                               }
                             >
                               {agent.status}
-                            </Chip>
+                            </Badge>
                           </div>
-                        </CardBody>
+                        </CardContent>
                       </Card>
                     ))}
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* Test Call Tab */}
-        <Tab key="test-call" title={<div className="flex items-center gap-2"><PhoneCall className="w-4 h-4" />Test Call</div>}>
+        <TabsContent value="test-call">
           <div className="mt-4 space-y-6">
             {/* Test Call Form */}
             <Card>
               <CardHeader className="flex gap-3">
                 <PhoneCall className="w-5 h-5 text-primary" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">Initiate Test Outbound Call</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">Initiate Test Outbound Call</p>
+                  <p className="text-sm text-muted-foreground">
                     Test the outbound calling functionality by placing a test call
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody className="space-y-4">
+              <div className="border-t my-4" />
+              <CardContent className="space-y-4">
                 <Input
                   label="Phone Number"
                   placeholder="Enter phone number (e.g., +17672958382)"
                   value={testCallPhoneNumber}
                   onChange={(e) => setTestCallPhoneNumber(e.target.value)}
-                  startContent={<Phone className="w-4 h-4 text-default-400" />}
-                  description="Include country code (e.g., +1 for US)"
+                                    description="Include country code (e.g., +1 for US)"
                 />
 
-                <Select
-                  label="Voice Agent (Optional)"
-                  placeholder="Select an agent or leave empty for default"
-                  selectedKeys={testCallAgentId ? [testCallAgentId] : []}
-                  onChange={(e) => setTestCallAgentId(e.target.value)}
-                  isLoading={voiceAgentsLoading}
-                >
-                  {voiceAgents.map((agent) => (
-                    <SelectItem key={agent.id}>
-                      {agent.name} {agent.organizationName ? `(${agent.organizationName})` : ""}
-                    </SelectItem>
-                  ))}
+                <Select value={testCallAgentId} onValueChange={setTestCallAgentId} disabled={voiceAgentsLoading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an agent or leave empty for default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {voiceAgents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.name} {agent.organizationName ? `(${agent.organizationName})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
 
                 <div className="flex gap-2">
                   <Button
-                    color="primary"
-                    startContent={testCallLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                    onPress={handleTestCall}
-                    isLoading={testCallLoading}
-                    isDisabled={!testCallPhoneNumber}
-                  >
+                    
+                    onClick={handleTestCall}
+                    disabled={testCallLoading}
+                    disabled={!testCallPhoneNumber}
+                  >testCallLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" /> 
                     Initiate Call
                   </Button>
                   <Button
-                    variant="flat"
-                    startContent={<RefreshCw className="w-4 h-4" />}
-                    onPress={fetchVoiceAgents}
-                    isLoading={voiceAgentsLoading}
-                  >
+                    variant="secondary"
+                    
+                    onClick={fetchVoiceAgents}
+                    disabled={voiceAgentsLoading}
+                  ><RefreshCw className="w-4 h-4" /> 
                     Refresh Agents
                   </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Test Call Result */}
@@ -1652,37 +1642,37 @@ export function LiveKitPanel() {
                     <XCircle className="w-5 h-5 text-danger" />
                   )}
                   <div className="flex flex-col">
-                    <p className="text-md font-semibold">
+                    <p className="text-base font-semibold">
                       {testCallResult.success ? "Call Initiated Successfully" : "Call Failed"}
                     </p>
                   </div>
                 </CardHeader>
-                <Divider />
-                <CardBody>
+                <div className="border-t my-4" />
+                <CardContent>
                   {testCallResult.success ? (
                     <div className="space-y-2">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-xs text-default-500">Call ID</p>
+                          <p className="text-xs text-muted-foreground">Call ID</p>
                           <div className="flex items-center gap-1">
                             <code className="text-sm">{testCallResult.callId}</code>
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              variant="light"
-                              onPress={() => copyToClipboard(testCallResult.callId!)}
+                              variant="ghost"
+                              onClick={() => copyToClipboard(testCallResult.callId!)}
                             >
                               <Copy className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs text-default-500">Room Name</p>
+                          <p className="text-xs text-muted-foreground">Room Name</p>
                           <code className="text-sm">{testCallResult.roomName}</code>
                         </div>
                         {testCallResult.sipCallId && (
                           <div>
-                            <p className="text-xs text-default-500">SIP Call ID</p>
+                            <p className="text-xs text-muted-foreground">SIP Call ID</p>
                             <code className="text-sm">{testCallResult.sipCallId}</code>
                           </div>
                         )}
@@ -1695,11 +1685,11 @@ export function LiveKitPanel() {
                     <div className="space-y-2">
                       <p className="text-danger font-medium">{testCallResult.error}</p>
                       {testCallResult.details && (
-                        <p className="text-sm text-default-500">{testCallResult.details}</p>
+                        <p className="text-sm text-muted-foreground">{testCallResult.details}</p>
                       )}
                     </div>
                   )}
-                </CardBody>
+                </CardContent>
               </Card>
             )}
 
@@ -1711,8 +1701,8 @@ export function LiveKitPanel() {
                   <span className="font-semibold">Troubleshooting Tips</span>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start gap-2">
                     <span className="font-medium text-primary">1.</span>
@@ -1739,13 +1729,13 @@ export function LiveKitPanel() {
                     <p>Check the <strong>SIP/Magnus</strong> tab to verify SIP accounts are properly configured.</p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
 
         {/* SIP/Magnus Diagnostics Tab */}
-        <Tab key="sip" title={<div className="flex items-center gap-2"><Database className="w-4 h-4" />SIP/Magnus</div>}>
+        <TabsContent value="sip">
           <div className="mt-4 space-y-6">
             {/* Magnus Integration Status */}
             <Card>
@@ -1753,72 +1743,73 @@ export function LiveKitPanel() {
                 <div className="flex gap-3">
                   <Database className="w-5 h-5 text-primary" />
                   <div className="flex flex-col">
-                    <p className="text-md font-semibold">Magnus Integration Status</p>
-                    <p className="text-small text-default-500">
+                    <p className="text-base font-semibold">Magnus Integration Status</p>
+                    <p className="text-sm text-muted-foreground">
                       Connection status and DID usage from Magnus Billing
                     </p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="flat"
-                  startContent={magnusDiagnosticsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  onPress={() => fetchMagnusDiagnostics(true)}
-                  isLoading={magnusDiagnosticsLoading}
+                  variant="secondary"
+                  
+                  onClick={() => fetchMagnusDiagnostics(true)}
+                  disabled={magnusDiagnosticsLoading}
                 >
+                  {magnusDiagnosticsLoading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
                   Refresh
                 </Button>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {magnusDiagnosticsLoading && !magnusDiagnostics ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : magnusDiagnostics ? (
                   <div className="space-y-6">
                     {/* Overall Status */}
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-default-500">Overall Status:</span>
-                      <Chip
+                      <span className="text-sm font-medium text-muted-foreground">Overall Status:</span>
+                      <Badge
                         color={magnusDiagnostics.overall_status === "healthy" ? "success" : magnusDiagnostics.overall_status === "degraded" ? "warning" : "danger"}
-                        variant="flat"
-                        startContent={magnusDiagnostics.overall_status === "healthy" ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        variant="secondary"
+                        
                       >
                         {magnusDiagnostics.overall_status.toUpperCase()}
-                      </Chip>
+                      </Badge>
                     </div>
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Magnus API Status */}
-                      <Card className="bg-default-50">
-                        <CardBody className="p-4">
+                      <Card className="bg-muted/50">
+                        <CardContent className="p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <Link className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium">API Connection</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Chip
-                              size="sm"
+                            <Badge
+                              
                               color={magnusDiagnostics.magnus_integration.status === "connected" ? "success" : "danger"}
-                              variant="dot"
+                              variant="outline"
                             >
                               {magnusDiagnostics.magnus_integration.status}
-                            </Chip>
-                            <span className="text-xs text-default-400">
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
                               {magnusDiagnostics.magnus_integration.api_response_time_ms}ms
                             </span>
                           </div>
-                          <p className="text-xs text-default-400 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             Total DIDs: {magnusDiagnostics.magnus_integration.total_dids_in_magnus}
                           </p>
-                        </CardBody>
+                        </CardContent>
                       </Card>
 
                       {/* DID Usage */}
-                      <Card className="bg-default-50">
-                        <CardBody className="p-4">
+                      <Card className="bg-muted/50">
+                        <CardContent className="p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <Phone className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium">DID Usage</span>
@@ -1827,7 +1818,7 @@ export function LiveKitPanel() {
                             <span className="text-2xl font-bold">
                               {magnusDiagnostics.did_usage.currently_used}
                             </span>
-                            <span className="text-default-400">
+                            <span className="text-muted-foreground">
                               / {magnusDiagnostics.did_usage.total_capacity}
                             </span>
                           </div>
@@ -1840,15 +1831,15 @@ export function LiveKitPanel() {
                               style={{ width: `${magnusDiagnostics.did_usage.utilization_percent}%` }}
                             />
                           </div>
-                          <p className="text-xs text-default-400 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             {magnusDiagnostics.did_usage.utilization_percent.toFixed(1)}% utilized
                           </p>
-                        </CardBody>
+                        </CardContent>
                       </Card>
 
                       {/* Health Score */}
-                      <Card className="bg-default-50">
-                        <CardBody className="p-4">
+                      <Card className="bg-muted/50">
+                        <CardContent className="p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <Shield className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium">Health Score</span>
@@ -1860,17 +1851,17 @@ export function LiveKitPanel() {
                             }`}>
                               {magnusDiagnostics.did_usage.health_score}
                             </span>
-                            <span className="text-default-400">/ 100</span>
+                            <span className="text-muted-foreground">/ 100</span>
                           </div>
-                          <Chip
-                            size="sm"
+                          <Badge
+                            
                             color={magnusDiagnostics.did_usage.status === "healthy" ? "success" : "warning"}
-                            variant="flat"
+                            variant="secondary"
                             className="mt-2"
                           >
                             {magnusDiagnostics.did_usage.status_message}
-                          </Chip>
-                        </CardBody>
+                          </Badge>
+                        </CardContent>
                       </Card>
                     </div>
 
@@ -1879,10 +1870,10 @@ export function LiveKitPanel() {
                       <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
                         <Settings className="w-4 h-4" /> Configuration
                       </h4>
-                      <div className="bg-default-50 rounded-lg p-3 font-mono text-xs space-y-1">
-                        <div><span className="text-default-500">Magnus URL:</span> {magnusDiagnostics.configuration.magnus_url}</div>
-                        <div><span className="text-default-500">SIP Server:</span> {magnusDiagnostics.configuration.sip_server}</div>
-                        <div><span className="text-default-500">DID Range:</span> {magnusDiagnostics.configuration.did_range}</div>
+                      <div className="bg-muted/50 rounded-lg p-3 font-mono text-xs space-y-1">
+                        <div><span className="text-muted-foreground">Magnus URL:</span> {magnusDiagnostics.configuration.magnus_url}</div>
+                        <div><span className="text-muted-foreground">SIP Server:</span> {magnusDiagnostics.configuration.sip_server}</div>
+                        <div><span className="text-muted-foreground">DID Range:</span> {magnusDiagnostics.configuration.did_range}</div>
                       </div>
                     </div>
 
@@ -1901,20 +1892,20 @@ export function LiveKitPanel() {
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-default-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Database className="w-12 h-12 mx-auto mb-2 opacity-20" />
                     <p>No Magnus diagnostics available</p>
                     <Button
                       size="sm"
-                      variant="flat"
+                      variant="secondary"
                       className="mt-2"
-                      onPress={() => fetchMagnusDiagnostics(true)}
+                      onClick={() => fetchMagnusDiagnostics(true)}
                     >
                       Load Diagnostics
                     </Button>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* SIP Account Validation */}
@@ -1922,17 +1913,17 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <Wrench className="w-5 h-5 text-warning" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">SIP Account Validation</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">SIP Account Validation</p>
+                  <p className="text-sm text-muted-foreground">
                     Verify that outbound trunk phone numbers have corresponding SIP accounts in Magnus/Asterisk
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 {sipValidationsLoading ? (
                   <div className="flex justify-center py-8">
-                    <Spinner />
+                    <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
                   </div>
                 ) : sipValidations.length > 0 ? (
                   <Table aria-label="SIP Account Validations">
@@ -1947,31 +1938,34 @@ export function LiveKitPanel() {
                       {sipValidations.map((validation, index) => (
                         <TableRow key={`${validation.trunkId}-${validation.number}-${index}`}>
                           <TableCell>
-                            <Tooltip content={validation.trunkId}>
-                              <span className="font-mono text-xs">
-                                {validation.trunkId.substring(0, 12)}...
-                              </span>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="font-mono text-xs cursor-help">
+                                    {validation.trunkId.substring(0, 12)}...
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>{validation.trunkId}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </TableCell>
                           <TableCell>
                             <span className="font-mono">{validation.number}</span>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              color={validation.sipAccountExists ? "success" : "danger"}
-                              variant="flat"
-                              size="sm"
-                              startContent={validation.sipAccountExists ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                            <Badge
+                              variant="secondary"
+                              className={validation.sipAccountExists ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"}
                             >
                               {validation.sipAccountExists ? "EXISTS" : "MISSING"}
-                            </Chip>
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {validation.sipAccountExists && validation.sipAccountDetails ? (
                               <div className="text-xs space-y-0.5">
-                                <div><span className="text-default-400">insecure:</span> {validation.sipAccountDetails.insecure}</div>
-                                <div><span className="text-default-400">fromdomain:</span> {validation.sipAccountDetails.fromdomain || "N/A"}</div>
-                                <div><span className="text-default-400">transport:</span> {validation.sipAccountDetails.transport || "N/A"}</div>
+                                <div><span className="text-muted-foreground">insecure:</span> {validation.sipAccountDetails.insecure}</div>
+                                <div><span className="text-muted-foreground">fromdomain:</span> {validation.sipAccountDetails.fromdomain || "N/A"}</div>
+                                <div><span className="text-muted-foreground">transport:</span> {validation.sipAccountDetails.transport || "N/A"}</div>
                               </div>
                             ) : validation.error ? (
                               <span className="text-xs text-danger">{validation.error}</span>
@@ -1985,12 +1979,11 @@ export function LiveKitPanel() {
                             {!validation.sipAccountExists && !validation.error && (
                               <Button
                                 size="sm"
-                                color="warning"
-                                variant="flat"
-                                startContent={loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wrench className="w-3 h-3" />}
-                                onPress={() => handleFixSipAccount(validation.number)}
-                                isLoading={loading}
+                                variant="outline"
+                                onClick={() => handleFixSipAccount(validation.number)}
+                                disabled={loading}
                               >
+                                {loading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Wrench className="w-3 h-3 mr-1" />}
                                 Create SIP Account
                               </Button>
                             )}
@@ -2000,7 +1993,7 @@ export function LiveKitPanel() {
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="text-center py-8 text-default-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Wrench className="w-12 h-12 mx-auto mb-2 opacity-20" />
                     <p>No SIP validations yet</p>
                     <p className="text-xs mt-1">Click Refresh above to validate outbound trunk phone numbers</p>
@@ -2010,18 +2003,18 @@ export function LiveKitPanel() {
                 {/* Summary Stats */}
                 {sipValidations.length > 0 && (
                   <div className="mt-4 flex gap-4 justify-center">
-                    <Chip color="success" variant="flat">
+                    <Badge variant="outline" variant="secondary">
                       {sipValidations.filter(v => v.sipAccountExists).length} Valid
-                    </Chip>
-                    <Chip color="danger" variant="flat">
+                    </Badge>
+                    <Badge variant="destructive" variant="secondary">
                       {sipValidations.filter(v => !v.sipAccountExists && !v.error).length} Missing
-                    </Chip>
-                    <Chip color="warning" variant="flat">
+                    </Badge>
+                    <Badge variant="outline" variant="secondary">
                       {sipValidations.filter(v => v.error).length} Errors
-                    </Chip>
+                    </Badge>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
 
             {/* Troubleshooting Guide */}
@@ -2029,24 +2022,24 @@ export function LiveKitPanel() {
               <CardHeader className="flex gap-3">
                 <AlertCircle className="w-5 h-5 text-warning" />
                 <div className="flex flex-col">
-                  <p className="text-md font-semibold">SIP Call Failure Troubleshooting</p>
-                  <p className="text-small text-default-500">
+                  <p className="text-base font-semibold">SIP Call Failure Troubleshooting</p>
+                  <p className="text-sm text-muted-foreground">
                     Common issues when outbound calls fail with 401/403 errors
                   </p>
                 </div>
               </CardHeader>
-              <Divider />
-              <CardBody>
+              <div className="border-t my-4" />
+              <CardContent>
                 <div className="space-y-4 text-sm">
                   <div className="bg-danger-50 rounded-lg p-4">
                     <h4 className="font-semibold text-danger mb-2">403 Forbidden Error</h4>
                     <p className="mb-2">This typically means:</p>
-                    <ul className="list-disc list-inside space-y-1 text-default-600">
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                       <li>The SIP account doesn&apos;t exist in Magnus/Asterisk for the outbound number</li>
                       <li>The &apos;insecure&apos; setting is wrong (should be &apos;port,invite&apos; for LiveKit)</li>
                       <li>The &apos;fromdomain&apos; doesn&apos;t match LiveKit&apos;s SIP domain</li>
                     </ul>
-                    <p className="mt-2 text-xs text-default-400">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Fix: Use the &quot;Create SIP Account&quot; button above to create missing accounts with correct settings
                     </p>
                   </div>
@@ -2054,16 +2047,16 @@ export function LiveKitPanel() {
                   <div className="bg-warning-50 rounded-lg p-4">
                     <h4 className="font-semibold text-warning mb-2">401 Unauthorized Error</h4>
                     <p className="mb-2">This typically means:</p>
-                    <ul className="list-disc list-inside space-y-1 text-default-600">
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                       <li>SIP credentials (username/password) are incorrect</li>
                       <li>The authentication realm doesn&apos;t match</li>
                       <li>HMAC signature calculation is failing</li>
                     </ul>
                   </div>
 
-                  <div className="bg-default-100 rounded-lg p-4">
+                  <div className="bg-muted rounded-lg p-4">
                     <h4 className="font-semibold mb-2">Expected SIP Account Settings</h4>
-                    <div className="font-mono text-xs space-y-1 text-default-600">
+                    <div className="font-mono text-xs space-y-1 text-muted-foreground">
                       <div>• <span className="text-primary">username:</span> &lt;phone_number_digits_only&gt;</div>
                       <div>• <span className="text-primary">insecure:</span> port,invite</div>
                       <div>• <span className="text-primary">fromdomain:</span> *.sip.livekit.cloud</div>
@@ -2072,19 +2065,19 @@ export function LiveKitPanel() {
                     </div>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
-        </Tab>
+        </TabsContent>
       </Tabs>
 
       {/* Create Trunk Modal */}
-      <Modal isOpen={isCreateTrunkOpen} onClose={onCloseCreateTrunk} size="2xl">
-        <ModalContent>
-          <ModalHeader>
+      <Dialog open={isCreateTrunkOpen} onOpenChange={(open) => { if (!open) onCloseCreateTrunk(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             Create {createTrunkType === "inbound" ? "Inbound" : "Outbound"} Trunk
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
               <Input
                 label="Name"
@@ -2114,14 +2107,15 @@ export function LiveKitPanel() {
                     value={trunkForm.address}
                     onChange={(e) => setTrunkForm({ ...trunkForm, address: e.target.value })}
                   />
-                  <Select
-                    label="Transport"
-                    selectedKeys={[trunkForm.transport]}
-                    onChange={(e) => setTrunkForm({ ...trunkForm, transport: e.target.value })}
-                  >
-                    <SelectItem key="udp">UDP</SelectItem>
-                    <SelectItem key="tcp">TCP</SelectItem>
-                    <SelectItem key="tls">TLS</SelectItem>
+                  <Select value={trunkForm.transport} onValueChange={(v) => setTrunkForm({ ...trunkForm, transport: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Transport" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="udp">UDP</SelectItem>
+                      <SelectItem value="tcp">TCP</SelectItem>
+                      <SelectItem value="tls">TLS</SelectItem>
+                    </SelectContent>
                   </Select>
                   <Input
                     label="Auth Username"
@@ -2146,28 +2140,26 @@ export function LiveKitPanel() {
                 onChange={(e) => setTrunkForm({ ...trunkForm, metadata: e.target.value })}
               />
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onCloseCreateTrunk}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onCloseCreateTrunk}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              isLoading={loading}
-              onPress={handleCreateTrunk}
-              isDisabled={!trunkForm.name || !trunkForm.numbers}
+              disabled={loading}
+              onClick={handleCreateTrunk}
+              disabled={!trunkForm.name || !trunkForm.numbers}
             >
               Create Trunk
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
 
       {/* Create Dispatch Rule Modal */}
-      <Modal isOpen={isCreateRuleOpen} onClose={onCloseCreateRule} size="2xl">
-        <ModalContent>
-          <ModalHeader>Create Dispatch Rule</ModalHeader>
-          <ModalBody>
+      <Dialog open={isCreateRuleOpen} onOpenChange={(open) => { if (!open) onCloseCreateRule(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Dispatch Rule</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-4">
               <Input
                 label="Name"
@@ -2205,8 +2197,8 @@ export function LiveKitPanel() {
                 value={ruleForm.pin}
                 onChange={(e) => setRuleForm({ ...ruleForm, pin: e.target.value })}
               />
-              <Divider />
-              <p className="text-sm text-default-500">Optional: Associate with specific resources</p>
+              <div className="border-t my-4" />
+              <p className="text-sm text-muted-foreground">Optional: Associate with specific resources</p>
               <div className="grid grid-cols-3 gap-4">
                 <Input
                   label="Organization ID"
@@ -2231,62 +2223,60 @@ export function LiveKitPanel() {
                 />
               </div>
             </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onCloseCreateRule}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onCloseCreateRule}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              isLoading={loading}
-              onPress={handleCreateRule}
-              isDisabled={!ruleForm.name || !ruleForm.agent_name}
+              disabled={loading}
+              onClick={handleCreateRule}
+              disabled={!ruleForm.name || !ruleForm.agent_name}
             >
               Create Rule
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
 
       {/* Room Details Modal */}
-      <Modal isOpen={isRoomDetailOpen} onClose={onCloseRoomDetail} size="3xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>
+      <Dialog open={isRoomDetailOpen} onOpenChange={(open) => { if (!open) onCloseRoomDetail(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             Room: {selectedRoom?.name}
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             {selectedRoom && (
               <div className="space-y-6">
                 {/* Room Info */}
                 <Card>
-                  <CardBody>
+                  <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <p className="text-xs text-default-500">SID</p>
+                        <p className="text-xs text-muted-foreground">SID</p>
                         <code className="text-xs">{selectedRoom.sid}</code>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Created</p>
+                        <p className="text-xs text-muted-foreground">Created</p>
                         <p className="text-sm">{formatTimestamp(selectedRoom.creationTime)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Empty Timeout</p>
+                        <p className="text-xs text-muted-foreground">Empty Timeout</p>
                         <p className="text-sm">{selectedRoom.emptyTimeout || 0}s</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Departure Timeout</p>
+                        <p className="text-xs text-muted-foreground">Departure Timeout</p>
                         <p className="text-sm">{selectedRoom.departureTimeout || 0}s</p>
                       </div>
                     </div>
                     {selectedRoom.metadata && (
                       <div className="mt-4">
-                        <p className="text-xs text-default-500 mb-1">Metadata</p>
-                        <pre className="text-xs bg-default-100 p-2 rounded overflow-auto">
+                        <p className="text-xs text-muted-foreground mb-1">Metadata</p>
+                        <pre className="text-xs bg-muted p-2 rounded overflow-auto">
                           {selectedRoom.metadata}
                         </pre>
                       </div>
                     )}
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 {/* Participants */}
@@ -2295,30 +2285,30 @@ export function LiveKitPanel() {
                     <Users className="w-5 h-5 mr-2" />
                     <span>Participants ({selectedRoom.participants?.length || 0})</span>
                   </CardHeader>
-                  <Divider />
-                  <CardBody>
+                  <div className="border-t my-4" />
+                  <CardContent>
                     {selectedRoom.participants?.length === 0 ? (
-                      <p className="text-center text-default-500 py-4">No participants</p>
+                      <p className="text-center text-muted-foreground py-4">No participants</p>
                     ) : (
                       <div className="space-y-4">
                         {selectedRoom.participants?.map((p) => (
-                          <Card key={p.sid} className="bg-default-50">
-                            <CardBody>
+                          <Card key={p.sid} className="bg-muted/50">
+                            <CardContent>
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
                                     <span className="font-medium">{p.name || p.identity}</span>
-                                    <Chip size="sm" variant="flat" color={p.state === 2 ? "success" : "default"}>
+                                    <Badge  variant="secondary" color={p.state === 2 ? "success" : "default"}>
                                       {getParticipantStateLabel(p.state)}
-                                    </Chip>
-                                    <Chip size="sm" variant="flat" color="primary">
+                                    </Badge>
+                                    <Badge  variant="secondary" >
                                       {getParticipantKindLabel(p.kind)}
-                                    </Chip>
+                                    </Badge>
                                     {p.isPublisher && (
-                                      <Chip size="sm" variant="flat" color="secondary">Publisher</Chip>
+                                      <Badge  variant="secondary" variant="secondary">Publisher</Badge>
                                     )}
                                   </div>
-                                  <div className="grid grid-cols-2 gap-2 text-xs text-default-500">
+                                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                                     <div>SID: <code>{p.sid}</code></div>
                                     <div>Identity: <code>{p.identity}</code></div>
                                     <div>Joined: {formatTimestamp(p.joinedAt)}</div>
@@ -2327,24 +2317,18 @@ export function LiveKitPanel() {
                                   {/* Tracks */}
                                   {p.tracks && p.tracks.length > 0 && (
                                     <div className="mt-3">
-                                      <p className="text-xs text-default-500 mb-1">Tracks:</p>
+                                      <p className="text-xs text-muted-foreground mb-1">Tracks:</p>
                                       <div className="flex flex-wrap gap-2">
                                         {p.tracks.map((track) => (
-                                          <Chip
+                                          <Badge
                                             key={track.sid}
-                                            size="sm"
-                                            variant="flat"
-                                            startContent={
-                                              track.source === 1 ? (
-                                                track.muted ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />
-                                              ) : (
-                                                track.muted ? <VideoOff className="w-3 h-3" /> : <Video className="w-3 h-3" />
-                                              )
-                                            }
+                                            
+                                            variant="secondary"
+                                            
                                             color={track.muted ? "default" : "success"}
                                           >
                                             {track.name || `Track ${track.type}`}
-                                          </Chip>
+                                          </Badge>
                                         ))}
                                       </div>
                                     </div>
@@ -2353,8 +2337,8 @@ export function LiveKitPanel() {
                                   {/* Attributes */}
                                   {Object.keys(p.attributes || {}).length > 0 && (
                                     <div className="mt-3">
-                                      <p className="text-xs text-default-500 mb-1">Attributes:</p>
-                                      <pre className="text-xs bg-default-100 p-2 rounded overflow-auto">
+                                      <p className="text-xs text-muted-foreground mb-1">Attributes:</p>
+                                      <pre className="text-xs bg-muted p-2 rounded overflow-auto">
                                         {JSON.stringify(p.attributes, null, 2)}
                                       </pre>
                                     </div>
@@ -2363,81 +2347,76 @@ export function LiveKitPanel() {
                                   {/* Metadata */}
                                   {p.metadata && (
                                     <div className="mt-3">
-                                      <p className="text-xs text-default-500 mb-1">Metadata:</p>
-                                      <pre className="text-xs bg-default-100 p-2 rounded overflow-auto">
+                                      <p className="text-xs text-muted-foreground mb-1">Metadata:</p>
+                                      <pre className="text-xs bg-muted p-2 rounded overflow-auto">
                                         {p.metadata}
                                       </pre>
                                     </div>
                                   )}
                                 </div>
                               </div>
-                            </CardBody>
+                            </CardContent>
                           </Card>
                         ))}
                       </div>
                     )}
-                  </CardBody>
+                  </CardContent>
                 </Card>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onCloseRoomDetail}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onCloseRoomDetail}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
 
       {/* Call Details Modal */}
-      <Modal isOpen={isCallDetailOpen} onClose={onCloseCallDetail} size="3xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>
+      <Dialog open={isCallDetailOpen} onOpenChange={(open) => { if (!open) onCloseCallDetail(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>
             Call Details
-          </ModalHeader>
-          <ModalBody>
+          </DialogTitle></DialogHeader>
+          <div className="py-4">
             {selectedCall && (
               <div className="space-y-6">
                 {/* Call Summary */}
                 <Card>
-                  <CardBody>
+                  <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <p className="text-xs text-default-500">Direction</p>
-                        <Chip
-                          size="sm"
-                          variant="flat"
+                        <p className="text-xs text-muted-foreground">Direction</p>
+                        <Badge
+                          
+                          variant="secondary"
                           color={selectedCall.direction === "inbound" ? "primary" : "secondary"}
-                          startContent={
-                            selectedCall.direction === "inbound"
-                              ? <ArrowDownLeft className="w-3 h-3" />
-                              : <ArrowUpRight className="w-3 h-3" />
-                          }
+                          
                         >
                           {selectedCall.direction}
-                        </Chip>
+                        </Badge>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Status</p>
-                        <Chip
-                          size="sm"
-                          variant="flat"
+                        <p className="text-xs text-muted-foreground">Status</p>
+                        <Badge
+                          
+                          variant="secondary"
                           color={getCallStatusColor(selectedCall.status) as "default" | "primary" | "secondary" | "success" | "warning" | "danger"}
-                          startContent={getCallStatusIcon(selectedCall.status)}
+                          
                         >
                           {selectedCall.status}
-                        </Chip>
+                        </Badge>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Duration</p>
+                        <p className="text-xs text-muted-foreground">Duration</p>
                         <p className="text-sm font-medium">{formatDuration(selectedCall.duration)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Created</p>
+                        <p className="text-xs text-muted-foreground">Created</p>
                         <p className="text-sm">{new Date(selectedCall.createdAt).toLocaleString()}</p>
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 {/* Phone Numbers */}
@@ -2446,19 +2425,19 @@ export function LiveKitPanel() {
                     <Phone className="w-5 h-5 mr-2" />
                     <span>Phone Numbers</span>
                   </CardHeader>
-                  <Divider />
-                  <CardBody>
+                  <div className="border-t my-4" />
+                  <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-default-500">From</p>
+                        <p className="text-xs text-muted-foreground">From</p>
                         <div className="flex items-center gap-2">
                           <code className="text-sm">{selectedCall.fromNumber || "N/A"}</code>
                           {selectedCall.fromNumber && (
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              variant="light"
-                              onPress={() => copyToClipboard(selectedCall.fromNumber!)}
+                              variant="ghost"
+                              onClick={() => copyToClipboard(selectedCall.fromNumber!)}
                             >
                               <Copy className="w-3 h-3" />
                             </Button>
@@ -2466,15 +2445,15 @@ export function LiveKitPanel() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">To</p>
+                        <p className="text-xs text-muted-foreground">To</p>
                         <div className="flex items-center gap-2">
                           <code className="text-sm">{selectedCall.toNumber || "N/A"}</code>
                           {selectedCall.toNumber && (
                             <Button
-                              isIconOnly
+                              size="icon"
                               size="sm"
-                              variant="light"
-                              onPress={() => copyToClipboard(selectedCall.toNumber!)}
+                              variant="ghost"
+                              onClick={() => copyToClipboard(selectedCall.toNumber!)}
                             >
                               <Copy className="w-3 h-3" />
                             </Button>
@@ -2482,7 +2461,7 @@ export function LiveKitPanel() {
                         </div>
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 {/* Timing */}
@@ -2491,23 +2470,23 @@ export function LiveKitPanel() {
                     <Clock className="w-5 h-5 mr-2" />
                     <span>Timing</span>
                   </CardHeader>
-                  <Divider />
-                  <CardBody>
+                  <div className="border-t my-4" />
+                  <CardContent>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-xs text-default-500">Started At</p>
+                        <p className="text-xs text-muted-foreground">Started At</p>
                         <p className="text-sm">{selectedCall.startedAt ? new Date(selectedCall.startedAt).toLocaleString() : "N/A"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Ended At</p>
+                        <p className="text-xs text-muted-foreground">Ended At</p>
                         <p className="text-sm">{selectedCall.endedAt ? new Date(selectedCall.endedAt).toLocaleString() : "N/A"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Duration</p>
+                        <p className="text-xs text-muted-foreground">Duration</p>
                         <p className="text-sm font-medium">{formatDuration(selectedCall.duration)}</p>
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 {/* Technical Details */}
@@ -2516,35 +2495,35 @@ export function LiveKitPanel() {
                     <Server className="w-5 h-5 mr-2" />
                     <span>Technical Details</span>
                   </CardHeader>
-                  <Divider />
-                  <CardBody>
+                  <div className="border-t my-4" />
+                  <CardContent>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-xs text-default-500">Call ID</p>
+                        <p className="text-xs text-muted-foreground">Call ID</p>
                         <code className="text-xs">{selectedCall.id}</code>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Room Name</p>
+                        <p className="text-xs text-muted-foreground">Room Name</p>
                         <code className="text-xs">{selectedCall.roomName || "N/A"}</code>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">SIP Call ID</p>
+                        <p className="text-xs text-muted-foreground">SIP Call ID</p>
                         <code className="text-xs">{selectedCall.sipCallId || "N/A"}</code>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Participant Identity</p>
+                        <p className="text-xs text-muted-foreground">Participant Identity</p>
                         <code className="text-xs">{selectedCall.participantIdentity || "N/A"}</code>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Agent</p>
+                        <p className="text-xs text-muted-foreground">Agent</p>
                         <p className="text-sm">{selectedCall.agentName || "N/A"}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500">Agent ID</p>
+                        <p className="text-xs text-muted-foreground">Agent ID</p>
                         <code className="text-xs">{selectedCall.agentId || "N/A"}</code>
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
                 {/* Error Details (if any) */}
@@ -2554,10 +2533,10 @@ export function LiveKitPanel() {
                       <AlertCircle className="w-5 h-5 mr-2 text-danger" />
                       <span className="text-danger">Error</span>
                     </CardHeader>
-                    <Divider />
-                    <CardBody>
+                    <div className="border-t my-4" />
+                    <CardContent>
                       <p className="text-sm text-danger">{selectedCall.errorMessage}</p>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 )}
 
@@ -2567,47 +2546,45 @@ export function LiveKitPanel() {
                     <CardHeader>
                       <span>Metadata</span>
                     </CardHeader>
-                    <Divider />
-                    <CardBody>
-                      <pre className="text-xs bg-default-100 p-3 rounded overflow-auto">
+                    <div className="border-t my-4" />
+                    <CardContent>
+                      <pre className="text-xs bg-muted p-3 rounded overflow-auto">
                         {JSON.stringify(selectedCall.metadata, null, 2)}
                       </pre>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 )}
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onCloseCallDetail}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onCloseCallDetail}>
               Close
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteConfirmOpen} onClose={onCloseDeleteConfirm}>
-        <ModalContent>
-          <ModalHeader>Confirm Delete</ModalHeader>
-          <ModalBody>
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={(open) => { if (!open) onCloseDeleteConfirm(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Confirm Delete</DialogTitle></DialogHeader>
+          <div className="py-4">
             <p>
               Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
             </p>
-            <p className="text-sm text-default-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               This action cannot be undone.
             </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onCloseDeleteConfirm}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={onCloseDeleteConfirm}>
               Cancel
             </Button>
-            <Button color="danger" isLoading={loading} onPress={handleDelete}>
+            <Button variant="destructive" disabled={loading} onClick={handleDelete}>
               Delete
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter></DialogContent>
+      </Dialog>
     </div>
   );
 }

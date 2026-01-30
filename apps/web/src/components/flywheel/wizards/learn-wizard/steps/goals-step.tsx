@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardBody, Button, Chip, Input } from "@heroui/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Target, Plus, X, TrendingUp, Zap } from "lucide-react";
 import type { LearnWizardData, OptimizationGoal, MetricType } from "@/lib/flywheel/types";
 
@@ -79,7 +83,7 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
 
       {/* Quick Presets */}
       <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -94,20 +98,19 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
             </div>
             <Button
               size="sm"
-              color="primary"
-              variant="flat"
-              onPress={applyPresets}
+              variant="secondary"
+              onClick={applyPresets}
             >
               Apply Presets
             </Button>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Current Goals */}
       {goals.length > 0 && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Target className="w-4 h-4" />
               Your Learning Goals
@@ -152,11 +155,10 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
                         <option value="low">Low Priority</option>
                       </select>
                       <Button
-                        isIconOnly
                         size="sm"
-                        variant="light"
-                        color="danger"
-                        onPress={() => removeGoal(goal.metric)}
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeGoal(goal.metric)}
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -165,14 +167,14 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
                 );
               })}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Add New Goal */}
       {availableMetrics.length > 0 && (
         <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody className="p-4">
+          <CardContent className="p-4">
             <h4 className="font-medium text-gray-900 dark:text-white mb-4">
               Add a Goal
             </h4>
@@ -181,9 +183,8 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
                 <Button
                   key={metric.id}
                   size="sm"
-                  variant={selectedMetric === metric.id ? "solid" : "bordered"}
-                  color={selectedMetric === metric.id ? "secondary" : "default"}
-                  onPress={() => setSelectedMetric(metric.id)}
+                  variant={selectedMetric === metric.id ? "default" : "outline"}
+                  onClick={() => setSelectedMetric(metric.id)}
                 >
                   {metric.label}
                 </Button>
@@ -193,49 +194,47 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
             {selectedMetric && (
               <div className="flex items-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex-1">
+                  <Label htmlFor="goal-target">Target (optional)</Label>
                   <Input
+                    id="goal-target"
                     type="number"
-                    label="Target (optional)"
                     placeholder="e.g., 1000"
                     value={targetValue}
-                    onValueChange={setTargetValue}
-                    size="sm"
+                    onChange={(e) => setTargetValue(e.target.value)}
                   />
                 </div>
                 <Button
-                  color="primary"
                   size="sm"
-                  startContent={<Plus className="w-4 h-4" />}
-                  onPress={() =>
+                  onClick={() =>
                     addGoal(
                       selectedMetric,
                       targetValue ? parseInt(targetValue, 10) : undefined
                     )
                   }
                 >
+                  <Plus className="w-4 h-4 mr-1" />
                   Add Goal
                 </Button>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {/* Goals Summary */}
       <div className="flex items-center justify-center gap-4 text-sm">
         <div className="text-gray-500 dark:text-gray-400">Active goals:</div>
-        <Chip
-          color={goals.length >= 1 ? "success" : "warning"}
-          variant="flat"
-          startContent={<Target className="w-3 h-3" />}
+        <Badge
+          variant="secondary"
+          className={goals.length >= 1 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"}
         >
           {goals.length} goal{goals.length !== 1 ? "s" : ""}
-        </Chip>
+        </Badge>
       </div>
 
       {/* Info */}
       <Card className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <CardBody className="p-4">
+        <CardContent className="p-4">
           <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             How Goals Work
           </h5>
@@ -244,7 +243,7 @@ export function GoalsStep({ data, updateData }: GoalsStepProps) {
             High-priority goals get more attention in your reports and influence
             content suggestions more heavily.
           </p>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

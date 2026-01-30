@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function DashboardError({
@@ -37,19 +37,19 @@ export default function DashboardError({
           </svg>
         </div>
         <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
-        <p className="text-default-500 mb-6">
+        <p className="text-muted-foreground mb-6">
           We encountered an error loading this page. This has been logged for investigation.
         </p>
         {error.digest && (
-          <p className="text-xs text-default-400 mb-4">
+          <p className="text-xs text-muted-foreground mb-4">
             Error ID: {error.digest}
           </p>
         )}
         <div className="flex gap-3 justify-center">
-          <Button variant="bordered" onPress={() => router.push("/")}>
+          <Button variant="outline" onClick={() => router.push("/")}>
             Go Home
           </Button>
-          <Button color="primary" onPress={() => reset()}>
+          <Button onClick={() => reset()}>
             Try Again
           </Button>
         </div>

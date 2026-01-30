@@ -9,7 +9,7 @@
  * @module index
  */
 
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { Worker } from 'bullmq';
 import { prisma } from '@epic-ai/database';
 import { redis, closeRedisConnection, createRedisConnection } from './lib';
@@ -37,9 +37,6 @@ import { startAmiEventListener as startOldAmiEventListener } from './lib/ami-eve
 import { startAmiEventListener } from './runtime/ami-event-listener';
 import { JobType } from './types/payloads';
 import { startHealthServer, recordJobProcessed } from './health';
-
-// Load environment variables
-dotenv.config();
 
 // =============================================================================
 // Constants
@@ -518,12 +515,6 @@ async function main(): Promise<void> {
     );
     workers.push(agentOsWorker);
 
-    const callbackWorker = createWorker(
-      CALLBACK_QUEUE_NAME,
-      callbackRouter
-    );
-    workers.push(callbackWorker);
-
     logger.info(COMPONENT, 'All workers initialized', {
       queues: [
         QueueName.CONTENT_GENERATION,
@@ -554,7 +545,8 @@ async function main(): Promise<void> {
     // and triggers AMI Originate commands to Asterisk
     try {
       const { createCallbackWorker } = await import('./queues/callback');
-      createCallbackWorker();
+      const callbackWorker = createCallbackWorker();
+      workers.push(callbackWorker);
       logger.info(COMPONENT, 'Callback worker started (originate-callback)');
     } catch (error) {
       logger.error(COMPONENT, 'Failed to start callback worker', {

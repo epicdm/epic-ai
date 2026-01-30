@@ -1,27 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  Button,
-  Input,
-  Textarea,
   Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
   SelectItem,
-  Switch,
-  Accordion,
-  AccordionItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  Chip,
-  Divider,
-} from "@heroui/react";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Plus,
   Trash2,
@@ -110,7 +110,7 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
   const [error, setError] = useState<string | null>(null);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Fetch tools on mount
   useEffect(() => {
@@ -136,13 +136,19 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
   const handleAddTool = () => {
     setEditingTool({ ...defaultTool });
     setEditingIndex(null);
-    onOpen();
+    setIsOpen(true);
   };
 
   const handleEditTool = (tool: Tool, index: number) => {
     setEditingTool({ ...tool });
     setEditingIndex(index);
-    onOpen();
+    setIsOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsOpen(false);
+    setEditingTool(null);
+    setEditingIndex(null);
   };
 
   const handleSaveTool = async () => {
@@ -191,9 +197,7 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
         onToolsChange?.(newTools);
       }
 
-      onClose();
-      setEditingTool(null);
-      setEditingIndex(null);
+      handleCloseDialog();
     } catch (err) {
       console.error("Error saving tool:", err);
       setError(err instanceof Error ? err.message : "Failed to save tool");
@@ -318,11 +322,11 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
   if (loading) {
     return (
       <Card>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     );
   }
@@ -332,200 +336,222 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Function Calling Tools</h3>
-          <p className="text-sm text-default-500">
+          <p className="text-sm text-muted-foreground">
             Configure tools the AI agent can use during calls
           </p>
         </div>
-        <Button color="primary" startContent={<Plus className="w-4 h-4" />} onPress={handleAddTool}>
+        <Button onClick={handleAddTool}>
           Add Tool
         </Button>
       </div>
 
       {error && (
-        <Card className="bg-danger-50 border border-danger-200">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2 text-danger">
+        <Card className="bg-destructive/10 border border-destructive/30">
+          <CardContent className="py-3">
+            <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">{error}</span>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
       {tools.length === 0 ? (
         <Card>
-          <CardBody className="py-12 text-center">
+          <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="p-3 rounded-full bg-default-100">
-                <Settings className="w-8 h-8 text-default-400" />
+              <div className="p-3 rounded-full bg-muted">
+                <Settings className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
                 <p className="font-medium">No tools configured</p>
-                <p className="text-sm text-default-500">
+                <p className="text-sm text-muted-foreground">
                   Add tools to enable function calling for this agent
                 </p>
               </div>
-              <Button color="primary" variant="flat" startContent={<Plus className="w-4 h-4" />} onPress={handleAddTool}>
+              <Button variant="secondary" onClick={handleAddTool}>
                 Add Your First Tool
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {tools.map((tool, index) => (
             <Card key={tool.id || index} className={!tool.isActive ? "opacity-60" : ""}>
-              <CardBody className="py-3">
+              <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-default-100">
+                    <div className="p-2 rounded-lg bg-muted">
                       {getToolIcon(tool.type)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{tool.name}</span>
-                        <Chip size="sm" variant="flat" color={tool.type === "WEBHOOK" ? "primary" : tool.type === "BUILTIN" ? "secondary" : "success"}>
+                        <Badge variant={tool.type === "WEBHOOK" ? "default" : tool.type === "BUILTIN" ? "secondary" : "outline"}>
                           {tool.type}
-                        </Chip>
+                        </Badge>
                         {!tool.isActive && (
-                          <Chip size="sm" variant="flat" color="default">
+                          <Badge variant="secondary">
                             Disabled
-                          </Chip>
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-default-500 line-clamp-1">
+                      <p className="text-sm text-muted-foreground line-clamp-1">
                         {tool.description}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
-                      size="sm"
-                      isSelected={tool.isActive}
-                      onValueChange={() => handleToggleActive(tool, index)}
+                      checked={tool.isActive}
+                      onCheckedChange={() => handleToggleActive(tool, index)}
                     />
                     <Button
-                      size="sm"
-                      variant="flat"
-                      isIconOnly
-                      onPress={() => handleEditTool(tool, index)}
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => handleEditTool(tool, index)}
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
                     <Button
-                      size="sm"
-                      variant="flat"
-                      color="danger"
-                      isIconOnly
-                      onPress={() => handleDeleteTool(tool, index)}
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleDeleteTool(tool, index)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Tool Editor Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader>
-            {editingTool?.id ? "Edit Tool" : "Add New Tool"}
-          </ModalHeader>
-          <ModalBody>
+      {/* Tool Editor Dialog */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTool?.id ? "Edit Tool" : "Add New Tool"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
             {editingTool && (
               <div className="space-y-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <Input
-                    label="Tool Name"
-                    placeholder="e.g., check_order_status"
-                    value={editingTool.name}
-                    onValueChange={(value) => updateEditingTool({ name: value })}
-                    description="A unique identifier for this tool (no spaces)"
-                  />
-                  <Textarea
-                    label="Description"
-                    placeholder="Describe what this tool does and when the AI should use it"
-                    value={editingTool.description}
-                    onValueChange={(value) => updateEditingTool({ description: value })}
-                    description="The AI uses this to decide when to call the tool"
-                  />
-                  <Select
-                    label="Tool Type"
-                    selectedKeys={[editingTool.type]}
-                    onSelectionChange={(keys) => {
-                      const type = Array.from(keys)[0] as "WEBHOOK" | "BUILTIN" | "FUNCTION";
-                      updateEditingTool({ type });
-                    }}
-                  >
-                    <SelectItem key="WEBHOOK" startContent={<Globe className="w-4 h-4" />}>
-                      Webhook - Call an external API
-                    </SelectItem>
-                    <SelectItem key="BUILTIN" startContent={<Zap className="w-4 h-4" />}>
-                      Built-in - Use a pre-configured action
-                    </SelectItem>
-                    <SelectItem key="FUNCTION" startContent={<Code className="w-4 h-4" />}>
-                      Function - Custom code execution
-                    </SelectItem>
-                  </Select>
+                  <div className="space-y-2">
+                    <Label>Tool Name</Label>
+                    <Input
+                      placeholder="e.g., check_order_status"
+                      value={editingTool.name}
+                      onChange={(e) => updateEditingTool({ name: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">A unique identifier for this tool (no spaces)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="Describe what this tool does and when the AI should use it"
+                      value={editingTool.description}
+                      onChange={(e) => updateEditingTool({ description: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">The AI uses this to decide when to call the tool</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tool Type</Label>
+                    <Select
+                      value={editingTool.type}
+                      onValueChange={(val) => updateEditingTool({ type: val as "WEBHOOK" | "BUILTIN" | "FUNCTION" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tool type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="WEBHOOK">
+                          Webhook - Call an external API
+                        </SelectItem>
+                        <SelectItem value="BUILTIN">
+                          Built-in - Use a pre-configured action
+                        </SelectItem>
+                        <SelectItem value="FUNCTION">
+                          Function - Custom code execution
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <Divider />
+                <div className="border-t" />
 
                 {/* Type-specific configuration */}
                 {editingTool.type === "WEBHOOK" && (
                   <div className="space-y-4">
                     <h4 className="font-medium">Webhook Configuration</h4>
-                    <Input
-                      label="Webhook URL"
-                      placeholder="https://api.example.com/endpoint"
-                      value={editingTool.webhookUrl || ""}
-                      onValueChange={(value) => updateEditingTool({ webhookUrl: value })}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Select
-                        label="HTTP Method"
-                        selectedKeys={[editingTool.webhookMethod]}
-                        onSelectionChange={(keys) =>
-                          updateEditingTool({ webhookMethod: Array.from(keys)[0] as string })
-                        }
-                      >
-                        <SelectItem key="GET">GET</SelectItem>
-                        <SelectItem key="POST">POST</SelectItem>
-                        <SelectItem key="PUT">PUT</SelectItem>
-                        <SelectItem key="PATCH">PATCH</SelectItem>
-                        <SelectItem key="DELETE">DELETE</SelectItem>
-                      </Select>
-                      <Select
-                        label="Authentication"
-                        selectedKeys={[editingTool.authType || "none"]}
-                        onSelectionChange={(keys) =>
-                          updateEditingTool({ authType: Array.from(keys)[0] as string })
-                        }
-                      >
-                        <SelectItem key="none">No Authentication</SelectItem>
-                        <SelectItem key="api_key">API Key</SelectItem>
-                        <SelectItem key="bearer">Bearer Token</SelectItem>
-                        <SelectItem key="basic">Basic Auth</SelectItem>
-                      </Select>
+                    <div className="space-y-2">
+                      <Label>Webhook URL</Label>
+                      <Input
+                        placeholder="https://api.example.com/endpoint"
+                        value={editingTool.webhookUrl || ""}
+                        onChange={(e) => updateEditingTool({ webhookUrl: e.target.value })}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        type="number"
-                        label="Timeout (ms)"
-                        value={String(editingTool.timeoutMs)}
-                        onValueChange={(value) => updateEditingTool({ timeoutMs: parseInt(value) || 10000 })}
-                      />
-                      <Input
-                        type="number"
-                        label="Retry Count"
-                        value={String(editingTool.retryCount)}
-                        onValueChange={(value) => updateEditingTool({ retryCount: parseInt(value) || 1 })}
-                      />
+                      <div className="space-y-2">
+                        <Label>HTTP Method</Label>
+                        <Select
+                          value={editingTool.webhookMethod}
+                          onValueChange={(val) => updateEditingTool({ webhookMethod: val })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="GET">GET</SelectItem>
+                            <SelectItem value="POST">POST</SelectItem>
+                            <SelectItem value="PUT">PUT</SelectItem>
+                            <SelectItem value="PATCH">PATCH</SelectItem>
+                            <SelectItem value="DELETE">DELETE</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Authentication</Label>
+                        <Select
+                          value={editingTool.authType || "none"}
+                          onValueChange={(val) => updateEditingTool({ authType: val })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select auth type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Authentication</SelectItem>
+                            <SelectItem value="api_key">API Key</SelectItem>
+                            <SelectItem value="bearer">Bearer Token</SelectItem>
+                            <SelectItem value="basic">Basic Auth</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Timeout (ms)</Label>
+                        <Input
+                          type="number"
+                          value={String(editingTool.timeoutMs)}
+                          onChange={(e) => updateEditingTool({ timeoutMs: parseInt(e.target.value) || 10000 })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Retry Count</Label>
+                        <Input
+                          type="number"
+                          value={String(editingTool.retryCount)}
+                          onChange={(e) => updateEditingTool({ retryCount: parseInt(e.target.value) || 1 })}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -533,98 +559,103 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
                 {editingTool.type === "BUILTIN" && (
                   <div className="space-y-4">
                     <h4 className="font-medium">Built-in Tool Selection</h4>
-                    <Select
-                      label="Built-in Action"
-                      selectedKeys={editingTool.builtinType ? [editingTool.builtinType] : []}
-                      onSelectionChange={(keys) =>
-                        updateEditingTool({ builtinType: Array.from(keys)[0] as string })
-                      }
-                    >
-                      {builtinTools.map((tool) => (
-                        <SelectItem key={tool.value} description={tool.description}>
-                          {tool.label}
-                        </SelectItem>
-                      ))}
-                    </Select>
+                    <div className="space-y-2">
+                      <Label>Built-in Action</Label>
+                      <Select
+                        value={editingTool.builtinType || ""}
+                        onValueChange={(val) => updateEditingTool({ builtinType: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a built-in action" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {builtinTools.map((tool) => (
+                            <SelectItem key={tool.value} value={tool.value}>
+                              {tool.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 
-                <Divider />
+                <div className="border-t" />
 
                 {/* Parameters */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">Parameters</h4>
-                    <Button size="sm" variant="flat" startContent={<Plus className="w-4 h-4" />} onPress={addParameter}>
+                    <Button size="sm" variant="secondary" onClick={addParameter}>
                       Add Parameter
                     </Button>
                   </div>
 
                   {Object.entries(editingTool.parameters.properties).length === 0 ? (
-                    <p className="text-sm text-default-500">
+                    <p className="text-sm text-muted-foreground">
                       No parameters defined. Add parameters that the AI will extract from the conversation.
                     </p>
                   ) : (
                     <div className="space-y-3">
                       {Object.entries(editingTool.parameters.properties).map(([name, param]) => (
-                        <Card key={name} className="bg-default-50">
-                          <CardBody className="py-3">
+                        <Card key={name} className="bg-muted/50">
+                          <CardContent className="py-3">
                             <div className="grid grid-cols-12 gap-3 items-start">
-                              <div className="col-span-3">
+                              <div className="col-span-3 space-y-2">
+                                <Label>Name</Label>
                                 <Input
-                                  size="sm"
-                                  label="Name"
                                   value={name}
-                                  onValueChange={(newName) => updateParameter(name, newName, param)}
+                                  onChange={(e) => updateParameter(name, e.target.value, param)}
                                 />
                               </div>
-                              <div className="col-span-2">
+                              <div className="col-span-2 space-y-2">
+                                <Label>Type</Label>
                                 <Select
-                                  size="sm"
-                                  label="Type"
-                                  selectedKeys={[param.type]}
-                                  onSelectionChange={(keys) =>
-                                    updateParameter(name, name, { ...param, type: Array.from(keys)[0] as string })
+                                  value={param.type}
+                                  onValueChange={(val) =>
+                                    updateParameter(name, name, { ...param, type: val })
                                   }
                                 >
-                                  <SelectItem key="string">String</SelectItem>
-                                  <SelectItem key="number">Number</SelectItem>
-                                  <SelectItem key="boolean">Boolean</SelectItem>
-                                  <SelectItem key="array">Array</SelectItem>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="string">String</SelectItem>
+                                    <SelectItem value="number">Number</SelectItem>
+                                    <SelectItem value="boolean">Boolean</SelectItem>
+                                    <SelectItem value="array">Array</SelectItem>
+                                  </SelectContent>
                                 </Select>
                               </div>
-                              <div className="col-span-4">
+                              <div className="col-span-4 space-y-2">
+                                <Label>Description</Label>
                                 <Input
-                                  size="sm"
-                                  label="Description"
                                   value={param.description || ""}
-                                  onValueChange={(value) =>
-                                    updateParameter(name, name, { ...param, description: value })
+                                  onChange={(e) =>
+                                    updateParameter(name, name, { ...param, description: e.target.value })
                                   }
                                 />
                               </div>
-                              <div className="col-span-2 pt-6">
-                                <Switch
-                                  size="sm"
-                                  isSelected={editingTool.requiredParams.includes(name)}
-                                  onValueChange={() => toggleRequiredParam(name)}
-                                >
-                                  Required
-                                </Switch>
+                              <div className="col-span-2 pt-8">
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={editingTool.requiredParams.includes(name)}
+                                    onCheckedChange={() => toggleRequiredParam(name)}
+                                  />
+                                  <Label className="text-sm">Required</Label>
+                                </div>
                               </div>
-                              <div className="col-span-1 pt-6">
+                              <div className="col-span-1 pt-8">
                                 <Button
-                                  size="sm"
-                                  variant="flat"
-                                  color="danger"
-                                  isIconOnly
-                                  onPress={() => removeParameter(name)}
+                                  size="icon"
+                                  variant="destructive"
+                                  onClick={() => removeParameter(name)}
                                 >
                                   <X className="w-4 h-4" />
                                 </Button>
                               </div>
                             </div>
-                          </CardBody>
+                          </CardContent>
                         </Card>
                       ))}
                     </div>
@@ -632,23 +663,20 @@ export function AgentToolsEditor({ agentId, onToolsChange }: AgentToolsEditorPro
                 </div>
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={handleCloseDialog}>
               Cancel
             </Button>
             <Button
-              color="primary"
-              startContent={<Save className="w-4 h-4" />}
-              onPress={handleSaveTool}
-              isLoading={saving}
-              isDisabled={!editingTool?.name || !editingTool?.description}
+              onClick={handleSaveTool}
+              disabled={saving || !editingTool?.name || !editingTool?.description}
             >
               {editingTool?.id ? "Update Tool" : "Create Tool"}
             </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

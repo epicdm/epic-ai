@@ -1,6 +1,6 @@
 "use client";
 
-import { Slider, Checkbox, CheckboxGroup, RadioGroup, Radio } from "@heroui/react";
+import { Label } from "@/components/ui/label";
 import {
   FORMALITY_LEVELS,
   PERSONALITY_TRAITS,
@@ -18,9 +18,19 @@ export function VoiceStep({ data, updateData }: VoiceStepProps) {
     (f) => f.value === data.formality
   );
 
+  const personality = data.personality || [];
+
+  const togglePersonality = (traitId: string) => {
+    if (personality.includes(traitId)) {
+      updateData({ personality: personality.filter((t) => t !== traitId) });
+    } else {
+      updateData({ personality: [...personality, traitId] });
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         Define how your brand communicates. This sets the tone for all
         AI-generated content.
       </p>
@@ -31,28 +41,27 @@ export function VoiceStep({ data, updateData }: VoiceStepProps) {
           <h3 className="font-medium text-gray-900 dark:text-white mb-1">
             Formality Level
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             How formal should your content sound?
           </p>
         </div>
 
-        <Slider
-          size="lg"
-          step={1}
-          minValue={1}
-          maxValue={5}
-          value={data.formality || 3}
-          onChange={(value) =>
-            updateData({ formality: Array.isArray(value) ? value[0] : value })
-          }
-          marks={FORMALITY_LEVELS.map((f) => ({
-            value: f.value,
-            label: f.label,
-          }))}
-          classNames={{
-            mark: "text-xs",
-          }}
-        />
+        <div className="space-y-2">
+          <input
+            type="range"
+            className="w-full accent-purple-600"
+            value={data.formality || 3}
+            onChange={(e) => updateData({ formality: Number(e.target.value) })}
+            min={1}
+            max={5}
+            step={1}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {FORMALITY_LEVELS.map((f) => (
+              <span key={f.value}>{f.label}</span>
+            ))}
+          </div>
+        </div>
 
         {currentFormality && (
           <p className="text-center text-sm text-purple-600 dark:text-purple-400">
@@ -67,34 +76,32 @@ export function VoiceStep({ data, updateData }: VoiceStepProps) {
           <h3 className="font-medium text-gray-900 dark:text-white mb-1">
             Personality Traits
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Select 2-4 traits that describe your brand's personality
+          <p className="text-sm text-muted-foreground">
+            Select 2-4 traits that describe your brand&apos;s personality
           </p>
         </div>
 
-        <CheckboxGroup
-          value={data.personality || []}
-          onValueChange={(value) => updateData({ personality: value })}
-          orientation="horizontal"
-          classNames={{
-            wrapper: "gap-2 flex-wrap",
-          }}
-        >
-          {PERSONALITY_TRAITS.map((trait) => (
-            <Checkbox
-              key={trait.id}
-              value={trait.id}
-              classNames={{
-                base: "m-0 px-3 py-2 rounded-full border border-gray-200 dark:border-gray-700 data-[selected=true]:bg-purple-100 data-[selected=true]:border-purple-500 dark:data-[selected=true]:bg-purple-900/30",
-                label: "text-sm",
-              }}
-            >
-              {trait.emoji} {trait.label}
-            </Checkbox>
-          ))}
-        </CheckboxGroup>
+        <div className="flex flex-wrap gap-2">
+          {PERSONALITY_TRAITS.map((trait) => {
+            const isSelected = personality.includes(trait.id);
+            return (
+              <button
+                key={trait.id}
+                type="button"
+                onClick={() => togglePersonality(trait.id)}
+                className={`px-3 py-2 rounded-full border text-sm transition-colors ${
+                  isSelected
+                    ? "bg-purple-100 border-purple-500 dark:bg-purple-900/30 dark:border-purple-500"
+                    : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
+                }`}
+              >
+                {trait.emoji} {trait.label}
+              </button>
+            );
+          })}
+        </div>
 
-        {(data.personality?.length || 0) > 4 && (
+        {(personality.length) > 4 && (
           <p className="text-sm text-yellow-600 dark:text-yellow-400">
             Consider limiting to 4 traits for more focused content.
           </p>
@@ -107,35 +114,33 @@ export function VoiceStep({ data, updateData }: VoiceStepProps) {
           <h3 className="font-medium text-gray-900 dark:text-white mb-1">
             Writing Style
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             How should your content be structured?
           </p>
         </div>
 
-        <RadioGroup
-          value={data.writingStyle}
-          onValueChange={(value) => updateData({ writingStyle: value })}
-          orientation="horizontal"
-          classNames={{
-            wrapper: "gap-2 flex-wrap",
-          }}
-        >
-          {WRITING_STYLES.map((style) => (
-            <Radio
-              key={style.id}
-              value={style.id}
-              classNames={{
-                base: "m-0 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[selected=true]:bg-purple-100 data-[selected=true]:border-purple-500 dark:data-[selected=true]:bg-purple-900/30",
-                label: "text-sm",
-              }}
-            >
-              <span className="font-medium">{style.label}</span>
-              <span className="text-xs text-gray-500 block">
-                {style.description}
-              </span>
-            </Radio>
-          ))}
-        </RadioGroup>
+        <div className="flex flex-wrap gap-2">
+          {WRITING_STYLES.map((style) => {
+            const isSelected = data.writingStyle === style.id;
+            return (
+              <button
+                key={style.id}
+                type="button"
+                onClick={() => updateData({ writingStyle: style.id })}
+                className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                  isSelected
+                    ? "bg-purple-100 border-purple-500 dark:bg-purple-900/30 dark:border-purple-500"
+                    : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
+                }`}
+              >
+                <span className="font-medium">{style.label}</span>
+                <span className="text-xs text-muted-foreground block">
+                  {style.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
