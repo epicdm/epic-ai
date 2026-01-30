@@ -77,11 +77,10 @@ export function AutomationWizard({ brandId }: { brandId: string }) {
             <h3 className="font-medium">Workflow Template</h3>
             <div className="grid grid-cols-1 gap-4">
               {templates.map((t) => (
-                <Card 
-                  key={t.id} 
-                  className="cursor-pointer" 
+                <Card
+                  key={t.id}
+                  className={`cursor-pointer ${template?.id === t.id ? "border-primary" : ""}`}
                   onClick={() => setTemplate(t)}
-                  className={template?.id === t.id ? "border-primary" : ""}
                 >
                   <CardContent className="relative">
                     {t.recommended && (

@@ -385,8 +385,6 @@ export function PublishingSettings({ orgId }: Props) {
                     </Button>
 
                     <Button
-                      size="icon"
-                      variant="ghost"
                       size="sm"
                       variant="destructive"
                       onClick={() => deleteSchedule(schedule.platform)}
@@ -486,9 +484,7 @@ export function PublishingSettings({ orgId }: Props) {
                       />
                       {editingSchedule.postingTimes.length > 1 && (
                         <Button
-                          size="icon"
                           size="sm"
-                          variant="ghost"
                           variant="destructive"
                           onClick={() => removePostingTime(index)}
                         >

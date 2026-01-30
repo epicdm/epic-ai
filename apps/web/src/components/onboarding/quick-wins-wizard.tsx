@@ -198,10 +198,8 @@ export function QuickWinsWizard({ path, brandId, organizationId }: QuickWinsWiza
           ) : (
             <Button
               variant="outline"
-              
               onClick={handleComplete}
-              disabled={isLoading}
-              disabled={!canProceed(currentStep)}
+              disabled={isLoading || !canProceed(currentStep)}
             >
               Complete Setup
             </Button>
@@ -338,9 +336,7 @@ function GeneratePostStep({ brandId, onComplete }: { brandId?: string; onComplet
       <Button
         size="lg"
         onClick={handleGenerate}
-        disabled={isGenerating}
-        disabled={!topic.trim()}
-        
+        disabled={isGenerating || !topic.trim()}
         className="w-full"
       ><Sparkles className="w-5 h-5" /> 
         {isGenerating ? "Generating..." : "Generate Post"}
@@ -376,8 +372,7 @@ function SchedulePostStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="space-y-3">
         <Card
-          className="cursor-pointer"
-          className={selectedTime === "optimal" ? "ring-2 ring-purple-500" : ""}
+          className={`cursor-pointer ${selectedTime === "optimal" ? "ring-2 ring-purple-500" : ""}`}
           onClick={() => setSelectedTime("optimal")}
         >
           <CardContent className="p-4">
@@ -395,8 +390,7 @@ function SchedulePostStep({ onComplete }: { onComplete: () => void }) {
         </Card>
 
         <Card
-          className="cursor-pointer"
-          className={selectedTime === "now" ? "ring-2 ring-purple-500" : ""}
+          className={`cursor-pointer ${selectedTime === "now" ? "ring-2 ring-purple-500" : ""}`}
           onClick={() => setSelectedTime("now")}
         >
           <CardContent className="p-4">

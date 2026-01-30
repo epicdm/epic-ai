@@ -258,7 +258,7 @@ export default function EditGroupPage({
           </h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="destructive" variant="ghost" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete}>
             Delete
           </Button>
           <Button onClick={handleSave} disabled={saving}>
@@ -404,7 +404,6 @@ export default function EditGroupPage({
                         <Button
                           size="sm"
                           variant="destructive"
-                          variant="ghost"
                           onClick={() => toggleMember(member.agentId)}
                         >
                           Remove

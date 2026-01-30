@@ -109,10 +109,8 @@ export function WebsiteStep({ stepIndex }: WebsiteStepProps) {
               }}
             />
             <Button
-              
               onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              disabled={!url.trim()}
+              disabled={isAnalyzing || !url.trim()}
                           >
               Analyze
             </Button>

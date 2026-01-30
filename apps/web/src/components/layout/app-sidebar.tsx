@@ -63,14 +63,13 @@ const navSections: NavSection[] = [
     label: "Build",
     items: [
       {
-        id: "agents",
-        name: "Agents",
-        href: "/dashboard/agents",
+        id: "agent-os",
+        name: "Agent OS",
+        href: "/dashboard/agent-os",
         icon: Bot,
         children: [
-          { id: "agents-all", name: "All Agents", href: "/dashboard/agents" },
-          { id: "agents-new", name: "Create Agent", href: "/dashboard/agents/new" },
-          { id: "agents-templates", name: "Templates", href: "/dashboard/agents/templates" },
+          { id: "agent-os-home", name: "All Agents", href: "/dashboard/agent-os" },
+          { id: "agent-os-wizard", name: "Create Agent", href: "/dashboard/agent-os/wizard" },
         ],
       },
       {

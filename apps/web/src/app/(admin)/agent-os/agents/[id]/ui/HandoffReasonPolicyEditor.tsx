@@ -304,7 +304,6 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
 
                     <div className="flex items-center gap-1">
                       <Button
-                        size="icon"
                         size="sm"
                         variant="ghost"
                         onClick={() =>
@@ -318,9 +317,7 @@ export function HandoffReasonPolicyEditor({ agentId }: HandoffReasonPolicyEditor
                         />
                       </Button>
                       <Button
-                        size="icon"
                         size="sm"
-                        variant="ghost"
                         variant="destructive"
                         onClick={() => removeRule(index)}
                       >

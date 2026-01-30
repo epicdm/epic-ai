@@ -310,10 +310,10 @@ export function FlywheelTestPage() {
               <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
             </div>
           <div className="flex gap-4">
-            <Badge variant="outline" variant="secondary">
+            <Badge variant="secondary">
               {passedCount} Passed
             </Badge>
-            <Badge variant="destructive" variant="secondary">
+            <Badge variant="secondary">
               {failedCount} Failed
             </Badge>
             <Badge  variant="secondary">

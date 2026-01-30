@@ -537,8 +537,7 @@ function ContentCard({
               <Button
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white"
-                variant="secondary"
-                                onClick={onApprove}
+                onClick={onApprove}
                 disabled={isLoading}
               >
                 Approve
@@ -546,8 +545,7 @@ function ContentCard({
               <Button
                 size="sm"
                 variant="destructive"
-                variant="secondary"
-                                onClick={onReject}
+                onClick={onReject}
                 disabled={isLoading}
               >
                 Reject

@@ -307,8 +307,10 @@ function WizardContentInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: configForm.roleCardName,
-          description: configForm.roleCardDescription,
-          primary_objective: configForm.primaryObjective,
+          title: configForm.roleCardName,
+          company: companyForm.name || "Unknown",
+          mission: configForm.roleCardDescription,
+          context: configForm.primaryObjective,
         }),
       });
 
@@ -324,9 +326,7 @@ function WizardContentInner() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          communication_style: {
-            tone: configForm.personalityTone,
-          },
+          voice_tone: configForm.personalityTone.toLowerCase(),
         }),
       });
 

@@ -896,7 +896,6 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                size="icon"
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => copyToClipboard(trunk.sip_trunk_id)}
@@ -916,16 +915,14 @@ export function LiveKitPanel() {
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {trunk.allowed_addresses?.map((addr, i) => (
-                                <Badge key={i}  variant="secondary" variant="secondary">{addr}</Badge>
+                                <Badge key={i} variant="secondary">{addr}</Badge>
                               ))}
                             </div>
                           </TableCell>
                           <TableCell>
                             <Button
-                              size="icon"
                               size="sm"
                               variant="destructive"
-                              variant="ghost"
                               onClick={() => confirmDelete("inbound-trunk", trunk.sip_trunk_id, trunk.name || "Inbound trunk")}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -975,7 +972,6 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{trunk.sip_trunk_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                size="icon"
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => copyToClipboard(trunk.sip_trunk_id)}
@@ -998,10 +994,8 @@ export function LiveKitPanel() {
                           </TableCell>
                           <TableCell>
                             <Button
-                              size="icon"
                               size="sm"
                               variant="destructive"
-                              variant="ghost"
                               onClick={() => confirmDelete("outbound-trunk", trunk.sip_trunk_id, trunk.name || "Outbound trunk")}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1079,7 +1073,6 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{rule.sip_dispatch_rule_id?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                size="icon"
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => copyToClipboard(rule.sip_dispatch_rule_id)}
@@ -1105,17 +1098,15 @@ export function LiveKitPanel() {
                           </TableCell>
                           <TableCell>
                             {rule.rule?.dispatchRuleIndividual?.pin ? (
-                              <Badge  variant="outline" variant="secondary">PIN Set</Badge>
+                              <Badge variant="secondary">PIN Set</Badge>
                             ) : (
                               <span className="text-muted-foreground">None</span>
                             )}
                           </TableCell>
                           <TableCell>
                             <Button
-                              size="icon"
                               size="sm"
                               variant="destructive"
-                              variant="ghost"
                               onClick={() => confirmDelete("dispatch-rule", rule.sip_dispatch_rule_id, rule.name || "Dispatch rule")}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1183,7 +1174,6 @@ export function LiveKitPanel() {
                             <div className="flex items-center gap-1">
                               <code className="text-xs">{room.sid?.slice(0, 12) || "N/A"}...</code>
                               <Button
-                                size="icon"
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => copyToClipboard(room.sid)}
@@ -1615,8 +1605,7 @@ export function LiveKitPanel() {
                   <Button
                     
                     onClick={handleTestCall}
-                    disabled={testCallLoading}
-                    disabled={!testCallPhoneNumber}
+                    disabled={testCallLoading || !testCallPhoneNumber}
                   >testCallLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" /> 
                     Initiate Call
                   </Button>
@@ -1657,7 +1646,6 @@ export function LiveKitPanel() {
                           <div className="flex items-center gap-1">
                             <code className="text-sm">{testCallResult.callId}</code>
                             <Button
-                              size="icon"
                               size="sm"
                               variant="ghost"
                               onClick={() => copyToClipboard(testCallResult.callId!)}
@@ -2003,13 +1991,13 @@ export function LiveKitPanel() {
                 {/* Summary Stats */}
                 {sipValidations.length > 0 && (
                   <div className="mt-4 flex gap-4 justify-center">
-                    <Badge variant="outline" variant="secondary">
+                    <Badge variant="secondary">
                       {sipValidations.filter(v => v.sipAccountExists).length} Valid
                     </Badge>
-                    <Badge variant="destructive" variant="secondary">
+                    <Badge variant="destructive">
                       {sipValidations.filter(v => !v.sipAccountExists && !v.error).length} Missing
                     </Badge>
-                    <Badge variant="outline" variant="secondary">
+                    <Badge variant="secondary">
                       {sipValidations.filter(v => v.error).length} Errors
                     </Badge>
                   </div>
@@ -2146,9 +2134,8 @@ export function LiveKitPanel() {
               Cancel
             </Button>
             <Button
-              disabled={loading}
+              disabled={loading || !trunkForm.name || !trunkForm.numbers}
               onClick={handleCreateTrunk}
-              disabled={!trunkForm.name || !trunkForm.numbers}
             >
               Create Trunk
             </Button>
@@ -2229,9 +2216,8 @@ export function LiveKitPanel() {
               Cancel
             </Button>
             <Button
-              disabled={loading}
+              disabled={loading || !ruleForm.name || !ruleForm.agent_name}
               onClick={handleCreateRule}
-              disabled={!ruleForm.name || !ruleForm.agent_name}
             >
               Create Rule
             </Button>
@@ -2305,7 +2291,7 @@ export function LiveKitPanel() {
                                       {getParticipantKindLabel(p.kind)}
                                     </Badge>
                                     {p.isPublisher && (
-                                      <Badge  variant="secondary" variant="secondary">Publisher</Badge>
+                                      <Badge variant="secondary">Publisher</Badge>
                                     )}
                                   </div>
                                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -2434,7 +2420,6 @@ export function LiveKitPanel() {
                           <code className="text-sm">{selectedCall.fromNumber || "N/A"}</code>
                           {selectedCall.fromNumber && (
                             <Button
-                              size="icon"
                               size="sm"
                               variant="ghost"
                               onClick={() => copyToClipboard(selectedCall.fromNumber!)}
@@ -2450,7 +2435,6 @@ export function LiveKitPanel() {
                           <code className="text-sm">{selectedCall.toNumber || "N/A"}</code>
                           {selectedCall.toNumber && (
                             <Button
-                              size="icon"
                               size="sm"
                               variant="ghost"
                               onClick={() => copyToClipboard(selectedCall.toNumber!)}

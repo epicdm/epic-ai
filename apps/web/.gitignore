@@ -1,1 +1,10 @@
 .vercel
+
+# Playwright test artifacts
+playwright-report/
+playwright-results/
+test-results/
+
+# Temporary files
+temp-package.json
+test.env

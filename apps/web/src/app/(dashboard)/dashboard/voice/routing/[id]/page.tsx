@@ -307,7 +307,7 @@ export default function EditRoutingRulePage({
           </h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="destructive" variant="ghost" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete}>
             Delete
           </Button>
           <Button onClick={handleSave} disabled={saving}>
@@ -472,10 +472,8 @@ export default function EditRoutingRulePage({
                     className="flex-1"
                   />
                   <Button
-                    size="sm"
-                    variant="destructive"
-                    variant="ghost"
                     size="icon"
+                    variant="destructive"
                     onClick={() => removeCondition(index)}
                   >
                     ×

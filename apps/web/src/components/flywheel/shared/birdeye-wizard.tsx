@@ -587,10 +587,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                 return (
                   <Badge
                     key={phase.key}
-                    
                     variant="secondary"
-                    color={isAnalyzed ? "success" : "default"}
-                    
                   >
                     {phase.title}
                   </Badge>
@@ -650,19 +647,19 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                     Manual setup would take 30-45 minutes. AI configured your entire flywheel in just {analysisTime || 60} seconds.
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <Badge  variant="secondary" variant="outline" >
+                    <Badge variant="outline">
                       Brand Brain
                     </Badge>
-                    <Badge  variant="secondary" variant="outline" >
+                    <Badge variant="outline">
                       Content Factory
                     </Badge>
-                    <Badge  variant="secondary" variant="outline" >
+                    <Badge variant="outline">
                       Publishing
                     </Badge>
-                    <Badge  variant="secondary" variant="outline" >
+                    <Badge variant="outline">
                       Analytics
                     </Badge>
-                    <Badge  variant="secondary" variant="outline" >
+                    <Badge variant="outline">
                       Autopilot
                     </Badge>
                   </div>
@@ -679,7 +676,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                             title={
                 <div className="flex items-center gap-2">
                   <span>Understand</span>
-                  <Badge  variant="secondary" variant="secondary">Brand Brain</Badge>
+                  <Badge variant="secondary">Brand Brain</Badge>
                 </div>
               }
               subtitle="Brand identity, voice & audiences"
@@ -845,7 +842,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                             title={
                 <div className="flex items-center gap-2">
                   <span>Create</span>
-                  <Badge   variant="secondary">Content Factory</Badge>
+                  <Badge variant="secondary">Content Factory</Badge>
                 </div>
               }
               subtitle="Content types & generation settings"
@@ -918,7 +915,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                             title={
                 <div className="flex items-center gap-2">
                   <span>Distribute</span>
-                  <Badge  variant="outline" variant="secondary">Publishing</Badge>
+                  <Badge variant="secondary">Publishing</Badge>
                 </div>
               }
               subtitle="Schedule & platform settings"
@@ -983,7 +980,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                             title={
                 <div className="flex items-center gap-2">
                   <span>Learn</span>
-                  <Badge  variant="outline" variant="secondary">Analytics</Badge>
+                  <Badge variant="secondary">Analytics</Badge>
                 </div>
               }
               subtitle="Metrics & reporting"
@@ -1058,7 +1055,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                             title={
                 <div className="flex items-center gap-2">
                   <span>Automate</span>
-                  <Badge  variant="destructive" variant="secondary">AI Autopilot</Badge>
+                  <Badge variant="secondary">AI Autopilot</Badge>
                 </div>
               }
               subtitle="Automation & notifications"
@@ -1124,9 +1121,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
 
             {/* Escape Hatch Button */}
             <Button
-              variant="ghost"
               variant="outline"
-              
               onClick={handleSwitchToGuided}
             ><Settings2 className="w-4 h-4" /> 
               Customize Manually Instead
@@ -1190,12 +1185,12 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                       <p className="text-xs text-gray-500">{phase.description}</p>
                     </div>
                     {isApplying && (
-                      <Badge  variant="secondary" variant="secondary" className="animate-pulse">
+                      <Badge variant="secondary" className="animate-pulse">
                         Applying...
                       </Badge>
                     )}
                     {isApplied && (
-                      <Badge  variant="outline" variant="secondary">
+                      <Badge variant="outline">
                         <Check className="w-3 h-3 mr-1" />
                         Done
                       </Badge>
@@ -1253,10 +1248,7 @@ export function BirdEyeWizard({ onComplete, initialWebsiteUrl, connectedFacebook
                   return (
                     <Badge
                       key={phase.key}
-                      
-                      variant="secondary"
                       variant="outline"
-                      
                     >
                       {phase.title}
                     </Badge>

@@ -94,7 +94,7 @@ export default function BrandVoicePage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Primary Tone</label>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" variant="secondary">
+                    <Badge variant="secondary">
                       {brandBrain.voiceTone || "Professional"}
                     </Badge>
                     {brandBrain.voiceToneCustom && (
@@ -140,7 +140,7 @@ export default function BrandVoicePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">CTA Style</label>
-                <Badge variant="secondary" variant="secondary">
+                <Badge variant="secondary">
                   {brandBrain.ctaStyle || "Direct"}
                 </Badge>
               </div>
@@ -194,7 +194,7 @@ export default function BrandVoicePage() {
                   <label className="text-sm font-medium">Do Not Mention</label>
                   <div className="flex flex-wrap gap-2">
                     {brandBrain.doNotMention.map((item: string, i: number) => (
-                      <Badge key={i} variant="destructive" variant="secondary" >
+                      <Badge key={i} variant="destructive">
                         {item}
                       </Badge>
                     ))}

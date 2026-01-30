@@ -294,7 +294,7 @@ export default function AgentGroupsPage() {
                   </div>
                   <Dropdown>
                     <DropdownTrigger>
-                      <Button size="sm" variant="ghost" size="icon">
+                      <Button size="icon" variant="ghost">
                         ⋮
                       </Button>
                     </DropdownTrigger>

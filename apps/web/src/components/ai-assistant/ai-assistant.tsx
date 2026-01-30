@@ -266,7 +266,6 @@ export function AIAssistant() {
                 }
               />
               <Button
-                size="icon"
                 size={isMobile ? "md" : "sm"}
                 onClick={handleSend}
                 disabled={!input.trim() || state.isLoading}

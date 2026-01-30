@@ -237,7 +237,7 @@ export function SetupDashboard({
               )}
 
               {flywheelState.flywheelActive && (
-                <Badge variant="outline" variant="secondary" >
+                <Badge variant="secondary">
                   Flywheel Active
                 </Badge>
               )}
@@ -284,7 +284,6 @@ export function SetupDashboard({
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="secondary"
                     variant="secondary"
                     onClick={() => router.push("/setup/ai")}
                   >

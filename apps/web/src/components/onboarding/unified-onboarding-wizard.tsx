@@ -736,9 +736,7 @@ function AgentTypeStep({
             {recommendedOptions.map((option) => (
               <Card
                 key={option.id}
-                className="cursor-pointer"
-                
-                className={`transition-all ${
+                className={`cursor-pointer transition-all ${
                   selectedAgentType === option.id
                     ? "border-2 border-primary bg-primary/5"
                     : "border-2 border-transparent"
@@ -776,9 +774,7 @@ function AgentTypeStep({
               {otherOptions.map((option) => (
                 <Card
                   key={option.id}
-                  className="cursor-pointer"
-                  
-                  className={`transition-all ${
+                  className={`cursor-pointer transition-all ${
                     selectedAgentType === option.id
                       ? "border-2 border-primary bg-primary/5"
                       : "border-2 border-transparent"
@@ -1209,18 +1205,16 @@ function BusinessInfoStep({
             <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
           </div>
 
-          <div className="max-h-[280px]" className="overflow-auto">
+          <div className="max-h-[280px] overflow-auto">
             <div className="grid grid-cols-2 gap-3">
               {brandTemplates.map((template) => {
                 const recommendation = getRecommendedTemplatesForGoal(selectedGoal)
                   .find(r => r.templateId === template.id);
                   
                 return (
-                  <Card 
+                  <Card
                     key={template.id}
-                    className="cursor-pointer"
-                    
-                    className={`transition-all ${selectedTemplate?.id === template.id ? "border-2 border-primary bg-primary/5" : "border-2 border-transparent"}`}
+                    className={`cursor-pointer transition-all ${selectedTemplate?.id === template.id ? "border-2 border-primary bg-primary/5" : "border-2 border-transparent"}`}
                     onClick={() => handleTemplatePreview(template)}
                   >
                     <CardContent className="flex flex-col gap-2">
@@ -1789,16 +1783,14 @@ function AgentSetupStep({
           <div className="flex flex-col gap-2">
             <Button
               onClick={handleCreate}
-              disabled={isCreating}
-              disabled={!brandId || !selectedAgentTemplateId}
+              disabled={isCreating || !brandId || !selectedAgentTemplateId}
             >
               Create agent with AI defaults
             </Button>
             <Button
               variant="outline"
               onClick={onProvisionPhone}
-              disabled={isProvisioning}
-              disabled={!createdAgentId}
+              disabled={isProvisioning || !createdAgentId}
             >
               Provision phone number
             </Button>
@@ -1905,7 +1897,7 @@ function ChannelSelectionStep({
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {lockedChannels.map((channel) => (
-                  <Badge key={channel}  variant="outline" variant="secondary">
+                  <Badge key={channel} variant="secondary">
                     {channel.toUpperCase()}
                   </Badge>
                 ))}
@@ -2021,9 +2013,7 @@ function PathSelectionStep({
           {getPathOptions().map((option) => (
             <Card
               key={option.id}
-              className="cursor-pointer"
-              
-              className={`transition-all ${
+              className={`cursor-pointer transition-all ${
                 selectedPath === option.id
                   ? "border-2 border-primary bg-primary/5"
                   : "border-2 border-transparent"

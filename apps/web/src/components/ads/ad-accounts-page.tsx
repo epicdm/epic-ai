@@ -166,13 +166,11 @@ export function AdAccountsPage() {
                           </p>
                         </div>
                         <div className="flex gap-1">
-                          <Badge  variant="outline" variant="secondary">
+                          <Badge variant="secondary">
                             {account.status}
                           </Badge>
                           <Button
-                            size="icon"
                             size="sm"
-                            variant="ghost"
                             variant="destructive"
                             onClick={() => deleteAccount(account.id)}
                           >

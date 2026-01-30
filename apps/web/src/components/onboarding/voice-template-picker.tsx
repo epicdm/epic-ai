@@ -109,10 +109,8 @@ export function VoiceTemplatePicker({
         {filteredTemplates.map((template) => (
           <Card
             key={template.id}
-            className="cursor-pointer"
-            
             className={cn(
-              "transition-all",
+              "cursor-pointer transition-all",
               selectedId === template.id && "ring-2 ring-primary border-primary"
             )}
             onClick={() => onSelect(template)}

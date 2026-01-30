@@ -167,7 +167,6 @@ export function PhaseStatusCard({
       <Button
         size="sm"
         variant="outline"
-        variant="outline"
         onClick={onStart}
       >
         Start
@@ -193,7 +192,7 @@ export function PhaseStatusCard({
 
               {/* Status Badges */}
               {isCompleted && (
-                <Badge  variant="outline" variant="secondary">
+                <Badge variant="secondary">
                   Complete
                 </Badge>
               )}

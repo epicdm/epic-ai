@@ -66,16 +66,16 @@ const nextConfig: NextConfig = {
         destination: "/dashboard/phone/routing/:path*",
         permanent: true,
       },
-      // Old agent-os routes → new agents routes
+      // Placeholder agents hub → real Agent OS pages
       {
-        source: "/dashboard/agent-os",
-        destination: "/dashboard/agents",
-        permanent: true,
+        source: "/dashboard/agents",
+        destination: "/dashboard/agent-os",
+        permanent: false,
       },
       {
-        source: "/dashboard/agent-os/:path*",
-        destination: "/dashboard/agents/:path*",
-        permanent: true,
+        source: "/dashboard/agents/:path*",
+        destination: "/dashboard/agent-os/:path*",
+        permanent: false,
       },
     ];
   },

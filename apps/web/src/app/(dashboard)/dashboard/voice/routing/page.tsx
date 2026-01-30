@@ -378,7 +378,7 @@ export default function RoutingRulesPage() {
                       />
                       <Dropdown>
                         <DropdownTrigger>
-                          <Button size="sm" variant="ghost" size="icon">
+                          <Button size="icon" variant="ghost">
                             ⋮
                           </Button>
                         </DropdownTrigger>
@@ -563,10 +563,8 @@ export default function RoutingRulesPage() {
                           className="flex-1"
                         />
                         <Button
-                          size="sm"
-                          variant="destructive"
-                          variant="ghost"
                           size="icon"
+                          variant="destructive"
                           onClick={() => removeCondition(index)}
                         >
                           ×

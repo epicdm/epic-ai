@@ -171,7 +171,7 @@ export default function PublishedContentPage() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" variant="secondary" >
+                        <Badge variant="secondary">
                           {item.contentType}
                         </Badge>
                         {item.publishedPlatform && (

@@ -430,7 +430,7 @@ export function AdminPanel() {
                       <Activity className="w-4 h-4" />
                       <span>Database</span>
                     </div>
-                    <Badge  variant="outline" variant="secondary">
+                    <Badge variant="secondary">
                       Connected
                     </Badge>
                   </div>
@@ -581,7 +581,6 @@ export function AdminPanel() {
                             />
                             {config.isEncrypted && (
                               <Button
-                                size="icon"
                                 size="sm"
                                 variant="secondary"
                                 disabled={revealingKey === config.key}

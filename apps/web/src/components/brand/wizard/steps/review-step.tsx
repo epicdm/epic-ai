@@ -286,7 +286,6 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                     <Badge
                       key={idx}
                       variant="secondary"
-                      variant="secondary"
                       onClose={() => handleRemovePillar(idx)}
                     >
                       {pillar}
@@ -306,7 +305,6 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
                 />
                 <Button
                   size="sm"
-                  variant="secondary"
                   variant="secondary"
                   onClick={handleAddPillar}
                   disabled={!newPillar.trim()}
@@ -371,7 +369,6 @@ export function ReviewStep({ stepIndex, onCancel }: ReviewStepProps) {
           {onCancel && (
             <div className="flex justify-center pt-4">
               <Button
-                variant="ghost"
                 variant="destructive"
                 onClick={onCancel}
               >

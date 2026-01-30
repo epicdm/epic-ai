@@ -113,7 +113,7 @@ export default function BrandStrategyPage() {
                 <label className="text-sm font-medium">Core Values</label>
                 <div className="flex flex-wrap gap-2">
                   {brandBrain.values.map((value: string, i: number) => (
-                    <Badge key={i} variant="secondary" variant="secondary" >
+                    <Badge key={i} variant="secondary">
                       {value}
                     </Badge>
                   ))}

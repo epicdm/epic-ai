@@ -407,8 +407,7 @@ export function AIQuickSetup({ phase, onComplete, onSkip, existingData }: AIQuic
           <div className="flex gap-3">
             <Button
               onClick={handleGenerate}
-              disabled={isLoading}
-              disabled={!canSubmit()}
+              disabled={isLoading || !canSubmit()}
               className="flex-1"
               
             >!isLoading && <Sparkles className="w-4 h-4" /> 

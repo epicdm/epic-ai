@@ -101,8 +101,7 @@ export function SettingsForm({ organization }: SettingsFormProps) {
       <div className="flex justify-end">
         <Button
           type="submit"
-          disabled={isLoading}
-          disabled={!isDirty}
+          disabled={isLoading || !isDirty}
         >
           Save Changes
         </Button>

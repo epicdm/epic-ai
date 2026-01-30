@@ -464,13 +464,13 @@ export function WebhooksPage() {
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Recent Webhook Activity</h2>
             <div className="flex gap-2">
-              <Badge  variant="outline" variant="secondary">
+              <Badge variant="secondary">
                 {logCounts.success} Success
               </Badge>
-              <Badge  variant="destructive" variant="secondary">
+              <Badge variant="secondary">
                 {logCounts.failed} Failed
               </Badge>
-              <Badge  variant="outline" variant="secondary">
+              <Badge variant="secondary">
                 {logCounts.duplicate} Duplicate
               </Badge>
             </div>
@@ -499,10 +499,8 @@ export function WebhooksPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Badge
-                            
                             color={STATUS_COLORS[log.status]}
                             variant="secondary"
-                            
                           >
                             {log.status}
                           </Badge>
