@@ -29,7 +29,8 @@ from livekit.protocol.sip import (
 )
 from livekit.protocol.room import RoomConfiguration, CreateRoomRequest
 from livekit.protocol import models  # For ListUpdate
-from livekit.protocol.agent_dispatch import CreateAgentDispatchRequest
+# NOTE: CreateAgentDispatchRequest removed — LiveKit Cloud auto-dispatches agents.
+# Explicit dispatch caused duplicate agents in outbound calls.
 
 
 class LiveKitTelephonyManager:
@@ -709,24 +710,25 @@ class LiveKitTelephonyManager:
             else:
                 room_name = f"outbound-{call_id}"
 
-            # Create room
-            room_request = CreateRoomRequest(name=room_name)
+            # Build metadata for agent config routing
+            # Use 'agent_id' key to match what the agent worker expects
+            metadata = {}
+            if agent_config_id:
+                metadata['agent_id'] = agent_config_id
+                metadata['agent_config_id'] = agent_config_id  # backward compat
+            if organization_id:
+                metadata['org_id'] = organization_id
+                metadata['organization_id'] = organization_id  # backward compat
+
+            # Create room with metadata
+            # NOTE: LiveKit Cloud auto-dispatches agents to new rooms.
+            # Do NOT call create_dispatch explicitly or you'll get duplicate agents.
+            # Room metadata is passed to the agent via the job context.
+            room_request = CreateRoomRequest(
+                name=room_name,
+                metadata=json.dumps(metadata) if metadata else ""
+            )
             await lkapi.room.create_room(room_request)
-
-            # Create agent dispatch with metadata
-            if agent_name:
-                metadata = {}
-                if agent_config_id:
-                    metadata['agent_config_id'] = agent_config_id
-                if organization_id:
-                    metadata['organization_id'] = organization_id
-
-                dispatch_request = CreateAgentDispatchRequest(
-                    agent_name=agent_name,
-                    room=room_name,
-                    metadata=json.dumps(metadata) if metadata else ""
-                )
-                await lkapi.agent_dispatch.create_dispatch(dispatch_request)
 
             # Create SIP participant
             # wait_until_answered=True makes this call wait until the remote party answers
