@@ -2,11 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm turbo build --filter=@epic-ai/web",
   "installCommand": "pnpm install",
-  "outputDirectory": "apps/web/.next",
-  "framework": "nextjs",
-  "functions": {
-    "apps/web/app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  }
+  "outputDirectory": "apps/web/.next"
 }
