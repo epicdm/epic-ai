@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/voice/webhook(.*)",  // LiveKit webhooks for call tracking
   "/api/health",
   "/api/public(.*)",
+  "/api/user(.*)",
   "/api/cron(.*)",
 ]);
 
