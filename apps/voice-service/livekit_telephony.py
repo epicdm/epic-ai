@@ -28,9 +28,8 @@ from livekit.protocol.sip import (
     SIPTransport,
 )
 from livekit.protocol.room import RoomConfiguration, CreateRoomRequest
+from livekit.protocol.agent_dispatch import RoomAgentDispatch
 from livekit.protocol import models  # For ListUpdate
-# NOTE: CreateAgentDispatchRequest removed — LiveKit Cloud auto-dispatches agents.
-# Explicit dispatch caused duplicate agents in outbound calls.
 
 
 class LiveKitTelephonyManager:
@@ -720,13 +719,20 @@ class LiveKitTelephonyManager:
                 metadata['org_id'] = organization_id
                 metadata['organization_id'] = organization_id  # backward compat
 
-            # Create room with metadata
-            # NOTE: LiveKit Cloud auto-dispatches agents to new rooms.
-            # Do NOT call create_dispatch explicitly or you'll get duplicate agents.
-            # Room metadata is passed to the agent via the job context.
+            # Create room with RoomAgentDispatch to target our specific worker.
+            # Using agents=[RoomAgentDispatch(...)] on CreateRoomRequest does 3 things:
+            # 1. Dispatches to our named worker ("epic-voice-agent")
+            # 2. Passes metadata to the agent via job context
+            # 3. Prevents LiveKit's generic auto-dispatch from adding phantom agents
+            metadata_json = json.dumps(metadata) if metadata else ""
+            agent_dispatch = RoomAgentDispatch(
+                agent_name=agent_name,
+                metadata=metadata_json,
+            )
             room_request = CreateRoomRequest(
                 name=room_name,
-                metadata=json.dumps(metadata) if metadata else ""
+                metadata=metadata_json,
+                agents=[agent_dispatch],
             )
             await lkapi.room.create_room(room_request)
 
