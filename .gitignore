@@ -54,3 +54,5 @@ reference-voice/
 
 # Vercel env files with secrets
 .env.vercel*
+.env.local
+.env.production.local
