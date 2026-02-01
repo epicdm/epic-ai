@@ -12,7 +12,7 @@ import { z } from "zod";
 
 // Voice service URL - auto-detects production (Vercel) vs development
 const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL ||
-  (process.env.VERCEL ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice" : "http://localhost:5000");
+  (process.env.VOICE_SERVICE_URL || "http://localhost:5000");
 
 // Schema for creating SIP config
 const createSIPConfigSchema = z.object({

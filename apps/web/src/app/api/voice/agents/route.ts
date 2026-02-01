@@ -24,7 +24,7 @@ import { provisionLiveKitResources } from "@/lib/services/voice/livekit-provisio
 // In production (Vercel), default to DigitalOcean App Platform voice service
 // In development, default to local Flask server
 const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL ||
-  (process.env.VERCEL ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice" : "http://localhost:5000");
+  (process.env.VOICE_SERVICE_URL || "http://localhost:5000");
 
 // Timeout for voice service requests (30 seconds)
 const VOICE_SERVICE_TIMEOUT_MS = 30000;
