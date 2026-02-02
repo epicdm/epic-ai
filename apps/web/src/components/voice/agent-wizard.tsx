@@ -66,10 +66,11 @@ const LLM_MODELS = {
 };
 
 const TTS_PROVIDERS = [
-  { key: "openai", label: "OpenAI TTS" },
-  { key: "elevenlabs", label: "ElevenLabs" },
-  { key: "cartesia", label: "Cartesia" },
-  { key: "deepgram", label: "Deepgram" },
+  { key: "inworld", label: "Inworld TTS 1.5 ⭐", description: "$0.005/min · #1 ranked quality" },
+  { key: "openai", label: "OpenAI TTS", description: "$0.03/min" },
+  { key: "elevenlabs", label: "ElevenLabs", description: "$0.25/min · Premium voices" },
+  { key: "cartesia", label: "Cartesia", description: "$0.05/min" },
+  { key: "deepgram", label: "Deepgram", description: "$0.02/min" },
 ];
 
 const OPENAI_VOICES = [
@@ -79,6 +80,17 @@ const OPENAI_VOICES = [
   { key: "onyx", label: "Onyx" },
   { key: "nova", label: "Nova" },
   { key: "shimmer", label: "Shimmer" },
+  { key: "ash", label: "Ash" },
+  { key: "coral", label: "Coral" },
+  { key: "sage", label: "Sage" },
+];
+
+const INWORLD_VOICES = [
+  { key: "Alex", label: "Alex — Energetic male, mid-range" },
+  { key: "Ashley", label: "Ashley — Warm, natural female" },
+  { key: "Dennis", label: "Dennis — Smooth, calm male" },
+  { key: "Hades", label: "Hades — Deep, authoritative male" },
+  { key: "Zephyr", label: "Zephyr — Friendly, versatile" },
 ];
 
 const wizardSteps: WizardStep[] = [
@@ -126,9 +138,9 @@ export function AgentWizard({ brands }: AgentWizardProps) {
     provisionPhone: true,
     llmProvider: "openai",
     llmModel: "gpt-4o-mini",
-    ttsProvider: "openai",
+    ttsProvider: "inworld",
     sttProvider: "deepgram",
-    voiceId: "nova",
+    voiceId: "Ashley",
     systemPrompt:
       "You are a helpful AI assistant for our company. Be friendly, professional, and concise. Help callers with their questions and guide them to the right resources.",
     greeting: "Hello! Thanks for calling. How can I help you today?",
@@ -505,7 +517,21 @@ function VoiceSettingsStep({ formData, setFormData }: { formData: any; setFormDa
           </Select>
         )}
 
-        {formData.ttsProvider !== "openai" && (
+        {formData.ttsProvider === "inworld" && (
+          <Select
+            label="Voice"
+            selectedKeys={formData.voiceId ? [formData.voiceId] : []}
+            onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
+            size="lg"
+            description="#1 ranked TTS · $0.005/min · 15 languages · Free voice cloning"
+          >
+            {INWORLD_VOICES.map((voice) => (
+              <SelectItem key={voice.key}>{voice.label}</SelectItem>
+            ))}
+          </Select>
+        )}
+
+        {formData.ttsProvider !== "openai" && formData.ttsProvider !== "inworld" && (
           <Input
             label="Voice ID"
             placeholder="Provider-specific voice ID"
