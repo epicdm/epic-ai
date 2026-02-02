@@ -127,7 +127,7 @@ export async function getUser() {
  */
 export async function getCurrentUser() {
   try {
-    const { userId } = await getAuthWithBypass();
+    const { userId, isUATBypass } = await getAuthWithBypass();
 
     if (!userId) {
       return null;
@@ -144,6 +144,22 @@ export async function getCurrentUser() {
       },
     });
 
+    // In UAT bypass, user might not exist yet if ensureUATTestData is still running
+    if (!user && isUATBypass) {
+      console.warn("[getCurrentUser] UAT user not found, waiting for test data creation...");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+      });
+    }
+
     return user;
   } catch (error) {
     console.error("Error in getCurrentUser:", error);
@@ -154,11 +170,21 @@ export async function getCurrentUser() {
 
 /**
  * Get the user's current organization
+ * Includes retry logic for UAT bypass mode where test data may not be ready yet
  */
 export async function getCurrentOrganization() {
   const user = await getCurrentUser();
 
   if (!user || user.memberships.length === 0) {
+    // In UAT bypass mode, the test data might not be ready yet (race condition)
+    // Retry once after a short delay
+    if (isUATBypassEnabled) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const retryUser = await getCurrentUser();
+      if (retryUser && retryUser.memberships.length > 0) {
+        return retryUser.memberships[0].organization;
+      }
+    }
     return null;
   }
 
