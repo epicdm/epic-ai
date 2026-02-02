@@ -39,9 +39,16 @@ export async function getAuthWithBypass(): Promise<{ userId: string | null; isUA
   }
 
   if (isUATBypassEnabled) {
-    // Ensure UAT test user and org exist in database
-    await ensureUATTestData();
-    return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    try {
+      // Ensure UAT test user and org exist in database
+      await ensureUATTestData();
+      return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    } catch (error) {
+      console.error("Error in UAT bypass mode:", error);
+      // Even if UAT test data creation fails, still return the test user ID
+      // This prevents auth failures in development
+      return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    }
   }
 
   return { userId: null, isUATBypass: false };
@@ -119,24 +126,30 @@ export async function getUser() {
  * Supports UAT bypass mode
  */
 export async function getCurrentUser() {
-  const { userId } = await getAuthWithBypass();
+  try {
+    const { userId } = await getAuthWithBypass();
 
-  if (!userId) {
-    return null;
-  }
+    if (!userId) {
+      return null;
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      memberships: {
-        include: {
-          organization: true,
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        memberships: {
+          include: {
+            organization: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return user;
+    return user;
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error);
+    // Return null instead of throwing to prevent auth failures from breaking the app
+    return null;
+  }
 }
 
 /**
