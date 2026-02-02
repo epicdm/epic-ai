@@ -10,7 +10,7 @@ import { getUserOrganization } from "@/lib/sync-user";
 
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 // POST sync agent to voice service
 export async function POST(

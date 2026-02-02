@@ -10,7 +10,7 @@ import { UnderstandWizard } from "@/components/flywheel/wizards/understand-wizar
 import type { UnderstandWizardData } from "@/lib/flywheel/types";
 
 export const metadata = {
-  title: "Understand - Build Your Brand Brain | Epic AI",
+  title: "Understand - Build Your Brand Brain | OpenClaw",
   description: "Define your brand voice, audiences, and content strategy",
 };
 

@@ -6,23 +6,25 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Share2,
+  Bot,
   Phone,
   Users,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   BarChart3,
   Zap,
-  FlaskConical,
-  Megaphone,
-  Brain,
+  BookOpen,
+  PhoneCall,
+  MessageSquare,
   FileText,
-  CheckSquare,
-  Globe,
-  Database,
+  Share2,
+  Brain,
+  CreditCard,
+  Key,
+  Megaphone,
   Calendar,
+  Database,
 } from "lucide-react";
 
 interface NavItem {
@@ -39,7 +41,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Organized by Flywheel stages: Understand → Create → Distribute → Learn → Automate
+// Agent-centric navigation
 const navigationSections: NavSection[] = [
   {
     title: "",
@@ -53,121 +55,94 @@ const navigationSections: NavSection[] = [
     ],
   },
   {
-    title: "Understand",
-    subtitle: "Your brand identity",
+    title: "Agents",
+    subtitle: "Build & manage",
     items: [
       {
-        name: "Brand Brain",
-        href: "/dashboard/brand",
+        name: "My Agents",
+        href: "/dashboard/voice",
+        icon: Bot,
+        children: [
+          { name: "All Agents", href: "/dashboard/voice" },
+          { name: "Create Agent", href: "/dashboard/voice/agents/new" },
+        ],
+      },
+      {
+        name: "Templates",
+        href: "/dashboard/voice/templates",
+        icon: BookOpen,
+      },
+      {
+        name: "Knowledge Bases",
+        href: "/dashboard/voice/knowledge-bases",
         icon: Brain,
-        children: [
-          { name: "Overview", href: "/dashboard/brand" },
-          { name: "Voice & Style", href: "/dashboard/brand/voice" },
-          { name: "Strategy", href: "/dashboard/brand/strategy" },
-        ],
-      },
-      {
-        name: "Context Engine",
-        href: "/dashboard/context",
-        icon: Database,
-        children: [
-          { name: "Sources", href: "/dashboard/context" },
-          { name: "Documents", href: "/dashboard/context?tab=documents" },
-          { name: "Search", href: "/dashboard/context?tab=search" },
-        ],
       },
     ],
   },
   {
-    title: "Create",
-    subtitle: "Content factory",
+    title: "Channels",
+    subtitle: "Connect & communicate",
     items: [
       {
-        name: "Content",
-        href: "/dashboard/content",
-        icon: FileText,
+        name: "Phone Numbers",
+        href: "/dashboard/voice/numbers",
+        icon: Phone,
+      },
+      {
+        name: "Calls",
+        href: "/dashboard/voice/calls",
+        icon: PhoneCall,
         children: [
-          { name: "Queue", href: "/dashboard/content" },
-          { name: "Approval Queue", href: "/dashboard/content/approval" },
-          { name: "Generate", href: "/dashboard/content/generate" },
-          { name: "Published", href: "/dashboard/content/published" },
+          { name: "History", href: "/dashboard/voice/calls" },
+          { name: "Campaigns", href: "/dashboard/voice/campaigns" },
         ],
       },
       {
-        name: "Calendar",
-        href: "/dashboard/calendar",
-        icon: Calendar,
-      },
-    ],
-  },
-  {
-    title: "Distribute",
-    subtitle: "Reach your audience",
-    items: [
-      {
-        name: "Social Accounts",
+        name: "Social",
         href: "/dashboard/social",
         icon: Share2,
         children: [
-          { name: "Overview", href: "/dashboard/social" },
-          { name: "AI Suggestions", href: "/dashboard/social/suggestions" },
-          { name: "Autopilot Settings", href: "/dashboard/social/settings" },
+          { name: "Accounts", href: "/dashboard/social" },
           { name: "Create Post", href: "/dashboard/content/generate" },
-          { name: "Accounts", href: "/dashboard/social/accounts" },
-        ],
-      },
-      {
-        name: "Voice AI",
-        href: "/dashboard/voice",
-        icon: Phone,
-        children: [
-          { name: "Agents", href: "/dashboard/voice" },
-          { name: "Calls", href: "/dashboard/voice/calls" },
-          { name: "Phone Numbers", href: "/dashboard/voice/numbers" },
-        ],
-      },
-      {
-        name: "Ads",
-        href: "/dashboard/ads",
-        icon: Megaphone,
-        children: [
-          { name: "Dashboard", href: "/dashboard/ads" },
-          { name: "Create Campaign", href: "/dashboard/ads/create" },
-          { name: "Ad Accounts", href: "/dashboard/ads/accounts" },
         ],
       },
     ],
   },
   {
-    title: "Learn",
-    subtitle: "Measure & improve",
+    title: "Business",
+    subtitle: "Grow & measure",
     items: [
+      {
+        name: "Leads",
+        href: "/dashboard/leads",
+        icon: Users,
+      },
       {
         name: "Analytics",
         href: "/dashboard/analytics",
         icon: BarChart3,
       },
       {
-        name: "Leads",
-        href: "/dashboard/leads",
-        icon: Users,
+        name: "Content",
+        href: "/dashboard/content",
+        icon: FileText,
+        children: [
+          { name: "Queue", href: "/dashboard/content" },
+          { name: "Generate", href: "/dashboard/content/generate" },
+          { name: "Published", href: "/dashboard/content/published" },
+          { name: "Calendar", href: "/dashboard/calendar" },
+        ],
       },
     ],
   },
   {
     title: "Automate",
-    subtitle: "Set it & forget it",
+    subtitle: "Workflows & campaigns",
     items: [
       {
         name: "Automations",
         href: "/dashboard/automations",
         icon: Zap,
-      },
-      {
-        name: "Integration Tests",
-        href: "/dashboard/test",
-        icon: FlaskConical,
-        badge: "Dev",
       },
     ],
   },
@@ -182,8 +157,10 @@ const bottomNavigation: NavItem[] = [
     href: "/dashboard/settings",
     icon: Settings,
     children: [
-      { name: "General", href: "/dashboard/settings" },
-      { name: "Publishing", href: "/dashboard/settings/publishing" },
+      { name: "Organization", href: "/dashboard/settings" },
+      { name: "Brand & Voice", href: "/dashboard/brand" },
+      { name: "Billing & Usage", href: "/dashboard/settings/billing" },
+      { name: "API Keys", href: "/dashboard/settings/api" },
     ],
   },
 ];
@@ -237,34 +214,32 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             }
           }}
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
             active
-              ? "bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400"
-              : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800",
+              ? "bg-sky-500/10 text-sky-400"
+              : "text-gray-400 hover:bg-white/5 hover:text-gray-200",
             collapsed && "justify-center px-2"
           )}
         >
           <item.icon
             className={cn(
               "flex-shrink-0",
-              collapsed ? "w-6 h-6" : "w-5 h-5",
-              active
-                ? "text-brand-600 dark:text-brand-400"
-                : "text-gray-500 dark:text-gray-500"
+              collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
+              active ? "text-sky-400" : "text-gray-500"
             )}
           />
           {!collapsed && (
             <>
               <span className="flex-1">{item.name}</span>
               {item.badge && (
-                <span className="px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
+                <span className="px-1.5 py-0.5 text-[10px] bg-white/10 text-gray-400 rounded font-normal">
                   {item.badge}
                 </span>
               )}
               {hasChildren && (
                 <ChevronRight
                   className={cn(
-                    "w-4 h-4 transition-transform",
+                    "w-3.5 h-3.5 text-gray-600 transition-transform",
                     expanded && "rotate-90"
                   )}
                 />
@@ -275,16 +250,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* Children */}
         {hasChildren && expanded && !collapsed && (
-          <div className="ml-4 mt-1 space-y-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+          <div className="ml-5 mt-0.5 space-y-0.5 border-l border-white/5 pl-3">
             {item.children!.map((child) => (
               <Link
                 key={child.href}
                 href={child.href}
                 className={cn(
-                  "block px-3 py-2 rounded-lg text-sm transition-colors",
+                  "block px-3 py-1.5 rounded-md text-[13px] transition-colors",
                   pathname === child.href
-                    ? "text-brand-700 dark:text-brand-400 font-medium"
-                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                    ? "text-sky-400 font-medium"
+                    : "text-gray-500 hover:text-gray-300"
                 )}
               >
                 {child.name}
@@ -299,52 +274,47 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "fixed left-0 top-0 z-40 h-screen bg-gray-950 border-r border-white/5 transition-all duration-300",
+        collapsed ? "w-16" : "w-60"
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          "flex items-center h-16 border-b border-gray-200 dark:border-gray-800",
+          "flex items-center h-14 border-b border-white/5",
           collapsed ? "justify-center px-2" : "px-4"
         )}
       >
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-700 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <span className="text-xl">🐾</span>
           {!collapsed && (
-            <span className="font-bold text-xl bg-gradient-to-r from-brand-500 to-brand-700 bg-clip-text text-transparent">
-              Epic AI
+            <span className="font-bold text-lg text-white tracking-tight">
+              OpenClaw
             </span>
           )}
         </Link>
       </div>
 
       {/* Navigation */}
-      <div className="flex flex-col h-[calc(100vh-4rem)] py-4">
-        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] py-3">
+        <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
           {navigationSections.map((section, sectionIndex) => (
             <div key={section.title || sectionIndex}>
               {/* Section Header */}
               {section.title && !collapsed && (
-                <div className="pt-4 pb-2 first:pt-0">
-                  <div className="flex items-center gap-2 px-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      {section.title}
-                    </span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700" />
-                  </div>
-                  {section.subtitle && (
-                    <span className="px-2 text-[10px] text-gray-400 dark:text-gray-600">
-                      {section.subtitle}
-                    </span>
-                  )}
+                <div className="pt-5 pb-1.5 first:pt-0">
+                  <span className="px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
+                    {section.title}
+                  </span>
+                </div>
+              )}
+              {collapsed && section.title && (
+                <div className="pt-4 pb-1">
+                  <div className="mx-auto w-6 h-px bg-white/10" />
                 </div>
               )}
               {/* Section Items */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {section.items.map(renderNavItem)}
               </div>
             </div>
@@ -352,25 +322,25 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="px-3 space-y-1 border-t border-gray-200 dark:border-gray-800 pt-4">
+        <div className="px-2 space-y-0.5 border-t border-white/5 pt-3">
           {bottomNavigation.map(renderNavItem)}
         </div>
 
         {/* Collapse Toggle */}
-        <div className="px-3 pt-4">
+        <div className="px-2 pt-2">
           <button
             onClick={() => onCollapsedChange(!collapsed)}
             className={cn(
-              "flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+              "flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 hover:text-gray-400 rounded-lg hover:bg-white/5 transition-colors",
               collapsed && "justify-center"
             )}
           >
             {collapsed ? (
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             ) : (
               <>
-                <ChevronLeft className="w-5 h-5" />
-                <span>Collapse</span>
+                <ChevronLeft className="w-4 h-4" />
+                <span className="text-xs">Collapse</span>
               </>
             )}
           </button>

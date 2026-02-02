@@ -295,7 +295,7 @@ async function handleParticipantJoined(event: WebhookEvent) {
       agentId: callContext.agentId ?? undefined,
       phoneMappingId: callContext.phoneMappingId ?? undefined,
       direction: CallDirection.INBOUND,
-      phoneNumber: calledNumber || undefined, // Epic AI's number that was dialed
+      phoneNumber: calledNumber || undefined, // OpenClaw's number that was dialed
       callerNumber: callerNumber, // The customer's number who called in
       livekitRoomName: roomName,
       livekitRoomSid: room.sid ?? undefined,

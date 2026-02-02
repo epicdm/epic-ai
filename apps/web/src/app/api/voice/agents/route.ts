@@ -296,6 +296,7 @@ export async function GET() {
     console.log("[GET /api/voice/agents] Organization:", org ? `${org.name} (${org.id})` : "null");
 
     if (!org) {
+      console.warn("[GET /api/voice/agents] getCurrentOrganization() returned null, using fallback to query all user memberships");
       // No organization found - let's check all agents for this user
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -424,6 +425,7 @@ export async function POST(request: NextRequest) {
     // Get organization with fallback
     let org = await getCurrentOrganization();
     if (!org) {
+      console.warn("[agents POST] getCurrentOrganization() returned null, using fallback to first membership");
       // Fallback: get first membership's organization
       const userWithMemberships = await prisma.user.findUnique({
         where: { id: userId },
@@ -433,6 +435,7 @@ export async function POST(request: NextRequest) {
         org = userWithMemberships.memberships[0].organization;
         console.log("[agents POST] Using fallback org:", org.id, org.name);
       } else {
+        console.error("[agents POST] No organization found even with fallback");
         return NextResponse.json({ error: "No organization" }, { status: 404 });
       }
     }

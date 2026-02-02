@@ -70,7 +70,7 @@ function getSuggestions(page: string, hasData: boolean): string[] {
   const baseSuggestions = {
     "/dashboard": hasData
       ? ["What are my top performing posts?", "How can I improve engagement?", "Show me voice campaign results"]
-      : ["How do I get started?", "What features does Epic AI have?", "Help me create my first content"],
+      : ["How do I get started?", "What features does OpenClaw have?", "Help me create my first content"],
     "/dashboard/brand": ["Help me define my brand voice", "What are content pillars?", "How do I add a target audience?"],
     "/dashboard/content": ["Generate content ideas for me", "What's the best time to post?", "Help me write a LinkedIn post"],
     "/dashboard/voice": ["How do I create a voice agent?", "What are outbound campaigns?", "Show me available templates"],
@@ -133,17 +133,17 @@ Total content items: ${contentCount}
     )?.[1] || pageContexts["/dashboard"];
 
     // Build system prompt
-    const systemPrompt = `You are an AI assistant for Epic AI, a self-improving AI marketing platform. You help users navigate and use the platform effectively.
+    const systemPrompt = `You are an AI assistant for OpenClaw, an AI agent platform. You help users create, deploy, and manage AI agents.
 
 Platform Overview:
-Epic AI has 7 core modules that work together in a flywheel:
-1. Brand Brain - Central intelligence for brand voice and settings
-2. Context Engine - External data sources to keep content relevant
-3. Social Connectors - Native OAuth connections to platforms (Twitter, LinkedIn, Meta)
-4. Content Factory - AI-powered content generation
-5. Publishing Engine - Schedule and automate content
-6. Analytics - Collect metrics and generate insights
-7. Unified Dashboard - Command center for everything
+OpenClaw lets businesses deploy AI agents that handle voice calls, qualify leads, book appointments, and automate workflows:
+1. Agents - Create and manage AI voice agents with custom personalities and instructions
+2. Knowledge Bases - Upload documents and FAQs so agents answer accurately
+3. Phone Numbers - Assign phone numbers and SIP trunks to agents
+4. Call History - View call logs, recordings, transcripts, and outcomes
+5. Templates - Pre-built agent configurations for common use cases
+6. Automations - Connect agents to CRM, calendar, and other business tools
+7. Analytics - Track call volume, success rates, costs, and agent performance
 
 Current Context:
 ${pageContext}

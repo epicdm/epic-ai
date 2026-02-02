@@ -4,7 +4,7 @@ import { prisma } from "@epic-ai/database";
 import { AIContentWizard } from "@/components/content/ai-content-wizard";
 
 export const metadata = {
-  title: "Create Content | Epic AI",
+  title: "Create Content | OpenClaw",
 };
 
 export default async function Page() {

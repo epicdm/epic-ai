@@ -1,6 +1,6 @@
 /**
  * Magnus Billing API Client
- * Port from Python reference code in /opt/epic-ai/livekit1/magnus_billing_client.py
+ * Port from Python reference code in /opt/openclaw/livekit1/magnus_billing_client.py
  *
  * Magnus Billing is used for:
  * - DID (phone number) management

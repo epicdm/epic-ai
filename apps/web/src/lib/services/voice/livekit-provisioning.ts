@@ -9,7 +9,7 @@
 export const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
   (process.env.VERCEL
-    ? "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice"
+    ? "https://openclaw-platform-zcjiu.ondigitalocean.app/voice"
     : "http://localhost:5000");
 
 // Timeout for voice service requests (30 seconds)

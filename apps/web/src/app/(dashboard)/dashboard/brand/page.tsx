@@ -6,7 +6,7 @@ import { BrandBrainPage } from "@/components/brand/brand-brain-page";
 import { BrandOverview } from "@/components/brand/brand-overview";
 
 export const metadata = {
-  title: "Brand Brain | Epic AI",
+  title: "Brand Brain | OpenClaw",
 };
 
 export default async function BrandPage() {

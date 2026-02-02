@@ -11,7 +11,7 @@ import { prisma } from "@epic-ai/database";
 import { BirdEyeWizard } from "@/components/flywheel/shared/birdeye-wizard";
 
 export const metadata = {
-  title: "AI Express Setup | Epic AI",
+  title: "AI Express Setup | OpenClaw",
   description: "Let AI configure your entire marketing flywheel in under 5 minutes",
 };
 

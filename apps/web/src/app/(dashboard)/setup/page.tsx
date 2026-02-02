@@ -20,7 +20,7 @@ import type { FlywheelState, FlywheelPhase, PhaseState } from "@/lib/flywheel/ty
 import { SetupDashboard } from "./setup-dashboard";
 
 export const metadata = {
-  title: "Setup | Epic AI",
+  title: "Setup | OpenClaw",
   description: "Set up your AI marketing flywheel",
 };
 

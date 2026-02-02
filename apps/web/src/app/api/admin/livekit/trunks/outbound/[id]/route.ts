@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 const VOICE_SERVICE_TIMEOUT_MS = 30000;
 

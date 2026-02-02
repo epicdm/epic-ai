@@ -2,14 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Epic AI",
-    short_name: "Epic AI",
+    name: "OpenClaw",
+    short_name: "OpenClaw",
     description:
-      "Social media management and voice AI agents in one platform. From first impression to closed deal — all automated.",
+      "Build, deploy, and manage AI agents across voice, chat, and messaging. Open source AI Agent Platform.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#f9fafb",
-    theme_color: "#6366f1",
+    background_color: "#030712",
+    theme_color: "#0ea5e9",
     icons: [
       {
         src: "/icon.svg",

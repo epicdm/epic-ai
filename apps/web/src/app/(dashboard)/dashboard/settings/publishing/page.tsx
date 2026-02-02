@@ -9,7 +9,7 @@ import { prisma } from "@epic-ai/database";
 import { PublishingSettings } from "@/components/publishing/PublishingSettings";
 
 export const metadata = {
-  title: "Publishing Settings | Epic AI",
+  title: "Publishing Settings | OpenClaw",
   description: "Configure your publishing schedules and automation",
 };
 

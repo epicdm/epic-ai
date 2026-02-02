@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Unified Dashboard Component - PKG-026
- * Main command center bringing together all modules
+ * OpenClaw Agent Dashboard
+ * Command center for AI agents — voice, chat, automation
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,1000 +14,560 @@ import {
   Chip,
   Spinner,
   Progress,
-  Select,
-  SelectItem,
   Tooltip,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+  Avatar,
 } from "@heroui/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  Brain,
+  Bot,
+  Phone,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Clock,
+  TrendingUp,
+  DollarSign,
+  Plus,
+  ArrowRight,
+  Activity,
+  Zap,
+  MessageSquare,
+  Globe,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
   Sparkles,
-  Send,
   BarChart3,
   Users,
-  DollarSign,
-  TrendingUp,
-  Eye,
-  Heart,
-  Target,
-  Lightbulb,
-  ArrowRight,
-  CheckCircle,
-  RefreshCw,
-  Twitter,
-  Linkedin,
-  Facebook,
-  Instagram,
-  Calendar,
-  FileText,
-  Zap,
-  Activity,
-  Rocket,
-  PartyPopper,
+  BookOpen,
+  Settings,
+  ChevronRight,
+  PhoneCall,
+  Mic,
+  Brain,
 } from "lucide-react";
-import { FlywheelProgressCard } from "@/components/flywheel";
-import { LearningLoopCard } from "./learning-loop-card";
-import type { FlywheelState, FlywheelPhase, PhaseState, PhaseStatusType } from "@/lib/flywheel/types";
-import { PHASE_DEPENDENCIES } from "@/lib/flywheel/constants";
 
-interface DashboardData {
-  brand: {
-    id: string | null;
-  };
-  brandBrain: {
-    isSetup: boolean;
-    companyName: string | null;
-    audienceCount: number;
-    pillarCount: number;
-    learningCount: number;
-  };
-  accounts: {
-    total: number;
-    totalFollowers: number;
-    list: {
-      id: string;
-      platform: string;
-      username: string | null;
-      displayName: string | null;
-      avatar: string | null;
-      followerCount: number | null;
-    }[];
-  };
-  content: {
-    draft: number;
-    pending: number;
-    approved: number;
-    scheduled: number;
-    published: number;
-    total: number;
-  };
-  organic: {
-    posts: number;
-    impressions: number;
-    engagements: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    avgEngagementRate: number;
-  };
-  paid: {
-    spend: number;
-    impressions: number;
-    clicks: number;
-    conversions: number;
-    ctr: number;
-    cpa: number;
-  };
-  leads: {
-    total: number;
-    new: number;
-    contacted: number;
-    qualified: number;
-    converted: number;
-    organic: number;
-    paid: number;
-  };
-  roi: {
-    totalSpend: number;
-    totalLeads: number;
-    costPerLead: number;
-    conversionRate: number;
-  };
-  insights: {
-    id: string;
-    type: string;
-    insight: string;
-    confidence: number;
-  }[];
-  flywheel: {
-    score: number;
-    status: string;
-    components: { name: string; active: boolean }[];
-  };
-  activity: {
-    type: string;
-    title: string;
-    description: string;
-    timestamp: string;
-    platform?: string;
-    status?: string;
-  }[];
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+interface AgentSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  isDeployed: boolean;
+  phoneNumbers: { id: string; number: string }[];
+  _count: { calls: number };
 }
 
-const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  TWITTER: Twitter,
-  LINKEDIN: Linkedin,
-  FACEBOOK: Facebook,
-  INSTAGRAM: Instagram,
-};
-
-const PLATFORM_COLORS: Record<string, string> = {
-  TWITTER: "bg-black",
-  LINKEDIN: "bg-blue-700",
-  FACEBOOK: "bg-blue-600",
-  INSTAGRAM: "bg-gradient-to-br from-purple-600 to-pink-500",
-};
-
-const FLYWHEEL_STATUS_COLORS: Record<string, string> = {
-  inactive: "text-default-400",
-  starting: "text-warning",
-  spinning: "text-primary",
-  accelerating: "text-secondary",
-  optimal: "text-success",
-};
-
-// Transform API response to FlywheelState format
-function transformFlywheelData(apiData: Record<string, unknown>): FlywheelState {
-  const phases: Record<FlywheelPhase, PhaseState> = {} as Record<FlywheelPhase, PhaseState>;
-  const phaseKeys: FlywheelPhase[] = ["UNDERSTAND", "CREATE", "DISTRIBUTE", "LEARN", "AUTOMATE"];
-
-  for (const phase of phaseKeys) {
-    const phaseData = (apiData.phases as Record<string, unknown>)?.[phase] as Record<string, unknown> | undefined;
-    const status = (phaseData?.status as PhaseStatusType) || "NOT_STARTED";
-    const step = (phaseData?.step as number) ?? -1;
-    const totalSteps = (phaseData?.totalSteps as number) ?? 8;
-
-    // Calculate blocked state based on dependencies
-    const deps = PHASE_DEPENDENCIES[phase] || [];
-    const blockedBy = deps.filter((dep) => {
-      const depData = (apiData.phases as Record<string, unknown>)?.[dep] as Record<string, unknown> | undefined;
-      return depData?.status !== "COMPLETED";
-    });
-
-    phases[phase] = {
-      phase,
-      status,
-      currentStep: step,
-      totalSteps,
-      data: null,
-      isBlocked: blockedBy.length > 0,
-      blockedBy,
-    };
-  }
-
-  return {
-    phases,
-    overallProgress: (apiData.overallProgress as number) ?? 0,
-    flywheelActive: (apiData.flywheelActive as boolean) ?? false,
-    activatedAt: apiData.activatedAt ? new Date(apiData.activatedAt as string) : undefined,
-    lastActivePhase: apiData.lastActivePhase as FlywheelPhase | undefined,
-    lastActiveAt: apiData.lastActiveAt ? new Date(apiData.lastActiveAt as string) : new Date(),
-  };
+interface VoiceStats {
+  totalCalls: number;
+  totalMinutes: number;
+  successRate: number;
+  activeAgents: number;
+  phoneNumbers: number;
+  totalCost: number;
 }
 
-interface UnifiedDashboardProps {
-  flywheelJustActivated?: boolean;
+interface RecentCall {
+  id: string;
+  direction: string;
+  status: string;
+  duration: number | null;
+  callerNumber: string | null;
+  calleeNumber: string | null;
+  createdAt: string;
+  agent?: { name: string };
 }
 
-export function UnifiedDashboard({ flywheelJustActivated = false }: UnifiedDashboardProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [flywheelState, setFlywheelState] = useState<FlywheelState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState("30");
-  const [showActivationModal, setShowActivationModal] = useState(flywheelJustActivated);
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 
-  // Calculate onboarding progress
-  const getOnboardingStatus = (dashboardData: DashboardData) => {
-    const steps = [
-      { id: 'brand', label: 'Set up Brand Brain', done: dashboardData.brandBrain.isSetup, href: '/dashboard/brand' },
-      { id: 'accounts', label: 'Connect social accounts', done: dashboardData.accounts.total > 0, href: '/dashboard/social/accounts' },
-      { id: 'content', label: 'Create your first post', done: dashboardData.content.total > 0, href: '/dashboard/content' },
-    ];
-    const completed = steps.filter(s => s.done).length;
-    return { steps, completed, total: steps.length, isComplete: completed === steps.length };
-  };
-
-  const loadDashboard = useCallback(async () => {
-    setError(null);
-    try {
-      // Fetch both dashboard and flywheel data in parallel
-      const [dashboardRes, flywheelRes] = await Promise.all([
-        fetch(`/api/dashboard?period=${period}`),
-        fetch("/api/flywheel/progress"),
-      ]);
-
-      if (dashboardRes.ok) {
-        const dashboardData = await dashboardRes.json();
-        setData(dashboardData);
-      } else {
-        const errorData = await dashboardRes.json().catch(() => ({}));
-        setError(errorData.error || `Failed to load dashboard (${dashboardRes.status})`);
-      }
-
-      // Flywheel data - provide default state if missing
-      if (flywheelRes.ok) {
-        const flywheelData = await flywheelRes.json();
-        setFlywheelState(transformFlywheelData(flywheelData));
-      } else {
-        // Provide default state so wizard card still shows
-        setFlywheelState({
-          phases: {
-            UNDERSTAND: { phase: "UNDERSTAND", status: "NOT_STARTED", currentStep: -1, totalSteps: 8, data: null, isBlocked: false, blockedBy: [] },
-            CREATE: { phase: "CREATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["UNDERSTAND"] },
-            DISTRIBUTE: { phase: "DISTRIBUTE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["CREATE"] },
-            LEARN: { phase: "LEARN", status: "NOT_STARTED", currentStep: -1, totalSteps: 5, data: null, isBlocked: true, blockedBy: ["DISTRIBUTE"] },
-            AUTOMATE: { phase: "AUTOMATE", status: "NOT_STARTED", currentStep: -1, totalSteps: 6, data: null, isBlocked: true, blockedBy: ["LEARN"] },
-          },
-          overallProgress: 0,
-          flywheelActive: false,
-          lastActiveAt: new Date(),
-        });
-      }
-    } catch (error) {
-      console.error("Error loading dashboard:", error);
-      setError("Failed to connect to server");
-    } finally {
-      setLoading(false);
-    }
-  }, [period]);
-
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger/10 flex items-center justify-center">
-            <Activity className="w-8 h-8 text-danger" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Unable to load dashboard</h2>
-          <p className="text-default-500 mb-6">
-            {error || "We couldn't fetch your dashboard data. Please try again."}
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button variant="bordered" onPress={() => router.push("/onboarding")}>
-              Setup Wizard
-            </Button>
-            <Button color="primary" onPress={() => loadDashboard()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const onboarding = data ? getOnboardingStatus(data) : null;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {data.brandBrain.companyName
-              ? `Welcome back, ${data.brandBrain.companyName}`
-              : "Welcome to Epic AI"}
-          </h1>
-          <p className="text-default-500">
-            Your AI-powered marketing command center
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Select
-            size="sm"
-            selectedKeys={[period]}
-            onSelectionChange={(keys) =>
-              setPeriod(Array.from(keys)[0] as string)
-            }
-            className="w-32"
-          >
-            <SelectItem key="7">7 days</SelectItem>
-            <SelectItem key="30">30 days</SelectItem>
-            <SelectItem key="90">90 days</SelectItem>
-          </Select>
-          <Button isIconOnly variant="bordered" onPress={() => loadDashboard()}>
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Flywheel Progress Card - Show when setup is incomplete (progress < 100%) */}
-      {flywheelState && flywheelState.overallProgress < 100 && (
-        <FlywheelProgressCard
-          flywheelState={flywheelState}
-          compact={flywheelState.overallProgress > 50}
-        />
-      )}
-
-      {/* Flywheel Status - Only show full version when flywheel is active AND setup is complete */}
-      {flywheelState?.flywheelActive && flywheelState.overallProgress >= 100 ? (
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div
-                    className={`w-20 h-20 rounded-full border-4 ${
-                      data.flywheel.status === "optimal"
-                        ? "border-success"
-                        : data.flywheel.status === "accelerating"
-                          ? "border-secondary"
-                          : data.flywheel.status === "spinning"
-                            ? "border-primary"
-                            : "border-default-300"
-                    } flex items-center justify-center`}
-                  >
-                    <Zap
-                      className={`w-8 h-8 ${FLYWHEEL_STATUS_COLORS[data.flywheel.status]}`}
-                    />
-                  </div>
-                  {data.flywheel.status !== "inactive" && (
-                    <div className="absolute -top-1 -right-1">
-                      <span className="relative flex h-4 w-4">
-                        <span
-                          className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                            data.flywheel.status === "optimal"
-                              ? "bg-success"
-                              : "bg-primary"
-                          } opacity-75`}
-                        ></span>
-                        <span
-                          className={`relative inline-flex rounded-full h-4 w-4 ${
-                            data.flywheel.status === "optimal"
-                              ? "bg-success"
-                              : "bg-primary"
-                          }`}
-                        ></span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold capitalize">
-                    Flywheel: {data.flywheel.status}
-                  </h2>
-                  <Progress
-                    value={data.flywheel.score}
-                    className="w-48 mt-2"
-                    color={
-                      data.flywheel.score >= 90
-                        ? "success"
-                        : data.flywheel.score >= 60
-                          ? "primary"
-                          : "warning"
-                    }
-                  />
-                  <p className="text-sm text-default-500 mt-1">
-                    System Health: {data.flywheel.score}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                {data.flywheel.components.map((comp, i) => (
-                  <Tooltip key={i} content={comp.name}>
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        comp.active ? "bg-success" : "bg-default-300"
-                      }`}
-                    />
-                  </Tooltip>
-                ))}
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      ) : (
-        /* During setup: Show minimal system health indicator with clear labeling */
-        <Card className="border border-default-200">
-          <CardBody className="py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-default-100 rounded-lg">
-                  <Activity className="w-4 h-4 text-default-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-default-600">
-                    System Health
-                  </p>
-                  <p className="text-xs text-default-400">
-                    {data.flywheel.components.filter(c => c.active).length} of {data.flywheel.components.length} components active
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1">
-                  {data.flywheel.components.map((comp, i) => (
-                    <Tooltip key={i} content={comp.name}>
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          comp.active ? "bg-success" : "bg-default-300"
-                        }`}
-                      />
-                    </Tooltip>
-                  ))}
-                </div>
-                <Chip size="sm" variant="flat" color="default">
-                  {data.flywheel.score}%
-                </Chip>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Learning Loop - Show for users with active flywheel */}
-      {onboarding?.isComplete && data.brand.id && (
-        <LearningLoopCard brandId={data.brand.id} compact />
-      )}
-
-      {/* Next Steps Guidance - Show when flywheel is not fully active */}
-      {data.flywheel.score < 100 && (() => {
-        const inactiveComponents = data.flywheel.components.filter(c => !c.active);
-        const needsContent = inactiveComponents.some(c => c.name === "Published Content");
-        const needsAccounts = inactiveComponents.some(c => c.name === "Social Accounts");
-        const needsAnalytics = inactiveComponents.some(c => c.name === "Analytics Active");
-        const needsLearnings = inactiveComponents.some(c => c.name === "AI Learnings");
-
-        // Determine the primary next action
-        let nextStep: { title: string; description: string; action: string; href: string; icon: React.ReactNode } | null = null;
-
-        if (needsAccounts && data.accounts.total === 0) {
-          nextStep = {
-            title: "Connect a Social Account",
-            description: "Link your social profiles to start publishing content",
-            action: "Connect Account",
-            href: "/dashboard/social/accounts",
-            icon: <Send className="w-5 h-5" />,
-          };
-        } else if (needsContent) {
-          nextStep = {
-            title: "Create Your First Post",
-            description: "Use AI to generate on-brand content and publish to your connected accounts",
-            action: "Create Content",
-            href: "/dashboard/content/generate",
-            icon: <Sparkles className="w-5 h-5" />,
-          };
-        } else if (needsAnalytics || needsLearnings) {
-          nextStep = {
-            title: "Waiting for Data",
-            description: "Analytics and AI Learnings will activate automatically once your posts collect engagement",
-            action: "View Analytics",
-            href: "/dashboard/analytics",
-            icon: <BarChart3 className="w-5 h-5" />,
-          };
-        }
-
-        if (!nextStep) return null;
-
-        return (
-          <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-            <CardBody className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-xl">
-                    {nextStep.icon}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-lg">{nextStep.title}</p>
-                      <Chip size="sm" color="primary" variant="flat">Next Step</Chip>
-                    </div>
-                    <p className="text-sm text-default-500 mt-0.5">{nextStep.description}</p>
-                    <p className="text-xs text-default-400 mt-1">
-                      {inactiveComponents.length} component{inactiveComponents.length > 1 ? 's' : ''} remaining to reach 100% system health
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  color="primary"
-                  size="lg"
-                  endContent={<ArrowRight className="w-4 h-4" />}
-                  onPress={() => router.push(nextStep!.href)}
-                >
-                  {nextStep.action}
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
-        );
-      })()}
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card isPressable onPress={() => router.push("/dashboard/content")}>
-          <CardBody className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="font-medium">Create Content</p>
-              <p className="text-xs text-default-500">AI-powered</p>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card isPressable onPress={() => router.push("/dashboard/calendar")}>
-          <CardBody className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-secondary/10 rounded-lg">
-              <Calendar className="w-5 h-5 text-secondary" />
-            </div>
-            <div>
-              <p className="font-medium">View Calendar</p>
-              <p className="text-xs text-default-500">
-                {data.content.scheduled} scheduled
-              </p>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card isPressable onPress={() => router.push("/dashboard/leads")}>
-          <CardBody className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-success/10 rounded-lg">
-              <Users className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="font-medium">Manage Leads</p>
-              <p className="text-xs text-default-500">{data.leads.new} new</p>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card isPressable onPress={() => router.push("/dashboard/brand")}>
-          <CardBody className="flex flex-row items-center gap-3">
-            <div className="p-2 bg-warning/10 rounded-lg">
-              <Brain className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="font-medium">Brand Brain</p>
-              <p className="text-xs text-default-500">
-                {data.brandBrain.learningCount} learnings
-              </p>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Organic Performance */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <span className="font-semibold">Organic</span>
-            </div>
-            <Button
-              size="sm"
-              variant="light"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={() => router.push("/dashboard/analytics")}
-            >
-              Details
-            </Button>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <Eye className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">
-                  {data.organic.impressions.toLocaleString()}
-                </p>
-                <p className="text-xs text-default-500">Impressions</p>
-              </div>
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <Heart className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">
-                  {data.organic.engagements.toLocaleString()}
-                </p>
-                <p className="text-xs text-default-500">Engagements</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
-              <span className="text-sm">Avg Engagement Rate</span>
-              <Chip color="primary" variant="flat">
-                {data.organic.avgEngagementRate.toFixed(2)}%
-              </Chip>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Paid Performance */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-success" />
-              <span className="font-semibold">Paid Ads</span>
-            </div>
-            <Button
-              size="sm"
-              variant="light"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={() => router.push("/dashboard/ads")}
-            >
-              Details
-            </Button>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <DollarSign className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">
-                  ${data.paid.spend.toLocaleString()}
-                </p>
-                <p className="text-xs text-default-500">Ad Spend</p>
-              </div>
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <Target className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">{data.paid.conversions}</p>
-                <p className="text-xs text-default-500">Conversions</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-success/5 rounded-lg">
-              <span className="text-sm">Cost per Lead</span>
-              <Chip color="success" variant="flat">
-                ${data.paid.cpa.toFixed(2)}
-              </Chip>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Leads */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-warning" />
-              <span className="font-semibold">Leads</span>
-            </div>
-            <Button
-              size="sm"
-              variant="light"
-              endContent={<ArrowRight className="w-4 h-4" />}
-              onPress={() => router.push("/dashboard/leads")}
-            >
-              Details
-            </Button>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <Users className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">{data.leads.total}</p>
-                <p className="text-xs text-default-500">Total Leads</p>
-              </div>
-              <div className="text-center p-3 bg-default-50 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-default-400 mx-auto mb-1" />
-                <p className="text-xl font-bold">{data.leads.qualified}</p>
-                <p className="text-xs text-default-500">Qualified</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-warning/5 rounded-lg">
-              <span className="text-sm">Conversion Rate</span>
-              <Chip color="warning" variant="flat">
-                {data.roi.conversionRate.toFixed(1)}%
-              </Chip>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* AI Insights & Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AI Insights */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-warning" />
-              <span className="font-semibold">AI Insights</span>
-            </div>
-          </CardHeader>
-          <CardBody>
-            {data.insights.length > 0 ? (
-              <div className="space-y-3">
-                {data.insights.map((insight) => (
-                  <div
-                    key={insight.id}
-                    className="p-3 bg-warning/5 border border-warning/20 rounded-lg"
-                  >
-                    <p className="text-sm">{insight.insight}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Chip size="sm" variant="flat">
-                        {insight.type.replace(/_/g, " ")}
-                      </Chip>
-                      <span className="text-xs text-default-400">
-                        {(insight.confidence * 100).toFixed(0)}% confidence
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Lightbulb className="w-12 h-12 text-default-200 mx-auto mb-3" />
-                <p className="text-default-500">
-                  No insights yet. Keep posting to unlock AI recommendations!
-                </p>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-secondary" />
-              <span className="font-semibold">Recent Activity</span>
-            </div>
-          </CardHeader>
-          <CardBody>
-            {data.activity.length > 0 ? (
-              <div className="space-y-3">
-                {data.activity.map((item, i) => {
-                  const Icon =
-                    item.type === "post_published"
-                      ? Send
-                      : item.type === "lead_created"
-                        ? Users
-                        : FileText;
-                  const PlatformIcon = item.platform
-                    ? PLATFORM_ICONS[item.platform]
-                    : null;
-
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-default-50"
-                    >
-                      <div
-                        className={`p-2 rounded-lg ${
-                          item.type === "post_published"
-                            ? "bg-success/10"
-                            : item.type === "lead_created"
-                              ? "bg-primary/10"
-                              : "bg-secondary/10"
-                        }`}
-                      >
-                        {PlatformIcon ? (
-                          <PlatformIcon className="w-4 h-4" />
-                        ) : (
-                          <Icon className="w-4 h-4" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{item.title}</p>
-                        <p className="text-xs text-default-500 truncate">
-                          {item.description}
-                        </p>
-                      </div>
-                      <span className="text-xs text-default-400 whitespace-nowrap">
-                        {formatTimeAgo(new Date(item.timestamp))}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Activity className="w-12 h-12 text-default-200 mx-auto mb-3" />
-                <p className="text-default-500">No recent activity</p>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Connected Accounts */}
-      <Card>
-        <CardHeader className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            <span className="font-semibold">Connected Accounts</span>
-          </div>
-          <Button
-            size="sm"
-            variant="bordered"
-            onPress={() => router.push("/dashboard/social/accounts")}
-          >
-            Manage
-          </Button>
-        </CardHeader>
-        <CardBody>
-          {data.accounts.list.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
-              {data.accounts.list.map((account) => {
-                const Icon = PLATFORM_ICONS[account.platform];
-                return (
-                  <div
-                    key={account.id}
-                    className="flex items-center gap-3 p-3 bg-default-50 rounded-lg"
-                  >
-                    <div
-                      className={`w-10 h-10 ${PLATFORM_COLORS[account.platform]} rounded-lg flex items-center justify-center`}
-                    >
-                      {Icon && <Icon className="w-5 h-5 text-white" />}
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        @{account.username || account.displayName}
-                      </p>
-                      <p className="text-xs text-default-500">
-                        {account.followerCount?.toLocaleString() || 0} followers
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-default-500 mb-3">
-                No accounts connected yet
-              </p>
-              <Button
-                color="primary"
-                onPress={() => router.push("/dashboard/social/accounts")}
-              >
-                Connect Account
-              </Button>
-            </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Success celebration when onboarding complete */}
-      {onboarding?.isComplete && data.content.total <= 3 && (
-        <Card className="bg-gradient-to-r from-success to-secondary">
-          <CardBody className="text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🎉</div>
-                <div>
-                  <h3 className="text-lg font-semibold">You're all set up!</h3>
-                  <p className="text-white/80">
-                    Your flywheel is ready. Create content and watch it spin!
-                  </p>
-                </div>
-              </div>
-              <Button
-                color="default"
-                variant="solid"
-                onPress={() => router.push("/dashboard/content")}
-              >
-                Create Post
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Flywheel Activation Celebration Modal */}
-      <Modal
-        isOpen={showActivationModal}
-        onClose={() => {
-          setShowActivationModal(false);
-          // Remove the query param from URL without reload
-          router.replace("/dashboard", { scroll: false });
-        }}
-        size="lg"
-        classNames={{
-          body: "py-6",
-          backdrop: "bg-gradient-to-t from-primary/20 to-secondary/20 backdrop-opacity-40",
-        }}
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1 items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-success to-primary flex items-center justify-center mb-2">
-                  <Rocket className="w-10 h-10 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent">
-                  Flywheel Activated! 🎉
-                </h2>
-              </ModalHeader>
-              <ModalBody className="text-center">
-                <p className="text-lg text-default-600 mb-4">
-                  Congratulations! Your AI-powered marketing flywheel is now spinning.
-                </p>
-
-                <div className="bg-gradient-to-r from-success/10 to-primary/10 rounded-xl p-4 mb-4">
-                  <h4 className="font-semibold text-default-800 mb-3 flex items-center justify-center gap-2">
-                    <PartyPopper className="w-5 h-5 text-success" />
-                    What happens now?
-                  </h4>
-                  <ul className="text-sm text-default-600 space-y-2 text-left">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Your AI autopilot will generate content based on your brand voice</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Content will be published according to your schedule</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Analytics will track performance and feed AI learnings</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>The more it runs, the smarter it gets!</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <p className="text-sm text-default-500">
-                  Check your dashboard regularly to monitor performance and review AI-generated content.
-                </p>
-              </ModalBody>
-              <ModalFooter className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Button
-                  color="default"
-                  variant="bordered"
-                  onPress={onClose}
-                >
-                  Explore Dashboard
-                </Button>
-                <Button
-                  color="primary"
-                  endContent={<ArrowRight className="w-4 h-4" />}
-                  onPress={() => {
-                    onClose();
-                    router.push("/dashboard/content");
-                  }}
-                >
-                  Create Content
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
-    </div>
-  );
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return "0s";
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
-/**
- * Format time ago
- */
 function formatTimeAgo(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
-
   if (diffMins < 1) return "just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
+}
+
+function statusColor(status: string) {
+  switch (status?.toLowerCase()) {
+    case "completed": return "success";
+    case "in-progress": case "ringing": return "primary";
+    case "failed": case "error": return "danger";
+    case "missed": case "no-answer": return "warning";
+    default: return "default";
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
+interface UnifiedDashboardProps {
+  flywheelJustActivated?: boolean;
+}
+
+export function UnifiedDashboard({ flywheelJustActivated: _ }: UnifiedDashboardProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [agents, setAgents] = useState<AgentSummary[]>([]);
+  const [stats, setStats] = useState<VoiceStats | null>(null);
+  const [recentCalls, setRecentCalls] = useState<RecentCall[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDashboard = useCallback(async () => {
+    setError(null);
+    try {
+      const [agentsRes, statsRes, callsRes] = await Promise.all([
+        fetch("/api/voice/agents"),
+        fetch("/api/voice/stats"),
+        fetch("/api/voice/calls?limit=8"),
+      ]);
+
+      if (agentsRes.ok) {
+        const d = await agentsRes.json();
+        setAgents(Array.isArray(d.agents) ? d.agents : []);
+      }
+      if (statsRes.ok) {
+        const d = await statsRes.json();
+        if (d.success && d.data) setStats(d.data);
+      }
+      if (callsRes.ok) {
+        const d = await callsRes.json();
+        setRecentCalls(Array.isArray(d.calls) ? d.calls.slice(0, 8) : []);
+      }
+    } catch (e) {
+      console.error("Dashboard load error:", e);
+      setError("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  /* ---- Loading ---- */
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Spinner size="lg" color="primary" />
+          <p className="text-gray-400 text-sm">Loading your agents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- Error ---- */
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Something went wrong</h2>
+          <p className="text-gray-400">{error}</p>
+          <Button color="primary" variant="flat" onPress={loadDashboard}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const activeAgents = agents.filter(a => a.isActive);
+  const deployedAgents = agents.filter(a => a.isDeployed);
+  const totalCalls = stats?.totalCalls ?? agents.reduce((a, ag) => a + ag._count.calls, 0);
+  const totalMinutes = stats?.totalMinutes ?? 0;
+  const successRate = stats?.successRate ?? 0;
+  const monthlyCost = stats?.totalCost ?? 0;
+
+  /* ---- Empty State ---- */
+  if (agents.length === 0) {
+    return (
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-white">Welcome to OpenClaw</h1>
+          <p className="text-gray-400 mt-1">Deploy AI agents that handle calls, qualify leads, and automate your business.</p>
+        </div>
+
+        {/* Empty Hero */}
+        <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700/50">
+          <CardBody className="p-12 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-sky-500/10 flex items-center justify-center">
+              <Bot className="w-10 h-10 text-sky-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Create Your First Agent</h2>
+            <p className="text-gray-400 max-w-lg mx-auto mb-8">
+              AI voice agents answer calls, qualify leads, book appointments, and handle support — 24/7, in any language. Start with a template or build from scratch.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                as={Link}
+                href="/dashboard/voice/templates"
+                variant="bordered"
+                className="border-gray-600 text-gray-300"
+                startContent={<Sparkles className="w-4 h-4" />}
+              >
+                Browse Templates
+              </Button>
+              <Button
+                as={Link}
+                href="/dashboard/voice/agents/new"
+                color="primary"
+                size="lg"
+                startContent={<Plus className="w-4 h-4" />}
+              >
+                Create Agent
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gray-900/50 border border-gray-800">
+            <CardBody className="p-6">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center mb-4">
+                <PhoneCall className="w-5 h-5 text-sky-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">Voice Agents</h3>
+              <p className="text-sm text-gray-400">Answer inbound calls, make outbound campaigns, handle any conversation naturally.</p>
+            </CardBody>
+          </Card>
+          <Card className="bg-gray-900/50 border border-gray-800">
+            <CardBody className="p-6">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
+                <Brain className="w-5 h-5 text-emerald-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">Knowledge Base</h3>
+              <p className="text-sm text-gray-400">Upload docs, FAQs, and product info. Your agents learn and answer accurately.</p>
+            </CardBody>
+          </Card>
+          <Card className="bg-gray-900/50 border border-gray-800">
+            <CardBody className="p-6">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4">
+                <Zap className="w-5 h-5 text-violet-400" />
+              </div>
+              <h3 className="font-semibold text-white mb-2">Automations</h3>
+              <p className="text-sm text-gray-400">Book appointments, push to CRM, send follow-ups — agents take action, not just talk.</p>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- Main Dashboard ---- */
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-gray-400 mt-0.5">
+            {activeAgents.length} active agent{activeAgents.length !== 1 ? "s" : ""} · {deployedAgents.length} deployed
+          </p>
+        </div>
+        <Button
+          as={Link}
+          href="/dashboard/voice/agents/new"
+          color="primary"
+          startContent={<Plus className="w-4 h-4" />}
+        >
+          New Agent
+        </Button>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="bg-gray-900/50 border border-gray-800">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-sky-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{agents.length}</p>
+                <p className="text-xs text-gray-500">Agents</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gray-900/50 border border-gray-800">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{totalCalls.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Total Calls</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gray-900/50 border border-gray-800">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-violet-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  {totalMinutes >= 60 ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : `${totalMinutes}m`}
+                </p>
+                <p className="text-xs text-gray-500">Minutes Used</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gray-900/50 border border-gray-800">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{successRate}%</p>
+                <p className="text-xs text-gray-500">Success Rate</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gray-900/50 border border-gray-800 col-span-2 lg:col-span-1">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">${monthlyCost.toFixed(2)}</p>
+                <p className="text-xs text-gray-500">This Month</p>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Main Grid: Agents + Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Agents Column (2/3) */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">Your Agents</h2>
+            <Button
+              as={Link}
+              href="/dashboard/voice/agents"
+              variant="light"
+              size="sm"
+              endContent={<ChevronRight className="w-4 h-4" />}
+              className="text-gray-400"
+            >
+              View All
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {agents.slice(0, 6).map((agent) => (
+              <Link key={agent.id} href={`/dashboard/voice/agents/${agent.id}`}>
+                <Card
+                  isPressable
+                  className="bg-gray-900/50 border border-gray-800 hover:border-sky-500/30 transition-all h-full"
+                >
+                  <CardBody className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
+                        <Bot className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex gap-1.5">
+                        {agent.isDeployed && (
+                          <Chip size="sm" color="success" variant="dot" classNames={{ base: "border-none", dot: "bg-emerald-400" }}>
+                            Live
+                          </Chip>
+                        )}
+                        <Chip
+                          size="sm"
+                          color={agent.isActive ? "primary" : "default"}
+                          variant="flat"
+                          classNames={{ base: agent.isActive ? "bg-sky-500/10 text-sky-400" : "bg-gray-800 text-gray-500" }}
+                        >
+                          {agent.isActive ? "Active" : "Inactive"}
+                        </Chip>
+                      </div>
+                    </div>
+
+                    <h3 className="font-semibold text-white mb-1">{agent.name}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-1 mb-3">
+                      {agent.description || "No description"}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5" />
+                        {agent._count.calls} calls
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Mic className="w-3.5 h-3.5" />
+                        {agent.phoneNumbers.length} number{agent.phoneNumbers.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </CardBody>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Sidebar (1/3) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">Recent Calls</h2>
+            <Button
+              as={Link}
+              href="/dashboard/voice/calls"
+              variant="light"
+              size="sm"
+              endContent={<ChevronRight className="w-4 h-4" />}
+              className="text-gray-400"
+            >
+              All Calls
+            </Button>
+          </div>
+
+          <Card className="bg-gray-900/50 border border-gray-800">
+            <CardBody className="p-0">
+              {recentCalls.length > 0 ? (
+                <div className="divide-y divide-gray-800">
+                  {recentCalls.map((call) => (
+                    <div key={call.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800/30 transition-colors">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        call.direction === "inbound"
+                          ? "bg-emerald-500/10"
+                          : "bg-sky-500/10"
+                      }`}>
+                        {call.direction === "inbound" ? (
+                          <PhoneIncoming className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <PhoneOutgoing className="w-4 h-4 text-sky-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-white truncate">
+                            {call.callerNumber || call.calleeNumber || "Unknown"}
+                          </p>
+                          <Chip size="sm" color={statusColor(call.status)} variant="flat" classNames={{ base: "h-5 text-[10px]" }}>
+                            {call.status}
+                          </Chip>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {call.agent?.name || "Unknown agent"} · {formatDuration(call.duration)}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-600 whitespace-nowrap">
+                        {formatTimeAgo(new Date(call.createdAt))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <Phone className="w-8 h-8 text-gray-700 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No calls yet</p>
+                  <p className="text-xs text-gray-600 mt-1">Deploy an agent to start receiving calls</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Quick Links */}
+          <div className="space-y-2">
+            <Link href="/dashboard/voice/numbers">
+              <Card isPressable className="bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors">
+                <CardBody className="p-3 flex flex-row items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Globe className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Phone Numbers</p>
+                    <p className="text-xs text-gray-500">{stats?.phoneNumbers || 0} numbers</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </CardBody>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/voice/knowledge-bases">
+              <Card isPressable className="bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors">
+                <CardBody className="p-3 flex flex-row items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Knowledge Bases</p>
+                    <p className="text-xs text-gray-500">Train your agents</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </CardBody>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/voice/templates">
+              <Card isPressable className="bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors">
+                <CardBody className="p-3 flex flex-row items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Templates</p>
+                    <p className="text-xs text-gray-500">Pre-built agent configs</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </CardBody>
+              </Card>
+            </Link>
+
+            <Link href="/dashboard/voice/test">
+              <Card isPressable className="bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-colors">
+                <CardBody className="p-3 flex flex-row items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                    <Mic className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Test Console</p>
+                    <p className="text-xs text-gray-500">Try agents in browser</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </CardBody>
+              </Card>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

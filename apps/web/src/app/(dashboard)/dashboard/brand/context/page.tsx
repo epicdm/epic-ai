@@ -5,7 +5,7 @@ import { prisma } from "@epic-ai/database";
 import { ContextSourcesPage } from "@/components/brand/context-sources-page";
 
 export const metadata = {
-  title: "Context Sources | Epic AI",
+  title: "Context Sources | OpenClaw",
 };
 
 export default async function Page() {

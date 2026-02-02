@@ -100,7 +100,7 @@ const goalOptions: GoalOption[] = [
   {
     id: "explore",
     title: "Just Exploring",
-    description: "Look around and see what Epic AI can do",
+    description: "Look around and see what OpenClaw can do",
     icon: <CompassIcon className="w-6 h-6" />,
   },
 ];
@@ -294,7 +294,7 @@ function WelcomeStep({ userName, selectedGoal, onGoalSelect }: WelcomeStepProps)
       <WizardStepHeader
         icon={<span className="text-3xl">👋</span>}
         title={`Welcome, ${userName}!`}
-        description="What would you like to accomplish with Epic AI?"
+        description="What would you like to accomplish with OpenClaw?"
       />
 
       <WizardStepContent>

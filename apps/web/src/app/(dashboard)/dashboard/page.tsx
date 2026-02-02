@@ -16,8 +16,8 @@ const isUATBypassEnabled =
   process.env.UAT_AUTH_BYPASS === "true";
 
 export const metadata = {
-  title: "Dashboard | Epic AI",
-  description: "Your AI-powered marketing command center",
+  title: "Dashboard | OpenClaw",
+  description: "Your AI agent command center",
 };
 
 interface DashboardPageProps {

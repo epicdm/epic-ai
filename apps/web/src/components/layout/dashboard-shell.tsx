@@ -41,7 +41,7 @@ export function DashboardShell({
   return (
     <DemoModeProvider>
       <AssistantProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="min-h-screen bg-gray-950">
           {/* Demo Mode Banner */}
           <DemoModeBanner />
 

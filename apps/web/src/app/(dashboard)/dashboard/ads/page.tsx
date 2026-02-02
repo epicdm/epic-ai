@@ -1,7 +1,7 @@
 import { AdsDashboard } from "@/components/ads/ads-dashboard";
 
 export const metadata = {
-  title: "Ads | Epic AI",
+  title: "Ads | OpenClaw",
 };
 
 export default function Page() {

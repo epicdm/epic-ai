@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Epic AI - AI Marketing Platform",
+  title: "OpenClaw - AI Agent Platform",
   description:
-    "Social media management and voice AI agents in one platform. From first impression to closed deal — all automated.",
+    "Build, deploy, and manage AI agents across voice, chat, and messaging. Open source. Caribbean built. Global ambition.",
 };
 
 export default function RootLayout({

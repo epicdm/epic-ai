@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 // Voice service URL with fallback
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 interface MagnusDiagnosticsResponse {
   success: boolean;

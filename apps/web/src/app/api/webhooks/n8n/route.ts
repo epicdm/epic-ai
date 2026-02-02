@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    service: 'epic-ai-n8n-webhook',
+    service: 'openclaw-n8n-webhook',
     timestamp: new Date().toISOString(),
   });
 }

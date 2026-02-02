@@ -10,7 +10,7 @@ import { getUserOrganization } from "@/lib/sync-user";
 // Voice service URL for cleanup operations
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 /**
  * Cleanup phone number resources (LiveKit trunks, dispatch rules, Magnus DIDs)

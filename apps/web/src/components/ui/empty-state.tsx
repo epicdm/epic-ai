@@ -216,7 +216,7 @@ export const emptyStates = {
   social: {
     icon: <SparklesIcon className="w-full h-full" />,
     title: "Connect Your Social Accounts",
-    description: "Link your social media accounts to publish content and track engagement directly from Epic AI.",
+    description: "Link your social media accounts to publish content and track engagement directly from OpenClaw.",
     features: ["Twitter/X", "LinkedIn", "Facebook & Instagram"],
     actions: [
       { label: "Connect Accounts", variant: "primary" as const, href: "/dashboard/social/connect" },
