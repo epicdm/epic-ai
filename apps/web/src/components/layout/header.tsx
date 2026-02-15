@@ -21,7 +21,7 @@ export function Header({ organizationName }: HeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+    <header className="sticky top-0 z-30 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left Side */}
         <div className="flex items-center gap-4">
@@ -32,41 +32,26 @@ export function Header({ organizationName }: HeaderProps) {
         {/* Right Side */}
         <div className="flex items-center gap-2">
           {/* Search (Desktop) */}
-          <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
             <Search className="w-4 h-4" />
             <span>Search...</span>
-            <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 rounded">
+            <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-xs bg-gray-700 rounded">
               ⌘K
             </kbd>
           </button>
 
-          {/* Theme Toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
-          )}
-
           {/* Notifications */}
-          <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+          <button className="relative p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-colors">
             <Bell className="w-5 h-5" />
-            {/* Notification badge */}
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-sky-500 rounded-full" />
           </button>
 
           {/* Divider */}
-          <div className="hidden md:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+          <div className="hidden md:block w-px h-6 bg-gray-700 mx-2" />
 
           {/* Org Name (Desktop) */}
           {organizationName && (
-            <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400">
+            <span className="hidden md:block text-sm text-gray-400">
               {organizationName}
             </span>
           )}

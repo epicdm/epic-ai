@@ -80,7 +80,7 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
     <div className="space-y-6">
       <p className="text-gray-600 dark:text-gray-400">
         Review your analytics and learning settings before activating. These
-        settings determine how Epic AI learns from your content performance.
+        settings determine how OpenClaw learns from your content performance.
       </p>
 
       {/* Completion Checklist */}
@@ -247,7 +247,7 @@ export function LearnReviewStep({ data, updateData }: LearnReviewStepProps) {
                 The AI Learning Loop
               </p>
               <p className="text-sm text-purple-700 dark:text-purple-300">
-                After you publish content, Epic AI will analyze performance and
+                After you publish content, OpenClaw will analyze performance and
                 feed insights back into your Brand Brain, continuously improving
                 future content.
               </p>

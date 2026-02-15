@@ -9,7 +9,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const DO_SPACES_KEY = process.env.DO_SPACES_KEY;
 const DO_SPACES_SECRET = process.env.DO_SPACES_SECRET;
-const DO_SPACES_BUCKET = process.env.DO_SPACES_BUCKET || 'epic-ai-media';
+const DO_SPACES_BUCKET = process.env.DO_SPACES_BUCKET || 'openclaw-media';
 const DO_SPACES_REGION = process.env.DO_SPACES_REGION || 'nyc3';
 const DO_SPACES_ENDPOINT = process.env.DO_SPACES_ENDPOINT || `https://${DO_SPACES_REGION}.digitaloceanspaces.com`;
 const DO_SPACES_CDN_ENDPOINT = process.env.DO_SPACES_CDN_ENDPOINT || `https://${DO_SPACES_BUCKET}.${DO_SPACES_REGION}.cdn.digitaloceanspaces.com`;

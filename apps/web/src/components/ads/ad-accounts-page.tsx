@@ -223,7 +223,7 @@ export function AdAccountsPage() {
               <p className="text-sm text-default-500">
                 Full API integration with Meta, Google, and LinkedIn requires business verification
                 and app review. For now, you can manually enter campaign metrics to track performance
-                in Epic AI. We&apos;re working on automated sync!
+                in OpenClaw. We&apos;re working on automated sync!
               </p>
             </div>
           </div>

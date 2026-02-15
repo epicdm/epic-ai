@@ -60,7 +60,7 @@ export function AnalyticsIntroStep({ data, updateData }: AnalyticsIntroStepProps
           The Learning Loop
         </h2>
         <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-          Epic AI doesn&apos;t just post content—it learns from every interaction.
+          OpenClaw doesn&apos;t just post content—it learns from every interaction.
           The more you use it, the better it gets at reaching your audience.
         </p>
       </div>

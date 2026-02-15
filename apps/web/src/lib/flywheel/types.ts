@@ -9,7 +9,7 @@
 export { PhaseStatus } from "@epic-ai/database";
 
 /**
- * The 5 phases of the Epic AI flywheel
+ * The 5 phases of the OpenClaw flywheel
  */
 export type FlywheelPhase = "UNDERSTAND" | "CREATE" | "DISTRIBUTE" | "LEARN" | "AUTOMATE";
 

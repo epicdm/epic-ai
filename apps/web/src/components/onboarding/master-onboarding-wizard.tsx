@@ -70,7 +70,7 @@ const goalOptions: GoalOption[] = [
   {
     id: "explore",
     title: "Just Exploring",
-    description: "Look around and see what Epic AI can do",
+    description: "Look around and see what OpenClaw can do",
     icon: <CompassIcon className="w-6 h-6" />,
     quickWin: "Take a tour of the dashboard",
   },
@@ -517,7 +517,7 @@ function QuickWinStep({
           {!quickWinDone ? (
             <>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Ready to see Epic AI in action? This will only take a moment.
+                Ready to see OpenClaw in action? This will only take a moment.
               </p>
 
               <Checkbox
@@ -645,7 +645,7 @@ function CompleteStep({ selectedGoal }: CompleteStepProps) {
       <WizardStepHeader
         icon={<span className="text-4xl">🎉</span>}
         title="You're All Set!"
-        description="Your Epic AI workspace is ready to go"
+        description="Your OpenClaw workspace is ready to go"
       />
 
       <WizardStepContent>

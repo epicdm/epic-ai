@@ -27,12 +27,12 @@ import { cn } from "@/lib/utils";
 // Pricing constants (in USD)
 export const PRICING = {
   voice: {
-    perMinute: 0.15, // $0.15 per minute
+    perMinute: 0.125, // $0.125 per minute (with Inworld TTS)
     breakdown: {
-      stt: 0.04, // Speech-to-text
+      stt: 0.04, // Speech-to-text (Deepgram)
       llm: 0.06, // LLM processing
-      tts: 0.03, // Text-to-speech
-      telephony: 0.02, // Phone line
+      tts: 0.005, // Text-to-speech (Inworld TTS 1.5)
+      telephony: 0.02, // Phone line (owned infra)
     },
   },
   content: {

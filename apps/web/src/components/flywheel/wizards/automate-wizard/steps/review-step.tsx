@@ -283,7 +283,7 @@ export function AutomateReviewStep({ data, updateData }: AutomateReviewStepProps
           >
             <span>
               I confirm my automation settings and I&apos;m ready to activate the
-              Epic AI flywheel.
+              OpenClaw flywheel.
             </span>
           </Checkbox>
         </CardBody>

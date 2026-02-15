@@ -82,6 +82,7 @@ const LLM_MODELS = {
 };
 
 const TTS_PROVIDERS = [
+  { key: "inworld", label: "Inworld TTS 1.5 ⭐" },
   { key: "openai", label: "OpenAI TTS" },
   { key: "elevenlabs", label: "ElevenLabs" },
   { key: "cartesia", label: "Cartesia" },
@@ -95,6 +96,17 @@ const OPENAI_VOICES = [
   { key: "onyx", label: "Onyx" },
   { key: "nova", label: "Nova" },
   { key: "shimmer", label: "Shimmer" },
+  { key: "ash", label: "Ash" },
+  { key: "coral", label: "Coral" },
+  { key: "sage", label: "Sage" },
+];
+
+const INWORLD_VOICES = [
+  { key: "Alex", label: "Alex — Energetic male" },
+  { key: "Ashley", label: "Ashley — Warm female" },
+  { key: "Dennis", label: "Dennis — Smooth, calm male" },
+  { key: "Hades", label: "Hades — Deep, authoritative" },
+  { key: "Zephyr", label: "Zephyr — Friendly, versatile" },
 ];
 
 // ElevenLabs premium voices - ultra-low 75ms latency
@@ -573,6 +585,7 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                 const provider = e.target.value;
                 let defaultVoice = "";
                 switch (provider) {
+                  case "inworld": defaultVoice = "Ashley"; break;
                   case "openai": defaultVoice = "nova"; break;
                   case "elevenlabs": defaultVoice = "21m00Tcm4TlvDq8ikWAM"; break; // Rachel
                   case "cartesia": defaultVoice = "248be419-c632-4f23-adf1-5324ed7dbf1d"; break; // Helpful Woman
@@ -597,6 +610,25 @@ export function AgentForm({ brands, initialData }: AgentFormProps) {
                   <SelectItem key={voice.key}>{voice.label}</SelectItem>
                 ))}
               </Select>
+            )}
+
+            {formData.ttsProvider === "inworld" && (
+              <>
+                <Select
+                  label="Voice"
+                  selectedKeys={formData.voiceId ? [formData.voiceId] : []}
+                  onChange={(e) => setFormData({ ...formData, voiceId: e.target.value })}
+                  description="#1 ranked TTS quality · 15 languages · Voice cloning available"
+                >
+                  {INWORLD_VOICES.map((voice) => (
+                    <SelectItem key={voice.key}>{voice.label}</SelectItem>
+                  ))}
+                </Select>
+                <div className="flex items-center gap-2 text-sm text-success">
+                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  50x cheaper than ElevenLabs · $0.005/min
+                </div>
+              </>
             )}
 
             {formData.ttsProvider === "elevenlabs" && (

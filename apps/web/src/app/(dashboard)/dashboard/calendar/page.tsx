@@ -9,7 +9,7 @@ import { prisma } from "@epic-ai/database";
 import { ContentCalendar } from "@/components/calendar/ContentCalendar";
 
 export const metadata = {
-  title: "Content Calendar | Epic AI",
+  title: "Content Calendar | OpenClaw",
   description: "View and manage your scheduled content",
 };
 

@@ -190,7 +190,7 @@ export function SetupDashboard({
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Your Epic AI Setup
+                  Your OpenClaw Setup
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   {getProgressMessage(overallProgress)}

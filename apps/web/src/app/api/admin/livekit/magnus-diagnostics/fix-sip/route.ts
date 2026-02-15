@@ -10,7 +10,7 @@ import { z } from "zod";
 // Voice service URL with fallback
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 const fixSipSchema = z.object({
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),

@@ -11,7 +11,7 @@ import { prisma } from "@epic-ai/database";
 import { AIBrandSetup } from "@/components/brand/ai-brand-setup";
 
 export const metadata = {
-  title: "AI Social Setup | Epic AI",
+  title: "AI Social Setup | OpenClaw",
   description: "Let AI learn your brand voice from your social media posts",
 };
 

@@ -39,9 +39,16 @@ export async function getAuthWithBypass(): Promise<{ userId: string | null; isUA
   }
 
   if (isUATBypassEnabled) {
-    // Ensure UAT test user and org exist in database
-    await ensureUATTestData();
-    return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    try {
+      // Ensure UAT test user and org exist in database
+      await ensureUATTestData();
+      return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    } catch (error) {
+      console.error("Error in UAT bypass mode:", error);
+      // Even if UAT test data creation fails, still return the test user ID
+      // This prevents auth failures in development
+      return { userId: UAT_TEST_USER_ID, isUATBypass: true };
+    }
   }
 
   return { userId: null, isUATBypass: false };
@@ -119,33 +126,65 @@ export async function getUser() {
  * Supports UAT bypass mode
  */
 export async function getCurrentUser() {
-  const { userId } = await getAuthWithBypass();
+  try {
+    const { userId, isUATBypass } = await getAuthWithBypass();
 
-  if (!userId) {
-    return null;
-  }
+    if (!userId) {
+      return null;
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      memberships: {
-        include: {
-          organization: true,
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        memberships: {
+          include: {
+            organization: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return user;
+    // In UAT bypass, user might not exist yet if ensureUATTestData is still running
+    if (!user && isUATBypass) {
+      console.warn("[getCurrentUser] UAT user not found, waiting for test data creation...");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          memberships: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+      });
+    }
+
+    return user;
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error);
+    // Return null instead of throwing to prevent auth failures from breaking the app
+    return null;
+  }
 }
 
 /**
  * Get the user's current organization
+ * Includes retry logic for UAT bypass mode where test data may not be ready yet
  */
 export async function getCurrentOrganization() {
   const user = await getCurrentUser();
 
   if (!user || user.memberships.length === 0) {
+    // In UAT bypass mode, the test data might not be ready yet (race condition)
+    // Retry once after a short delay
+    if (isUATBypassEnabled) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const retryUser = await getCurrentUser();
+      if (retryUser && retryUser.memberships.length > 0) {
+        return retryUser.memberships[0].organization;
+      }
+    }
     return null;
   }
 

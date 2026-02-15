@@ -4,7 +4,7 @@ import { prisma } from "@epic-ai/database";
 import { DistributeWizard } from "@/components/flywheel/wizards/distribute-wizard";
 
 export const metadata = {
-  title: "Publishing Engine Setup | Epic AI",
+  title: "Publishing Engine Setup | OpenClaw",
   description: "Connect your social accounts and set up your publishing schedule",
 };
 

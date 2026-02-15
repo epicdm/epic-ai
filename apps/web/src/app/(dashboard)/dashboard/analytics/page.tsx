@@ -9,7 +9,7 @@ import { prisma } from '@epic-ai/database';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 
 export const metadata = {
-  title: 'Analytics | Epic AI',
+  title: 'Analytics | OpenClaw',
   description: 'Track your social media performance and discover AI-powered insights',
 };
 

@@ -69,7 +69,7 @@ export function PlatformSettingsStep({ data, updateData }: PlatformSettingsStepP
   return (
     <div className="space-y-6">
       <p className="text-gray-600 dark:text-gray-400">
-        Configure how Epic AI posts to each of your connected platforms. These
+        Configure how OpenClaw posts to each of your connected platforms. These
         settings can be changed at any time.
       </p>
 

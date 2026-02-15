@@ -105,7 +105,7 @@ export function OnboardingChecklist({
           <div>
             <h3 className="font-semibold">Getting Started</h3>
             <p className="text-sm text-default-500">
-              Complete these steps to unlock the full power of Epic AI
+              Complete these steps to unlock the full power of OpenClaw
             </p>
           </div>
           {onDismiss && (

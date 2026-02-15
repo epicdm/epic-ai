@@ -4,7 +4,7 @@ import { prisma } from "@epic-ai/database";
 import { CreateWizard } from "@/components/flywheel/wizards/create-wizard";
 
 export const metadata = {
-  title: "Content Factory Setup | Epic AI",
+  title: "Content Factory Setup | OpenClaw",
   description: "Set up your Content Factory - templates, content types, and AI settings",
 };
 

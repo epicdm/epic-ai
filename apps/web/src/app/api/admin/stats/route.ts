@@ -11,7 +11,7 @@ import { RoomServiceClient } from "livekit-server-sdk";
 // Voice service URL
 const VOICE_SERVICE_URL =
   process.env.VOICE_SERVICE_URL ||
-  "https://epic-ai-platform-zcjiu.ondigitalocean.app/voice";
+  "https://openclaw-platform-zcjiu.ondigitalocean.app/voice";
 
 interface LiveKitStats {
   activeRooms: number;
